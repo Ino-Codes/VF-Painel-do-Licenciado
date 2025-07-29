@@ -1,0 +1,76 @@
+import React, { useState } from 'react';
+import api from './api.ts';
+import { useNavigate } from 'react-router-dom';
+import logoclara from './img/logo-clara.png';
+import { useAuth } from './context/AuthContext.tsx';
+
+const App: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false);
+  const [emailRecuperacao, setEmailRecuperacao] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleLogin = async () => {
+    try {
+      setLoginError('');
+      const res = await api.post('/api/login', { email, password });
+      console.log('Resposta da API (login):', res.data);
+      login(res.data);
+      navigate('/dashboard');
+    } catch (err) {
+      setLoginError('Revise os dados de login e tente novamente.');
+    }
+  };
+
+  const handleRecuperarSenha = async () => {
+    
+  };
+
+  return (
+    <div className="p-login">
+      <div className="p-img">
+        <img alt="Logo da Valor Fiscal" src={logoclara} />
+      </div>
+      <div className="p-1">
+        <h2 className="titulo-login">Painel do Licenciado</h2>
+
+        {loginError && <div className="login-error-message">{loginError}</div>}
+
+        {!mostrarRecuperacao ? (
+          <>
+            <input
+              type="email"
+              placeholder="Email"
+              className="input-login"
+              onChange={e => {
+                setEmail(e.target.value);
+                if (loginError) setLoginError('');
+              }}
+            />
+            <input
+              type="password"
+              placeholder="Senha"
+              className="input-login"
+              onChange={e => {
+                setPassword(e.target.value);
+                if (loginError) setLoginError('');
+              }}
+            />
+            
+            <button className="botao-login" onClick={handleLogin}>Login</button>           
+            <p><a href="#" onClick={() => setMostrarRecuperacao(true)}>Esqueceu sua senha?</a></p>
+          </>
+        ) : (
+          <>
+          </>
+        )}
+        
+      </div>
+    </div>
+  );
+};
+
+export default App;
