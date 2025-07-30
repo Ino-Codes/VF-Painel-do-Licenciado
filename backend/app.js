@@ -69,8 +69,6 @@ app.post('/api/login', async (req, res) => {
   
   console.log('--- Nova Tentativa de Login ---');
   console.log('Email recebido do frontend:', email);
-  // AVISO: O log abaixo é apenas para depuração. Remova-o após resolver o problema.
-  console.log('Senha recebida do frontend:', password);
 
   try {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -130,10 +128,8 @@ app.post('/api/admin/users', async (req, res) => {
     }
 });
 
-
 // ... (outras rotas como notice, upload, etc., adaptadas de forma similar)
 // Se precisar de ajuda para adaptar outras rotas, me avise!
-
 
 // Inicia o servidor e cria as tabelas
 app.listen(port, () => {
