@@ -63,7 +63,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // --- ROTAS DA API (ADAPTADAS PARA POSTGRESQL) ---
 
 // LOGIN
-// Substitua a rota de login existente por esta versão com logs de depuração
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   
@@ -128,8 +127,31 @@ app.post('/api/admin/users', async (req, res) => {
     }
 });
 
-// ... (outras rotas como notice, upload, etc., adaptadas de forma similar)
-// Se precisar de ajuda para adaptar outras rotas, me avise!
+// ADMIN: EDITAR USUÁRIO
+app.put('/api/admin/users/:id', async (req, res) => {
+  const { id } = req.params; // Pega o ID da URL
+  const { nome, role } = req.body; // Pega nome e role do corpo da requisição
+
+  // Validação simples para garantir que os dados necessários foram enviados
+  if (!nome || !role) {
+    return res.status(400).json({ error: 'Nome e role são obrigatórios.' });
+  }
+
+  try {
+    const sql = 'UPDATE users SET nome = $1, role = $2 WHERE id = $3';
+    const result = await pool.query(sql, [nome, role, id]);
+
+    // Verifica se alguma linha foi de fato alterada
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    res.json({ success: true, message: 'Usuário atualizado com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao atualizar usuário:', err);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
 
 // Inicia o servidor e cria as tabelas
 app.listen(port, () => {

@@ -67,7 +67,6 @@ const AdminUsers: React.FC = () => {
     <Menu />
     <div className="content-area">
       <h2>{editingUser ? 'Editar Usuário' : 'Criar Usuário'}</h2>
-      {/* Adicionada a classe "admin-form" para o container do formulário */}
       <form onSubmit={handleSubmit} className="admin-form">
         <div className="form-row">
           <input
@@ -120,7 +119,6 @@ const AdminUsers: React.FC = () => {
         <div className="form-row">
           <button className="form-button" type="submit">{editingUser ? 'Salvar Alterações' : 'Criar Usuário'}</button>
           {editingUser && (
-            /* Classe renomeada para melhor semântica */
             <button className="form-button-cancel" type="button" onClick={() => setEditingUser(null)}>
               Cancelar Edição
             </button>
