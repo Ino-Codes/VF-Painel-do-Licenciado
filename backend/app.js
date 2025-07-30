@@ -153,6 +153,26 @@ app.put('/api/admin/users/:id', async (req, res) => {
   }
 });
 
+// ADMIN: EXCLUIR USUÁRIO
+app.delete('/api/admin/users/:id', async (req, res) => {
+  const { id } = req.params; // Pega o ID do usuário da URL
+
+  try {
+    const sql = 'DELETE FROM users WHERE id = $1';
+    const result = await pool.query(sql, [id]);
+
+    // Verifica se alguma linha foi de fato excluída. Se rowCount for 0, o usuário não foi encontrado.
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado para exclusão.' });
+    }
+
+    res.json({ success: true, message: 'Usuário excluído com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir usuário:', err);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
 // Inicia o servidor e cria as tabelas
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
