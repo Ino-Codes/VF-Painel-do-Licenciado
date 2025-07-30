@@ -13,8 +13,8 @@ vermelho escuro: #c82333
 
 body {
   background-image: url(https://d335luupugsy2.cloudfront.net/cms/files/342452/1698426778/$p8rdih6o8);
-  background-size: cover;
-  background-position: center;
+  background-size: cover ;
+  background-position: top ;
 
   font-family: "Montserrat", sans-serif;
   font-optical-sizing: auto;
@@ -41,7 +41,7 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(0, 0, 0, 0.8);
   z-index: -1;
 }
 
