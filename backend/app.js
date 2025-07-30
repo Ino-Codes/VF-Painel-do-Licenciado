@@ -63,23 +63,45 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // --- ROTAS DA API (ADAPTADAS PARA POSTGRESQL) ---
 
 // LOGIN
+// Substitua a rota de login existente por esta versão com logs de depuração
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
+  
+  console.log('--- Nova Tentativa de Login ---');
+  console.log('Email recebido do frontend:', email);
+  // AVISO: O log abaixo é apenas para depuração. Remova-o após resolver o problema.
+  console.log('Senha recebida do frontend:', password);
+
   try {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
 
     if (!user) {
-      return res.status(401).json({ message: 'Usuário não encontrado' });
+      console.log('Resultado da verificação: Usuário não encontrado no banco de dados.');
+      return res.status(401).json({ message: 'Credenciais inválidas' });
     }
-    const senhaOk = await bcrypt.compare(password, user.password);
-    if (!senhaOk) {
-      return res.status(401).json({ message: 'Senha incorreta' });
+
+    console.log('Usuário encontrado no banco. Email:', user.email);
+    console.log('Hash da senha salvo no banco:', user.password);
+
+    // Compara a senha enviada com o hash salvo no banco
+    const senhaCorreta = await bcrypt.compare(password, user.password);
+    
+    // Este é o log mais importante!
+    console.log('Resultado do bcrypt.compare:', senhaCorreta); 
+
+    if (!senhaCorreta) {
+      console.log('Resultado da verificação: A senha está incorreta.');
+      return res.status(401).json({ message: 'Credenciais inválidas' });
     }
+
+    console.log('Resultado da verificação: Login bem-sucedido!');
+    // Retorna os dados do usuário se a senha estiver correta
     res.json({ email: user.email, nome: user.nome, role: user.role });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: 'Erro no servidor' });
+    console.error('ERRO CRÍTICO NA ROTA /api/login:', err);
+    res.status(500).send({ error: 'Erro interno no servidor' });
   }
 });
 
