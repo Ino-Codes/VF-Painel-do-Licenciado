@@ -5,7 +5,7 @@ import { useAuth } from './context/AuthContext.tsx';
 const Menu: React.FC = () => {
   const { user } = useAuth();
 
-  const defaultAvatar = 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1753972473/imagem-do-usuario-com-fundo-preto_hqam2d.png';
+  const defaultAvatar = 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1753972686/imagem-do-usuario-com-fundo-preto_1_y0ulj0.png';
 
   return (
     <nav className="main-menu">
