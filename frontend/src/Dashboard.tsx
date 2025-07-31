@@ -35,9 +35,6 @@ const Dashboard: React.FC = () => {
       <Menu />
       <div className="content-area">
         <h2>Bem-vindo, {user.nome}!</h2>
-        <p>Email: {user.email}</p>
-        <p>Permissão de acesso: {user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
-        <button className="botao-logout" onClick={() => { logout(); navigate('/'); }}>Desconectar</button>
       </div>
     </div>
   );

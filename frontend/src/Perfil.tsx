@@ -56,7 +56,7 @@ const Perfil: React.FC = () => {
     }
 
     try {
-      const res = await api.put('/api/users/${user.id}/profile', {nome});
+      const res = await api.put(`/api/users/${user.id}/profile`, {nome});
       const updatedUser = res.data.user;
       login(updatedUser);
       setMessage('Nome atualizado com sucesso!');

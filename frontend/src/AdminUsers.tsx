@@ -141,7 +141,6 @@ const AdminUsers: React.FC = () => {
           </li>
         ))}
       </ul>
-      <button className="botao-logout" onClick={() => { logout(); navigate('/'); }}>Desconectar</button>
     </div>
   </div>
   );
