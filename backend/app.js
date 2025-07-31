@@ -1,22 +1,32 @@
-// backend/app.js - VERSÃO ATUALIZADA PARA POSTGRESQL
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
-const { Pool } = require('pg'); // Importa a biblioteca do PostgreSQL
-
+const { Pool } = require('pg');
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
 const app = express();
 const port = 3001;
 
-// Configuração da conexão com o PostgreSQL usando a URL do Render
+// Configuração da conexão com o PostgreSQL
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Usa a variável de ambiente que vamos configurar no Render
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
   }
 });
+
+// Configuração do Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 // Função para criar as tabelas se não existirem
 const createTables = async () => {
@@ -170,6 +180,51 @@ app.delete('/api/admin/users/:id', async (req, res) => {
   } catch (err) {
     console.error('Erro ao excluir usuário:', err);
     res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
+// PERFIL: UPLOAD DE FOTO DE PERFIL
+app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
+  const { id } = req.params;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+  }
+
+  try {
+    // 1. Buscar a URL do avatar antigo no banco de dados
+    const userResult = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [id]);
+    const oldAvatarUrl = userResult.rows[0]?.avatar_url;
+
+    // 2. Se um avatar antigo existir, excluí-lo do Cloudinary
+    if (oldAvatarUrl) {
+      // Extrai o public_id da URL antiga para poder deletar
+      const publicId = oldAvatarUrl.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
+      console.log('Avatar antigo excluído do Cloudinary.');
+    }
+
+    // 3. Fazer o upload do novo avatar para o Cloudinary
+    // O upload é feito a partir do buffer de memória do arquivo
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
+        if (error) reject(error);
+        resolve(result);
+      }).end(req.file.buffer);
+    });
+
+    const newAvatarUrl = uploadResult.secure_url;
+
+    // 4. Atualizar a tabela de usuários com a nova URL do avatar
+    const updateSql = 'UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url';
+    const updateResult = await pool.query(updateSql, [newAvatarUrl, id]);
+
+    console.log('Avatar atualizado com sucesso no banco de dados.');
+    res.json({ success: true, avatarUrl: updateResult.rows[0].avatar_url });
+
+  } catch (err) {
+    console.error('Erro no processo de upload de avatar:', err);
+    res.status(500).json({ error: 'Erro no servidor durante o upload.' });
   }
 });
 

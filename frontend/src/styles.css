@@ -152,6 +152,7 @@ body::before {
   box-sizing: border-box;
 }
 
+/* Menu Superior */
 .main-menu {
   width: 100%;
   background-color: #111217;
@@ -159,6 +160,14 @@ body::before {
   display: flex;
   gap: 25px;
   box-sizing: border-box;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menu-left, .menu-right {
+  display: flex;
+  align-items: center;
+  gap: 25px;
 }
 
 .menu-item {
@@ -319,4 +328,63 @@ body::before {
 
 .list-button.delete {
   background-color: #c82333;
+}
+
+/* Estilo para o ícone de perfil */
+.profile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-icon svg {
+  stroke: white;
+  transition: stroke 0.3s ease;
+}
+
+.profile-icon:hover svg {
+  stroke: #c79332;
+}
+
+.profile-icon.active svg {
+  stroke: #c79332;
+}
+
+/* Estilos da Página de Perfil */
+.profile-card {
+  display: flex;
+  gap: 40px;
+  background-color: #f8f9fa;
+  padding: 30px;
+  border-radius: 8px;
+}
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.profile-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.details-section {
+  flex-grow: 1;
+}
+
+.details-section .form-row {
+  align-items: center;
+}
+
+.details-section label {
+  font-weight: 500;
+  margin-right: 15px;
+  width: 80px;
 }

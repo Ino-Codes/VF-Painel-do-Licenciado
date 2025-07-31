@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import App from './App.tsx';
-import Dashboard from './Dashboard.tsx';
-import AdminUsers from './AdminUsers.tsx';
-import { AuthProvider } from './context/AuthContext.tsx';
+import App from './App';
+import Dashboard from './Dashboard';
+import AdminUsers from './AdminUsers';
+import Perfil from './Perfil';
+import { AuthProvider } from './context/AuthContext';
 import './styles.css';
 
 const AppRouter: React.FC = () => {
@@ -15,6 +16,7 @@ const AppRouter: React.FC = () => {
           <Route path="/" element={<App />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </Router>
     </AuthProvider>
