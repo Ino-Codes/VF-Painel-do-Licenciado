@@ -182,12 +182,12 @@ body::before {
 
 .menu-item:hover {
   background-color: #626683;
+  color: #c79332;
 }
 
 .menu-item.active {
   background-color: #383c54;
-  color: #fff;
-  font-weight: 600;
+  color: #c79332;
 }
 
 .login-error-message {
