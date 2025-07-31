@@ -166,6 +166,15 @@ body::before {
 .main-menu {
 justify-content: space-between;
 align-items: center;
+
+width: 100%;
+background-color: #111217;
+padding: 15px 25px;
+display: flex;
+gap: 25px;
+box-sizing: border-box;
+
+
 }
 
 .menu-left, .menu-right {
