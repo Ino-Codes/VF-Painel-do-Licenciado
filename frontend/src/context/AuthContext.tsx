@@ -1,9 +1,11 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
 interface User {
+  id: number; // Garanta que o ID está na interface
   email: string;
   nome: string;
   role: 'admin' | 'licenciado' | 'gestor';
+  avatar_url?: string; // Avatar é opcional
 }
 
 interface AuthContextType {
@@ -19,30 +21,43 @@ const SESSION_DURATION_HOURS = 24;
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // Efeito para carregar a sessão do localStorage ao iniciar
   useEffect(() => {
-    const storedSession = localStorage.getItem('userSession');
-    if (storedSession) {
-      const sessionData = JSON.parse(storedSession);
-      const now = new Date().getTime();
+    try {
+      const storedSession = localStorage.getItem('userSession');
+      if (storedSession) {
+        const sessionData = JSON.parse(storedSession);
+        const now = new Date().getTime();
 
-      if (now > sessionData.expiry) {
-        localStorage.removeItem('userSession');
-      } else {
-        setUser(sessionData.user);
+        // Verifica se a sessão expirou
+        if (now > sessionData.expiry) {
+          console.log('Sessão expirada, limpando...');
+          localStorage.removeItem('userSession');
+          setUser(null);
+        } else {
+          // Se a sessão for válida, define o usuário
+          setUser(sessionData.user);
+        }
       }
+    } catch (error) {
+      console.error("Erro ao ler a sessão do localStorage", error);
+      localStorage.removeItem('userSession'); // Limpa em caso de erro de parse
     }
-  }, []);
+  }, []); // Executa apenas uma vez, quando o componente é montado
 
+  // Função de login e ATUALIZAÇÃO de dados do usuário
   const login = (userData: User) => {
     const now = new Date();
     const expiry = now.getTime() + (SESSION_DURATION_HOURS * 60 * 60 * 1000);
 
     const sessionData = {
-      user: userData,
+      user: userData, // Salva o objeto de usuário completo
       expiry: expiry,
     };
 
+    // 1. Atualiza o estado em memória
     setUser(userData);
+    // 2. Salva a sessão completa e atualizada no localStorage
     localStorage.setItem('userSession', JSON.stringify(sessionData));
   };
 
