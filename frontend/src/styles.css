@@ -166,15 +166,12 @@ body::before {
 .main-menu {
 justify-content: space-between;
 align-items: center;
-
 width: 100%;
 background-color: #111217;
 padding: 15px 25px;
 display: flex;
 gap: 25px;
 box-sizing: border-box;
-
-
 }
 
 .menu-left, .menu-right {
@@ -235,25 +232,11 @@ color: #ccc;
 margin-bottom: 2px;
 }
 
-.profile-name {
-font-weight: bold;
-}
-
 .profile-image-container {
 width: 40px;
 height: 40px;
 border-radius: 8px;
 overflow: hidden;
-border: 2px solid transparent;
-transition: border-color 0.3s ease;
-}
-
-.profile-info-container:hover .profile-image-container {
-border-color: #c79332; /* Borda dourada no hover */
-}
-
-.profile-info-container.active .profile-image-container {
-border-color: #daa520; /* Borda dourada mais clara quando ativo */
 }
 
 .profile-avatar-img {
