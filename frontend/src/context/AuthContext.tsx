@@ -1,11 +1,11 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
 interface User {
-  id: number; // Garanta que o ID está na interface
+  id: number;
   email: string;
   nome: string;
   role: 'admin' | 'licenciado' | 'gestor';
-  avatar_url?: string; // Avatar é opcional
+  avatar_url?: string;
 }
 
 interface AuthContextType {

@@ -69,39 +69,31 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // LOGIN
+// ROTA DE LOGIN CORRIGIDA
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
-  
-  console.log('--- Nova Tentativa de Login ---');
-  console.log('Email recebido do frontend:', email);
-
   try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    // Busca o usuário completo no banco de dados
+    const result = await pool.query('SELECT id, nome, email, role, password, avatar_url FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
 
     if (!user) {
-      console.log('Resultado da verificação: Usuário não encontrado no banco de dados.');
+      return res.status(401).json({ message: 'Credenciais inválidas' });
+    }
+    const senhaOk = await bcrypt.compare(password, user.password);
+    if (!senhaOk) {
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
-    console.log('Usuário encontrado no banco. Email:', user.email);
-    console.log('Hash da senha salvo no banco:', user.password);
+    // Remove a senha antes de enviar a resposta para o frontend
+    delete user.password; 
 
-    const senhaCorreta = await bcrypt.compare(password, user.password);
-    
-    console.log('Resultado do bcrypt.compare:', senhaCorreta); 
-
-    if (!senhaCorreta) {
-      console.log('Resultado da verificação: A senha está incorreta.');
-      return res.status(401).json({ message: 'Credenciais inválidas' });
-    }
-
-    console.log('Resultado da verificação: Login bem-sucedido!');
-    res.json({id: user.id, email: user.email, nome: user.nome, role: user.role});
+    // Envia o objeto de usuário completo
+    res.json(user);
 
   } catch (err) {
-    console.error('ERRO CRÍTICO NA ROTA /api/login:', err);
-    res.status(500).send({ error: 'Erro interno no servidor' });
+    console.error('Erro na rota /api/login:', err);
+    res.status(500).send({ error: 'Erro no servidor' });
   }
 });
 
