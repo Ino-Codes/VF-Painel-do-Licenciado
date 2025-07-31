@@ -2,13 +2,10 @@
 
 /*
 Paleta de cores
-dourado claro: #daa520
-dourado escuro: #ab7f11
-azul escuro: #111217
-azul claro: #3b3e4f
-verde claro: #0aba5f
-verde escuro: #04a146
-vermelho escuro: #c82333
+menu hover: #363950
+menu active: #4b4f6c
+verde: #04a146
+vermelho: #c82333
 */
 
 body {
@@ -26,6 +23,7 @@ body {
   height: 100vh;
 }
 
+/* LOGIN */
 .p-login {
   display: flex;
   flex-direction: column;
@@ -122,6 +120,18 @@ body::before {
   background-color: #ab7f11; 
 }
 
+.login-error-message {
+  background-color: #fff0f0;
+  border: 1px solid #ff4d4d;
+  color: #d8000c;
+  padding: 12px;
+  margin: 0 auto 15px;
+  border-radius: 8px;
+  width: 250px;
+  text-align: center;
+  font-weight: 500;
+}
+
 .botao-logout {
   display: block;
   margin: 0 auto;
@@ -154,20 +164,14 @@ body::before {
 
 /* Menu Superior */
 .main-menu {
-  width: 100%;
-  background-color: #111217;
-  padding: 15px 25px;
-  display: flex;
-  gap: 25px;
-  box-sizing: border-box;
-  justify-content: space-between;
-  align-items: center;
+justify-content: space-between;
+align-items: center;
 }
 
 .menu-left, .menu-right {
-  display: flex;
-  align-items: center;
-  gap: 25px;
+display: flex;
+align-items: center;
+gap: 25px;
 }
 
 .menu-item {
@@ -190,32 +194,76 @@ body::before {
   color: white;
 }
 
-.login-error-message {
-  background-color: #fff0f0;
-  border: 1px solid #ff4d4d;
-  color: #d8000c;
-  padding: 12px;
-  margin: 0 auto 15px;
-  border-radius: 8px;
-  width: 250px;
-  text-align: center;
-  font-weight: 500;
-}
-
 /* Ícone Perfil */
-.profile-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 !important;
-  background-color: transparent !important;
+.profile-info-container {
+display: flex;
+align-items: center;
+gap: 15px;
+text-decoration: none;
+color: white;
+padding: 8px 15px;
+border-radius: 8px;
+transition: background-color 0.3s ease;
 }
 
-.menu-avatar-img {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
+.profile-info-container:hover {
+background-color: #4b4f6c;
+}
+
+.profile-info-container.active {
+background-color: #363950;
+}
+
+.profile-text {
+display: flex;
+flex-direction: column;
+align-items: flex-end;
+}
+
+.profile-role {
+font-size: 0.8em;
+color: #ccc;
+margin-bottom: 2px;
+}
+
+.profile-name {
+font-weight: bold;
+}
+
+.profile-image-container {
+width: 40px;
+height: 40px;
+border-radius: 8px;
+overflow: hidden;
+border: 2px solid transparent;
+transition: border-color 0.3s ease;
+}
+
+.profile-info-container:hover .profile-image-container {
+border-color: #c79332; /* Borda dourada no hover */
+}
+
+.profile-info-container.active .profile-image-container {
+border-color: #daa520; /* Borda dourada mais clara quando ativo */
+}
+
+.profile-avatar-img {
+width: 100%;
+height: 100%;
+object-fit: cover;
+}
+
+.menu-right {
+margin-left: auto;
+}
+.menu-left {
+margin-right: auto;
+}
+.main-menu > div {
+padding: 0 20px;
+}
+nav.main-menu {
+padding: 10px 0;
 }
 
 /* Criar Usuário | Editar Usuário */
