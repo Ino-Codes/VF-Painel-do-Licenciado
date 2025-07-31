@@ -49,3 +49,5 @@ return (
 </nav>
 );
 };
+
+export default Menu;
