@@ -90,8 +90,8 @@ const Documentos: React.FC = () => {
             <div key={file.id} className="file-item">
               <span className="file-name">{file.originalname}</span>
               <div className="file-actions">
-                <a href={file.filename} /*target="_blank" rel="noopener noreferrer"*/ download>
-                  <button className="list-button download">Download</button>
+                <a href={file.filename} rel="noopener noreferrer" download>
+                  <button className="list-button download">Baixar</button>
                 </a>
                 {user?.role === 'admin' && (
                   <>
