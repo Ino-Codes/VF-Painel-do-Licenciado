@@ -33,7 +33,7 @@ return (
         className="profile-info-container"
       >
         <div className="profile-text">
-          <span className="profile-role">{user.role}</span>
+          <span className="profile-role">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
           <span className="profile-name">{user.nome}</span>
         </div>
         <div className="profile-image-container">

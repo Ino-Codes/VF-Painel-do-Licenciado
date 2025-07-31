@@ -8,7 +8,7 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  role: 'admin' | 'licenciado';
+  role: 'admin' | 'licenciado' | 'gestor';
 }
 
 const AdminUsers: React.FC = () => {
@@ -106,13 +106,14 @@ const AdminUsers: React.FC = () => {
             className="form-select"
             value={editingUser ? editingUser.role : form.role}
             onChange={e => {
-              const newRole = e.target.value as 'admin' | 'licenciado';
+              const newRole = e.target.value as 'admin' | 'licenciado' | 'gestor';
               if (editingUser) setEditingUser({ ...editingUser, role: newRole });
               else setForm({ ...form, role: newRole });
             }}
           >
             <option value="licenciado">Licenciado</option>
             <option value="admin">Admin</option>
+            <option value="gestor">Gestor</option>
           </select>
         </div>
 

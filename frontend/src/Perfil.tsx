@@ -5,7 +5,7 @@ import Menu from './Menu.tsx';
 import { useNavigate } from 'react-router-dom';
 
 const Perfil: React.FC = () => {
-  const { user, login } = useAuth();
+  const { user, login, logout } = useAuth();
   const navigate = useNavigate();
   
   const [nome, setNome] = useState(user?.nome || '');
@@ -117,7 +117,7 @@ const Perfil: React.FC = () => {
           </div>
         </div>
         {message && <p className="feedback-message">{message}</p>}
-        <button className="botao-logout" onClick={() => { logout(); navigate('/'); }}>Desconectar</button>      
+        <button className="botao-logout" onClick={() => { logout(); navigate('/'); }}>Desconectar</button>  
       </div>
     </div>
   );
