@@ -181,13 +181,13 @@ body::before {
 }
 
 .menu-item:hover {
-  background-color: #626683;
-  color: #f4ba28;
+  background-color: #4b4f6c;
+  color: white;
 }
 
 .menu-item.active {
-  background-color: #383c54;
-  color: #f4ba28;
+  background-color: #363950;
+  color: white;
 }
 
 .login-error-message {
@@ -216,16 +216,6 @@ body::before {
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid transparent;
-  transition: border-color 0.3s ease;
-}
-
-.profile-icon:hover .menu-avatar-img {
-  border-color: #f4ba28;
-}
-
-.profile-icon.active .menu-avatar-img {
-  border-color: #f4ba28;
 }
 
 /* Criar Usuário | Editar Usuário */
