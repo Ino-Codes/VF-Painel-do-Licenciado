@@ -6,6 +6,7 @@ import Dashboard from './Dashboard.tsx';
 import AdminUsers from './AdminUsers.tsx';
 import Perfil from './Perfil.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
+import Documentos from './Documentos.tsx';
 import './styles.css';
 
 const AppRouter: React.FC = () => {
@@ -17,6 +18,7 @@ const AppRouter: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/documentos" element={<Documentos />} />
         </Routes>
       </Router>
     </AuthProvider>
