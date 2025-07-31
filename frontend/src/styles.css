@@ -1,12 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
-/*
-Paleta de cores
+/* Paleta de cores
 menu hover: #363950
 menu active: #4b4f6c
 verde: #04a146
-vermelho: #c82333
-*/
+vermelho: #c82333 */
 
 body {
   background-image: url(https://d335luupugsy2.cloudfront.net/cms/files/342452/1698426778/$p8rdih6o8);
@@ -23,7 +21,7 @@ body {
   height: 100vh;
 }
 
-/* LOGIN */
+/* Login */
 .p-login {
   display: flex;
   flex-direction: column;
@@ -162,7 +160,7 @@ body::before {
   box-sizing: border-box;
 }
 
-/* Menu Superior */
+/* Menu */
 .main-menu {
 justify-content: space-between;
 align-items: center;
@@ -200,7 +198,7 @@ gap: 25px;
   color: white;
 }
 
-/* Ícone Perfil */
+/* Ícone de perfil */
 .profile-info-container {
 display: flex;
 align-items: center;
@@ -235,7 +233,7 @@ margin-bottom: 2px;
 .profile-image-container {
 width: 40px;
 height: 40px;
-border-radius: 8px;
+border-radius: 4px;
 overflow: hidden;
 }
 
@@ -323,7 +321,7 @@ padding: 10px 0;
   opacity: 0.85;
 }
 
-/* Usuários Cadastrados: */
+/* Lista de usuários cadastrados */
 .user-list {
   list-style: none;
   padding: 0;

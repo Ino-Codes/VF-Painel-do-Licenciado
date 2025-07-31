@@ -236,6 +236,102 @@ app.put('/api/users/:id/profile', async (req, res) => {
   }
 });
 
+// --- ROTAS PARA GERENCIAMENTO DE ARQUIVOS (CENTRAL DE DOCUMENTOS) ---
+
+// LISTAR ARQUIVOS (COM FILTRO POR CATEGORIA)
+app.get('/api/files', async (req, res) => {
+  const { category } = req.query; // Pega a categoria da URL, ex: /api/files?category=marketing
+
+  try {
+    let sql = 'SELECT id, originalname, filename, category, uploaded_at FROM files ORDER BY uploaded_at DESC';
+    const params = [];
+
+    if (category) {
+      sql = 'SELECT id, originalname, filename, category, uploaded_at FROM files WHERE category = $1 ORDER BY uploaded_at DESC';
+      params.push(category);
+    }
+    
+    const result = await pool.query(sql, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar arquivos:', err);
+    res.status(500).json({ error: 'Erro ao buscar arquivos' });
+  }
+});
+
+// UPLOAD DE NOVO ARQUIVO (Apenas Admin)
+app.post('/api/files', upload.single('file'), async (req, res) => {
+  const { originalname, category } = req.body; // Recebe o nome customizado e a categoria do frontend
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+  }
+
+  try {
+    // Envia o arquivo para o Cloudinary
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+        if (error) reject(error);
+        resolve(result);
+      }).end(req.file.buffer);
+    });
+
+    const fileUrl = uploadResult.secure_url;
+
+    // Salva as informações no banco de dados
+    const sql = 'INSERT INTO files (filename, originalname, category) VALUES ($1, $2, $3) RETURNING *';
+    const result = await pool.query(sql, [fileUrl, originalname, category]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro no upload de arquivo:', err);
+    res.status(500).json({ error: 'Erro no servidor durante o upload.' });
+  }
+});
+
+// DELETAR UM ARQUIVO (Apenas Admin)
+app.delete('/api/files/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 1. Buscar a URL do arquivo no banco de dados para poder deletá-lo do Cloudinary
+    const fileResult = await pool.query('SELECT filename FROM files WHERE id = $1', [id]);
+    if (fileResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Arquivo não encontrado.' });
+    }
+    const fileUrl = fileResult.rows[0].filename;
+
+    // 2. Extrair o public_id da URL e deletar do Cloudinary
+    const publicId = fileUrl.split('/').pop().split('.')[0];
+    await cloudinary.uploader.destroy(publicId);
+
+    // 3. Deletar o registro do banco de dados
+    await pool.query('DELETE FROM files WHERE id = $1', [id]);
+
+    res.json({ success: true, message: 'Arquivo excluído com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir arquivo:', err);
+    res.status(500).json({ error: 'Erro ao excluir arquivo.' });
+  }
+});
+
+// (Opcional, mas útil) Rota para editar metadados de um arquivo
+app.put('/api/files/:id', async (req, res) => {
+    const { id } = req.params;
+    const { originalname, category } = req.body;
+    try {
+        const sql = 'UPDATE files SET originalname = $1, category = $2 WHERE id = $3 RETURNING *';
+        const result = await pool.query(sql, [originalname, category, id]);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Arquivo não encontrado.' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Erro ao editar arquivo:', err);
+        res.status(500).json({ error: 'Erro ao editar arquivo.' });
+    }
+});
+
 // Inicia o servidor e cria as tabelas
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
