@@ -361,7 +361,7 @@ padding: 10px 0;
   gap: 10px;
 }
 
-.list-button {
+.list-button{
   border: none;
   padding: 8px 15px;
   border-radius: 5px;
@@ -374,6 +374,10 @@ padding: 10px 0;
 
 .list-button:hover {
   opacity: 0.85;
+}
+
+.list-button.download {
+  background-color: #3b3e4f;
 }
 
 .list-button.edit {
