@@ -16,6 +16,14 @@ return (
       Dashboard
     </NavLink>
 
+    {/* NOVO LINK ADICIONADO AQUI */}
+    <NavLink
+      to="/documentos"
+      className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')}
+    >
+      Documentos
+    </NavLink>
+
     {user && user.role === 'admin' && (
     <NavLink
       to="/admin/users"
