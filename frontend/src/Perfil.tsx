@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './context/AuthContext';
-import api from './api';
-import Menu from './Menu';
+import { useAuth } from './context/AuthContext.tsx';
+import api from './api.ts';
+import Menu from './Menu.tsx';
 import { useNavigate } from 'react-router-dom';
 
 const Perfil: React.FC = () => {
