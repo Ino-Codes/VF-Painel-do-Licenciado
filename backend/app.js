@@ -87,10 +87,8 @@ app.post('/api/login', async (req, res) => {
     console.log('Usuário encontrado no banco. Email:', user.email);
     console.log('Hash da senha salvo no banco:', user.password);
 
-    // Compara a senha enviada com o hash salvo no banco
     const senhaCorreta = await bcrypt.compare(password, user.password);
     
-    // Este é o log mais importante!
     console.log('Resultado do bcrypt.compare:', senhaCorreta); 
 
     if (!senhaCorreta) {
@@ -99,8 +97,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     console.log('Resultado da verificação: Login bem-sucedido!');
-    // Retorna os dados do usuário se a senha estiver correta
-    res.json({ email: user.email, nome: user.nome, role: user.role });
+    res.json({id: user.id, email: user.email, nome: user.nome, role: user.role});
 
   } catch (err) {
     console.error('ERRO CRÍTICO NA ROTA /api/login:', err);
@@ -135,10 +132,9 @@ app.post('/api/admin/users', async (req, res) => {
 
 // ADMIN: EDITAR USUÁRIO
 app.put('/api/admin/users/:id', async (req, res) => {
-  const { id } = req.params; // Pega o ID da URL
-  const { nome, role } = req.body; // Pega nome e role do corpo da requisição
+  const { id } = req.params;
+  const { nome, role } = req.body;
 
-  // Validação simples para garantir que os dados necessários foram enviados
   if (!nome || !role) {
     return res.status(400).json({ error: 'Nome e role são obrigatórios.' });
   }
@@ -147,7 +143,6 @@ app.put('/api/admin/users/:id', async (req, res) => {
     const sql = 'UPDATE users SET nome = $1, role = $2 WHERE id = $3';
     const result = await pool.query(sql, [nome, role, id]);
 
-    // Verifica se alguma linha foi de fato alterada
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
@@ -161,13 +156,12 @@ app.put('/api/admin/users/:id', async (req, res) => {
 
 // ADMIN: EXCLUIR USUÁRIO
 app.delete('/api/admin/users/:id', async (req, res) => {
-  const { id } = req.params; // Pega o ID do usuário da URL
+  const { id } = req.params;
 
   try {
     const sql = 'DELETE FROM users WHERE id = $1';
     const result = await pool.query(sql, [id]);
 
-    // Verifica se alguma linha foi de fato excluída. Se rowCount for 0, o usuário não foi encontrado.
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Usuário não encontrado para exclusão.' });
     }

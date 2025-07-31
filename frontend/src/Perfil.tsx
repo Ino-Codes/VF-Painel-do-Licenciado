@@ -116,8 +116,8 @@ const Perfil: React.FC = () => {
             <button className="form-button" onClick={handleSaveChanges}>Salvar Alterações</button>
           </div>
         </div>
-
         {message && <p className="feedback-message">{message}</p>}
+        <button className="botao-logout" onClick={() => { logout(); navigate('/'); }}>Desconectar</button>      
       </div>
     </div>
   );
