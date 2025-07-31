@@ -5,7 +5,7 @@ import Menu from './Menu.tsx';
 import { useNavigate } from 'react-router-dom';
 
 const Perfil: React.FC = () => {
-  const { user, login } = useAuth(); // Usaremos 'login' para atualizar o contexto
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   
   const [nome, setNome] = useState(user?.nome || '');
@@ -15,6 +15,8 @@ const Perfil: React.FC = () => {
   useEffect(() => {
     if (!user) {
       navigate('/');
+    } else {
+      setNome(user.nome);
     }
   }, [user, navigate]);
 
@@ -35,20 +37,37 @@ const Perfil: React.FC = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
-      // Atualiza o contexto do usuário com a nova URL do avatar
       const updatedUser = { ...user, avatar_url: res.data.avatarUrl };
-      login(updatedUser); // A função login do contexto também atualiza os dados
+      login(updatedUser);
 
       setMessage('Foto de perfil atualizada com sucesso!');
       setSelectedFile(null);
+
     } catch (err) {
       setMessage('Erro ao atualizar a foto.');
       console.error(err);
     }
   };
 
+  const handleSaveChanges = async () => {
+    if (!user || !nome.trim()) {
+      setMessage('O nome não pode estar vazio.');
+      return;
+    }
+
+    try {
+      const res = await api.put('/api/users/${user.id}/profile', {nome});
+      const updatedUser = res.data.user;
+      login(updatedUser);
+      setMessage('Nome atualizado com sucesso!');
+    } catch (err) {
+      setMessage('Erro ao salvar as alterações.');
+      console.error(err);
+    }
+  };
+
   if (!user) {
-    return null; // Não renderiza nada se o usuário não estiver logado
+    return null;
   }
 
   return (
@@ -94,11 +113,11 @@ const Perfil: React.FC = () => {
                 className="form-input"
               />
             </div>
-            <button className="form-button">Salvar Alterações</button>
+            <button className="form-button" onClick={handleSaveChanges}>Salvar Alterações</button>
           </div>
         </div>
 
-        {message && <p>{message}</p>}
+        {message && <p className="feedback-message">{message}</p>}
       </div>
     </div>
   );

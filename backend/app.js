@@ -68,9 +68,6 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-
-// --- ROTAS DA API (ADAPTADAS PARA POSTGRESQL) ---
-
 // LOGIN
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
@@ -191,20 +188,15 @@ app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
   }
 
   try {
-    // 1. Buscar a URL do avatar antigo no banco de dados
     const userResult = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [id]);
     const oldAvatarUrl = userResult.rows[0]?.avatar_url;
 
-    // 2. Se um avatar antigo existir, excluí-lo do Cloudinary
     if (oldAvatarUrl) {
-      // Extrai o public_id da URL antiga para poder deletar
       const publicId = oldAvatarUrl.split('/').pop().split('.')[0];
       await cloudinary.uploader.destroy(publicId);
       console.log('Avatar antigo excluído do Cloudinary.');
     }
 
-    // 3. Fazer o upload do novo avatar para o Cloudinary
-    // O upload é feito a partir do buffer de memória do arquivo
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
         if (error) reject(error);
@@ -214,7 +206,6 @@ app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
 
     const newAvatarUrl = uploadResult.secure_url;
 
-    // 4. Atualizar a tabela de usuários com a nova URL do avatar
     const updateSql = 'UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url';
     const updateResult = await pool.query(updateSql, [newAvatarUrl, id]);
 
@@ -224,6 +215,30 @@ app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
   } catch (err) {
     console.error('Erro no processo de upload de avatar:', err);
     res.status(500).json({ error: 'Erro no servidor durante o upload.' });
+  }
+});
+
+// PERFIL: ALTERAÇÃO DO NOME DO USUÁRIO
+app.put('/api/users/:id/profile', async (req, res) => {
+  const { id } = req.params;
+  const { nome } = req.body;
+
+  if (!nome) {
+    return res.status(400).json({ error: 'O campo nome é obrigatório.' });
+  }
+
+  try {
+    const sql = 'UPDATE users SET nome = $1 WHERE id = $2 RETURNING id, nome, email, role, avatar_url';
+    const result = await pool.query(sql, [nome, id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+    
+    res.json({ success: true, user: result.rows[0] });
+  } catch (err) {
+    console.error('Erro ao atualizar perfil:', err);
+    res.status(500).json({ error: 'Erro no servidor' });
   }
 });
 

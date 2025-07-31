@@ -182,12 +182,12 @@ body::before {
 
 .menu-item:hover {
   background-color: #626683;
-  color: #c79332;
+  color: #daa520;
 }
 
 .menu-item.active {
   background-color: #383c54;
-  color: #c79332;
+  color: #daa520;
 }
 
 .login-error-message {
@@ -215,11 +215,11 @@ body::before {
 }
 
 .profile-icon:hover svg {
-  stroke: #c79332;
+  stroke: #daa520;
 }
 
 .profile-icon.active svg {
-  stroke: #c79332;
+  stroke: #daa520;
 }
 
 /* Criar Usuário | Editar Usuário */
