@@ -202,6 +202,26 @@ body::before {
   font-weight: 500;
 }
 
+/* Ícone Perfil */
+.profile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-icon svg {
+  stroke: white;
+  transition: stroke 0.3s ease;
+}
+
+.profile-icon:hover svg {
+  stroke: #c79332;
+}
+
+.profile-icon.active svg {
+  stroke: #c79332;
+}
+
 /* Criar Usuário | Editar Usuário */
 .admin-form {
   background-color: #f4f4f4;
@@ -330,27 +350,7 @@ body::before {
   background-color: #c82333;
 }
 
-/* Estilo para o ícone de perfil */
-.profile-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.profile-icon svg {
-  stroke: white;
-  transition: stroke 0.3s ease;
-}
-
-.profile-icon:hover svg {
-  stroke: #c79332;
-}
-
-.profile-icon.active svg {
-  stroke: #c79332;
-}
-
-/* Estilos da Página de Perfil */
+/* Perfil */
 .profile-card {
   display: flex;
   gap: 40px;
