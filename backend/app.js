@@ -6,7 +6,6 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
-const multer = require('multer');
 const app = express();
 const port = 3001;
 
