@@ -127,7 +127,7 @@ const Perfil: React.FC = () => {
         <div className="profile-card">
           <div className="avatar-section">
             <img 
-              src={user.avatar_url || 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1753972686/imagem-do-usuario-com-fundo-preto_1_y0ulj0.png'} 
+              src={user.avatar_url || 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1754077476/imagem-do-usuario-com-fundo-preto_kcuzbg.png'} 
               alt="Foto de Perfil" 
               className="profile-avatar"
             />
@@ -168,7 +168,7 @@ const Perfil: React.FC = () => {
             </div>
             <button className="form-button" onClick={handleSaveChanges}>Salvar Alterações</button>
             {message && <p className="feedback-message">{message}</p>}
-            
+
             <div className="password-section">
               <h3>Alterar Senha</h3>
               <div className="form-row">
