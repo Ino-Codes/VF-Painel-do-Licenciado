@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext.tsx';
 import api from './api.ts';
 import Menu from './Menu.tsx';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Perfil: React.FC = () => {
   const { user, login, logout, loading } = useAuth();
@@ -10,9 +11,7 @@ const Perfil: React.FC = () => {
   
   const [nome, setNome] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [message, setMessage] = useState('');
-  const [passwordMessage, setPasswordMessage] = useState('');
-  
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -43,40 +42,39 @@ const Perfil: React.FC = () => {
       });
       const updatedUser = { ...user, avatar_url: res.data.avatarUrl };
       login(updatedUser);
-      setMessage('Foto de perfil atualizada com sucesso!');
+      toast.success('Foto de perfil atualizada com sucesso!');
       setSelectedFile(null);
     } catch (err) {
-      setMessage('Erro ao atualizar a foto.');
+      toast.error('Erro ao atualizar a foto.');
       console.error(err);
     }
   };
 
   const handleSaveChanges = async () => {
     if (!user || !nome.trim()) {
-      setMessage('O nome não pode estar vazio.');
+      toast.error('O nome não pode estar vazio.');
       return;
     }
     try {
       const res = await api.put(`/api/users/${user.id}/profile`, {nome});
       const updatedUser = res.data.user;
       login(updatedUser);
-      setMessage('Nome atualizado com sucesso!');
+      toast.success('Nome atualizado com sucesso!');
     } catch (err) {
-      setMessage('Erro ao salvar as alterações.');
+      toast.error('Erro ao salvar as alterações.');
       console.error(err);
     }
   };
 
   const handleChangePassword = async () => {
     if (!user) return;
-    setPasswordMessage('');
 
     if (newPassword !== confirmPassword) {
-      setPasswordMessage('A nova senha e a confirmação não correspondem.');
+      toast.error('A nova senha e a confirmação não correspondem.');
       return;
     }
     if (newPassword.length < 6) {
-      setPasswordMessage('A nova senha deve ter pelo menos 6 caracteres.');
+      toast.error('A nova senha deve ter pelo menos 6 caracteres.');
       return;
     }
 
@@ -85,13 +83,13 @@ const Perfil: React.FC = () => {
         currentPassword,
         newPassword,
       });
-      setPasswordMessage('Senha alterada com sucesso!');
+      toast.success('Senha alterada com sucesso!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'Erro ao alterar a senha.';
-      setPasswordMessage(errorMessage);
+      toast.error(errorMessage);
       console.error(err);
     }
   };
@@ -103,9 +101,9 @@ const Perfil: React.FC = () => {
       try {
         const res = await api.delete(`/api/users/${user.id}/avatar`);
         login(res.data.user);
-        setMessage('Foto de perfil removida com sucesso!');
+        toast.success('Foto de perfil removida com sucesso!');
       } catch (err) {
-        setMessage('Erro ao remover a foto.');
+        toast.error('Erro ao remover a foto.');
         console.error(err);
       }
     }
@@ -167,7 +165,6 @@ const Perfil: React.FC = () => {
               />
             </div>
             <button className="form-button" onClick={handleSaveChanges}>Salvar Alterações</button>
-            {message && <p className="feedback-message">{message}</p>}
 
             <div className="password-section">
               <h3>Alterar Senha</h3>
@@ -202,7 +199,6 @@ const Perfil: React.FC = () => {
                 />
               </div>
               <button className="form-button" onClick={handleChangePassword}>Alterar Senha</button>
-              {passwordMessage && <p className="feedback-message">{passwordMessage}</p>}
             </div>
           </div>
         </div>
