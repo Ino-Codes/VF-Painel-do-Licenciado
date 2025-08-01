@@ -173,7 +173,7 @@ body::before {
 }
 
 .content-area {
-  padding: 0 15px 0 15px;
+  padding: 0 15px 15px 15px;
 }
 
 .p-2 {

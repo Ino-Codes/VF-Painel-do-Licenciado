@@ -95,6 +95,21 @@ const Perfil: React.FC = () => {
       console.error(err);
     }
   };
+
+  const handleRemoveAvatar = async () => {
+    if (!user) return;
+
+    if (window.confirm('Tem certeza que deseja remover sua foto de perfil?')) {
+      try {
+        const res = await api.delete(`/api/users/${user.id}/avatar`);
+        login(res.data.user);
+        setMessage('Foto de perfil removida com sucesso!');
+      } catch (err) {
+        setMessage('Erro ao remover a foto.');
+        console.error(err);
+      }
+    }
+  };
  
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
@@ -120,6 +135,11 @@ const Perfil: React.FC = () => {
             {selectedFile && (
               <button onClick={handleUpload} className="form-button">
                 Salvar Nova Foto
+              </button>
+            )}
+            {user.avatar_url && !selectedFile && (
+              <button onClick={handleRemoveAvatar} className="form-button-cancel">
+                Remover Foto
               </button>
             )}
           </div>
