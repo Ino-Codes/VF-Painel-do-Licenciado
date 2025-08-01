@@ -427,7 +427,7 @@ padding: 10px 0;
   width: 80px;
 }
 
-/* --- Estilos da Central de Documentos --- */
+/* Documentos */
 .document-center .document-header {
   display: flex;
   justify-content: space-between;
@@ -451,7 +451,7 @@ padding: 10px 0;
 }
 
 .tab-item.active {
-  border-bottom-color: #daa520; /* Dourado */
+  border-bottom-color: #daa520;
   font-weight: 600;
 }
 
@@ -484,7 +484,7 @@ padding: 10px 0;
   text-decoration: none;
 }
 
-/* --- Estilos do Modal --- */
+/* Documentos - Modal */
 .modal-overlay {
   position: fixed;
   top: 0;

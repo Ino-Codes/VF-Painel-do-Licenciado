@@ -12,29 +12,37 @@ interface User {
 }
 
 const AdminUsers: React.FC = () => {
-  const { user, logout } = useAuth(); 
+  const { user, loading } = useAuth(); 
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [form, setForm] = useState({ nome: '', email: '', password: '', role: 'licenciado' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
   
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-    } else if (user.role !== 'admin') {
-      alert('Acesso restrito a administradores.');
-      navigate('/dashboard');
+    if (!loading) {
+      if (!user) {
+        navigate('/');
+      } else if (user.role !== 'admin') {
+        alert('Acesso restrito a administradores.');
+        navigate('/dashboard');
+      }
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   const fetchUsers = async () => {
-    const res = await api.get('/api/admin/users');
-    setUsers(res.data);
+    try {
+      const res = await api.get('/api/admin/users');
+      setUsers(res.data);
+    } catch (err) {
+      console.error("Erro ao buscar usuários:", err);
+    }
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (user?.role === 'admin') {
+      fetchUsers();
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +69,14 @@ const AdminUsers: React.FC = () => {
   const startEdit = (u: User) => {
     setEditingUser(u);
   };
+
+  if (!loading) {
+    return <div>Carregando...</div>
+  }
+
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
 
   return (
   <div className="p-2">

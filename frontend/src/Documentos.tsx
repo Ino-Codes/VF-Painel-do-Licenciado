@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
 import api from './api.ts';
 import Menu from './Menu.tsx';
-import FileModal from './FileModal.tsx'; // Importa o modal
+import FileModal from './FileModal.tsx';
 
 interface FileData {
   id: number;
@@ -32,13 +32,13 @@ const Documentos: React.FC = () => {
 
   useEffect(() => {
     fetchFiles();
-  }, [category]); // Executa toda vez que a categoria muda
+  }, [category]);
 
   const handleDelete = async (fileId: number) => {
     if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
       try {
         await api.delete(`/api/files/${fileId}`);
-        fetchFiles(); // Atualiza a lista após a exclusão
+        fetchFiles();
       } catch (err) {
         alert('Erro ao excluir o arquivo.');
       }

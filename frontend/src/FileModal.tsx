@@ -31,9 +31,9 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
     setError('');
 
     try {
-      if (fileToEdit) { // Modo Edição
+      if (fileToEdit) {
         await api.put(`/api/files/${fileToEdit.id}`, { originalname, category });
-      } else { // Modo Criação
+      } else {
         if (!file) {
           setError('Por favor, selecione um arquivo.');
           return;
@@ -44,7 +44,7 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
         formData.append('category', category);
         await api.post('/api/files', formData);
       }
-      onSuccess(); // Avisa o componente pai que a operação foi um sucesso
+      onSuccess();
     } catch (err) {
       setError('Ocorreu um erro ao salvar o arquivo.');
       console.error(err);
