@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false);
   const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [recoveryMessage, setRecoveryMessage] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -17,7 +18,6 @@ const App: React.FC = () => {
     try {
       setLoginError('');
       const res = await api.post('/api/login', { email, password });
-      console.log('Resposta da API (login):', res.data);
       login(res.data);
       navigate('/dashboard');
     } catch (err) {
@@ -26,7 +26,18 @@ const App: React.FC = () => {
   };
 
   const handleRecuperarSenha = async () => {
-    
+    if (!emailRecuperacao) {
+      setLoginError('Por favor, insira um e-mail.');
+      return;
+    }
+    try {
+      setLoginError('');
+      await api.post('/api/redefinir-senha', { email: emailRecuperacao });
+      setRecoveryMessage('Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.');
+    } catch (err) {
+      setRecoveryMessage('Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.');
+      console.error('Erro ao solicitar redefinição de senha:', err);
+    }
   };
 
   return (
@@ -35,10 +46,10 @@ const App: React.FC = () => {
         <img alt="Logo da Valor Fiscal" src={logoclara} />
       </div>
       <div className="p-1">
-        <h2 className="titulo-login">Painel do Licenciado</h2>
+        <h2 className="titulo-login">{!mostrarRecuperacao ? 'Painel do Licenciado' : 'Recuperar Senha'}</h2>
 
         {loginError && <div className="login-error-message">{loginError}</div>}
-
+        
         {!mostrarRecuperacao ? (
           <>
             <input
@@ -59,15 +70,28 @@ const App: React.FC = () => {
                 if (loginError) setLoginError('');
               }}
             />
-            
             <button className="botao-login" onClick={handleLogin}>Login</button>           
             <p><a href="#" onClick={() => setMostrarRecuperacao(true)}>Esqueceu sua senha?</a></p>
           </>
         ) : (
           <>
+            {!recoveryMessage ? (
+              <>
+                <input
+                  type="email"
+                  placeholder="Digite seu e-mail"
+                  className="input-login"
+                  value={emailRecuperacao}
+                  onChange={e => setEmailRecuperacao(e.target.value)}
+                />
+                <button className="botao-login" onClick={handleRecuperarSenha}>Enviar</button>
+              </>
+            ) : (
+              <p className="feedback-message">{recoveryMessage}</p>
+            )}
+            <p><a href="#" onClick={() => { setMostrarRecuperacao(false); setRecoveryMessage(''); }}>Voltar para o Login</a></p>
           </>
         )}
-        
       </div>
     </div>
   );
