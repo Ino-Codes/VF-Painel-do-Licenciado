@@ -253,9 +253,35 @@ app.put('/api/users/:id/change-password', async (req, res) => {
   }
 });
 
+// PERFIL: REMOVER FOTO DE PERFIL
+app.delete('/api/users/:id/avatar', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const userResult = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [id]);
+    const oldAvatarUrl = userResult.rows[0]?.avatar_url;
+
+    if (oldAvatarUrl) {
+      const publicId = oldAvatarUrl.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
+    }
+
+    const updateResult = await pool.query(
+      'UPDATE users SET avatar_url = NULL WHERE id = $1 RETURNING id, nome, email, role, avatar_url',
+      [id]
+    );
+
+    res.json({ success: true, user: updateResult.rows[0] });
+
+  } catch (err) {
+    console.error('Erro ao remover avatar:', err);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
 // DOCUMENTOS: LISTAR ARQUIVOS
 app.get('/api/files', async (req, res) => {
-  const { category } = req.query; // Pega a categoria da URL, ex: /api/files?category=marketing
+  const { category } = req.query;
 
   try {
     let sql = 'SELECT id, originalname, filename, category, uploaded_at FROM files ORDER BY uploaded_at DESC';
