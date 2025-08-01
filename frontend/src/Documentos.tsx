@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
 import api from './api.ts';
 import Menu from './Menu.tsx';
-import FileModal from './FileModal.tsx';
-import { useNavigate } from 'react-router-dom';
+import FileModal from './FileModal.tsx'; // Importa o modal
 
 interface FileData {
   id: number;
@@ -14,20 +13,13 @@ interface FileData {
 }
 
 const Documentos: React.FC = () => {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [files, setFiles] = useState<FileData[]>([]);
   const [category, setCategory] = useState('Manuais');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
 
   const categories = ['Manuais', 'Marketing', 'Financeiro'];
-
-  useEffect (() => {
-    if (!loading && !user) {
-      navigate('/');
-    }
-  }, [user, loading, navigate]);
 
   const fetchFiles = async () => {
     try {
@@ -39,16 +31,14 @@ const Documentos: React.FC = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchFiles();
-    }
-  }, [category, user]);
+    fetchFiles();
+  }, [category]); // Executa toda vez que a categoria muda
 
   const handleDelete = async (fileId: number) => {
     if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
       try {
         await api.delete(`/api/files/${fileId}`);
-        fetchFiles();
+        fetchFiles(); // Atualiza a lista após a exclusão
       } catch (err) {
         alert('Erro ao excluir o arquivo.');
       }
@@ -69,14 +59,6 @@ const Documentos: React.FC = () => {
     setIsModalOpen(false);
     fetchFiles();
   };
-
-  if (loading) {
-    return <div>Carregando...</div>;
-  }
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <div className="p-2">
