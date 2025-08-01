@@ -55,12 +55,12 @@ body::before {
 .p-1 {
   background-color: red;
   color: white;
-  width: 100vw;
+  min-width: 400px;
+  width: 50vw;
   margin: 0 auto;
   overflow: auto;
   text-align: center;
 }
-
 
 .p-1 a {
   color: white;
