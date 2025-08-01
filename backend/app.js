@@ -69,11 +69,9 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // LOGIN
-// ROTA DE LOGIN CORRIGIDA
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Busca o usuário completo no banco de dados
     const result = await pool.query('SELECT id, nome, email, role, password, avatar_url FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
 
@@ -85,10 +83,8 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
-    // Remove a senha antes de enviar a resposta para o frontend
     delete user.password; 
 
-    // Envia o objeto de usuário completo
     res.json(user);
 
   } catch (err) {
@@ -228,9 +224,36 @@ app.put('/api/users/:id/profile', async (req, res) => {
   }
 });
 
-// --- ROTAS PARA GERENCIAMENTO DE ARQUIVOS (CENTRAL DE DOCUMENTOS) ---
+// PERFIL: ALTERAÇÃO DE SENHA
+app.put('/api/users/:id/change-password', async (req, res) => {
+  const { id } = req.params;
+  const { currentPassword, newPassword } = req.body;
 
-// LISTAR ARQUIVOS (COM FILTRO POR CATEGORIA)
+  try {
+    const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [id]);
+    if (userResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+    const storedHash = userResult.rows[0].password;
+
+    const isMatch = await bcrypt.compare(currentPassword, storedHash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'A senha atual está incorreta.' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+
+    await pool.query('UPDATE users SET password = $1 WHERE id = $2', [newHash, id]);
+
+    res.json({ success: true, message: 'Senha alterada com sucesso.' });
+
+  } catch (err) {
+    console.error('Erro ao alterar senha:', err);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
+// DOCUMENTOS: LISTAR ARQUIVOS
 app.get('/api/files', async (req, res) => {
   const { category } = req.query; // Pega a categoria da URL, ex: /api/files?category=marketing
 
@@ -251,16 +274,15 @@ app.get('/api/files', async (req, res) => {
   }
 });
 
-// UPLOAD DE NOVO ARQUIVO (Apenas Admin)
+// DOCUMENTOS: UPLOAD DE NOVO ARQUIVO
 app.post('/api/files', upload.single('file'), async (req, res) => {
-  const { originalname, category } = req.body; // Recebe o nome customizado e a categoria do frontend
+  const { originalname, category } = req.body;
 
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
   }
 
   try {
-    // Envia o arquivo para o Cloudinary
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
         if (error) reject(error);
@@ -270,7 +292,6 @@ app.post('/api/files', upload.single('file'), async (req, res) => {
 
     const fileUrl = uploadResult.secure_url;
 
-    // Salva as informações no banco de dados
     const sql = 'INSERT INTO files (filename, originalname, category) VALUES ($1, $2, $3) RETURNING *';
     const result = await pool.query(sql, [fileUrl, originalname, category]);
 
@@ -281,23 +302,20 @@ app.post('/api/files', upload.single('file'), async (req, res) => {
   }
 });
 
-// DELETAR UM ARQUIVO (Apenas Admin)
+// DOCUMENTOS: DELETAR UM ARQUIVO
 app.delete('/api/files/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    // 1. Buscar a URL do arquivo no banco de dados para poder deletá-lo do Cloudinary
     const fileResult = await pool.query('SELECT filename FROM files WHERE id = $1', [id]);
     if (fileResult.rowCount === 0) {
       return res.status(404).json({ error: 'Arquivo não encontrado.' });
     }
     const fileUrl = fileResult.rows[0].filename;
 
-    // 2. Extrair o public_id da URL e deletar do Cloudinary
     const publicId = fileUrl.split('/').pop().split('.')[0];
     await cloudinary.uploader.destroy(publicId);
 
-    // 3. Deletar o registro do banco de dados
     await pool.query('DELETE FROM files WHERE id = $1', [id]);
 
     res.json({ success: true, message: 'Arquivo excluído com sucesso.' });
@@ -307,7 +325,6 @@ app.delete('/api/files/:id', async (req, res) => {
   }
 });
 
-// (Opcional, mas útil) Rota para editar metadados de um arquivo
 app.put('/api/files/:id', async (req, res) => {
     const { id } = req.params;
     const { originalname, category } = req.body;
