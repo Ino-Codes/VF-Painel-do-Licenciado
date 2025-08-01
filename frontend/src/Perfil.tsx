@@ -5,7 +5,7 @@ import Menu from './Menu.tsx';
 import { useNavigate } from 'react-router-dom';
 
 const Perfil: React.FC = () => {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, loading } = useAuth();
   const navigate = useNavigate();
   
   const [nome, setNome] = useState(user?.nome || '');
@@ -13,12 +13,14 @@ const Perfil: React.FC = () => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-    } else {
-      setNome(user.nome);
+    if (!loading) {
+      if (!user) {
+        navigate('/');
+      } else {
+        setNome(user.nome);
+      }
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -65,6 +67,10 @@ const Perfil: React.FC = () => {
       console.error(err);
     }
   };
+
+  if (!loading) {
+    return <div>Carregando...</div>;
+  }
 
   if (!user) {
     return null;
