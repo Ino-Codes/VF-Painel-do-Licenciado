@@ -70,8 +70,8 @@ const AdminUsers: React.FC = () => {
     setEditingUser(u);
   };
 
-  if (!loading) {
-    return <div>Carregando...</div>
+  if (loading) {
+    return <div className="tela-loading">Carregando...</div>
   }
 
   if (!user || user.role !== 'admin') {

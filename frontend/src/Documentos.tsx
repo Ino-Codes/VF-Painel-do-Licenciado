@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext.tsx';
 import api from './api.ts';
 import Menu from './Menu.tsx';
 import FileModal from './FileModal.tsx';
+import { useNavigate } from 'react-router-dom';
 
 interface FileData {
   id: number;
@@ -13,13 +14,20 @@ interface FileData {
 }
 
 const Documentos: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [files, setFiles] = useState<FileData[]>([]);
   const [category, setCategory] = useState('Manuais');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
 
   const categories = ['Manuais', 'Marketing', 'Financeiro'];
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
 
   const fetchFiles = async () => {
     try {
@@ -31,8 +39,10 @@ const Documentos: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchFiles();
-  }, [category]);
+    if (user) {
+      fetchFiles();
+    }
+  }, [category, user]);
 
   const handleDelete = async (fileId: number) => {
     if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
@@ -59,6 +69,14 @@ const Documentos: React.FC = () => {
     setIsModalOpen(false);
     fetchFiles();
   };
+
+  if (loading) {
+    return <div className="tela-loading">Carregando...</div>
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="p-2">

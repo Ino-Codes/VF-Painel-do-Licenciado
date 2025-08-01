@@ -69,8 +69,8 @@ const Perfil: React.FC = () => {
     }
   };
  
-  if (!loading) {
-    return <div>Carregando...</div>;
+  if (loading) {
+    return <div className="tela-loading">Carregando...</div>;
   }
 
   if (!user) {
