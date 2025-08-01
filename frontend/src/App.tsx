@@ -71,7 +71,7 @@ const App: React.FC = () => {
               }}
             />
             <button className="botao-login" onClick={handleLogin}>Login</button>           
-            <p><a href="#" onClick={() => setMostrarRecuperacao(true)}>Esqueceu sua senha?</a></p>
+            <p className="esqueceu-senha"><a href="#" onClick={() => setMostrarRecuperacao(true)}>Esqueceu sua senha?</a></p>
           </>
         ) : (
           <>

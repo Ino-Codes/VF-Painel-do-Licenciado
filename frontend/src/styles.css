@@ -53,13 +53,19 @@ body::before {
 }
 
 .p-1 {
-  background-color: red;
-  color: white;
-  min-width: 400px;
-  width: 30vw;
+  background-color: rgba(0, 0, 0, 0.6);
+  min-width: 350px;
   margin: 0 auto;
-  overflow: auto;
   text-align: center;
+  border-radius: 10px;
+  height: auto;
+  padding: 20px 20px 20px 20px;
+  box-sizing: border-box;
+  color: white;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .p-1 a {
@@ -70,7 +76,7 @@ body::before {
 
 .p-1 a:hover {
   font-style: normal;
-  color: #a5a5a5;
+  color: #cccccc;
 }
 
 .p-img {
@@ -92,18 +98,20 @@ body::before {
 
 .input-login {
   display: block;
-  margin: 0 auto 10px;
+  color: white;
+  margin-bottom: 10px;
   width: 250px;
   height: 30px;
   padding-left: 20px;
-  color: white;
+  
   background: transparent;
   border: 2px solid white;
+  
   border-radius: 100px; 
 }
 
 .input-login::placeholder {
-  color: white; 
+  color: #cccccc; 
   opacity: 1;
 }
 
@@ -113,23 +121,24 @@ body::before {
 
 .botao-login {
   display: block;
-  margin: 0 auto;
-  min-width: auto;
-  max-width: 272px;
-
   width: 180px;
   height: 30px;
   border-radius: 100px;
   border: none;
-  margin-bottom: 10px;
   background-color: #daa520;
   color: white;
   font-weight: bold;
+  margin-top: 10px;
 }
 
 .botao-login:hover {
   background-color: #ab7f11; 
 }
+
+.esqueceu-senha {
+  margin-top: 20px;
+}
+
 
 .login-error-message {
   background-color: #fff0f0;
@@ -173,7 +182,6 @@ body::before {
   box-sizing: border-box;
 }
 
-/* Menu */
 .main-menu {
 justify-content: space-between;
 align-items: center;
