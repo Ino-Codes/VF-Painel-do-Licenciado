@@ -127,7 +127,7 @@ const Perfil: React.FC = () => {
         <div className="profile-card">
           <div className="avatar-section">
             <img 
-              src={user.avatar_url || 'https://via.placeholder.com/150'} 
+              src={user.avatar_url || 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1753972686/imagem-do-usuario-com-fundo-preto_1_y0ulj0.png'} 
               alt="Foto de Perfil" 
               className="profile-avatar"
             />
