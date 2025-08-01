@@ -571,3 +571,99 @@ padding: 10px 0;
 .main-footer p {
   margin: 0;
 }
+
+/* --- MOBILE / RESPONSIVO (Telas menores que 768px) --- */
+@media (max-width: 768px) {
+  
+  /* Ajustes no Login */
+  .p-1 {
+    width: 90%;
+    min-width: unset;
+    padding: 20px;
+  }
+  .input-login {
+    width: 100%;
+  }
+
+  /* Ajustes no Menu Principal */
+  .main-menu {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 10px 15px;
+  }
+  .hamburger-menu {
+    display: block; /* Mostra o botão hambúrguer */
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  .menu-left {
+    display: none; /* Esconde os links por padrão */
+    flex-direction: column;
+    width: 100%;
+    background-color: #1c1f26;
+    padding: 10px 0;
+    position: absolute;
+    top: 60px; /* Posição abaixo do menu */
+    left: 0;
+    z-index: 999;
+  }
+  .menu-left.open {
+    display: flex; /* Mostra os links quando o menu está aberto */
+  }
+  .menu-item {
+    width: 100%;
+    text-align: center;
+    padding: 15px 0;
+    border-radius: 0;
+  }
+  .menu-right {
+    gap: 10px;
+  }
+  .profile-text {
+    display: none; /* Esconde o texto do perfil em telas pequenas */
+  }
+
+  /* Ajustes no Layout Geral */
+  .content-area {
+    padding: 15px;
+  }
+
+  /* Ajustes no Perfil */
+  .profile-card {
+    flex-direction: column; /* Empilha os elementos verticalmente */
+    gap: 20px;
+  }
+
+  /* Ajustes na Lista de Documentos e Usuários */
+  .file-item, .user-list-item {
+    flex-direction: column;
+    align-items: flex-start; /* Alinha itens à esquerda */
+    gap: 15px;
+  }
+  .file-actions, .user-actions {
+    width: 100%;
+    justify-content: flex-end; /* Alinha botões à direita */
+  }
+
+  /* Ajustes no Formulário de Admin */
+  .admin-form .form-row {
+    flex-direction: column;
+  }
+  .form-input {
+    min-width: unset; /* Remove largura mínima */
+    width: 100%;
+  }
+
+  /* Ajustes no Modal */
+  .modal-content {
+    width: 95%;
+  }
+}
+
+/* Esconde o botão hambúrguer em telas grandes */
+.hamburger-menu {
+  display: none;
+}
