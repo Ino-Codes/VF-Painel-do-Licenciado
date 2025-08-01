@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
 import api from './api.ts';
 import Menu from './Menu.tsx';
+import Footer from './Footer.tsx';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -204,6 +205,7 @@ const Perfil: React.FC = () => {
         </div>
         <button className="botao-logout" onClick={() => { logout(); navigate('/'); }}>Desconectar</button>  
       </div>
+      <Footer />
     </div>
   );
 };

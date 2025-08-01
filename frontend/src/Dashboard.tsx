@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from './api.ts';
 import { useAuth } from './context/AuthContext.tsx';
 import Menu from './Menu.tsx';
+import Footer from './Footer.tsx';
 
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
@@ -43,6 +44,7 @@ const Dashboard: React.FC = () => {
       <div className="content-area">
         <h2>Bem-vindo, {user.nome}!</h2>
       </div>
+      <Footer />
     </div>
   );
 };

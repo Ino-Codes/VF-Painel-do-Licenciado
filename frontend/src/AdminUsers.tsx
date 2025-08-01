@@ -3,6 +3,7 @@ import api from './api.ts';
 import { useAuth } from './context/AuthContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import Menu from './Menu.tsx';
+import Footer from './Footer.tsx';
 
 interface User {
   id: number;
@@ -159,6 +160,7 @@ const AdminUsers: React.FC = () => {
         ))}
       </ul>
     </div>
+    <Footer />
   </div>
   );
 
