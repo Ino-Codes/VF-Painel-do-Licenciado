@@ -505,6 +505,25 @@ padding: 10px 0;
   text-decoration: none;
 }
 
+/* --- Adicione ao final do styles.css --- */
+.password-section {
+  margin-top: 30px;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 20px;
+}
+
+.feedback-message {
+  margin-top: 15px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #04a146; /* Verde para sucesso, pode ser alterado dinamicamente */
+}
+
+/* Para mensagens de erro, podemos criar uma classe específica */
+.feedback-message.error {
+    color: #c82333; /* Vermelho */
+}
+
 /* Documentos - Modal */
 .modal-overlay {
   position: fixed;
