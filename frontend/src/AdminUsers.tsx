@@ -85,6 +85,11 @@ const AdminUsers: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
+    if (user && user.id === id) {
+      toast.error('Você não pode excluir sua própria conta de administrador.');
+      return;
+    }
+
     if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
       try {
         await api.delete(`/api/admin/users/${id}`);
@@ -199,7 +204,13 @@ const AdminUsers: React.FC = () => {
             </div>
             <div className="user-actions">
               <button className="list-button edit" onClick={() => startEdit(u)}>Editar</button>
-              <button className="list-button delete" onClick={() => handleDelete(u.id)}>Excluir</button>
+              <button 
+                className="list-button delete" 
+                onClick={() => handleDelete(u.id)}
+                disabled={user.id === u.id}
+                >
+                Excluir
+              </button>
             </div>
           </li>
         ))}
