@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext.tsx';
 import Menu from './Menu.tsx';
 import Footer from './Footer.tsx';
 import toast from 'react-hot-toast';
+import ConfirmationModal from './ConfirmationModal.tsx';
 
 interface Notice {
   id: number;
@@ -21,6 +22,9 @@ const Dashboard: React.FC = () => {
 
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
+
+  const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -59,15 +63,23 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteNotice = async (noticeId: number) => {
-    if (window.confirm('Tem certeza que deseja excluir este aviso?')) {
-      try {
-        await api.delete(`/api/admin/notices/${noticeId}`);
-        toast.success('Aviso excluído com sucesso!');
-        fetchNotices();
-      } catch (err) {
-        toast.error('Erro ao excluir o aviso.');
-      }
+  const handleDeleteNoticeClick = (noticeId: number) => {
+    setNoticeToDelete(noticeId);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmDeleteNotice = async () => {
+    if (noticeToDelete === null) return;
+
+    try {
+      await api.delete(`/api/admin/notices/${noticeToDelete}`);
+      toast.success('Aviso excluído com sucesso!');
+      fetchNotices();
+    } catch (err) {
+      toast.error('Erro ao excluir o aviso.');
+    } finally {
+      setIsConfirmModalOpen(false);
+      setNoticeToDelete(null);
     }
   };
 
@@ -154,7 +166,7 @@ const Dashboard: React.FC = () => {
                           {user.role === 'admin' && (
                             <div className="notice-actions">
                               <button className="list-button edit" onClick={() => handleEditNotice(notice)}>Editar</button>
-                              <button className="list-button delete" onClick={() => handleDeleteNotice(notice.id)}>Excluir</button>
+                              <button className="list-button delete" onClick={() => handleDeleteNoticeClick(notice.id)}>Excluir</button>
                             </div>
                           )}
                         </div>
@@ -178,6 +190,13 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       <Footer />
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleConfirmDeleteNotice}
+        title="Excluir Aviso"
+        message="Tem certeza que deseja excluir este aviso? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 };
