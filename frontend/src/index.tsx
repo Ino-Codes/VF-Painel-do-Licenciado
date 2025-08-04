@@ -12,6 +12,8 @@ import Documentos from './Documentos.tsx';
 import Videos from './Videos.tsx';
 import './styles.css';
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 const AppRouter: React.FC = () => {
   return (
     <AuthProvider>

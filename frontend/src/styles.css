@@ -6,6 +6,10 @@ menu active: #4b4f6c
 verde: #04a146
 vermelho: #c82333 */
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   background-image: url(https://d335luupugsy2.cloudfront.net/cms/files/342452/1698426778/$p8rdih6o8);
   background-size: cover ;
@@ -19,6 +23,7 @@ body {
 
   margin: 0;
   height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Tela de carregamento */
@@ -180,9 +185,10 @@ body::before {
   background-color: white;
   min-height: 100vh;
   box-sizing: border-box;
-
   display: flex;
   flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* Menu */
@@ -704,21 +710,26 @@ padding: 10px 0;
 /* --- RESPONSIVO (Telas menores que 768px) --- */
 @media (max-width: 768px) {
   
-  /* Login */
+  /* Ajustes no Login */
   .p-1 {
-    width: 90%;
-    min-width: unset;
+    width: 90%; /* Usa 90% da largura da tela */
+    min-width: unset; /* REMOVE a largura mínima fixa que causava o problema */
     padding: 20px;
+    height: auto; /* Altura automática para se ajustar ao conteúdo */
   }
   .input-login {
-    width: 100%;
+    width: 100%; /* Inputs ocupam a largura total do card */
+  }
+  .p-img img {
+    width: 250px; /* Logo um pouco menor no mobile */
   }
 
-  /* Menu Superior */
+  /* Ajustes no Menu Principal */
   .main-menu {
     flex-wrap: wrap;
     justify-content: space-between;
     padding: 10px 15px;
+    position: relative; /* Necessário para o menu dropdown */
   }
   .hamburger-menu {
     display: block;
@@ -735,12 +746,15 @@ padding: 10px 0;
     background-color: #1c1f26;
     padding: 10px 0;
     position: absolute;
-    top: 60px; 
+    top: 60px; /* Posição abaixo do cabeçalho do menu */
     left: 0;
     z-index: 999;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   }
   .menu-left.open {
-    display: flex; 
+    display: flex;
   }
   .menu-item {
     width: 100%;
@@ -752,21 +766,30 @@ padding: 10px 0;
     gap: 10px;
   }
   .profile-text {
-    display: none; 
+    display: none; /* Esconde o texto do perfil em telas pequenas para economizar espaço */
   }
 
-  /* Layout Geral */
+  /* Ajustes no Layout Geral */
   .content-area {
     padding: 15px;
   }
 
-  /* Perfil */
+  /* Ajustes no Perfil */
   .profile-card {
     flex-direction: column;
     gap: 20px;
+    padding: 20px;
+  }
+  .details-section label {
+      width: auto; /* Permite que o label quebre a linha se necessário */
+      margin-bottom: 5px;
+  }
+  .details-section .form-row {
+      flex-direction: column;
+      align-items: flex-start;
   }
 
-  /* Documentos | Usuários */
+  /* Ajustes na Lista de Documentos e Usuários */
   .file-item, .user-list-item {
     flex-direction: column;
     align-items: flex-start;
@@ -774,15 +797,10 @@ padding: 10px 0;
   }
   .file-actions, .user-actions {
     width: 100%;
-    justify-content: flex-end; 
+    justify-content: flex-end;
   }
 
-  .pagination-controls {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  /* Admin */
+  /* Ajustes no Formulário de Admin */
   .admin-form .form-row {
     flex-direction: column;
   }
@@ -791,12 +809,15 @@ padding: 10px 0;
     width: 100%;
   }
 
+  /* Ajustes no Modal */
   .modal-content {
     width: 95%;
   }
 }
 
-/* Esconde o botão hambúrguer em telas grandes 
-.hamburger-menu {
-  display: none;
-}*/
+/*
+@media (min-width: 769px) {
+  .hamburger-menu {
+    display: none;
+  }
+} */
