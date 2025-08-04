@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from './api.ts';
+import toast from 'react-hot-toast';
 
 interface FileData {
   id: number;
@@ -17,7 +18,6 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
   const [originalname, setOriginalname] = useState('');
   const [category, setCategory] = useState('Manuais');
   const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (fileToEdit) {
@@ -28,14 +28,14 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     try {
       if (fileToEdit) {
         await api.put(`/api/files/${fileToEdit.id}`, { originalname, category });
+        toast.success('Arquivo atualizado com sucesso!');
       } else {
         if (!file) {
-          setError('Por favor, selecione um arquivo.');
+          toast.error('Por favor, selecione um arquivo.'); 
           return;
         }
         const formData = new FormData();
@@ -43,10 +43,11 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
         formData.append('originalname', originalname);
         formData.append('category', category);
         await api.post('/api/files', formData);
+        toast.success('Arquivo incluído com sucesso!');
       }
       onSuccess();
     } catch (err) {
-      setError('Ocorreu um erro ao salvar o arquivo.');
+      toast.error('Ocorreu um erro ao salvar o arquivo.');
       console.error(err);
     }
   };
@@ -86,7 +87,7 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
               />
             </div>
           )}
-          {error && <p className="error-message">{error}</p>}
+                    
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="form-button-cancel">Cancelar</button>
             <button type="submit" className="form-button">Salvar</button>
