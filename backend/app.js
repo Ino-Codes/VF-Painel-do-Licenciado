@@ -95,11 +95,40 @@ app.post('/api/login', async (req, res) => {
 
 // ADMIN: LISTAR USUÁRIOS
 app.get('/api/admin/users', async (req, res) => {
+  const { search, page = 1, limit = 10 } = req.query;
+
   try {
-    const result = await pool.query('SELECT id, nome, email, role FROM users ORDER BY id ASC');
-    res.json(result.rows);
+    const offset = (page - 1) * limit;
+    let whereClause = '';
+    const params = [];
+
+    if (search) {
+      params.push(`%${search}%`);
+      whereClause = `WHERE nome ILIKE $1 OR email ILIKE $1`;
+    }
+
+    const countSql = `SELECT COUNT(*) FROM users ${whereClause}`;
+    const usersSql = `SELECT id, nome, email, role FROM users ${whereClause} ORDER BY nome ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+
+    const countParams = [...params];
+    const usersParams = [...params, limit, offset];
+
+    const [countResult, usersResult] = await Promise.all([
+      pool.query(countSql, countParams),
+      pool.query(usersSql, usersParams)
+    ]);
+
+    const totalCount = parseInt(countResult.rows[0].count, 10);
+    const users = usersResult.rows;
+
+    res.json({
+      users,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit)
+    });
+
   } catch (err) {
-    console.error(err);
+    console.error('Erro ao buscar usuários:', err);
     res.status(500).json({ error: 'Erro ao buscar usuários' });
   }
 });
