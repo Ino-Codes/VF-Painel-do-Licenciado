@@ -6,6 +6,7 @@ import Footer from './Footer.tsx';
 import VideoModal from './VideoModal.tsx';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import ConfirmationModal from './ConfirmationModal.tsx';
 
 interface VideoData {
   id: number;
@@ -14,7 +15,6 @@ interface VideoData {
   youtube_url: string;
 }
 
-// Função para converter URL do YouTube em URL de embed
 const getYoutubeEmbedUrl = (url: string): string => {
   try {
     const urlObj = new URL(url);
@@ -24,16 +24,19 @@ const getYoutubeEmbedUrl = (url: string): string => {
     }
     return `https://www.youtube.com/embed/${videoId}`;
   } catch (error) {
-    return ''; // Retorna vazio se a URL for inválida
+    return '';
   }
 };
 
-const Videoteca: React.FC = () => {
+const Videos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<VideoData | null>(null);
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [videoToDelete, setVideoToDelete] = useState<number | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -56,15 +59,22 @@ const Videoteca: React.FC = () => {
     }
   }, [user]);
 
-  const handleDelete = async (videoId: number) => {
-    if (window.confirm('Tem certeza que deseja excluir este vídeo?')) {
-      try {
-        await api.delete(`/api/videos/${videoId}`);
-        toast.success('Vídeo excluído com sucesso!');
-        fetchVideos();
-      } catch (err) {
-        toast.error('Erro ao excluir o vídeo.');
-      }
+  const handleDeleteClick = (videoId: number) => {
+    setVideoToDelete(videoId);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (videoToDelete === null) return;
+    try {
+      await api.delete(`/api/videos/${videoToDelete}`);
+      toast.success('Vídeo excluído com sucesso!');
+      fetchVideos();
+    } catch (err) {
+      toast.error('Erro ao excluir o vídeo.');
+    } finally {
+      setIsConfirmModalOpen(false);
+      setVideoToDelete(null);
     }
   };
 
@@ -120,7 +130,7 @@ const Videoteca: React.FC = () => {
                 {user.role === 'admin' && (
                   <div className="video-actions">
                     <button className="list-button edit" onClick={() => openModalForEdit(video)}>Editar</button>
-                    <button className="list-button delete" onClick={() => handleDelete(video.id)}>Excluir</button>
+                    <button className="list-button delete" onClick={() => handleDeleteClick(video.id)}>Excluir</button>
                   </div>
                 )}
               </div>
@@ -136,8 +146,15 @@ const Videoteca: React.FC = () => {
         />
       )}
       <Footer />
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Vídeo"
+        message="Tem certeza que deseja excluir este vídeo? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 };
 
-export default Videoteca;
+export default Videos;
