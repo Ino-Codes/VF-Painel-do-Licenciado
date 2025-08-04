@@ -215,6 +215,13 @@ const Documentos: React.FC = () => {
         />
       )}
       <Footer />
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Exclusão"
+        message="Tem certeza que deseja excluir este arquivo?"
+      />
     </div>
   );
 };
