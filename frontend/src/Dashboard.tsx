@@ -6,7 +6,6 @@ import Menu from './Menu.tsx';
 import Footer from './Footer.tsx';
 import toast from 'react-hot-toast';
 
-// Interface para definir a estrutura de um aviso
 interface Notice {
   id: number;
   message: string;
@@ -17,7 +16,6 @@ const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   
-  // Estados para os avisos
   const [notices, setNotices] = useState<Notice[]>([]);
   const [newMessage, setNewMessage] = useState('');
 
@@ -27,7 +25,6 @@ const Dashboard: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  // Função para buscar os avisos da API
   const fetchNotices = async () => {
     try {
       const res = await api.get('/api/notices');
@@ -44,7 +41,6 @@ const Dashboard: React.FC = () => {
     }
   }, [user]);
 
-  // Função para o admin postar um novo aviso
   const handlePostNotice = async () => {
     if (!newMessage.trim()) {
       toast.error('O aviso não pode estar em branco.');
@@ -52,8 +48,8 @@ const Dashboard: React.FC = () => {
     }
     try {
       await api.post('/api/admin/notice', { message: newMessage });
-      setNewMessage(''); // Limpa o campo
-      fetchNotices(); // Atualiza a lista de avisos
+      setNewMessage(''); 
+      fetchNotices(); 
       toast.success('Aviso postado com sucesso!');
     } catch (err) {
       toast.error('Erro ao postar o aviso.');
@@ -74,17 +70,14 @@ const Dashboard: React.FC = () => {
       <div className="content-area">
         <div className="dashboard-header">
           <h2>Bem-vindo, {user.nome}!</h2>
-          <p>Este é o seu painel de controle central.</p>
+          <p>Este é o seu novo Painel do Licenciado</p>
         </div>
 
-        {/* Layout principal do Dashboard em grid */}
         <div className="dashboard-grid">
           
-          {/* Coluna de Avisos */}
           <div className="notice-board">
             <h3>Mural de Avisos</h3>
             
-            {/* Formulário para postar avisos (apenas para admins) */}
             {user.role === 'admin' && (
               <div className="notice-form">
                 <textarea
@@ -98,7 +91,6 @@ const Dashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Lista de Avisos */}
             <div className="notice-list">
               {notices.length > 0 ? (
                 notices.map((notice) => (
@@ -117,7 +109,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Coluna para futuros relatórios e gráficos */}
           <div className="placeholder-column">
             <h3>Relatórios</h3>
             <div className="placeholder-content">
