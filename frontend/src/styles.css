@@ -321,6 +321,38 @@ body::before {
     align-self: flex-end;
 }
 
+/* Logs de Atividade */
+.logs-table-container {
+  overflow-x: auto;
+}
+
+.logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.logs-table th,
+.logs-table td {
+  border: 1px solid #e9ecef;
+  padding: 10px 15px;
+  text-align: left;
+}
+
+.logs-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.logs-table tbody tr:nth-of-type(even) {
+  background-color: #f8f9fa;
+}
+
+.logs-table td {
+  color: #333;
+}
+
 /* Menu */
 .main-menu {
 justify-content: space-between;

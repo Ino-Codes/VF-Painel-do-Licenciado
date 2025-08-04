@@ -10,6 +10,7 @@ import Perfil from './Perfil.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 import Documentos from './Documentos.tsx';
 import Videos from './Videos.tsx';
+import ActivityLogs from './ActivityLogs.tsx';
 import './styles.css';
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -42,6 +43,7 @@ const AppRouter: React.FC = () => {
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/videos" element={<Videos />} />
+          <Route path="/admin/logs" element={<ActivityLogs />} />
         </Routes>
       </Router>
     </AuthProvider>

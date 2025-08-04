@@ -35,6 +35,10 @@ const Menu: React.FC = () => {
           <NavLink to="/admin/users" className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'} onClick={() => setIsMenuOpen(false)}>
             Gerenciar Usuários
           </NavLink>
+
+          <NavLink to="/admin/logs" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')}>
+            Logs de Atividade
+          </NavLink>
         )}
       </div>
 

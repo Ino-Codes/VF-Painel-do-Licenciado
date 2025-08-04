@@ -6,10 +6,13 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
-const app = express();
-const port = 3001;
 
-// Configuração da conexão com o PostgreSQL
+const app = express();
+const port = process.env.PORT || 3001;
+
+// --- CONFIGURAÇÕES ---
+
+// Conexão com o PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -24,10 +27,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Configuração do Multer para upload em memória
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Função para criar as tabelas se não existirem
+
+// --- INICIALIZAÇÃO DO BANCO DE DADOS ---
+
 const createTables = async () => {
   const userTable = `
     CREATE TABLE IF NOT EXISTS users (
@@ -35,91 +41,130 @@ const createTables = async () => {
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       role TEXT NOT NULL,
-      nome TEXT
+      nome TEXT,
+      avatar_url TEXT
     );`;
-
   const noticeTable = `
     CREATE TABLE IF NOT EXISTS notices (
       id SERIAL PRIMARY KEY,
       message TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
-
   const fileTable = `
     CREATE TABLE IF NOT EXISTS files (
       id SERIAL PRIMARY KEY,
       filename TEXT,
       originalname TEXT,
+      category TEXT,
       uploaded_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+  const videoTable = `
+    CREATE TABLE IF NOT EXISTS videos (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      youtube_url TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+  const logsTable = `
+    CREATE TABLE IF NOT EXISTS activity_logs (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      user_email TEXT,
+      action TEXT NOT NULL,
+      details TEXT,
+      ip_address TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
 
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
     await pool.query(fileTable);
+    await pool.query(videoTable);
+    await pool.query(logsTable);
     console.log('Tabelas verificadas/criadas com sucesso no PostgreSQL.');
   } catch (err) {
     console.error('Erro ao criar tabelas:', err);
   }
 };
 
-// Middlewares
+
+// --- MIDDLEWARES ---
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use((req, res, next) => {
+    req.ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    next();
+});
 
-// LOGIN
+
+// --- FUNÇÃO DE LOGGING ---
+const logActivity = async (userId, userEmail, action, details, ipAddress) => {
+  try {
+    const sql = `INSERT INTO activity_logs (user_id, user_email, action, details, ip_address) VALUES ($1, $2, $3, $4, $5)`;
+    await pool.query(sql, [userId, userEmail, action, details, ipAddress]);
+  } catch (err) {
+    console.error('Falha ao registrar log de atividade:', err);
+  }
+};
+
+
+// --- ROTAS DA API ---
+
+// AUTENTICAÇÃO
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const result = await pool.query('SELECT id, nome, email, role, password, avatar_url FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
-
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      logActivity(null, email, 'LOGIN_FAIL', 'Tentativa de login falhou.', req.ipAddress);
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
-    const senhaOk = await bcrypt.compare(password, user.password);
-    if (!senhaOk) {
-      return res.status(401).json({ message: 'Credenciais inválidas' });
-    }
-
-    delete user.password; 
-
+    logActivity(user.id, user.email, 'LOGIN_SUCCESS', 'Usuário logado com sucesso.', req.ipAddress);
+    delete user.password;
     res.json(user);
-
   } catch (err) {
     console.error('Erro na rota /api/login:', err);
     res.status(500).send({ error: 'Erro no servidor' });
   }
 });
 
-// DASHBOARDS: LISTAR AVISOS
+app.post('/api/redefinir-senha', (req, res) => {
+    // Lógica de redefinição de senha a ser implementada
+    res.json({ message: 'Funcionalidade em desenvolvimento.' });
+});
+
+
+// MURAL DE AVISOS (DASHBOARD)
 app.get('/api/notices', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM notices ORDER BY created_at DESC');
-        res.json(result.rows);
-    } catch (err) { /* ... */ }
+  try {
+    const result = await pool.query('SELECT * FROM notices ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar avisos:', err);
+    res.status(500).json({ error: 'Erro ao buscar avisos.' });
+  }
 });
 
-// DASHBOARDS: CRIAR AVISO
 app.post('/api/admin/notice', async (req, res) => {
-    const { message } = req.body;
-    try {
-        await pool.query('INSERT INTO notices (message) VALUES ($1)', [message]);
-        res.status(201).json({ success: true });
-    } catch (err) { /* ... */ }
+  const { message } = req.body;
+  try {
+    await pool.query('INSERT INTO notices (message) VALUES ($1)', [message]);
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('Erro ao criar aviso:', err);
+    res.status(500).json({ error: 'Erro ao criar aviso.' });
+  }
 });
 
-// DASHBOARDS: EDITAR AVISO
 app.put('/api/admin/notices/:id', async (req, res) => {
   const { id } = req.params;
   const { message } = req.body;
   try {
-    const sql = 'UPDATE notices SET message = $1 WHERE id = $2 RETURNING *';
-    const result = await pool.query(sql, [message, id]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Aviso não encontrado.' });
-    }
+    const result = await pool.query('UPDATE notices SET message = $1 WHERE id = $2 RETURNING *', [message, id]);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Aviso não encontrado.' });
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Erro ao editar aviso:', err);
@@ -127,14 +172,11 @@ app.put('/api/admin/notices/:id', async (req, res) => {
   }
 });
 
-// DASHBOARDS: EXCLUIR AVISO
 app.delete('/api/admin/notices/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query('DELETE FROM notices WHERE id = $1', [id]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Aviso não encontrado.' });
-    }
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Aviso não encontrado.' });
     res.json({ success: true, message: 'Aviso excluído com sucesso.' });
   } catch (err) {
     console.error('Erro ao excluir aviso:', err);
@@ -142,133 +184,104 @@ app.delete('/api/admin/notices/:id', async (req, res) => {
   }
 });
 
-// VIDEOS: LISTAGEM
+
+// VIDEOS
 app.get('/api/videos', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM videos ORDER BY created_at DESC');
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Erro ao buscar vídeos:', err);
-    res.status(500).json({ error: 'Erro ao buscar vídeos' });
-  }
+    try {
+        const result = await pool.query('SELECT * FROM videos ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Erro ao buscar vídeos:', err);
+        res.status(500).json({ error: 'Erro ao buscar vídeos' });
+    }
 });
 
-// VIDEOS: INCLUSÃO
 app.post('/api/videos', async (req, res) => {
-  const { title, description, youtube_url } = req.body;
-  try {
-    const sql = 'INSERT INTO videos (title, description, youtube_url) VALUES ($1, $2, $3) RETURNING *';
-    const result = await pool.query(sql, [title, description, youtube_url]);
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Erro ao adicionar vídeo:', err);
-    res.status(500).json({ error: 'Erro ao adicionar vídeo' });
-  }
+    const { title, description, youtube_url } = req.body;
+    try {
+        const result = await pool.query('INSERT INTO videos (title, description, youtube_url) VALUES ($1, $2, $3) RETURNING *', [title, description, youtube_url]);
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('Erro ao adicionar vídeo:', err);
+        res.status(500).json({ error: 'Erro ao adicionar vídeo' });
+    }
 });
 
-// VIDEOS: EDIÇÃO
 app.put('/api/videos/:id', async (req, res) => {
-  const { id } = req.params;
-  const { title, description, youtube_url } = req.body;
-  try {
-    const sql = 'UPDATE videos SET title = $1, description = $2, youtube_url = $3 WHERE id = $4 RETURNING *';
-    const result = await pool.query(sql, [title, description, youtube_url, id]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Vídeo não encontrado.' });
+    const { id } = req.params;
+    const { title, description, youtube_url } = req.body;
+    try {
+        const result = await pool.query('UPDATE videos SET title = $1, description = $2, youtube_url = $3 WHERE id = $4 RETURNING *', [title, description, youtube_url, id]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Vídeo não encontrado.' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Erro ao editar vídeo:', err);
+        res.status(500).json({ error: 'Erro ao editar vídeo.' });
     }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Erro ao editar vídeo:', err);
-    res.status(500).json({ error: 'Erro ao editar vídeo.' });
-  }
 });
 
-// VIDEOS: EXCLUSÃO
 app.delete('/api/videos/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await pool.query('DELETE FROM videos WHERE id = $1', [id]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Vídeo não encontrado.' });
+    const { id } = req.params;
+    try {
+        const result = await pool.query('DELETE FROM videos WHERE id = $1', [id]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Vídeo não encontrado.' });
+        res.json({ success: true, message: 'Vídeo excluído com sucesso.' });
+    } catch (err) {
+        console.error('Erro ao excluir vídeo:', err);
+        res.status(500).json({ error: 'Erro ao excluir vídeo.' });
     }
-    res.json({ success: true, message: 'Vídeo excluído com sucesso.' });
-  } catch (err) {
-    console.error('Erro ao excluir vídeo:', err);
-    res.status(500).json({ error: 'Erro ao excluir vídeo.' });
-  }
 });
 
-// ADMIN: LISTAR USUÁRIOS
+
+// ADMINISTRAÇÃO DE USUÁRIOS
 app.get('/api/admin/users', async (req, res) => {
   const { search, page = 1, limit = 10 } = req.query;
-
   try {
     const offset = (page - 1) * limit;
     let whereClause = '';
     const params = [];
-
     if (search) {
       params.push(`%${search}%`);
       whereClause = `WHERE nome ILIKE $1 OR email ILIKE $1`;
     }
-
     const countSql = `SELECT COUNT(*) FROM users ${whereClause}`;
-    const usersSql = `SELECT id, nome, email, role FROM users ${whereClause} ORDER BY nome ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-
-    const countParams = [...params];
-    const usersParams = [...params, limit, offset];
-
+    const usersSql = `SELECT id, nome, email, role, avatar_url FROM users ${whereClause} ORDER BY nome ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     const [countResult, usersResult] = await Promise.all([
-      pool.query(countSql, countParams),
-      pool.query(usersSql, usersParams)
+      pool.query(countSql, params),
+      pool.query(usersSql, [...params, limit, offset])
     ]);
-
     const totalCount = parseInt(countResult.rows[0].count, 10);
-    const users = usersResult.rows;
-
     res.json({
-      users,
+      users: usersResult.rows,
       totalCount,
       totalPages: Math.ceil(totalCount / limit)
     });
-
   } catch (err) {
     console.error('Erro ao buscar usuários:', err);
     res.status(500).json({ error: 'Erro ao buscar usuários' });
   }
 });
 
-// ADMIN: CRIAR USUÁRIO
 app.post('/api/admin/users', async (req, res) => {
     const { nome, email, password, role } = req.body;
     try {
         const hash = await bcrypt.hash(password, 10);
-        const sql = 'INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id';
-        const result = await pool.query(sql, [nome, email, hash, role]);
+        const result = await pool.query('INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id', [nome, email, hash, role]);
+        logActivity(null, email, 'CREATE_USER', `Usuário ${email} (${role}) foi criado.`, req.ipAddress);
         res.json({ success: true, id: result.rows[0].id });
     } catch (err) {
-        console.error(err);
+        console.error('Erro ao criar usuário:', err);
         res.status(500).json({ error: 'Erro ao criar usuário' });
     }
 });
 
-// ADMIN: EDITAR USUÁRIO
 app.put('/api/admin/users/:id', async (req, res) => {
   const { id } = req.params;
   const { nome, role } = req.body;
-
-  if (!nome || !role) {
-    return res.status(400).json({ error: 'Nome e role são obrigatórios.' });
-  }
-
   try {
-    const sql = 'UPDATE users SET nome = $1, role = $2 WHERE id = $3';
-    const result = await pool.query(sql, [nome, role, id]);
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado.' });
-    }
-
+    const result = await pool.query('UPDATE users SET nome = $1, role = $2 WHERE id = $3', [nome, role, id]);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
+    logActivity(id, null, 'UPDATE_USER_ADMIN', `Dados do usuário ID ${id} foram atualizados para nome: ${nome}, role: ${role}.`, req.ipAddress);
     res.json({ success: true, message: 'Usuário atualizado com sucesso.' });
   } catch (err) {
     console.error('Erro ao atualizar usuário:', err);
@@ -276,18 +289,12 @@ app.put('/api/admin/users/:id', async (req, res) => {
   }
 });
 
-// ADMIN: EXCLUIR USUÁRIO
 app.delete('/api/admin/users/:id', async (req, res) => {
   const { id } = req.params;
-
   try {
-    const sql = 'DELETE FROM users WHERE id = $1';
-    const result = await pool.query(sql, [id]);
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado para exclusão.' });
-    }
-
+    const result = await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
+    logActivity(id, null, 'DELETE_USER', `Usuário ID ${id} foi excluído.`, req.ipAddress);
     res.json({ success: true, message: 'Usuário excluído com sucesso.' });
   } catch (err) {
     console.error('Erro ao excluir usuário:', err);
@@ -295,179 +302,128 @@ app.delete('/api/admin/users/:id', async (req, res) => {
   }
 });
 
-// PERFIL: UPLOAD DE FOTO DE PERFIL
+
+// PERFIL DO USUÁRIO
 app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
   const { id } = req.params;
-
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
-  }
-
+  if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
   try {
     const userResult = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [id]);
     const oldAvatarUrl = userResult.rows[0]?.avatar_url;
-
     if (oldAvatarUrl) {
       const publicId = oldAvatarUrl.split('/').pop().split('.')[0];
       await cloudinary.uploader.destroy(publicId);
-      console.log('Avatar antigo excluído do Cloudinary.');
     }
-
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
         if (error) reject(error);
         resolve(result);
       }).end(req.file.buffer);
     });
-
     const newAvatarUrl = uploadResult.secure_url;
-
-    const updateSql = 'UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url';
-    const updateResult = await pool.query(updateSql, [newAvatarUrl, id]);
-
-    console.log('Avatar atualizado com sucesso no banco de dados.');
+    const updateResult = await pool.query('UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url', [newAvatarUrl, id]);
+    logActivity(id, null, 'UPDATE_AVATAR', 'Foto de perfil atualizada.', req.ipAddress);
     res.json({ success: true, avatarUrl: updateResult.rows[0].avatar_url });
-
   } catch (err) {
-    console.error('Erro no processo de upload de avatar:', err);
+    console.error('Erro no upload de avatar:', err);
     res.status(500).json({ error: 'Erro no servidor durante o upload.' });
   }
 });
 
-// PERFIL: ALTERAÇÃO DO NOME DO USUÁRIO
 app.put('/api/users/:id/profile', async (req, res) => {
   const { id } = req.params;
   const { nome } = req.body;
-
-  if (!nome) {
-    return res.status(400).json({ error: 'O campo nome é obrigatório.' });
-  }
-
   try {
-    const sql = 'UPDATE users SET nome = $1 WHERE id = $2 RETURNING id, nome, email, role, avatar_url';
-    const result = await pool.query(sql, [nome, id]);
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado.' });
-    }
-    
-    res.json({ success: true, user: result.rows[0] });
+    const result = await pool.query('UPDATE users SET nome = $1 WHERE id = $2 RETURNING *', [nome, id]);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
+    const updatedUser = result.rows[0];
+    delete updatedUser.password;
+    logActivity(id, null, 'UPDATE_PROFILE', 'Nome do perfil atualizado.', req.ipAddress);
+    res.json({ success: true, user: updatedUser });
   } catch (err) {
     console.error('Erro ao atualizar perfil:', err);
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
 
-// PERFIL: ALTERAÇÃO DE SENHA
 app.put('/api/users/:id/change-password', async (req, res) => {
   const { id } = req.params;
   const { currentPassword, newPassword } = req.body;
-
   try {
     const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [id]);
-    if (userResult.rowCount === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado.' });
-    }
+    if (userResult.rowCount === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
     const storedHash = userResult.rows[0].password;
-
-    const isMatch = await bcrypt.compare(currentPassword, storedHash);
-    if (!isMatch) {
+    if (!(await bcrypt.compare(currentPassword, storedHash))) {
       return res.status(401).json({ error: 'A senha atual está incorreta.' });
     }
-
     const newHash = await bcrypt.hash(newPassword, 10);
-
     await pool.query('UPDATE users SET password = $1 WHERE id = $2', [newHash, id]);
-
+    logActivity(id, null, 'CHANGE_PASSWORD', 'Senha alterada com sucesso.', req.ipAddress);
     res.json({ success: true, message: 'Senha alterada com sucesso.' });
-
   } catch (err) {
     console.error('Erro ao alterar senha:', err);
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
 
-// PERFIL: REMOVER FOTO DE PERFIL
 app.delete('/api/users/:id/avatar', async (req, res) => {
   const { id } = req.params;
-
   try {
     const userResult = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [id]);
     const oldAvatarUrl = userResult.rows[0]?.avatar_url;
-
     if (oldAvatarUrl) {
       const publicId = oldAvatarUrl.split('/').pop().split('.')[0];
       await cloudinary.uploader.destroy(publicId);
     }
-
-    const updateResult = await pool.query(
-      'UPDATE users SET avatar_url = NULL WHERE id = $1 RETURNING id, nome, email, role, avatar_url',
-      [id]
-    );
-
-    res.json({ success: true, user: updateResult.rows[0] });
-
+    const updateResult = await pool.query('UPDATE users SET avatar_url = NULL WHERE id = $1 RETURNING *', [id]);
+    const updatedUser = updateResult.rows[0];
+    delete updatedUser.password;
+    logActivity(id, null, 'REMOVE_AVATAR', 'Foto de perfil removida.', req.ipAddress);
+    res.json({ success: true, user: updatedUser });
   } catch (err) {
     console.error('Erro ao remover avatar:', err);
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
 
-// DOCUMENTOS: LISTAR ARQUIVOS
+
+// CENTRAL DE DOCUMENTOS
 app.get('/api/files', async (req, res) => {
   const { category, search, page = 1, limit = 10 } = req.query;
-
   try {
     const offset = (page - 1) * limit;
     let whereClauses = [];
     const params = [];
-
     if (category) {
       params.push(category);
       whereClauses.push(`category = $${params.length}`);
     }
-
     if (search) {
       params.push(`%${search}%`);
       whereClauses.push(`originalname ILIKE $${params.length}`);
     }
-
     const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-
     const countSql = `SELECT COUNT(*) FROM files ${whereString}`;
-    const filesSql = `SELECT id, originalname, filename, category, uploaded_at FROM files ${whereString} ORDER BY uploaded_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    
-    const countParams = [...params];
-    const filesParams = [...params, limit, offset];
-
+    const filesSql = `SELECT * FROM files ${whereString} ORDER BY uploaded_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     const [countResult, filesResult] = await Promise.all([
-      pool.query(countSql, countParams),
-      pool.query(filesSql, filesParams)
+      pool.query(countSql, params),
+      pool.query(filesSql, [...params, limit, offset])
     ]);
-
     const totalCount = parseInt(countResult.rows[0].count, 10);
-    const files = filesResult.rows;
-
     res.json({
-      files,
+      files: filesResult.rows,
       totalCount,
       totalPages: Math.ceil(totalCount / limit)
     });
-
   } catch (err) {
     console.error('Erro ao buscar arquivos:', err);
     res.status(500).json({ error: 'Erro ao buscar arquivos' });
   }
 });
 
-// DOCUMENTOS: UPLOAD DE NOVO ARQUIVO
 app.post('/api/files', upload.single('file'), async (req, res) => {
   const { originalname, category } = req.body;
-
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
-  }
-
+  if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
   try {
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
@@ -475,12 +431,8 @@ app.post('/api/files', upload.single('file'), async (req, res) => {
         resolve(result);
       }).end(req.file.buffer);
     });
-
     const fileUrl = uploadResult.secure_url;
-
-    const sql = 'INSERT INTO files (filename, originalname, category) VALUES ($1, $2, $3) RETURNING *';
-    const result = await pool.query(sql, [fileUrl, originalname, category]);
-
+    const result = await pool.query('INSERT INTO files (filename, originalname, category) VALUES ($1, $2, $3) RETURNING *', [fileUrl, originalname, category]);
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Erro no upload de arquivo:', err);
@@ -488,22 +440,15 @@ app.post('/api/files', upload.single('file'), async (req, res) => {
   }
 });
 
-// DOCUMENTOS: DELETAR UM ARQUIVO
 app.delete('/api/files/:id', async (req, res) => {
   const { id } = req.params;
-
   try {
     const fileResult = await pool.query('SELECT filename FROM files WHERE id = $1', [id]);
-    if (fileResult.rowCount === 0) {
-      return res.status(404).json({ error: 'Arquivo não encontrado.' });
-    }
+    if (fileResult.rowCount === 0) return res.status(404).json({ error: 'Arquivo não encontrado.' });
     const fileUrl = fileResult.rows[0].filename;
-
     const publicId = fileUrl.split('/').pop().split('.')[0];
     await cloudinary.uploader.destroy(publicId);
-
     await pool.query('DELETE FROM files WHERE id = $1', [id]);
-
     res.json({ success: true, message: 'Arquivo excluído com sucesso.' });
   } catch (err) {
     console.error('Erro ao excluir arquivo:', err);
@@ -515,11 +460,8 @@ app.put('/api/files/:id', async (req, res) => {
     const { id } = req.params;
     const { originalname, category } = req.body;
     try {
-        const sql = 'UPDATE files SET originalname = $1, category = $2 WHERE id = $3 RETURNING *';
-        const result = await pool.query(sql, [originalname, category, id]);
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: 'Arquivo não encontrado.' });
-        }
+        const result = await pool.query('UPDATE files SET originalname = $1, category = $2 WHERE id = $3 RETURNING *', [originalname, category, id]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Arquivo não encontrado.' });
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Erro ao editar arquivo:', err);
@@ -527,7 +469,32 @@ app.put('/api/files/:id', async (req, res) => {
     }
 });
 
-// Inicia o servidor e cria as tabelas
+
+// LOGS DE ATIVIDADE
+app.get('/api/admin/logs', async (req, res) => {
+    const { page = 1, limit = 20 } = req.query;
+    try {
+        const offset = (page - 1) * limit;
+        const countSql = `SELECT COUNT(*) FROM activity_logs`;
+        const logsSql = `SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT $1 OFFSET $2`;
+        const [countResult, logsResult] = await Promise.all([
+            pool.query(countSql),
+            pool.query(logsSql, [limit, offset])
+        ]);
+        const totalCount = parseInt(countResult.rows[0].count, 10);
+        res.json({
+            logs: logsResult.rows,
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit)
+        });
+    } catch (err) {
+        console.error('Erro ao buscar logs de atividade:', err);
+        res.status(500).json({ error: 'Erro ao buscar logs.' });
+    }
+});
+
+
+// --- INICIALIZAÇÃO DO SERVIDOR ---
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
   createTables();
