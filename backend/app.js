@@ -281,26 +281,34 @@ app.delete('/api/users/:id/avatar', async (req, res) => {
 
 // DOCUMENTOS: LISTAR ARQUIVOS
 app.get('/api/files', async (req, res) => {
-  const { category, page = 1, limit = 10 } = req.query;
+  const { category, search, page = 1, limit = 10 } = req.query;
 
   try {
     const offset = (page - 1) * limit;
-    let countSql = 'SELECT COUNT(*) FROM files';
-    let filesSql = 'SELECT id, originalname, filename, category, uploaded_at FROM files';
-    
+    let whereClauses = [];
     const params = [];
-    
+
     if (category) {
-      countSql += ' WHERE category = $1';
-      filesSql += ' WHERE category = $1';
       params.push(category);
+      whereClauses.push(`category = $${params.length}`);
     }
 
-    filesSql += ` ORDER BY uploaded_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    if (search) {
+      params.push(`%${search}%`);
+      whereClauses.push(`originalname ILIKE $${params.length}`);
+    }
+
+    const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const countSql = `SELECT COUNT(*) FROM files ${whereString}`;
+    const filesSql = `SELECT id, originalname, filename, category, uploaded_at FROM files ${whereString} ORDER BY uploaded_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     
+    const countParams = [...params];
+    const filesParams = [...params, limit, offset];
+
     const [countResult, filesResult] = await Promise.all([
-      pool.query(countSql, params),
-      pool.query(filesSql, [...params, limit, offset])
+      pool.query(countSql, countParams),
+      pool.query(filesSql, filesParams)
     ]);
 
     const totalCount = parseInt(countResult.rows[0].count, 10);

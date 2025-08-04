@@ -520,6 +520,21 @@ padding: 10px 0;
   text-decoration: none;
 }
 
+/* --- Estilos da Barra de Pesquisa --- */
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-bar .form-input {
+  flex-grow: 1; /* Faz o input ocupar o máximo de espaço */
+}
+
+.search-bar .form-button {
+  flex-shrink: 0; /* Impede que o botão encolha */
+}
+
 /* --- Estilos da Paginação --- */
 .pagination-controls {
   display: flex;

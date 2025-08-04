@@ -19,13 +19,15 @@ const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   
-  // Estados da página
   const [files, setFiles] = useState<FileData[]>([]);
   const [category, setCategory] = useState('Manuais');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
 
-  // --- NOVOS ESTADOS PARA PAGINAÇÃO ---
+  // --- NOVOS ESTADOS PARA A PESQUISA ---
+  const [searchTerm, setSearchTerm] = useState(''); // Controla o valor do input
+  const [searchQuery, setSearchQuery] = useState(''); // Controla o termo enviado para a API
+
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalFiles, setTotalFiles] = useState(0);
@@ -42,14 +44,16 @@ const Documentos: React.FC = () => {
   const fetchFiles = async () => {
     if (!user) return;
     try {
-      // Envia os parâmetros de paginação e categoria para a API
-      const res = await api.get('/api/files', { 
-        params: { 
-          category,
-          page: currentPage,
-          limit,
-        } 
-      });
+      const params: any = { 
+        category,
+        page: currentPage,
+        limit,
+      };
+      // Adiciona o termo de busca aos parâmetros apenas se ele não estiver vazio
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+      const res = await api.get('/api/files', { params });
       setFiles(res.data.files);
       setTotalFiles(res.data.totalCount);
       setTotalPages(res.data.totalPages);
@@ -58,15 +62,19 @@ const Documentos: React.FC = () => {
     }
   };
 
-  // Efeito para buscar os arquivos quando a página, limite ou categoria mudam
+  // Efeito para buscar arquivos quando filtros, página ou busca mudam
   useEffect(() => {
     fetchFiles();
-  }, [category, user, currentPage, limit]);
+  }, [category, user, currentPage, limit, searchQuery]);
 
-  // Reseta para a primeira página quando a categoria ou o limite mudam
+  // Reseta para a primeira página quando filtros mudam
   useEffect(() => {
     setCurrentPage(1);
-  }, [category, limit]);
+  }, [category, limit, searchQuery]);
+
+  const handleSearch = () => {
+    setSearchQuery(searchTerm);
+  };
 
   const handleDelete = async (fileId: number) => {
     if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
@@ -115,7 +123,7 @@ const Documentos: React.FC = () => {
             </button>
           )}
         </div>
-
+     
         <div className="tabs">
           {categories.map((cat) => (
             <button
@@ -126,6 +134,19 @@ const Documentos: React.FC = () => {
               {cat}
             </button>
           ))}
+        </div>
+
+        {/* --- NOVA BARRA DE PESQUISA --- */}
+        <div className="search-bar">
+          <input
+            type="search"
+            placeholder="Pesquisar por nome do arquivo..."
+            className="form-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <button className="form-button" onClick={handleSearch}>Pesquisar</button>
         </div>
 
         <div className="file-list">
