@@ -51,7 +51,6 @@ const Documentos: React.FC = () => {
       try {
         await api.delete(`/api/files/${fileId}`);
         fetchFiles();
-        toast.success('Arquivo excluído com sucesso.');
       } catch (err) {
         toast.error('Erro ao excluir o arquivo.');
       }

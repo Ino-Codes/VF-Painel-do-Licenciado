@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from './api.ts';
+import toast from 'react-hot-toast';
 
 interface FileData {
   id: number;
@@ -17,7 +18,7 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
   const [originalname, setOriginalname] = useState('');
   const [category, setCategory] = useState('Manuais');
   const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState('');
+  const [error] = useState('');
 
   useEffect(() => {
     if (fileToEdit) {
@@ -28,14 +29,14 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    toast.error('');
 
     try {
       if (fileToEdit) {
         await api.put(`/api/files/${fileToEdit.id}`, { originalname, category });
       } else {
         if (!file) {
-          setError('Por favor, selecione um arquivo.');
+          toast.error('Por favor, selecione um arquivo.');
           return;
         }
         const formData = new FormData();
@@ -46,7 +47,7 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
       }
       onSuccess();
     } catch (err) {
-      setError('Ocorreu um erro ao salvar o arquivo.');
+      toast.error('Ocorreu um erro ao salvar o arquivo.');
       console.error(err);
     }
   };
