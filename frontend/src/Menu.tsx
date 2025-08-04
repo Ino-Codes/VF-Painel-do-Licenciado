@@ -24,9 +24,9 @@ const Menu: React.FC = () => {
         </NavLink>
 
         <NavLink to="/documentos" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')} onClick={() => setIsMenuOpen(false)}>
-          <img src={logo} alt="Valor Fiscal logo" className="menu-logo"/>
+          Documentos
         </NavLink>
-        
+
         {user && user.role === 'admin' && (
           <NavLink to="/admin/users" className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'} onClick={() => setIsMenuOpen(false)}>
             Gerenciar Usuários
