@@ -6,6 +6,7 @@ import FileModal from './FileModal.tsx';
 import Footer from './Footer.tsx';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import ConfirmationModal from './ConfirmationModal.tsx';
 
 interface FileData {
   id: number;
@@ -31,6 +32,9 @@ const Documentos: React.FC = () => {
   const [limit, setLimit] = useState(10);
   const [totalFiles, setTotalFiles] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<number | null>(null);
 
   const categories = ['Manuais', 'Marketing', 'Financeiro'];
 
@@ -72,15 +76,22 @@ const Documentos: React.FC = () => {
     setSearchQuery(searchTerm);
   };
 
-  const handleDelete = async (fileId: number) => {
-    if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
-      try {
-        await api.delete(`/api/files/${fileId}`);
-        toast.success('Arquivo excluído com sucesso!');
-        fetchFiles();
-      } catch (err) {
-        toast.error('Erro ao excluir o arquivo.');
-      }
+  const handleDeleteClick = (fileId: number) => {
+    setFileToDelete(fileId);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (fileToDelete === null) return;
+    try {
+      await api.delete(`/api/files/${fileToDelete}`);
+      toast.success('Arquivo excluído com sucesso!');
+      fetchFiles();
+    } catch (err) {
+      toast.error('Erro ao excluir o arquivo.');
+    } finally {
+      setIsConfirmModalOpen(false);
+      setFileToDelete(null);
     }
   };
 
@@ -155,7 +166,7 @@ const Documentos: React.FC = () => {
                 {user?.role === 'admin' && (
                   <>
                     <button className="list-button edit" onClick={() => openModalForEdit(file)}>Editar</button>
-                    <button className="list-button delete" onClick={() => handleDelete(file.id)}>Excluir</button>
+                    <button className="list-button delete" onClick={() => handleDeleteClick(file.id)}>Excluir</button>
                   </>
                 )}
               </div>
