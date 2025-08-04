@@ -93,6 +93,22 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// DASHBOARDS
+app.get('/api/notices', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM notices ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) { /* ... */ }
+});
+
+app.post('/api/admin/notice', async (req, res) => {
+    const { message } = req.body;
+    try {
+        await pool.query('INSERT INTO notices (message) VALUES ($1)', [message]);
+        res.status(201).json({ success: true });
+    } catch (err) { /* ... */ }
+});
+
 // VIDEOS: LISTAGEM
 app.get('/api/videos', async (req, res) => {
   try {
