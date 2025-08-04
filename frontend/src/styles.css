@@ -520,7 +520,7 @@ padding: 10px 0;
   text-decoration: none;
 }
 
-/* --- Estilos da Barra de Pesquisa --- */
+/* Documentos: Barra de Pesquisa */
 .search-bar {
   display: flex;
   gap: 10px;
@@ -528,14 +528,14 @@ padding: 10px 0;
 }
 
 .search-bar .form-input {
-  flex-grow: 1; /* Faz o input ocupar o máximo de espaço */
+  flex-grow: 1;
 }
 
 .search-bar .form-button {
-  flex-shrink: 0; /* Impede que o botão encolha */
+  flex-shrink: 0;
 }
 
-/* --- Estilos da Paginação --- */
+/* Documentos: Paginação */
 .pagination-controls {
   display: flex;
   justify-content: space-between;
@@ -579,15 +579,7 @@ padding: 10px 0;
   background-color: #e9ecef;
 }
 
-/* Ajuste para telas pequenas */
-@media (max-width: 768px) {
-  .pagination-controls {
-    flex-direction: column;
-    gap: 15px;
-  }
-}
-
-/* --- PopUps Toast --- */
+/* --- Popups Toast --- */
 .password-section {
   margin-top: 30px;
   border-top: 1px solid #e0e0e0;
@@ -605,7 +597,7 @@ padding: 10px 0;
     color: #c82333;
 }
 
-/* Documentos - Modal */
+/* Documentos: Adicionar/Editar Arquivo */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -723,6 +715,11 @@ padding: 10px 0;
   .file-actions, .user-actions {
     width: 100%;
     justify-content: flex-end; 
+  }
+
+  .pagination-controls {
+    flex-direction: column;
+    gap: 15px;
   }
 
   /* Admin */

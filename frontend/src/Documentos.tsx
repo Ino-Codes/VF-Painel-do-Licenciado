@@ -24,9 +24,8 @@ const Documentos: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
 
-  // --- NOVOS ESTADOS PARA A PESQUISA ---
-  const [searchTerm, setSearchTerm] = useState(''); // Controla o valor do input
-  const [searchQuery, setSearchQuery] = useState(''); // Controla o termo enviado para a API
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -49,7 +48,6 @@ const Documentos: React.FC = () => {
         page: currentPage,
         limit,
       };
-      // Adiciona o termo de busca aos parâmetros apenas se ele não estiver vazio
       if (searchQuery) {
         params.search = searchQuery;
       }
@@ -62,12 +60,10 @@ const Documentos: React.FC = () => {
     }
   };
 
-  // Efeito para buscar arquivos quando filtros, página ou busca mudam
   useEffect(() => {
     fetchFiles();
   }, [category, user, currentPage, limit, searchQuery]);
 
-  // Reseta para a primeira página quando filtros mudam
   useEffect(() => {
     setCurrentPage(1);
   }, [category, limit, searchQuery]);
@@ -136,7 +132,6 @@ const Documentos: React.FC = () => {
           ))}
         </div>
 
-        {/* --- NOVA BARRA DE PESQUISA --- */}
         <div className="search-bar">
           <input
             type="search"
@@ -168,7 +163,6 @@ const Documentos: React.FC = () => {
           ))}
         </div>
 
-        {/* --- NOVOS CONTROLES DE PAGINAÇÃO --- */}
         {totalFiles > 0 && (
           <div className="pagination-controls">
             <div className="limit-selector">
