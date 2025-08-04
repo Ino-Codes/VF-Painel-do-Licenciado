@@ -93,7 +93,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// DASHBOARDS
+// DASHBOARDS: LISTAR AVISOS
 app.get('/api/notices', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM notices ORDER BY created_at DESC');
@@ -101,12 +101,45 @@ app.get('/api/notices', async (req, res) => {
     } catch (err) { /* ... */ }
 });
 
+// DASHBOARDS: CRIAR AVISO
 app.post('/api/admin/notice', async (req, res) => {
     const { message } = req.body;
     try {
         await pool.query('INSERT INTO notices (message) VALUES ($1)', [message]);
         res.status(201).json({ success: true });
     } catch (err) { /* ... */ }
+});
+
+// DASHBOARDS: EDITAR AVISO
+app.put('/api/admin/notices/:id', async (req, res) => {
+  const { id } = req.params;
+  const { message } = req.body;
+  try {
+    const sql = 'UPDATE notices SET message = $1 WHERE id = $2 RETURNING *';
+    const result = await pool.query(sql, [message, id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Aviso não encontrado.' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao editar aviso:', err);
+    res.status(500).json({ error: 'Erro ao editar aviso.' });
+  }
+});
+
+// DASHBOARDS: EXCLUIR AVISO
+app.delete('/api/admin/notices/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM notices WHERE id = $1', [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Aviso não encontrado.' });
+    }
+    res.json({ success: true, message: 'Aviso excluído com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir aviso:', err);
+    res.status(500).json({ error: 'Erro ao excluir aviso.' });
+  }
 });
 
 // VIDEOS: LISTAGEM

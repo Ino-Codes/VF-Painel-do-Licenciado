@@ -19,6 +19,9 @@ const Dashboard: React.FC = () => {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [newMessage, setNewMessage] = useState('');
 
+  const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
+
   useEffect(() => {
     if (!loading && !user) {
       navigate('/');
@@ -53,6 +56,39 @@ const Dashboard: React.FC = () => {
       toast.success('Aviso postado com sucesso!');
     } catch (err) {
       toast.error('Erro ao postar o aviso.');
+    }
+  };
+
+  const handleDeleteNotice = async (noticeId: number) => {
+    if (window.confirm('Tem certeza que deseja excluir este aviso?')) {
+      try {
+        await api.delete(`/api/admin/notices/${noticeId}`);
+        toast.success('Aviso excluído com sucesso!');
+        fetchNotices();
+      } catch (err) {
+        toast.error('Erro ao excluir o aviso.');
+      }
+    }
+  };
+
+  const handleEditNotice = (notice: Notice) => {
+    setEditingNoticeId(notice.id);
+    setEditText(notice.message);
+  };
+
+  const handleUpdateNotice = async (noticeId: number) => {
+    if (!editText.trim()) {
+      toast.error('O aviso não pode estar em branco.');
+      return;
+    }
+    try {
+      await api.put(`/api/admin/notices/${noticeId}`, { message: editText });
+      toast.success('Aviso atualizado com sucesso!');
+      setEditingNoticeId(null);
+      setEditText('');
+      fetchNotices();
+    } catch (err) {
+      toast.error('Erro ao atualizar o aviso.');
     }
   };
 
@@ -95,12 +131,35 @@ const Dashboard: React.FC = () => {
               {notices.length > 0 ? (
                 notices.map((notice) => (
                   <div key={notice.id} className="notice-card">
-                    <p>{notice.message}</p>
-                    <small>
-                      {new Date(notice.created_at).toLocaleDateString('pt-BR', {
-                        day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                      })}
-                    </small>
+                    {editingNoticeId === notice.id ? (
+                      <div className="notice-edit-form">
+                        <textarea
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                        />
+                        <div className="notice-actions">
+                           <button className="list-button" onClick={() => setEditingNoticeId(null)}>Cancelar</button>
+                           <button className="list-button edit" onClick={() => handleUpdateNotice(notice.id)}>Salvar</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p>{notice.message}</p>
+                        <div className="notice-footer">
+                          <small>
+                            {new Date(notice.created_at).toLocaleDateString('pt-BR', {
+                              day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                            })}
+                          </small>
+                          {user.role === 'admin' && (
+                            <div className="notice-actions">
+                              <button className="list-button edit" onClick={() => handleEditNotice(notice)}>Editar</button>
+                              <button className="list-button delete" onClick={() => handleDeleteNotice(notice.id)}>Excluir</button>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))
               ) : (

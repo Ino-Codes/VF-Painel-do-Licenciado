@@ -289,6 +289,38 @@ body::before {
   }
 }
 
+.notice-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.notice-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.notice-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notice-edit-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-family: "Montserrat", sans-serif;
+  resize: vertical;
+}
+
+.notice-edit-form .notice-actions {
+    align-self: flex-end;
+}
+
 /* Menu */
 .main-menu {
 justify-content: space-between;
