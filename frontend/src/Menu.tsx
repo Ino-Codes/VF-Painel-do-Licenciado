@@ -27,8 +27,8 @@ const Menu: React.FC = () => {
           Documentos
         </NavLink>
 
-        <NavLink to="/videoteca" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')}>
-          Videoteca
+        <NavLink to="/videos" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')}>
+          Videos
         </NavLink>
 
         {user && user.role === 'admin' && (

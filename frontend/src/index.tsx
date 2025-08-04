@@ -9,7 +9,7 @@ import AdminUsers from './AdminUsers.tsx';
 import Perfil from './Perfil.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 import Documentos from './Documentos.tsx';
-import Videos from './Videos.tsx';;
+import Videos from './Videos.tsx';
 import './styles.css';
 
 const AppRouter: React.FC = () => {
@@ -21,13 +21,13 @@ const AppRouter: React.FC = () => {
           toastOptions={{
             success: {
               style: {
-                background: '#04a146', // Verde da sua paleta de cores
+                background: '#04a146',
                 color: 'white',
               },
             },
             error: {
               style: {
-                background: '#c82333', // Vermelho da sua paleta de cores
+                background: '#c82333',
                 color: 'white',
               },
             },
