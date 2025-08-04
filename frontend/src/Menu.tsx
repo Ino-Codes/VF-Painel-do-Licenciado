@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.tsx';
+import logo from './img/logo-clara.png';
 
 const Menu: React.FC = () => {
   const { user } = useAuth();
@@ -14,14 +15,20 @@ const Menu: React.FC = () => {
       </button>
 
       <div className={`menu-left ${isMenuOpen ? 'open' : ''}`}>
-        <NavLink to="/dashboard" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"} onClick={() => setIsMenuOpen(false)}>
+        <NavLink to="/dashboard" className="menu-logo-link">
+          <img src={logo} alt="Valor Fiscal Logo" className="menu-logo" />
+        </NavLink>
+
+        <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'} onClick={() => setIsMenuOpen(false)}>
           Dashboard
         </NavLink>
+
         <NavLink to="/documentos" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')} onClick={() => setIsMenuOpen(false)}>
-          Documentos
+          <img src={logo} alt="Valor Fiscal logo" className="menu-logo"/>
         </NavLink>
+        
         {user && user.role === 'admin' && (
-          <NavLink to="/admin/users" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"} onClick={() => setIsMenuOpen(false)}>
+          <NavLink to="/admin/users" className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'} onClick={() => setIsMenuOpen(false)}>
             Gerenciar Usuários
           </NavLink>
         )}

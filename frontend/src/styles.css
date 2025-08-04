@@ -139,7 +139,6 @@ body::before {
   margin-top: 20px;
 }
 
-
 .login-error-message {
   background-color: #fff0f0;
   border: 1px solid #ff4d4d;
@@ -173,8 +172,8 @@ body::before {
 }
 
 .content-area {
-  padding: 25px; /* Ajustei o padding para ficar mais consistente */
-  flex-grow: 1; /* MÁGICA! Faz esta área crescer e empurrar o rodapé para baixo */
+  padding: 25px;
+  flex-grow: 1; 
 }
 
 .p-2 {
@@ -186,6 +185,7 @@ body::before {
   flex-direction: column;
 }
 
+/* Menu */
 .main-menu {
 justify-content: space-between;
 align-items: center;
@@ -221,6 +221,17 @@ gap: 25px;
 .menu-item.active {
   background-color: #363950;
   color: white;
+}
+
+/* Adicione estas classes ao seu styles.css */
+.menu-logo-link {
+  display: flex;
+  align-items: center;
+}
+
+.menu-logo {
+  height: 25px; /* Ajuste a altura conforme necessário */
+  width: auto;
 }
 
 /* Ícone de perfil */
@@ -509,7 +520,7 @@ padding: 10px 0;
   text-decoration: none;
 }
 
-/* --- Adicione ao final do styles.css --- */
+/* --- PopUps Toast --- */
 .password-section {
   margin-top: 30px;
   border-top: 1px solid #e0e0e0;
@@ -520,12 +531,11 @@ padding: 10px 0;
   margin-top: 15px;
   font-size: 14px;
   font-weight: 500;
-  color: #04a146; /* Verde para sucesso, pode ser alterado dinamicamente */
+  color: #04a146;
 }
 
-/* Para mensagens de erro, podemos criar uma classe específica */
 .feedback-message.error {
-    color: #c82333; /* Vermelho */
+    color: #c82333;
 }
 
 /* Documentos - Modal */
@@ -572,10 +582,10 @@ padding: 10px 0;
   margin: 0;
 }
 
-/* --- MOBILE / RESPONSIVO (Telas menores que 768px) --- */
+/* --- RESPONSIVO (Telas menores que 768px) --- */
 @media (max-width: 768px) {
   
-  /* Ajustes no Login */
+  /* Login */
   .p-1 {
     width: 90%;
     min-width: unset;
@@ -585,14 +595,14 @@ padding: 10px 0;
     width: 100%;
   }
 
-  /* Ajustes no Menu Principal */
+  /* Menu Superior */
   .main-menu {
     flex-wrap: wrap;
     justify-content: space-between;
     padding: 10px 15px;
   }
   .hamburger-menu {
-    display: block; /* Mostra o botão hambúrguer */
+    display: block;
     background: none;
     border: none;
     color: white;
@@ -600,18 +610,18 @@ padding: 10px 0;
     cursor: pointer;
   }
   .menu-left {
-    display: none; /* Esconde os links por padrão */
+    display: none;
     flex-direction: column;
     width: 100%;
     background-color: #1c1f26;
     padding: 10px 0;
     position: absolute;
-    top: 60px; /* Posição abaixo do menu */
+    top: 60px; 
     left: 0;
     z-index: 999;
   }
   .menu-left.open {
-    display: flex; /* Mostra os links quando o menu está aberto */
+    display: flex; 
   }
   .menu-item {
     width: 100%;
@@ -623,41 +633,40 @@ padding: 10px 0;
     gap: 10px;
   }
   .profile-text {
-    display: none; /* Esconde o texto do perfil em telas pequenas */
+    display: none; 
   }
 
-  /* Ajustes no Layout Geral */
+  /* Layout Geral */
   .content-area {
     padding: 15px;
   }
 
-  /* Ajustes no Perfil */
+  /* Perfil */
   .profile-card {
-    flex-direction: column; /* Empilha os elementos verticalmente */
+    flex-direction: column;
     gap: 20px;
   }
 
-  /* Ajustes na Lista de Documentos e Usuários */
+  /* Documentos | Usuários */
   .file-item, .user-list-item {
     flex-direction: column;
-    align-items: flex-start; /* Alinha itens à esquerda */
+    align-items: flex-start;
     gap: 15px;
   }
   .file-actions, .user-actions {
     width: 100%;
-    justify-content: flex-end; /* Alinha botões à direita */
+    justify-content: flex-end; 
   }
 
-  /* Ajustes no Formulário de Admin */
+  /* Admin */
   .admin-form .form-row {
     flex-direction: column;
   }
   .form-input {
-    min-width: unset; /* Remove largura mínima */
+    min-width: unset;
     width: 100%;
   }
 
-  /* Ajustes no Modal */
   .modal-content {
     width: 95%;
   }
