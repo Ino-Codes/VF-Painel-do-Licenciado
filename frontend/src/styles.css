@@ -710,18 +710,18 @@ padding: 10px 0;
 /* --- RESPONSIVO (Telas menores que 768px) --- */
 @media (max-width: 768px) {
   
-  /* Ajustes no Login */
+  /* Login */
   .p-1 {
-    width: 90%; /* Usa 90% da largura da tela */
-    min-width: unset; /* REMOVE a largura mínima fixa que causava o problema */
+    width: 90%;
+    min-width: unset; 
     padding: 20px;
-    height: auto; /* Altura automática para se ajustar ao conteúdo */
+    height: 100%; 
   }
   .input-login {
-    width: 100%; /* Inputs ocupam a largura total do card */
+    width: 100%;
   }
   .p-img img {
-    width: 250px; /* Logo um pouco menor no mobile */
+    width: 250px;
   }
 
   /* Ajustes no Menu Principal */
@@ -729,7 +729,7 @@ padding: 10px 0;
     flex-wrap: wrap;
     justify-content: space-between;
     padding: 10px 15px;
-    position: relative; /* Necessário para o menu dropdown */
+    position: relative; 
   }
   .hamburger-menu {
     display: block;
@@ -746,7 +746,7 @@ padding: 10px 0;
     background-color: #1c1f26;
     padding: 10px 0;
     position: absolute;
-    top: 60px; /* Posição abaixo do cabeçalho do menu */
+    top: 60px;
     left: 0;
     z-index: 999;
     border-bottom-left-radius: 8px;
@@ -766,7 +766,7 @@ padding: 10px 0;
     gap: 10px;
   }
   .profile-text {
-    display: none; /* Esconde o texto do perfil em telas pequenas para economizar espaço */
+    display: none;
   }
 
   /* Ajustes no Layout Geral */
@@ -774,14 +774,14 @@ padding: 10px 0;
     padding: 15px;
   }
 
-  /* Ajustes no Perfil */
+  /* Perfil */
   .profile-card {
     flex-direction: column;
     gap: 20px;
     padding: 20px;
   }
   .details-section label {
-      width: auto; /* Permite que o label quebre a linha se necessário */
+      width: auto;
       margin-bottom: 5px;
   }
   .details-section .form-row {
@@ -789,7 +789,7 @@ padding: 10px 0;
       align-items: flex-start;
   }
 
-  /* Ajustes na Lista de Documentos e Usuários */
+  /* Documentos e Usuários */
   .file-item, .user-list-item {
     flex-direction: column;
     align-items: flex-start;
@@ -800,7 +800,7 @@ padding: 10px 0;
     justify-content: flex-end;
   }
 
-  /* Ajustes no Formulário de Admin */
+  /* Admin */
   .admin-form .form-row {
     flex-direction: column;
   }
@@ -809,15 +809,14 @@ padding: 10px 0;
     width: 100%;
   }
 
-  /* Ajustes no Modal */
+  /* Modal */
   .modal-content {
     width: 95%;
   }
 }
 
-/*
 @media (min-width: 769px) {
   .hamburger-menu {
     display: none;
   }
-} */
+}
