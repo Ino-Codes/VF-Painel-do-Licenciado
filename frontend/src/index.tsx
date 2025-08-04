@@ -9,7 +9,7 @@ import AdminUsers from './AdminUsers.tsx';
 import Perfil from './Perfil.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 import Documentos from './Documentos.tsx';
-import Videos from './Videos.tsx';
+import Videos from './Videos.tsx';;
 import './styles.css';
 
 const AppRouter: React.FC = () => {
