@@ -93,6 +93,62 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// VIDEOS: LISTAGEM
+app.get('/api/videos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM videos ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar vídeos:', err);
+    res.status(500).json({ error: 'Erro ao buscar vídeos' });
+  }
+});
+
+// VIDEOS: INCLUSÃO
+app.post('/api/videos', async (req, res) => {
+  const { title, description, youtube_url } = req.body;
+  try {
+    const sql = 'INSERT INTO videos (title, description, youtube_url) VALUES ($1, $2, $3) RETURNING *';
+    const result = await pool.query(sql, [title, description, youtube_url]);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao adicionar vídeo:', err);
+    res.status(500).json({ error: 'Erro ao adicionar vídeo' });
+  }
+});
+
+// VIDEOS: EDIÇÃO
+app.put('/api/videos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, description, youtube_url } = req.body;
+  try {
+    const sql = 'UPDATE videos SET title = $1, description = $2, youtube_url = $3 WHERE id = $4 RETURNING *';
+    const result = await pool.query(sql, [title, description, youtube_url, id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Vídeo não encontrado.' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao editar vídeo:', err);
+    res.status(500).json({ error: 'Erro ao editar vídeo.' });
+  }
+});
+
+// VIDEOS: EXCLUSÃO
+app.delete('/api/videos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM videos WHERE id = $1', [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Vídeo não encontrado.' });
+    }
+    res.json({ success: true, message: 'Vídeo excluído com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir vídeo:', err);
+    res.status(500).json({ error: 'Erro ao excluir vídeo.' });
+  }
+});
+
 // ADMIN: LISTAR USUÁRIOS
 app.get('/api/admin/users', async (req, res) => {
   const { search, page = 1, limit = 10 } = req.query;

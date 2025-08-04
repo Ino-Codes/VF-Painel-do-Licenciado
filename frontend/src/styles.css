@@ -575,6 +575,68 @@ padding: 10px 0;
   opacity: 0.5;
 }
 
+/* Videos */
+/* --- Estilos da Videoteca --- */
+.video-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.video-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-embed {
+  position: relative;
+  padding-top: 56.25%; /* Proporção 16:9 */
+  width: 100%;
+}
+
+.video-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video-info {
+  padding: 15px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-info h3 {
+  margin-top: 0;
+  font-size: 1.1em;
+}
+
+.video-info p {
+  flex-grow: 1;
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.video-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* Ajuste no textarea do modal */
+.modal-content textarea.form-input {
+  height: 80px;
+  resize: vertical;
+}
+
 .pagination-controls button:not(:disabled):hover {
   background-color: #e9ecef;
 }

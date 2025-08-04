@@ -20,7 +20,6 @@ const AdminUsers: React.FC = () => {
   const [form, setForm] = useState({ nome: '', email: '', password: '', role: 'licenciado' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  // --- NOVOS ESTADOS PARA PESQUISA E PAGINAÇÃO ---
   const [searchTerm, setSearchTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,12 +55,10 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  // Efeito principal para buscar dados
   useEffect(() => {
     fetchUsers();
   }, [user, currentPage, limit, searchQuery]);
 
-  // Efeito para resetar a página ao filtrar
   useEffect(() => {
     setCurrentPage(1);
   }, [limit, searchQuery]);
@@ -243,7 +240,6 @@ const AdminUsers: React.FC = () => {
     <Footer />
   </div>
   );
-
   
 };
 
