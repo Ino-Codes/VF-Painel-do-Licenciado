@@ -5,6 +5,7 @@ import Menu from './Menu.tsx';
 import FileModal from './FileModal.tsx';
 import Footer from './Footer.tsx';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 interface FileData {
   id: number;
@@ -35,7 +36,7 @@ const Documentos: React.FC = () => {
       const res = await api.get('/api/files', { params: { category } });
       setFiles(res.data);
     } catch (err) {
-      console.error('Erro ao buscar arquivos:', err);
+      toast.error('Erro ao buscar arquivos:', err);
     }
   };
 
@@ -50,8 +51,9 @@ const Documentos: React.FC = () => {
       try {
         await api.delete(`/api/files/${fileId}`);
         fetchFiles();
+        toast.success('Arquivo excluído com sucesso.');
       } catch (err) {
-        alert('Erro ao excluir o arquivo.');
+        toast.error('Erro ao excluir o arquivo.');
       }
     }
   };
