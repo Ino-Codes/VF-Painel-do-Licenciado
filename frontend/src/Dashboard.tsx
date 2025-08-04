@@ -194,7 +194,7 @@ const Dashboard: React.FC = () => {
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDeleteNotice}
-        title="Excluir Aviso"
+        title="Confirmar Exclusão"
         message="Tem certeza que deseja excluir este aviso? Esta ação não pode ser desfeita."
       />
     </div>

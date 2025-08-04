@@ -150,7 +150,7 @@ const Videos: React.FC = () => {
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="Excluir Vídeo"
+        title="Confirmar Exclusão"
         message="Tem certeza que deseja excluir este vídeo? Esta ação não pode ser desfeita."
       />
     </div>
