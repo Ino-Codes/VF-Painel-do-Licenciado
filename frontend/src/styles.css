@@ -715,7 +715,7 @@ padding: 10px 0;
     width: 90%;
     min-width: unset; 
     padding: 20px;
-    height: 100%; 
+    height: auto; 
   }
   .input-login {
     width: 100%;
@@ -815,6 +815,7 @@ padding: 10px 0;
   }
 }
 
+/* Oculta o menu mobile (Telas maiores que 768px) */
 @media (min-width: 769px) {
   .hamburger-menu {
     display: none;
