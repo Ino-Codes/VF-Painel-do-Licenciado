@@ -801,6 +801,21 @@ padding: 10px 0;
     color: #c82333;
 }
 
+/* --- Popups de Confirmacao --- */
+.confirmation-modal p {
+  margin: 20px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.form-button.delete {
+  background-color: #c82333;/
+}
+
+.form-button.delete:hover {
+  background-color: #a21b29;
+}
+
 /* Documentos: Adicionar/Editar Arquivo */
 .modal-overlay {
   position: fixed;

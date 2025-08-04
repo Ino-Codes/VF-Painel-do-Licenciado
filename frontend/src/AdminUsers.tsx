@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Menu from './Menu.tsx';
 import Footer from './Footer.tsx';
 import toast from 'react-hot-toast';
+import ConfirmationModal from './ConfirmationModal.tsx';
 
 interface User {
   id: number;
@@ -26,6 +27,9 @@ const AdminUsers: React.FC = () => {
   const [limit, setLimit] = useState(10);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
   
   useEffect(() => {
     if (!loading) {
@@ -38,7 +42,7 @@ const AdminUsers: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  const fetchUsers = async () => {
+    const fetchUsers = async () => {
     if (user?.role !== 'admin') return;
     try {
       const params: any = { page: currentPage, limit };
@@ -84,20 +88,27 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteClick = (id: number) => {
     if (user && user.id === id) {
       toast.error('Você não pode excluir sua própria conta de administrador.');
       return;
     }
+    setUserToDelete(id);
+    setIsConfirmModalOpen(true);
+  };
 
-    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
-      try {
-        await api.delete(`/api/admin/users/${id}`);
-        toast.success("Usuário excluído com sucesso!");
-        fetchUsers();
-      } catch(err) {
-        toast.error("Erro ao excluir o usuário.");
-      }
+  const handleConfirmDelete = async () => {
+    if (userToDelete === null) return;
+
+    try {
+      await api.delete(`/api/admin/users/${userToDelete}`);
+      toast.success("Usuário excluído com sucesso!");
+      fetchUsers();
+    } catch(err) {
+      toast.error("Erro ao excluir o usuário.");
+    } finally {
+      setIsConfirmModalOpen(false); // Fecha o modal
+      setUserToDelete(null); // Limpa o ID
     }
   };
 
@@ -206,7 +217,7 @@ const AdminUsers: React.FC = () => {
               <button className="list-button edit" onClick={() => startEdit(u)}>Editar</button>
               <button 
                 className="list-button delete" 
-                onClick={() => handleDelete(u.id)}
+                onClick={() => handleDeleteClick(u.id)}
                 disabled={user.id === u.id}
                 >
                 Excluir
@@ -249,6 +260,13 @@ const AdminUsers: React.FC = () => {
       )}
     </div>
     <Footer />
+    <ConfirmationModal
+      isOpen={isConfirmModalOpen}
+      onClose={() => setIsConfirmModalOpen(false)}
+      onConfirm={handleConfirmDelete}
+      title="Confirmar Exclusão"
+      message="Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita."
+    />
   </div>
   );
   
