@@ -5,6 +5,7 @@ import Menu from './Menu.tsx';
 import Footer from './Footer.tsx';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import ConfirmationModal from './ConfirmationModal.tsx';
 
 const Perfil: React.FC = () => {
   const { user, login, logout, loading } = useAuth();
@@ -16,6 +17,8 @@ const Perfil: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -95,18 +98,21 @@ const Perfil: React.FC = () => {
     }
   };
 
-  const handleRemoveAvatar = async () => {
-    if (!user) return;
+  const handleRemoveAvatarClick = () => {
+    setIsConfirmModalOpen(true);
+  };
 
-    if (window.confirm('Tem certeza que deseja remover sua foto de perfil?')) {
-      try {
-        const res = await api.delete(`/api/users/${user.id}/avatar`);
-        login(res.data.user);
-        toast.success('Foto de perfil removida com sucesso!');
-      } catch (err) {
-        toast.error('Erro ao remover a foto.');
-        console.error(err);
-      }
+  const handleConfirmRemoveAvatar = async () => {
+    if (!user) return;
+    try {
+      const res = await api.delete(`/api/users/${user.id}/avatar`);
+      login(res.data.user);
+      toast.success('Foto de perfil removida com sucesso!');
+    } catch (err) {
+      toast.error('Erro ao remover a foto.');
+      console.error(err);
+    } finally {
+      setIsConfirmModalOpen(false);
     }
   };
  
@@ -137,7 +143,7 @@ const Perfil: React.FC = () => {
               </button>
             )}
             {user.avatar_url && !selectedFile && (
-              <button onClick={handleRemoveAvatar} className="form-button-cancel">
+              <button onClick={handleRemoveAvatarClick} className="form-button-cancel">
                 Remover Foto
               </button>
             )}
@@ -206,6 +212,13 @@ const Perfil: React.FC = () => {
         <button className="botao-logout" onClick={() => { logout(); navigate('/'); }}>Desconectar</button>  
       </div>
       <Footer />
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleConfirmRemoveAvatar}
+        title="Remover Foto de Perfil"
+        message="Tem certeza que deseja remover sua foto de perfil?"
+      />
     </div>
   );
 };
