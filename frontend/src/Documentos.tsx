@@ -18,10 +18,18 @@ interface FileData {
 const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  
+  // Estados da página
   const [files, setFiles] = useState<FileData[]>([]);
   const [category, setCategory] = useState('Manuais');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
+
+  // --- NOVOS ESTADOS PARA PAGINAÇÃO ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalFiles, setTotalFiles] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const categories = ['Manuais', 'Marketing', 'Financeiro'];
 
@@ -32,25 +40,39 @@ const Documentos: React.FC = () => {
   }, [user, loading, navigate]);
 
   const fetchFiles = async () => {
+    if (!user) return;
     try {
-      const res = await api.get('/api/files', { params: { category } });
-      setFiles(res.data);
+      // Envia os parâmetros de paginação e categoria para a API
+      const res = await api.get('/api/files', { 
+        params: { 
+          category,
+          page: currentPage,
+          limit,
+        } 
+      });
+      setFiles(res.data.files);
+      setTotalFiles(res.data.totalCount);
+      setTotalPages(res.data.totalPages);
     } catch (err) {
-      toast.error('Erro ao buscar arquivos:', err);
+      toast.error('Erro ao buscar arquivos.');
     }
   };
 
+  // Efeito para buscar os arquivos quando a página, limite ou categoria mudam
   useEffect(() => {
-    if (user) {
-      fetchFiles();
-    }
-  }, [category, user]);
+    fetchFiles();
+  }, [category, user, currentPage, limit]);
+
+  // Reseta para a primeira página quando a categoria ou o limite mudam
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, limit]);
 
   const handleDelete = async (fileId: number) => {
     if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
       try {
         await api.delete(`/api/files/${fileId}`);
-        toast.success('Arquivo excluído com sucesso.');
+        toast.success('Arquivo excluído com sucesso!');
         fetchFiles();
       } catch (err) {
         toast.error('Erro ao excluir o arquivo.');
@@ -124,6 +146,39 @@ const Documentos: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* --- NOVOS CONTROLES DE PAGINAÇÃO --- */}
+        {totalFiles > 0 && (
+          <div className="pagination-controls">
+            <div className="limit-selector">
+              <label htmlFor="limit">Itens por página:</label>
+              <select 
+                id="limit" 
+                value={limit} 
+                onChange={(e) => setLimit(Number(e.target.value))}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+            <span>Página {currentPage} de {totalPages}</span>
+            <div className="page-buttons">
+              <button 
+                onClick={() => setCurrentPage(currentPage - 1)} 
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </button>
+              <button 
+                onClick={() => setCurrentPage(currentPage + 1)} 
+                disabled={currentPage === totalPages}
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
