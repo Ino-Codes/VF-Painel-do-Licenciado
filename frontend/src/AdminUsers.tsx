@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import Menu from './Menu.tsx';
 import Footer from './Footer.tsx';
+import toast from 'react-hot-toast';
 
 interface User {
   id: number;
@@ -18,6 +19,14 @@ const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [form, setForm] = useState({ nome: '', email: '', password: '', role: 'licenciado' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  // --- NOVOS ESTADOS PARA PESQUISA E PAGINAÇÃO ---
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   
   useEffect(() => {
     if (!loading) {
@@ -31,44 +40,71 @@ const AdminUsers: React.FC = () => {
   }, [user, loading, navigate]);
 
   const fetchUsers = async () => {
+    if (user?.role !== 'admin') return;
     try {
-      const res = await api.get('/api/admin/users');
-      setUsers(res.data);
+      const params: any = { page: currentPage, limit };
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+      const res = await api.get('/api/admin/users', { params });
+      setUsers(res.data.users);
+      setTotalUsers(res.data.totalCount);
+      setTotalPages(res.data.totalPages);
     } catch (err) {
       console.error("Erro ao buscar usuários:", err);
+      toast.error("Não foi possível carregar os usuários.");
     }
   };
 
+  // Efeito principal para buscar dados
   useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchUsers();
-    }
-  }, [user]);
+    fetchUsers();
+  }, [user, currentPage, limit, searchQuery]);
+
+  // Efeito para resetar a página ao filtrar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [limit, searchQuery]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingUser) {
-      await api.put(`/api/admin/users/${editingUser.id}`, {
-        nome: editingUser.nome,
-        role: editingUser.role
-      });
-      setEditingUser(null);
-    } else {
-      await api.post('/api/admin/users', form);
-      setForm({ nome: '', email: '', password: '', role: 'licenciado' });
+    try {
+      if (editingUser) {
+        await api.put(`/api/admin/users/${editingUser.id}`, {
+          nome: editingUser.nome,
+          role: editingUser.role
+        });
+        toast.success("Usuário atualizado com sucesso!");
+        setEditingUser(null);
+      } else {
+        await api.post('/api/admin/users', form);
+        toast.success("Usuário criado com sucesso!");
+        setForm({ nome: '', email: '', password: '', role: 'licenciado' });
+      }
+      fetchUsers();
+    } catch(err) {
+      toast.error("Ocorreu um erro ao salvar o usuário.");
     }
-    fetchUsers();
   };
 
   const handleDelete = async (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
-      await api.delete(`/api/admin/users/${id}`);
-      fetchUsers();
+      try {
+        await api.delete(`/api/admin/users/${id}`);
+        toast.success("Usuário excluído com sucesso!");
+        fetchUsers();
+      } catch(err) {
+        toast.error("Erro ao excluir o usuário.");
+      }
     }
   };
 
   const startEdit = (u: User) => {
     setEditingUser(u);
+  };
+  
+  const handleSearch = () => {
+    setSearchQuery(searchTerm);
   };
 
   if (loading) {
@@ -145,6 +181,18 @@ const AdminUsers: React.FC = () => {
       </form>
 
       <h2>Usuários Cadastrados:</h2>
+      <div className="search-bar">
+        <input
+            type="search"
+            placeholder="Pesquisar por nome ou e-mail..."
+            className="form-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+        />
+        <button type="button" className="form-button" onClick={handleSearch}>Pesquisar</button>
+      </div>
+      
       <ul className="user-list">
         {users.map(u => (
           <li key={u.id} className="user-list-item">
@@ -159,6 +207,38 @@ const AdminUsers: React.FC = () => {
           </li>
         ))}
       </ul>
+
+      {totalUsers > 0 && (
+        <div className="pagination-controls">
+          <div className="limit-selector">
+            <label htmlFor="limit">Itens por página:</label>
+            <select 
+              id="limit" 
+              value={limit} 
+              onChange={(e) => setLimit(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+          <span>Página {currentPage} de {totalPages}</span>
+          <div className="page-buttons">
+            <button 
+              onClick={() => setCurrentPage(currentPage - 1)} 
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </button>
+            <button 
+              onClick={() => setCurrentPage(currentPage + 1)} 
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              Próxima
+            </button>
+          </div>
+        </div>
+      )}
     </div>
     <Footer />
   </div>
