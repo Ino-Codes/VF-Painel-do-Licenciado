@@ -281,19 +281,37 @@ app.delete('/api/users/:id/avatar', async (req, res) => {
 
 // DOCUMENTOS: LISTAR ARQUIVOS
 app.get('/api/files', async (req, res) => {
-  const { category } = req.query;
+  const { category, page = 1, limit = 10 } = req.query;
 
   try {
-    let sql = 'SELECT id, originalname, filename, category, uploaded_at FROM files ORDER BY uploaded_at DESC';
+    const offset = (page - 1) * limit;
+    let countSql = 'SELECT COUNT(*) FROM files';
+    let filesSql = 'SELECT id, originalname, filename, category, uploaded_at FROM files';
+    
     const params = [];
-
+    
     if (category) {
-      sql = 'SELECT id, originalname, filename, category, uploaded_at FROM files WHERE category = $1 ORDER BY uploaded_at DESC';
+      countSql += ' WHERE category = $1';
+      filesSql += ' WHERE category = $1';
       params.push(category);
     }
+
+    filesSql += ` ORDER BY uploaded_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     
-    const result = await pool.query(sql, params);
-    res.json(result.rows);
+    const [countResult, filesResult] = await Promise.all([
+      pool.query(countSql, params),
+      pool.query(filesSql, [...params, limit, offset])
+    ]);
+
+    const totalCount = parseInt(countResult.rows[0].count, 10);
+    const files = filesResult.rows;
+
+    res.json({
+      files,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit)
+    });
+
   } catch (err) {
     console.error('Erro ao buscar arquivos:', err);
     res.status(500).json({ error: 'Erro ao buscar arquivos' });
