@@ -126,7 +126,7 @@ const Faq: React.FC = () => {
         </div>
         
         <div className="search-bar">
-          <input type="search" placeholder="Pesquisar na FAQ..." className="form-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()}/>
+          <input type="search" placeholder="Pesquisar..." className="form-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()}/>
           <button className="form-button" onClick={handleSearch}>Pesquisar</button>
         </div>
 

@@ -959,8 +959,8 @@ padding: 10px 0;
   gap: 10px;
 }
 
-/* --- RESPONSIVO (Telas menores que 768px) --- */
-@media (max-width: 768px) {
+/* --- RESPONSIVO (Telas menores que 900px) --- */
+@media (max-width: 900px) {
   
   /* Login */
   .p-1 {
@@ -990,6 +990,7 @@ padding: 10px 0;
     color: white;
     font-size: 24px;
     cursor: pointer;
+    margin-left: 5px;
   }
   .menu-left {
     display: none;
@@ -1068,8 +1069,8 @@ padding: 10px 0;
   }
 }
 
-/* Oculta o menu mobile (Telas maiores que 768px) */
-@media (min-width: 769px) {
+/* Oculta o menu mobile (Telas maiores que 900px) */
+@media (min-width: 901px) {
   .hamburger-menu {
     display: none;
   }
