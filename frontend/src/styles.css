@@ -73,6 +73,13 @@ body::before {
   align-items: center;
 }
 
+.p-1 form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
 .p-1 a {
   color: white;
   font-style: normal;
