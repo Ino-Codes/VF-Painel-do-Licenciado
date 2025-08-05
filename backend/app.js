@@ -377,13 +377,25 @@ app.put('/api/admin/users/:id', async (req, res) => {
 app.delete('/api/admin/users/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('DELETE FROM users WHERE id = $1', [id]);
-    if (result.rowCount === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
-    logActivity(id, null, 'DELETE_USER', `Usuário ID ${id} foi excluído.`, req.ipAddress);
+    // Passo 1: Buscar os dados do usuário ANTES de deletar.
+    const userResult = await pool.query('SELECT email FROM users WHERE id = $1', [id]);
+    if (userResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+    const userEmail = userResult.rows[0].email;
+
+    // Passo 2: Deletar o usuário da tabela 'users'.
+    // A constraint 'ON DELETE SET NULL' na tabela 'activity_logs' cuidará das referências antigas.
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+
+    // Passo 3: Registrar o log da exclusão.
+    // Passamos 'null' para o user_id, pois o usuário não existe mais, e usamos o email que guardamos.
+    logActivity(null, userEmail, 'DELETE_USER', `Usuário ${userEmail} (ID: ${id}) foi excluído.`, req.ipAddress);
+    
     res.json({ success: true, message: 'Usuário excluído com sucesso.' });
   } catch (err) {
     console.error('Erro ao excluir usuário:', err);
-    res.status(500).json({ error: 'Erro no servidor' });
+    res.status(500).json({ error: 'Erro no servidor ao tentar excluir usuário.' });
   }
 });
 
