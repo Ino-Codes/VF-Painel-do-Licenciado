@@ -959,8 +959,8 @@ padding: 10px 0;
   gap: 10px;
 }
 
-/* --- RESPONSIVO (Telas menores que 900px) --- */
-@media (max-width: 900px) {
+/* --- RESPONSIVO (Telas menores que 1150px) --- */
+@media (max-width: 1150px) {
   
   /* Login */
   .p-1 {
@@ -1069,8 +1069,8 @@ padding: 10px 0;
   }
 }
 
-/* Oculta o menu mobile (Telas maiores que 900px) */
-@media (min-width: 901px) {
+/* Oculta o menu mobile (Telas maiores que 1150px) */
+@media (min-width: 1151px) {
   .hamburger-menu {
     display: none;
   }
