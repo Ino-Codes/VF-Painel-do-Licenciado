@@ -19,18 +19,20 @@ const VideoModal: React.FC<VideoModalProps> = ({ videoToEdit, onClose, onSuccess
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [youtube_url, setYoutubeUrl] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'internal'>('public');
 
   useEffect(() => {
     if (videoToEdit) {
       setTitle(videoToEdit.title);
       setDescription(videoToEdit.description);
       setYoutubeUrl(videoToEdit.youtube_url);
+      setVisibility(videoToEdit.visibility || 'public');
     }
   }, [videoToEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const videoData = { title, description, youtube_url };
+    const videoData = { title, description, youtube_url, visibility };
     try {
       if (videoToEdit) {
         await api.put(`/api/videos/${videoToEdit.id}`, videoData);
@@ -59,6 +61,18 @@ const VideoModal: React.FC<VideoModalProps> = ({ videoToEdit, onClose, onSuccess
           <div className="form-row">
             <textarea placeholder="Descrição do vídeo..." value={description} onChange={(e) => setDescription(e.target.value)} className="form-input" />
           </div>
+
+          <div className="form-row">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={visibility === 'internal'}
+                onChange={(e) => setVisibility(e.target.checked ? 'internal' : 'public')}
+              />
+              Visível apenas para Gestores e Admin
+            </label>
+          </div>
+
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="form-button-cancel">Cancelar</button>
             <button type="submit" className="form-button">Salvar</button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
 import api from './api.ts';
 import Menu from './Menu.tsx';
@@ -44,14 +44,15 @@ const Videos: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async () => {
+    if (!user) return;
     try {
-      const res = await api.get('/api/videos');
+      const res = await api.get('/api/videos', { params: { role: user.role } });
       setVideos(res.data);
     } catch (err) {
       toast.error('Erro ao buscar vídeos.');
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -112,22 +113,17 @@ const Videos: React.FC = () => {
             </button>
           )}
         </div>
+        
         <div className="video-list">
           {videos.map((video) => (
             <div key={video.id} className="video-card">
               <div className="video-embed">
-                <iframe
-                  src={getYoutubeEmbedUrl(video.youtube_url)}
-                  title={video.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
+                <iframe src={getYoutubeEmbedUrl(video.youtube_url)} title={video.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
               </div>
               <div className="video-info">
                 <h3>{video.title}</h3>
                 <p>{video.description}</p>
-                {user.role === 'admin' && (
+                {user.role !== 'licenciado' && (
                   <div className="video-actions">
                     <button className="list-button edit" onClick={() => openModalForEdit(video)}>Editar</button>
                     <button className="list-button delete" onClick={() => handleDeleteClick(video.id)}>Excluir</button>
@@ -138,20 +134,20 @@ const Videos: React.FC = () => {
           ))}
         </div>
       </div>
-      {isModalOpen && (
-        <VideoModal
-          videoToEdit={editingVideo}
-          onClose={() => setIsModalOpen(false)}
-          onSuccess={handleSuccess}
-        />
-      )}
+      {isModalOpen && <VideoModal
+      videoToEdit={editingVideo}
+      onClose={() => setIsModalOpen(false)}
+      onSuccess={handleSuccess}
+      />}
+
       <Footer />
+
       <ConfirmationModal
-        isOpen={isConfirmModalOpen}
-        onClose={() => setIsConfirmModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Confirmar Exclusão"
-        message="Tem certeza que deseja excluir este vídeo? Esta ação não pode ser desfeita."
+      isOpen={isConfirmModalOpen}
+      onClose={() => setIsConfirmModalOpen(false)}
+      onConfirm={handleConfirmDelete}
+      title="Confirmar Exclusão"
+      message="Tem certeza que deseja excluir este vídeo? Esta ação não pode ser desfeita."
       />
     </div>
   );

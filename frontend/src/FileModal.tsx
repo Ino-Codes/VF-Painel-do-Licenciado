@@ -17,12 +17,14 @@ interface FileModalProps {
 const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess }) => {
   const [originalname, setOriginalname] = useState('');
   const [category, setCategory] = useState('Manuais');
+  const [visibility, setVisibility] = useState<'public' | 'internal'>('public');
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (fileToEdit) {
       setOriginalname(fileToEdit.originalname);
       setCategory(fileToEdit.category);
+      setVisibility(fileToEdit.visibility || 'public');
     }
   }, [fileToEdit]);
 
@@ -31,7 +33,7 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
 
     try {
       if (fileToEdit) {
-        await api.put(`/api/files/${fileToEdit.id}`, { originalname, category });
+        await api.put(`/api/files/${fileToEdit.id}`, { originalname, category, visibility });
         toast.success('Arquivo atualizado com sucesso!');
       } else {
         if (!file) {
@@ -42,6 +44,7 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
         formData.append('file', file);
         formData.append('originalname', originalname);
         formData.append('category', category);
+        formData.append('visibility', visibility);
         await api.post('/api/files', formData);
         toast.success('Arquivo incluído com sucesso!');
       }
@@ -67,17 +70,28 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
               required
             />
           </div>
+
           <div className="form-row">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="form-select"
-            >
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className="form-select">
               <option value="Manuais">Manuais</option>
               <option value="Marketing">Marketing</option>
-              <option value="Financeiro">Financeiro</option>
+              <option value="Financeiro">Remuneração</option>
+              {/* Aqui vão as categorias */}
+              <option value="Gestão Interna">Gestão Interna</option>
             </select>
           </div>
+
+          <div className="form-row">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={visibility === 'internal'}
+                onChange={(e) => setVisibility(e.target.checked ? 'internal' : 'public')}
+              />
+              Visível apenas para Gestores e Admin
+            </label>
+          </div>
+
           {!fileToEdit && (
             <div className="form-row">
               <input

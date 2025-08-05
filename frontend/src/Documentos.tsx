@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
 import api from './api.ts';
 import Menu from './Menu.tsx';
@@ -21,6 +21,8 @@ const Documentos: React.FC = () => {
   const navigate = useNavigate();
   
   const [files, setFiles] = useState<FileData[]>([]);
+  const allCategories = ['Manuais', 'Marketing', 'Financeiro', 'Gestão Interna'];
+  const [visibleCategories, setVisibleCategories] = useState<string[]>([]);
   const [category, setCategory] = useState('Manuais');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
@@ -36,21 +38,30 @@ const Documentos: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<number | null>(null);
 
-  const categories = ['Manuais', 'Marketing', 'Financeiro'];
-
   useEffect(() => {
     if (!loading && !user) {
       navigate('/');
     }
   }, [user, loading, navigate]);
 
-  const fetchFiles = async () => {
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'licenciado') {
+        setVisibleCategories(allCategories.filter(cat => cat !== 'Gestão Interna'));
+      } else {
+        setVisibleCategories(allCategories);
+      }
+    }
+  }, [user]);
+
+  const fetchFiles = useCallback(async () => {
     if (!user) return;
     try {
       const params: any = { 
         category,
         page: currentPage,
         limit,
+        role: user.role,
       };
       if (searchQuery) {
         params.search = searchQuery;
@@ -62,7 +73,7 @@ const Documentos: React.FC = () => {
     } catch (err) {
       toast.error('Erro ao buscar arquivos.');
     }
-  };
+  }, [user, category, currentPage, limit, searchQuery]);
 
   useEffect(() => {
     fetchFiles();
@@ -124,7 +135,7 @@ const Documentos: React.FC = () => {
       <div className="content-area document-center">
         <div className="document-header">
           <h2>Central de Documentos</h2>
-          {user?.role === 'admin' && (
+          {user?.role !== 'licenciado' && (
             <button className="form-button" onClick={openModalForCreate}>
               + Adicionar Arquivo
             </button>
@@ -132,7 +143,7 @@ const Documentos: React.FC = () => {
         </div>
      
         <div className="tabs">
-          {categories.map((cat) => (
+          {visibleCategories.map((cat) => (
             <button
               key={cat}
               className={`tab-item ${category === cat ? 'active' : ''}`}
