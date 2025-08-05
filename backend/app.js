@@ -41,58 +41,38 @@ const upload = multer({ storage: storage });
 const createTables = async () => {
   const userTable = `
     CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL,
-      nome TEXT,
-      avatar_url TEXT,
-      reset_token TEXT,
-      reset_token_expires TIMESTAMPTZ
+      id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL,
+      role TEXT NOT NULL, nome TEXT, avatar_url TEXT,
+      reset_token TEXT, reset_token_expires TIMESTAMPTZ
     );`;
   const noticeTable = `
     CREATE TABLE IF NOT EXISTS notices (
-      id SERIAL PRIMARY KEY,
-      message TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      id SERIAL PRIMARY KEY, message TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
   const fileTable = `
     CREATE TABLE IF NOT EXISTS files (
-      id SERIAL PRIMARY KEY,
-      filename TEXT,
-      originalname TEXT,
-      category TEXT,
+      id SERIAL PRIMARY KEY, filename TEXT, originalname TEXT, category TEXT,
+      visibility TEXT DEFAULT 'public', -- NOVO
       uploaded_at TIMESTAMPTZ DEFAULT NOW()
     );`;
   const videoTable = `
     CREATE TABLE IF NOT EXISTS videos (
-      id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT,
+      id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT,
       youtube_url TEXT NOT NULL UNIQUE,
+      visibility TEXT DEFAULT 'public', -- NOVO
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
   const logsTable = `
     CREATE TABLE IF NOT EXISTS activity_logs (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-      user_email TEXT,
-      action TEXT NOT NULL,
-      details TEXT,
-      ip_address TEXT,
+      id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      user_email TEXT, action TEXT NOT NULL, details TEXT, ip_address TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
-  
   const faqTable = `
-  CREATE TABLE IF NOT EXISTS faq (
-    id SERIAL PRIMARY KEY,
-    category TEXT NOT NULL,
-    question TEXT NOT NULL,
-    answer TEXT NOT NULL,
-    document_url TEXT,
-    document_originalname TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-  );`;
+    CREATE TABLE IF NOT EXISTS faq (
+      id SERIAL PRIMARY KEY, category TEXT NOT NULL, question TEXT NOT NULL, answer TEXT NOT NULL,
+      document_url TEXT, document_originalname TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
 
   try {
     await pool.query(userTable);
@@ -257,10 +237,20 @@ app.delete('/api/admin/notices/:id', async (req, res) => {
   }
 });
 
-// VIDEOS
+// --- VIDEOS (COM CONTROLE DE VISIBILIDADE) ---
 app.get('/api/videos', async (req, res) => {
+    // Adicionado 'role' para filtrar
+    const { role } = req.query;
     try {
-        const result = await pool.query('SELECT * FROM videos ORDER BY created_at DESC');
+        let sql = 'SELECT * FROM videos';
+        const params = [];
+
+        if (role === 'licenciado') {
+          sql += " WHERE visibility = 'public'";
+        }
+        sql += ' ORDER BY created_at DESC';
+
+        const result = await pool.query(sql, params);
         res.json(result.rows);
     } catch (err) {
         console.error('Erro ao buscar vídeos:', err);
@@ -269,9 +259,13 @@ app.get('/api/videos', async (req, res) => {
 });
 
 app.post('/api/videos', async (req, res) => {
-    const { title, description, youtube_url } = req.body;
+    // Adicionado 'visibility'
+    const { title, description, youtube_url, visibility } = req.body;
     try {
-        const result = await pool.query('INSERT INTO videos (title, description, youtube_url) VALUES ($1, $2, $3) RETURNING *', [title, description, youtube_url]);
+        const result = await pool.query(
+          'INSERT INTO videos (title, description, youtube_url, visibility) VALUES ($1, $2, $3, $4) RETURNING *',
+          [title, description, youtube_url, visibility]
+        );
         res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error('Erro ao adicionar vídeo:', err);
@@ -280,10 +274,14 @@ app.post('/api/videos', async (req, res) => {
 });
 
 app.put('/api/videos/:id', async (req, res) => {
+    // Adicionado 'visibility'
     const { id } = req.params;
-    const { title, description, youtube_url } = req.body;
+    const { title, description, youtube_url, visibility } = req.body;
     try {
-        const result = await pool.query('UPDATE videos SET title = $1, description = $2, youtube_url = $3 WHERE id = $4 RETURNING *', [title, description, youtube_url, id]);
+        const result = await pool.query(
+          'UPDATE videos SET title = $1, description = $2, youtube_url = $3, visibility = $4 WHERE id = $5 RETURNING *',
+          [title, description, youtube_url, visibility, id]
+        );
         if (result.rowCount === 0) return res.status(404).json({ error: 'Vídeo não encontrado.' });
         res.json(result.rows[0]);
     } catch (err) {
@@ -543,13 +541,20 @@ app.delete('/api/users/:id/avatar', async (req, res) => {
   }
 });
 
-// CENTRAL DE DOCUMENTOS
+// --- CENTRAL DE DOCUMENTOS (COM CONTROLE DE VISIBILIDADE) ---
 app.get('/api/files', async (req, res) => {
-  const { category, search, page = 1, limit = 10 } = req.query;
+  // Adicionado 'role' para filtrar
+  const { category, search, page = 1, limit = 10, role } = req.query;
   try {
     const offset = (page - 1) * limit;
     let whereClauses = [];
     const params = [];
+
+    // Filtro de visibilidade
+    if (role === 'licenciado') {
+      whereClauses.push("visibility = 'public'");
+    }
+
     if (category) {
       params.push(category);
       whereClauses.push(`category = $${params.length}`);
@@ -558,13 +563,16 @@ app.get('/api/files', async (req, res) => {
       params.push(`%${search}%`);
       whereClauses.push(`originalname ILIKE $${params.length}`);
     }
+    
     const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
     const countSql = `SELECT COUNT(*) FROM files ${whereString}`;
     const filesSql = `SELECT * FROM files ${whereString} ORDER BY uploaded_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    
     const [countResult, filesResult] = await Promise.all([
       pool.query(countSql, params),
       pool.query(filesSql, [...params, limit, offset])
     ]);
+
     const totalCount = parseInt(countResult.rows[0].count, 10);
     res.json({
       files: filesResult.rows,
@@ -578,7 +586,8 @@ app.get('/api/files', async (req, res) => {
 });
 
 app.post('/api/files', upload.single('file'), async (req, res) => {
-  const { originalname, category } = req.body;
+  // Adicionado 'visibility'
+  const { originalname, category, visibility } = req.body;
   if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
   try {
     const uploadResult = await new Promise((resolve, reject) => {
@@ -588,12 +597,32 @@ app.post('/api/files', upload.single('file'), async (req, res) => {
       }).end(req.file.buffer);
     });
     const fileUrl = uploadResult.secure_url;
-    const result = await pool.query('INSERT INTO files (filename, originalname, category) VALUES ($1, $2, $3) RETURNING *', [fileUrl, originalname, category]);
+    const result = await pool.query(
+      'INSERT INTO files (filename, originalname, category, visibility) VALUES ($1, $2, $3, $4) RETURNING *',
+      [fileUrl, originalname, category, visibility]
+    );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Erro no upload de arquivo:', err);
     res.status(500).json({ error: 'Erro no servidor durante o upload.' });
   }
+});
+
+app.put('/api/files/:id', async (req, res) => {
+    // Adicionado 'visibility'
+    const { id } = req.params;
+    const { originalname, category, visibility } = req.body;
+    try {
+        const result = await pool.query(
+          'UPDATE files SET originalname = $1, category = $2, visibility = $3 WHERE id = $4 RETURNING *',
+          [originalname, category, visibility, id]
+        );
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Arquivo não encontrado.' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Erro ao editar arquivo:', err);
+        res.status(500).json({ error: 'Erro ao editar arquivo.' });
+    }
 });
 
 app.delete('/api/files/:id', async (req, res) => {
@@ -610,19 +639,6 @@ app.delete('/api/files/:id', async (req, res) => {
     console.error('Erro ao excluir arquivo:', err);
     res.status(500).json({ error: 'Erro ao excluir arquivo.' });
   }
-});
-
-app.put('/api/files/:id', async (req, res) => {
-    const { id } = req.params;
-    const { originalname, category } = req.body;
-    try {
-        const result = await pool.query('UPDATE files SET originalname = $1, category = $2 WHERE id = $3 RETURNING *', [originalname, category, id]);
-        if (result.rowCount === 0) return res.status(404).json({ error: 'Arquivo não encontrado.' });
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error('Erro ao editar arquivo:', err);
-        res.status(500).json({ error: 'Erro ao editar arquivo.' });
-    }
 });
 
 // LOGS DE ATIVIDADE
