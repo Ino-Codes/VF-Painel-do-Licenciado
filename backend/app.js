@@ -6,11 +6,15 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
+const sgMail = require('@sendgrid/mail');
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 3001;
 
 // --- CONFIGURAÇÕES ---
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Conexão com o PostgreSQL
 const pool = new Pool({
@@ -138,11 +142,85 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.post('/api/redefinir-senha', (req, res) => {
-    // Lógica de redefinição de senha a ser implementada
-    res.json({ message: 'Funcionalidade em desenvolvimento.' });
+// REDEFINIR SENHA
+app.post('/api/solicitar-redefinicao', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = userResult.rows[0];
+
+    if (!user) {
+      return res.json({ message: 'Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.' });
+    }
+
+    // 1. Gerar o token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    // 2. Definir a data de expiração (15 minutos))
+    const tokenExpiry = new Date(Date.now() + 900000); 
+
+    // 3. Salvar o token HASHED no banco
+    await pool.query('UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3', [hashedToken, tokenExpiry, user.id]);
+    
+    // 4. Enviar o email com o token NÃO-HASHED
+    const resetUrl = `https://https://vf-painel-do-licenciado.vercel.app/reset-password?token=${resetToken}`; // ATENÇÃO: Troque pelo seu domínio da Vercel
+    
+    const msg = {
+      to: user.email,
+      from: process.env.EMAIL_FROM,
+      subject: 'Redefinição de Senha - Painel do Licenciado',
+      html: `
+        <p>Olá, ${user.nome}.</p>
+        <p>Você solicitou a redefinição da sua senha do Painel do Licenciado. Por favor, clique no link abaixo para criar uma nova senha:</p>
+        <a href="${resetUrl}" target="_blank">Redefinir Minha Senha</a>
+        <p>Este link é válido por 15 minutos. Se você não solicitou esta alteração, por favor, ignore este e-mail.</p>
+        <p>Atenciosamente,<br>Equipe Valor Fiscal</p>
+      `,
+    };
+
+    await sgMail.send(msg);
+
+    res.json({ message: 'Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.' });
+  } catch (err) {
+    console.error('Erro ao solicitar redefinição de senha:', err);
+    res.status(500).send({ error: 'Erro no servidor' });
+  }
 });
 
+
+// ROTA #2: Usuário efetivamente redefine a senha
+app.post('/api/redefinir-senha', async (req, res) => {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+        return res.status(400).json({ error: 'Token e nova senha são obrigatórios.' });
+    }
+
+    try {
+        // 1. Criptografar o token recebido para comparar com o do banco
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        // 2. Buscar usuário pelo token e verificar se não expirou
+        const userResult = await pool.query('SELECT * FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()', [hashedToken]);
+        const user = userResult.rows[0];
+
+        if (!user) {
+            return res.status(400).json({ error: 'Token inválido ou expirado. Por favor, solicite a redefinição novamente.' });
+        }
+
+        // 3. Atualizar a senha
+        const newPasswordHash = await bcrypt.hash(password, 10);
+        await pool.query('UPDATE users SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2', [newPasswordHash, user.id]);
+        
+        logActivity(user.id, user.email, 'PASSWORD_RESET', 'Senha redefinida com sucesso através do link.', req.ipAddress);
+        res.json({ message: 'Senha redefinida com sucesso!' });
+
+    } catch (err) {
+        console.error('Erro ao redefinir senha:', err);
+        res.status(500).send({ error: 'Erro no servidor' });
+    }
+});
 
 // MURAL DE AVISOS (DASHBOARD)
 app.get('/api/notices', async (req, res) => {
