@@ -165,7 +165,7 @@ app.post('/api/solicitar-redefinicao', async (req, res) => {
 
     await pool.query('UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3', [hashedToken, tokenExpiry, user.id]);
     
-    const resetUrl = `https://vf-painel-do-licenciado.vercel.app/reset-password?token=${resetToken}`;
+    const resetUrl = `https://licenciados.valorfiscal.com/reset-password?token=${resetToken}`;
     
     const msg = {
       to: user.email,
