@@ -12,6 +12,7 @@ import Documentos from './Documentos.tsx';
 import Videos from './Videos.tsx';
 import ActivityLogs from './ActivityLogs.tsx';
 import Faq from './Faq.tsx';
+import ResetPassword from './ResetPassword.tsx'; 
 import './styles.css';
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -39,6 +40,7 @@ const AppRouter: React.FC = () => {
         />
         <Routes>
           <Route path="/" element={<App />} />
+          <Route path="/reset-password" element={<ResetPassword />} /> {/* ADICIONE ESTA ROTA */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/perfil" element={<Perfil />} />

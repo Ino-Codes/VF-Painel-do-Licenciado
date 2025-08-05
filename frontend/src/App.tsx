@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import api from './api.ts';
 import { useNavigate } from 'react-router-dom';
-import logoclara from './img/logo-clara.png';
 import { useAuth } from './context/AuthContext.tsx';
+
+const logo = 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png';
 
 const App: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -25,17 +26,21 @@ const App: React.FC = () => {
     }
   };
 
+  // Em App.tsx, na função handleRecuperarSenha
   const handleRecuperarSenha = async () => {
     if (!emailRecuperacao) {
+      // Use o estado de erro existente para feedback
       setLoginError('Por favor, insira um e-mail.');
       return;
     }
     try {
       setLoginError('');
-      await api.post('/api/redefinir-senha', { email: emailRecuperacao });
-      setRecoveryMessage('Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.');
+      // Chame a nova rota do backend
+      const res = await api.post('/api/solicitar-redefinicao', { email: emailRecuperacao });
+      setRecoveryMessage(res.data.message);
     } catch (err) {
-      setRecoveryMessage('Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.');
+      // Em caso de erro de servidor, mostre uma mensagem genérica
+      setRecoveryMessage('Ocorreu um problema. Tente novamente mais tarde.');
       console.error('Erro ao solicitar redefinição de senha:', err);
     }
   };
@@ -43,7 +48,7 @@ const App: React.FC = () => {
   return (
     <div className="p-login">
       <div className="p-img">
-        <img alt="Logo da Valor Fiscal" src={logoclara} />
+        <img alt="Logo da Valor Fiscal" src={logo} />
       </div>
       <div className="p-1">
         <h2 className="titulo-login">{!mostrarRecuperacao ? 'Painel do Licenciado' : 'Recuperar Senha'}</h2>
