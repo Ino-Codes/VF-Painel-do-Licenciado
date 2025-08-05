@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './context/AuthContext.tsx';
 import api from './api.ts';
 import Menu from './Menu.tsx';
@@ -23,27 +23,44 @@ const ActivityLogs: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
   useEffect(() => {
     if (!loading && (!user || user.role !== 'admin')) {
-      navigate('/dashboard'); // Redireciona se não for admin
+      navigate('/dashboard');
     }
   }, [user, loading, navigate]);
 
-  const fetchLogs = async (page: number) => {
+  const fetchLogs = useCallback(async () => {
+    if (user?.role !== 'admin') return;
     try {
-      const res = await api.get('/api/admin/logs', { params: { page, limit: 20 } });
+      const params: any = { 
+        page: currentPage, 
+        limit: 20 
+      };
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+      const res = await api.get('/api/admin/logs', { params });
       setLogs(res.data.logs);
       setTotalPages(res.data.totalPages);
     } catch (err) {
       toast.error('Erro ao carregar os logs.');
     }
-  };
+  }, [user, currentPage, searchQuery]); 
 
   useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchLogs(currentPage);
-    }
-  }, [user, currentPage]);
+    fetchLogs(); 
+  }, [fetchLogs]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const handleSearch = () => {
+    setSearchQuery(searchTerm.trim());
+  };
 
   if (loading || !user || user.role !== 'admin') {
     return <div className="tela-loading">Carregando...</div>;
@@ -57,6 +74,18 @@ const ActivityLogs: React.FC = () => {
           <h2>Logs de Atividade do Sistema</h2>
         </div>
         
+        <div className="search-bar">
+          <input
+            type="search"
+            placeholder="Buscar por data, email, ação ou detalhes..."
+            className="form-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <button className="form-button" onClick={handleSearch}>Pesquisar</button>
+        </div>
+
         <div className="logs-table-container">
           <table className="logs-table">
             <thead>
@@ -82,13 +111,15 @@ const ActivityLogs: React.FC = () => {
           </table>
         </div>
 
-        <div className="pagination-controls">
-            <span>Página {currentPage} de {totalPages}</span>
-            <div className="page-buttons">
-                <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>Anterior</button>
-                <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>Próxima</button>
-            </div>
-        </div>
+        {totalPages > 0 && (
+          <div className="pagination-controls">
+              <span>Página {currentPage} de {totalPages}</span>
+              <div className="page-buttons">
+                  <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>Anterior</button>
+                  <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>Próxima</button>
+              </div>
+          </div>
+        )}
       </div>
       <Footer />
     </div>
