@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.tsx';
-import logo from './img/logo-clara.png';
 
 const Menu: React.FC = () => {
   const { user } = useAuth();
   const defaultAvatar = 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1753972686/imagem-do-usuario-com-fundo-preto_1_y0ulj0.png';
+  const logo = 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -29,6 +29,10 @@ const Menu: React.FC = () => {
 
         <NavLink to="/videos" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')}>
           Videos
+        </NavLink>
+
+        <NavLink to="/faq" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')}>
+          FAQ
         </NavLink>
 
         {user && user.role === 'admin' && (

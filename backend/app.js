@@ -31,9 +31,7 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-
 // --- INICIALIZAÇÃO DO BANCO DE DADOS ---
-
 const createTables = async () => {
   const userTable = `
     CREATE TABLE IF NOT EXISTS users (
@@ -76,6 +74,17 @@ const createTables = async () => {
       ip_address TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
+  
+  const faqTable = `
+  CREATE TABLE IF NOT EXISTS faq (
+    id SERIAL PRIMARY KEY,
+    category TEXT NOT NULL,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    document_url TEXT,
+    document_originalname TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );`;
 
   try {
     await pool.query(userTable);
@@ -83,12 +92,12 @@ const createTables = async () => {
     await pool.query(fileTable);
     await pool.query(videoTable);
     await pool.query(logsTable);
+    await pool.query(faqTable);
     console.log('Tabelas verificadas/criadas com sucesso no PostgreSQL.');
   } catch (err) {
     console.error('Erro ao criar tabelas:', err);
   }
 };
-
 
 // --- MIDDLEWARES ---
 app.use(cors());
@@ -97,7 +106,6 @@ app.use((req, res, next) => {
     req.ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     next();
 });
-
 
 // --- FUNÇÃO DE LOGGING ---
 const logActivity = async (userId, userEmail, action, details, ipAddress) => {
@@ -108,7 +116,6 @@ const logActivity = async (userId, userEmail, action, details, ipAddress) => {
     console.error('Falha ao registrar log de atividade:', err);
   }
 };
-
 
 // --- ROTAS DA API ---
 
@@ -184,7 +191,6 @@ app.delete('/api/admin/notices/:id', async (req, res) => {
   }
 });
 
-
 // VIDEOS
 app.get('/api/videos', async (req, res) => {
     try {
@@ -231,7 +237,6 @@ app.delete('/api/videos/:id', async (req, res) => {
         res.status(500).json({ error: 'Erro ao excluir vídeo.' });
     }
 });
-
 
 // ADMINISTRAÇÃO DE USUÁRIOS
 app.get('/api/admin/users', async (req, res) => {
@@ -301,7 +306,6 @@ app.delete('/api/admin/users/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
-
 
 // PERFIL DO USUÁRIO
 app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
@@ -385,7 +389,6 @@ app.delete('/api/users/:id/avatar', async (req, res) => {
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
-
 
 // CENTRAL DE DOCUMENTOS
 app.get('/api/files', async (req, res) => {
@@ -507,6 +510,107 @@ app.get('/api/admin/logs', async (req, res) => {
     } catch (err) {
         console.error('Erro ao buscar logs de atividade:', err);
         res.status(500).json({ error: 'Erro ao buscar logs.' });
+    }
+});
+
+// FAQ (PERGUNTAS FREQUENTES)
+
+// ROTA PÚBLICA: Busca todos os FAQs com filtros e paginação
+app.get('/api/faq', async (req, res) => {
+    const { category, search, page = 1, limit = 15 } = req.query;
+    try {
+        const offset = (page - 1) * limit;
+        let whereClauses = [];
+        const params = [];
+
+        if (category) {
+            params.push(category);
+            whereClauses.push(`category = $${params.length}`);
+        }
+        if (search) {
+            params.push(`%${search}%`);
+            whereClauses.push(`(question ILIKE $${params.length} OR answer ILIKE $${params.length})`);
+        }
+
+        const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+        const countSql = `SELECT COUNT(*) FROM faq ${whereString}`;
+        const faqSql = `SELECT * FROM faq ${whereString} ORDER BY category, question ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        
+        const [countResult, faqResult] = await Promise.all([
+            pool.query(countSql, params),
+            pool.query(faqSql, [...params, limit, offset])
+        ]);
+
+        const totalCount = parseInt(countResult.rows[0].count, 10);
+        res.json({
+            faqs: faqResult.rows,
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit)
+        });
+    } catch (err) {
+        console.error('Erro ao buscar FAQs:', err);
+        res.status(500).json({ error: 'Erro ao buscar FAQs' });
+    }
+});
+
+// ROTA PÚBLICA: Busca apenas as categorias existentes para as abas
+app.get('/api/faq/categories', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT DISTINCT category FROM faq ORDER BY category ASC');
+        res.json(result.rows.map(row => row.category));
+    } catch (err) {
+        console.error('Erro ao buscar categorias do FAQ:', err);
+        res.status(500).json({ error: 'Erro ao buscar categorias.' });
+    }
+});
+
+// ROTA ADMIN: Cria um novo item no FAQ (com anexo opcional)
+app.post('/api/admin/faq', upload.single('document'), async (req, res) => {
+    const { category, question, answer } = req.body;
+    let document_url = null;
+    let document_originalname = null;
+
+    try {
+        if (req.file) {
+            const uploadResult = await new Promise((resolve, reject) => {
+                cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+                    if (error) reject(error);
+                    resolve(result);
+                }).end(req.file.buffer);
+            });
+            document_url = uploadResult.secure_url;
+            document_originalname = req.file.originalname;
+        }
+
+        const result = await pool.query(
+            'INSERT INTO faq (category, question, answer, document_url, document_originalname) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [category, question, answer, document_url, document_originalname]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('Erro ao criar FAQ:', err);
+        res.status(500).json({ error: 'Erro ao criar FAQ.' });
+    }
+});
+
+// ROTA ADMIN: Deleta um item do FAQ
+app.delete('/api/admin/faq/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const faqResult = await pool.query('SELECT document_url FROM faq WHERE id = $1', [id]);
+        if (faqResult.rowCount === 0) return res.status(404).json({ error: 'FAQ não encontrado.' });
+        
+        const docUrl = faqResult.rows[0].document_url;
+        if (docUrl) {
+            const publicId = docUrl.split('/').pop().split('.')[0];
+            await cloudinary.uploader.destroy(publicId);
+        }
+
+        await pool.query('DELETE FROM faq WHERE id = $1', [id]);
+        res.json({ success: true, message: 'FAQ excluído com sucesso.' });
+    } catch (err) {
+        console.error('Erro ao excluir FAQ:', err);
+        res.status(500).json({ error: 'Erro ao excluir FAQ.' });
     }
 });
 
