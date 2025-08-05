@@ -46,7 +46,9 @@ const createTables = async () => {
       password TEXT NOT NULL,
       role TEXT NOT NULL,
       nome TEXT,
-      avatar_url TEXT
+      avatar_url TEXT,
+      reset_token TEXT,
+      reset_token_expires TIMESTAMPTZ
     );`;
   const noticeTable = `
     CREATE TABLE IF NOT EXISTS notices (
@@ -137,6 +139,8 @@ app.post('/api/login', async (req, res) => {
     }
     logActivity(user.id, user.email, 'LOGIN_SUCCESS', 'Usuário logado com sucesso.', req.ipAddress);
     delete user.password;
+    delete user.reset_token;
+    delete user.reset_token_expires;
     res.json(user);
   } catch (err) {
     console.error('Erro na rota /api/login:', err);
@@ -155,30 +159,19 @@ app.post('/api/solicitar-redefinicao', async (req, res) => {
       return res.json({ message: 'Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.' });
     }
 
-    // 1. Gerar o token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const tokenExpiry = new Date(Date.now() + 900000); // 15 minutos
 
-    // 2. Definir a data de expiração (15 minutos))
-    const tokenExpiry = new Date(Date.now() + 900000); 
-
-    // 3. Salvar o token HASHED no banco
     await pool.query('UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3', [hashedToken, tokenExpiry, user.id]);
     
-    // 4. Enviar o email com o token NÃO-HASHED
-    const resetUrl = `https://vf-painel-do-licenciado.vercel.app/reset-password?token=${resetToken}`; // ATENÇÃO: Troque pelo seu domínio da Vercel
+    const resetUrl = `https://vf-painel-do-licenciado.vercel.app/reset-password?token=${resetToken}`;
     
     const msg = {
       to: user.email,
       from: process.env.EMAIL_FROM,
       subject: 'Redefinição de Senha - Painel do Licenciado',
-      html: `
-        <p>Olá, ${user.nome}.</p>
-        <p>Você solicitou a redefinição da sua senha do Painel do Licenciado. Por favor, clique no link abaixo para criar uma nova senha:</p>
-        <a href="${resetUrl}" target="_blank">Redefinir Minha Senha</a>
-        <p>Este link é válido por 15 minutos. Se você não solicitou esta alteração, por favor, ignore este e-mail.</p>
-        <p>Atenciosamente,<br>Equipe Valor Fiscal</p>
-      `,
+      html: `<p>Olá, ${user.nome}.</p><p>Você solicitou a redefinição da sua senha do Painel do Licenciado. Por favor, clique no link abaixo para criar uma nova senha:</p><a href="${resetUrl}" target="_blank">Redefinir Minha Senha</a><p>Este link é válido por 15 minutos. Se você não solicitou esta alteração, por favor, ignore este e-mail.</p><p>Atenciosamente,<br>Equipe Valor Fiscal</p>`,
     };
 
     await sgMail.send(msg);
@@ -190,8 +183,6 @@ app.post('/api/solicitar-redefinicao', async (req, res) => {
   }
 });
 
-
-// ROTA #2: Usuário efetivamente redefine a senha
 app.post('/api/redefinir-senha', async (req, res) => {
     const { token, password } = req.body;
 
@@ -200,10 +191,7 @@ app.post('/api/redefinir-senha', async (req, res) => {
     }
 
     try {
-        // 1. Criptografar o token recebido para comparar com o do banco
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-        // 2. Buscar usuário pelo token e verificar se não expirou
         const userResult = await pool.query('SELECT * FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()', [hashedToken]);
         const user = userResult.rows[0];
 
@@ -211,13 +199,11 @@ app.post('/api/redefinir-senha', async (req, res) => {
             return res.status(400).json({ error: 'Token inválido ou expirado. Por favor, solicite a redefinição novamente.' });
         }
 
-        // 3. Atualizar a senha
         const newPasswordHash = await bcrypt.hash(password, 10);
         await pool.query('UPDATE users SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2', [newPasswordHash, user.id]);
         
         logActivity(user.id, user.email, 'PASSWORD_RESET', 'Senha redefinida com sucesso através do link.', req.ipAddress);
         res.json({ message: 'Senha redefinida com sucesso!' });
-
     } catch (err) {
         console.error('Erro ao redefinir senha:', err);
         res.status(500).send({ error: 'Erro no servidor' });
@@ -374,30 +360,50 @@ app.put('/api/admin/users/:id', async (req, res) => {
   }
 });
 
+// ROTA DE EXCLUSÃO DE USUÁRIO CORRIGIDA COM TRANSAÇÃO
 app.delete('/api/admin/users/:id', async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect(); // Conecta-se ao pool para usar um cliente para a transação
+
   try {
+    // Inicia a transação
+    await client.query('BEGIN');
+
     // Passo 1: Buscar os dados do usuário ANTES de deletar.
-    const userResult = await pool.query('SELECT email FROM users WHERE id = $1', [id]);
+    const userResult = await client.query('SELECT email FROM users WHERE id = $1', [id]);
     if (userResult.rowCount === 0) {
+      await client.query('ROLLBACK'); // Desfaz a transação se o usuário não for encontrado
+      client.release();
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
     const userEmail = userResult.rows[0].email;
 
-    // Passo 2: Deletar o usuário da tabela 'users'.
-    // A constraint 'ON DELETE SET NULL' na tabela 'activity_logs' cuidará das referências antigas.
-    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    // Passo 2: Manualmente remover a referência ao usuário nos logs de atividade existentes.
+    await client.query('UPDATE activity_logs SET user_id = NULL WHERE user_id = $1', [id]);
 
-    // Passo 3: Registrar o log da exclusão.
-    // Passamos 'null' para o user_id, pois o usuário não existe mais, e usamos o email que guardamos.
-    logActivity(null, userEmail, 'DELETE_USER', `Usuário ${userEmail} (ID: ${id}) foi excluído.`, req.ipAddress);
+    // Passo 3: Agora, deletar o usuário da tabela 'users' de forma segura.
+    await client.query('DELETE FROM users WHERE id = $1', [id]);
+
+    // Passo 4: Registrar o log da exclusão.
+    const logSql = 'INSERT INTO activity_logs (user_id, user_email, action, details, ip_address) VALUES ($1, $2, $3, $4, $5)';
+    const logValues = [null, userEmail, 'DELETE_USER', `Usuário ${userEmail} (ID: ${id}) foi excluído.`, req.ipAddress];
+    await client.query(logSql, logValues);
+    
+    // Confirma a transação, salvando todas as alterações
+    await client.query('COMMIT');
     
     res.json({ success: true, message: 'Usuário excluído com sucesso.' });
   } catch (err) {
+    // Se qualquer etapa falhar, desfaz todas as alterações
+    await client.query('ROLLBACK');
     console.error('Erro ao excluir usuário:', err);
     res.status(500).json({ error: 'Erro no servidor ao tentar excluir usuário.' });
+  } finally {
+    // Libera o cliente de volta para o pool, independentemente do resultado
+    client.release();
   }
 });
+
 
 // ROTA PARA INCLUSÃO DE USUÁRIOS EM MASSA
 app.post('/api/admin/users/bulk-upload', upload.single('file'), async (req, res) => {
@@ -407,35 +413,29 @@ app.post('/api/admin/users/bulk-upload', upload.single('file'), async (req, res)
 
     const results = [];
     const errors = [];
-    let processedCount = 0;
     let successCount = 0;
 
     const stream = Readable.from(req.file.buffer.toString());
 
     stream
-        .pipe(csv({
-            mapHeaders: ({ header }) => header.trim() // Garante que os nomes das colunas não tenham espaços
-        }))
+        .pipe(csv({ mapHeaders: ({ header }) => header.trim() }))
         .on('data', (data) => results.push(data))
         .on('end', async () => {
             for (const user of results) {
                 const { nome, email, password, role } = user;
                 
-                // Validação básica dos dados da linha
                 if (!nome || !email || !password || !role) {
                     errors.push(`Dados incompletos para o e-mail: ${email || 'desconhecido'}.`);
                     continue;
                 }
 
                 try {
-                    // Verifica se o usuário já existe
                     const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
                     if (existingUser.rowCount > 0) {
                         errors.push(`E-mail já cadastrado: ${email}.`);
                         continue;
                     }
 
-                    // Criptografa a senha e insere o usuário
                     const hash = await bcrypt.hash(password, 10);
                     await pool.query('INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4)', [nome, email, hash, role]);
                     
@@ -491,6 +491,8 @@ app.put('/api/users/:id/profile', async (req, res) => {
     if (result.rowCount === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
     const updatedUser = result.rows[0];
     delete updatedUser.password;
+    delete updatedUser.reset_token;
+    delete updatedUser.reset_token_expires;
     logActivity(id, null, 'UPDATE_PROFILE', 'Nome do perfil atualizado.', req.ipAddress);
     res.json({ success: true, user: updatedUser });
   } catch (err) {
@@ -531,6 +533,8 @@ app.delete('/api/users/:id/avatar', async (req, res) => {
     const updateResult = await pool.query('UPDATE users SET avatar_url = NULL WHERE id = $1 RETURNING *', [id]);
     const updatedUser = updateResult.rows[0];
     delete updatedUser.password;
+    delete updatedUser.reset_token;
+    delete updatedUser.reset_token_expires;
     logActivity(id, null, 'REMOVE_AVATAR', 'Foto de perfil removida.', req.ipAddress);
     res.json({ success: true, user: updatedUser });
   } catch (err) {
@@ -623,7 +627,7 @@ app.put('/api/files/:id', async (req, res) => {
 
 // LOGS DE ATIVIDADE
 app.get('/api/admin/logs', async (req, res) => {
-    const { page = 1, limit = 20, search } = req.query; // Adicionamos 'search'
+    const { page = 1, limit = 20, search } = req.query;
     try {
         const offset = (page - 1) * limit;
         
@@ -632,13 +636,11 @@ app.get('/api/admin/logs', async (req, res) => {
 
         if (search) {
             params.push(`%${search}%`);
-            // Buscamos no email, ação, detalhes e na data (convertida para texto)
             whereClause = `WHERE user_email ILIKE $1 OR action ILIKE $1 OR details ILIKE $1 OR to_char(created_at, 'DD/MM/YYYY HH24:MI') ILIKE $1`;
         }
 
         const countSql = `SELECT COUNT(*) FROM activity_logs ${whereClause}`;
         
-        // Os parâmetros para a query principal são os da busca + limit e offset
         const queryParams = [...params];
         queryParams.push(limit, offset);
 
@@ -646,8 +648,8 @@ app.get('/api/admin/logs', async (req, res) => {
         const logsSql = `SELECT * FROM activity_logs ${whereClause} ORDER BY created_at DESC LIMIT $${limitOffsetParamIndex} OFFSET $${limitOffsetParamIndex + 1}`;
 
         const [countResult, logsResult] = await Promise.all([
-            pool.query(countSql, params), // A contagem usa apenas os params de busca
-            pool.query(logsSql, queryParams) // A busca principal usa todos os params
+            pool.query(countSql, params),
+            pool.query(logsSql, queryParams)
         ]);
         
         const totalCount = parseInt(countResult.rows[0].count, 10);
@@ -663,8 +665,6 @@ app.get('/api/admin/logs', async (req, res) => {
 });
 
 // FAQ (PERGUNTAS FREQUENTES)
-
-// ROTA PÚBLICA: Busca todos os FAQs com filtros e paginação
 app.get('/api/faq', async (req, res) => {
     const { category, search, page = 1, limit = 15 } = req.query;
     try {
@@ -702,7 +702,6 @@ app.get('/api/faq', async (req, res) => {
     }
 });
 
-// ROTA PÚBLICA: Busca apenas as categorias existentes para as abas
 app.get('/api/faq/categories', async (req, res) => {
     try {
         const result = await pool.query('SELECT DISTINCT category FROM faq ORDER BY category ASC');
@@ -713,7 +712,6 @@ app.get('/api/faq/categories', async (req, res) => {
     }
 });
 
-// ROTA ADMIN: Cria um novo item no FAQ (com anexo opcional)
 app.post('/api/admin/faq', upload.single('document'), async (req, res) => {
     const { category, question, answer } = req.body;
     let document_url = null;
@@ -742,7 +740,6 @@ app.post('/api/admin/faq', upload.single('document'), async (req, res) => {
     }
 });
 
-// ROTA ADMIN: Deleta um item do FAQ
 app.delete('/api/admin/faq/:id', async (req, res) => {
     const { id } = req.params;
     try {
