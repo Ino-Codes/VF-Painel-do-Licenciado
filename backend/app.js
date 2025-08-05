@@ -469,18 +469,35 @@ app.put('/api/files/:id', async (req, res) => {
     }
 });
 
-
 // LOGS DE ATIVIDADE
 app.get('/api/admin/logs', async (req, res) => {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, search } = req.query; // Adicionamos 'search'
     try {
         const offset = (page - 1) * limit;
-        const countSql = `SELECT COUNT(*) FROM activity_logs`;
-        const logsSql = `SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT $1 OFFSET $2`;
+        
+        let whereClause = '';
+        const params = [];
+
+        if (search) {
+            params.push(`%${search}%`);
+            // Buscamos no email, ação, detalhes e na data (convertida para texto)
+            whereClause = `WHERE user_email ILIKE $1 OR action ILIKE $1 OR details ILIKE $1 OR to_char(created_at, 'DD/MM/YYYY HH24:MI') ILIKE $1`;
+        }
+
+        const countSql = `SELECT COUNT(*) FROM activity_logs ${whereClause}`;
+        
+        // Os parâmetros para a query principal são os da busca + limit e offset
+        const queryParams = [...params];
+        queryParams.push(limit, offset);
+
+        const limitOffsetParamIndex = params.length + 1;
+        const logsSql = `SELECT * FROM activity_logs ${whereClause} ORDER BY created_at DESC LIMIT $${limitOffsetParamIndex} OFFSET $${limitOffsetParamIndex + 1}`;
+
         const [countResult, logsResult] = await Promise.all([
-            pool.query(countSql),
-            pool.query(logsSql, [limit, offset])
+            pool.query(countSql, params), // A contagem usa apenas os params de busca
+            pool.query(logsSql, queryParams) // A busca principal usa todos os params
         ]);
+        
         const totalCount = parseInt(countResult.rows[0].count, 10);
         res.json({
             logs: logsResult.rows,
@@ -492,7 +509,6 @@ app.get('/api/admin/logs', async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar logs.' });
     }
 });
-
 
 // --- INICIALIZAÇÃO DO SERVIDOR ---
 app.listen(port, () => {
