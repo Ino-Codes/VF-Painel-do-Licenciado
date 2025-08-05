@@ -28,7 +28,7 @@ const Menu: React.FC = () => {
         </NavLink>
 
         <NavLink to="/videos" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')}>
-          Videos
+          Vídeos
         </NavLink>
 
         <NavLink to="/faq" className={({ isActive }) => (isActive ? 'menu-item active' : 'menu-item')}>
@@ -37,7 +37,7 @@ const Menu: React.FC = () => {
 
         {user && user.role === 'admin' && (
           <NavLink to="/admin/users" className={({ isActive }) => isActive ? 'menu-item active' : 'menu-item'} onClick={() => setIsMenuOpen(false)}>
-            Gerenciar Usuários
+            Usuários
           </NavLink>
         )}
         {user && user.role === 'admin' && (

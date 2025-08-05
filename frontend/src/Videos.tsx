@@ -105,7 +105,7 @@ const Videos: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="document-header">
-          <h2>Videos</h2>
+          <h2>Vídeos</h2>
           {user.role === 'admin' && (
             <button className="form-button" onClick={openModalForCreate}>
               + Adicionar Vídeo
