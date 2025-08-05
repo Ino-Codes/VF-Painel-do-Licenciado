@@ -109,7 +109,7 @@ const Faq: React.FC = () => {
           <h2>Perguntas Frequentes (FAQ)</h2>
           {user.role === 'admin' && (
             <button className="form-button" onClick={() => setIsModalOpen(true)}>
-              + Adicionar FAQ
+              + Adicionar Pergunta
             </button>
           )}
         </div>
@@ -126,7 +126,7 @@ const Faq: React.FC = () => {
         </div>
         
         <div className="search-bar">
-          <input type="search" placeholder="Pesquisar..." className="form-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()}/>
+          <input type="search" placeholder="Pesquisar por assunto..." className="form-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()}/>
           <button className="form-button" onClick={handleSearch}>Pesquisar</button>
         </div>
 
