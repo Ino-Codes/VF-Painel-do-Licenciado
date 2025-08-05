@@ -467,6 +467,24 @@ nav.main-menu {
 padding: 10px 0;
 }
 
+/* Incluir Usuários por CSV */
+.bulk-import-section {
+  background-color: #f4f4f4;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  border: 1px solid #e0e0e0;
+}
+
+.bulk-import-section h3 {
+  margin-top: 0;
+}
+
+.bulk-import-section p {
+  font-size: 14px;
+  color: #666;
+}
+
 /* Criar Usuário | Editar Usuário */
 .admin-form {
   background-color: #f4f4f4;

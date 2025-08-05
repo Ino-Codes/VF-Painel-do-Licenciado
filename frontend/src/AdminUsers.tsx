@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import api from './api.ts';
 import { useAuth } from './context/AuthContext.tsx';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ interface User {
   role: 'admin' | 'licenciado' | 'gestor';
 }
 
+// Componente para a funcionalidade de importação em massa
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({ onImportSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -42,13 +43,12 @@ const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({ onImportSuc
       
       toast.success(`${successCount} usuários importados com sucesso!`);
       if (errorCount > 0) {
-        // Mostra um toast de erro mais detalhado
-        const errorDetails = errors.slice(0, 3).join('\n'); // Mostra os 3 primeiros erros
+        const errorDetails = errors.slice(0, 3).join('\n');
         toast.error(`${errorCount} usuários falharam.\nDetalhes:\n${errorDetails}...`, { duration: 6000 });
         console.error("Erros de importação:", errors);
       }
       
-      onImportSuccess(); // Atualiza a lista de usuários na tela principal
+      onImportSuccess();
     } catch (err) {
       toast.error('Ocorreu um erro grave durante o upload.');
     } finally {
@@ -71,11 +71,13 @@ const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({ onImportSuc
   );
 };
 
+// Componente principal da página
 const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth(); 
   const navigate = useNavigate();
+  
   const [users, setUsers] = useState<User[]>([]);
-  const [form, setForm] = useState({ nome: '', email: '', password: '', role: 'licenciado' });
+  const [form, setForm] = useState({ nome: '', email: '', password: '', role: 'licenciado' as 'admin' | 'licenciado' | 'gestor' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,13 +95,13 @@ const AdminUsers: React.FC = () => {
       if (!user) {
         navigate('/');
       } else if (user.role !== 'admin') {
-        alert('Acesso restrito a administradores.');
+        toast.error('Acesso restrito a administradores.');
         navigate('/dashboard');
       }
     }
   }, [user, loading, navigate]);
 
-    const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     if (user?.role !== 'admin') return;
     try {
       const params: any = { page: currentPage, limit };
@@ -114,11 +116,11 @@ const AdminUsers: React.FC = () => {
       console.error("Erro ao buscar usuários:", err);
       toast.error("Não foi possível carregar os usuários.");
     }
-  };
+  }, [user, currentPage, limit, searchQuery]);
 
   useEffect(() => {
     fetchUsers();
-  }, [user, currentPage, limit, searchQuery]);
+  }, [fetchUsers]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -156,7 +158,6 @@ const AdminUsers: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (userToDelete === null) return;
-
     try {
       await api.delete(`/api/admin/users/${userToDelete}`);
       toast.success("Usuário excluído com sucesso!");
@@ -164,13 +165,15 @@ const AdminUsers: React.FC = () => {
     } catch(err) {
       toast.error("Erro ao excluir o usuário.");
     } finally {
-      setIsConfirmModalOpen(false); // Fecha o modal
-      setUserToDelete(null); // Limpa o ID
+      setIsConfirmModalOpen(false);
+      setUserToDelete(null);
     }
   };
 
   const startEdit = (u: User) => {
     setEditingUser(u);
+    // Limpa o formulário de criação para não manter dados antigos
+    setForm({ nome: '', email: '', password: '', role: 'licenciado' });
   };
   
   const handleSearch = () => {
@@ -250,6 +253,8 @@ const AdminUsers: React.FC = () => {
         </div>
       </form>
 
+      <BulkUserImport onImportSuccess={fetchUsers} />
+
       <h2>Usuários Cadastrados:</h2>
       <div className="search-bar">
         <input
@@ -326,7 +331,6 @@ const AdminUsers: React.FC = () => {
     />
   </div>
   );
-  
 };
 
 export default AdminUsers;
