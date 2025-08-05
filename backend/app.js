@@ -8,6 +8,8 @@ const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
 const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
+const csv = require('csv-parser');
+const { Readable } = require('stream');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -383,6 +385,63 @@ app.delete('/api/admin/users/:id', async (req, res) => {
     console.error('Erro ao excluir usuário:', err);
     res.status(500).json({ error: 'Erro no servidor' });
   }
+});
+
+// ROTA PARA INCLUSÃO DE USUÁRIOS EM MASSA
+app.post('/api/admin/users/bulk-upload', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Nenhum arquivo CSV enviado.' });
+    }
+
+    const results = [];
+    const errors = [];
+    let processedCount = 0;
+    let successCount = 0;
+
+    const stream = Readable.from(req.file.buffer.toString());
+
+    stream
+        .pipe(csv({
+            mapHeaders: ({ header }) => header.trim() // Garante que os nomes das colunas não tenham espaços
+        }))
+        .on('data', (data) => results.push(data))
+        .on('end', async () => {
+            for (const user of results) {
+                const { nome, email, password, role } = user;
+                
+                // Validação básica dos dados da linha
+                if (!nome || !email || !password || !role) {
+                    errors.push(`Dados incompletos para o e-mail: ${email || 'desconhecido'}.`);
+                    continue;
+                }
+
+                try {
+                    // Verifica se o usuário já existe
+                    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+                    if (existingUser.rowCount > 0) {
+                        errors.push(`E-mail já cadastrado: ${email}.`);
+                        continue;
+                    }
+
+                    // Criptografa a senha e insere o usuário
+                    const hash = await bcrypt.hash(password, 10);
+                    await pool.query('INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4)', [nome, email, hash, role]);
+                    
+                    logActivity(null, email, 'BULK_CREATE_USER', `Usuário ${email} criado via importação em massa.`, req.ipAddress);
+                    successCount++;
+                } catch (dbError) {
+                    console.error(`Erro ao inserir usuário ${email}:`, dbError);
+                    errors.push(`Erro de banco de dados para o e-mail: ${email}.`);
+                }
+            }
+
+            res.json({
+                message: 'Processamento do CSV finalizado.',
+                successCount,
+                errorCount: errors.length,
+                errors
+            });
+        });
 });
 
 // PERFIL DO USUÁRIO

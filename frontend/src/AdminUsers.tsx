@@ -14,6 +14,63 @@ interface User {
   role: 'admin' | 'licenciado' | 'gestor';
 }
 
+const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({ onImportSuccess }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast.error('Por favor, selecione um arquivo CSV.');
+      return;
+    }
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await api.post('/api/admin/users/bulk-upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      const { successCount, errorCount, errors } = res.data;
+      
+      toast.success(`${successCount} usuários importados com sucesso!`);
+      if (errorCount > 0) {
+        // Mostra um toast de erro mais detalhado
+        const errorDetails = errors.slice(0, 3).join('\n'); // Mostra os 3 primeiros erros
+        toast.error(`${errorCount} usuários falharam.\nDetalhes:\n${errorDetails}...`, { duration: 6000 });
+        console.error("Erros de importação:", errors);
+      }
+      
+      onImportSuccess(); // Atualiza a lista de usuários na tela principal
+    } catch (err) {
+      toast.error('Ocorreu um erro grave durante o upload.');
+    } finally {
+      setIsUploading(false);
+      setFile(null);
+    }
+  };
+
+  return (
+    <div className="bulk-import-section">
+      <h3>Importar Usuários em Massa</h3>
+      <p>Selecione um arquivo .csv com as colunas: <strong>nome, email, password, role</strong></p>
+      <div className="form-row">
+        <input type="file" accept=".csv" onChange={handleFileChange} />
+        <button className="form-button" onClick={handleUpload} disabled={!file || isUploading}>
+          {isUploading ? 'Importando...' : 'Importar Arquivo'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth(); 
   const navigate = useNavigate();
