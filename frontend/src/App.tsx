@@ -3,6 +3,7 @@ import api from './api.ts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.tsx';
 
+// URL da logo hospedada, para fácil manutenção.
 const logo = 'https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png';
 
 const App: React.FC = () => {
@@ -15,7 +16,8 @@ const App: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); // Previne o comportamento padrão do formulário
     try {
       setLoginError('');
       const res = await api.post('/api/login', { email, password });
@@ -26,24 +28,37 @@ const App: React.FC = () => {
     }
   };
 
-  // Em App.tsx, na função handleRecuperarSenha
-  const handleRecuperarSenha = async () => {
+  const handleRecuperarSenha = async (e: React.FormEvent) => {
+    e.preventDefault(); // Previne o comportamento padrão do formulário
     if (!emailRecuperacao) {
-      // Use o estado de erro existente para feedback
       setLoginError('Por favor, insira um e-mail.');
       return;
     }
     try {
       setLoginError('');
-      // Chame a nova rota do backend
       const res = await api.post('/api/solicitar-redefinicao', { email: emailRecuperacao });
       setRecoveryMessage(res.data.message);
     } catch (err) {
-      // Em caso de erro de servidor, mostre uma mensagem genérica
       setRecoveryMessage('Ocorreu um problema. Tente novamente mais tarde.');
       console.error('Erro ao solicitar redefinição de senha:', err);
     }
   };
+
+  // Função para alternar para a visão de recuperação de senha
+  const toggleRecuperacao = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault(); // Previne o link de pular a página
+    setMostrarRecuperacao(true);
+    setLoginError('');
+  };
+
+  // Função para voltar para a visão de login
+  const toggleLogin = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault(); // Previne o link de pular a página
+    setMostrarRecuperacao(false);
+    setRecoveryMessage('');
+    setLoginError('');
+  };
+
 
   return (
     <div className="p-login">
@@ -56,45 +71,57 @@ const App: React.FC = () => {
         {loginError && <div className="login-error-message">{loginError}</div>}
         
         {!mostrarRecuperacao ? (
-          <>
+          <form onSubmit={handleLogin}>
             <input
               type="email"
               placeholder="Email"
               className="input-login"
+              value={email}
               onChange={e => {
                 setEmail(e.target.value);
                 if (loginError) setLoginError('');
               }}
+              required
             />
             <input
               type="password"
               placeholder="Senha"
               className="input-login"
+              value={password}
               onChange={e => {
                 setPassword(e.target.value);
                 if (loginError) setLoginError('');
               }}
+              required
             />
-            <button className="botao-login" onClick={handleLogin}>Login</button>           
-            <p className="esqueceu-senha"><a href="#" onClick={() => setMostrarRecuperacao(true)}>Esqueceu sua senha?</a></p>
-          </>
+            <button className="botao-login" type="submit">Login</button>           
+            <p className="esqueceu-senha">
+              <a href="#" onClick={toggleRecuperacao}>Esqueceu sua senha?</a>
+            </p>
+          </form>
         ) : (
           <>
             {!recoveryMessage ? (
-              <>
+              <form onSubmit={handleRecuperarSenha}>
+                <p style={{fontSize: '14px', maxWidth: '280px', margin: '0 auto 20px'}}>
+                  Digite seu e-mail para receber o link de redefinição.
+                </p>
                 <input
                   type="email"
                   placeholder="Digite seu e-mail"
                   className="input-login"
                   value={emailRecuperacao}
                   onChange={e => setEmailRecuperacao(e.target.value)}
+                  required
                 />
-                <button className="botao-login" onClick={handleRecuperarSenha}>Enviar</button>
-              </>
+                <button className="botao-login" type="submit">Enviar</button>
+              </form>
             ) : (
               <p className="feedback-message">{recoveryMessage}</p>
             )}
-            <p><a href="#" onClick={() => { setMostrarRecuperacao(false); setRecoveryMessage(''); }}>Voltar para o Login</a></p>
+            <p style={{marginTop: '20px'}}>
+                <a href="#" onClick={toggleLogin}>Voltar para o Login</a>
+            </p>
           </>
         )}
       </div>

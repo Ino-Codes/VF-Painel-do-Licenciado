@@ -164,7 +164,7 @@ app.post('/api/solicitar-redefinicao', async (req, res) => {
     await pool.query('UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3', [hashedToken, tokenExpiry, user.id]);
     
     // 4. Enviar o email com o token NÃO-HASHED
-    const resetUrl = `https://https://vf-painel-do-licenciado.vercel.app/reset-password?token=${resetToken}`; // ATENÇÃO: Troque pelo seu domínio da Vercel
+    const resetUrl = `https://vf-painel-do-licenciado.vercel.app/reset-password?token=${resetToken}`; // ATENÇÃO: Troque pelo seu domínio da Vercel
     
     const msg = {
       to: user.email,
