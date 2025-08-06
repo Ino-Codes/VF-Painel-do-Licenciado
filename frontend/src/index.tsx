@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
 import App from './App.tsx';
 import Dashboard from './Dashboard.tsx';
 import AdminUsers from './AdminUsers.tsx';
