@@ -62,3 +62,5 @@ root.render(
     <AppRouter />
   </React.StrictMode>
 );
+
+<SpeedInsights />
