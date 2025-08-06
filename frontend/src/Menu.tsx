@@ -92,7 +92,9 @@ const Menu: React.FC = () => {
               <span className="profile-role">
                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>
-              <span className="profile-name">{user.nome}</span>
+              <span className="profile-name">
+                {user.nome.charAt(0).toUpperCase() + user.role.slice(1)}
+              </span>
             </div>
             <div className="profile-image-container">
               <img
