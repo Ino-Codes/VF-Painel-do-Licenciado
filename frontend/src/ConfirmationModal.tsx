@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -8,7 +8,13 @@ interface ConfirmationModalProps {
   message: string;
 }
 
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, title, message }) => {
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+}) => {
   if (!isOpen) {
     return null;
   }

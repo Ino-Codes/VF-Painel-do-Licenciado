@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from './context/AuthContext.tsx';
-import api from './api.ts';
-import Menu from './Menu.tsx';
-import Footer from './Footer.tsx';
-import VideoModal from './VideoModal.tsx';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import ConfirmationModal from './ConfirmationModal.tsx';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "./context/AuthContext.tsx";
+import api from "./api.ts";
+import Menu from "./Menu.tsx";
+import Footer from "./Footer.tsx";
+import VideoModal from "./VideoModal.tsx";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import ConfirmationModal from "./ConfirmationModal.tsx";
 
 interface VideoData {
   id: number;
@@ -18,13 +18,13 @@ interface VideoData {
 const getYoutubeEmbedUrl = (url: string): string => {
   try {
     const urlObj = new URL(url);
-    let videoId = urlObj.searchParams.get('v');
+    let videoId = urlObj.searchParams.get("v");
     if (!videoId) {
-      videoId = urlObj.pathname.split('/').pop() || '';
+      videoId = urlObj.pathname.split("/").pop() || "";
     }
     return `https://www.youtube.com/embed/${videoId}`;
   } catch (error) {
-    return '';
+    return "";
   }
 };
 
@@ -40,17 +40,17 @@ const Videos: React.FC = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/');
+      navigate("/");
     }
   }, [user, loading, navigate]);
 
   const fetchVideos = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get('/api/videos', { params: { role: user.role } });
+      const res = await api.get("/api/videos", { params: { role: user.role } });
       setVideos(res.data);
     } catch (err) {
-      toast.error('Erro ao buscar vídeos.');
+      toast.error("Erro ao buscar vídeos.");
     }
   }, [user]);
 
@@ -69,10 +69,10 @@ const Videos: React.FC = () => {
     if (videoToDelete === null) return;
     try {
       await api.delete(`/api/videos/${videoToDelete}`);
-      toast.success('Vídeo excluído com sucesso!');
+      toast.success("Vídeo excluído com sucesso!");
       fetchVideos();
     } catch (err) {
-      toast.error('Erro ao excluir o vídeo.');
+      toast.error("Erro ao excluir o vídeo.");
     } finally {
       setIsConfirmModalOpen(false);
       setVideoToDelete(null);
@@ -88,7 +88,7 @@ const Videos: React.FC = () => {
     setEditingVideo(null);
     setIsModalOpen(true);
   };
-  
+
   const handleSuccess = () => {
     setIsModalOpen(false);
     fetchVideos();
@@ -107,26 +107,42 @@ const Videos: React.FC = () => {
       <div className="content-area">
         <div className="document-header">
           <h2>Vídeos</h2>
-          {user.role === 'admin' && (
+          {user.role === "admin" && (
             <button className="form-button" onClick={openModalForCreate}>
               + Adicionar Vídeo
             </button>
           )}
         </div>
-        
+
         <div className="video-list">
           {videos.map((video) => (
             <div key={video.id} className="video-card">
               <div className="video-embed">
-                <iframe src={getYoutubeEmbedUrl(video.youtube_url)} title={video.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                <iframe
+                  src={getYoutubeEmbedUrl(video.youtube_url)}
+                  title={video.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
               </div>
               <div className="video-info">
                 <h3>{video.title}</h3>
                 <p>{video.description}</p>
-                {user.role !== 'licenciado' && (
+                {user.role !== "licenciado" && (
                   <div className="video-actions">
-                    <button className="list-button edit" onClick={() => openModalForEdit(video)}>Editar</button>
-                    <button className="list-button delete" onClick={() => handleDeleteClick(video.id)}>Excluir</button>
+                    <button
+                      className="list-button edit"
+                      onClick={() => openModalForEdit(video)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="list-button delete"
+                      onClick={() => handleDeleteClick(video.id)}
+                    >
+                      Excluir
+                    </button>
                   </div>
                 )}
               </div>
@@ -134,20 +150,22 @@ const Videos: React.FC = () => {
           ))}
         </div>
       </div>
-      {isModalOpen && <VideoModal
-      videoToEdit={editingVideo}
-      onClose={() => setIsModalOpen(false)}
-      onSuccess={handleSuccess}
-      />}
+      {isModalOpen && (
+        <VideoModal
+          videoToEdit={editingVideo}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleSuccess}
+        />
+      )}
 
       <Footer />
 
       <ConfirmationModal
-      isOpen={isConfirmModalOpen}
-      onClose={() => setIsConfirmModalOpen(false)}
-      onConfirm={handleConfirmDelete}
-      title="Confirmar Exclusão"
-      message="Tem certeza que deseja excluir este vídeo? Esta ação não pode ser desfeita."
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Exclusão"
+        message="Tem certeza que deseja excluir este vídeo? Esta ação não pode ser desfeita."
       />
     </div>
   );

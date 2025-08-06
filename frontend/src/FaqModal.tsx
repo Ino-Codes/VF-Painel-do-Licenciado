@@ -1,7 +1,7 @@
 // Crie o arquivo FaqModal.tsx
-import React, { useState } from 'react';
-import api from './api.ts';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import api from "./api.ts";
+import toast from "react-hot-toast";
 
 interface FaqModalProps {
   onClose: () => void;
@@ -9,35 +9,35 @@ interface FaqModalProps {
 }
 
 const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
-  const [category, setCategory] = useState('');
-  const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
+  const [category, setCategory] = useState("");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
   const [documentFile, setDocumentFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!category || !question || !answer) {
-        toast.error('Categoria, Pergunta e Resposta são campos obrigatórios.');
-        return;
+      toast.error("Categoria, Pergunta e Resposta são campos obrigatórios.");
+      return;
     }
 
     const formData = new FormData();
-    formData.append('category', category);
-    formData.append('question', question);
-    formData.append('answer', answer);
+    formData.append("category", category);
+    formData.append("question", question);
+    formData.append("answer", answer);
     if (documentFile) {
-        formData.append('document', documentFile);
+      formData.append("document", documentFile);
     }
 
     try {
-        await api.post('/api/admin/faq', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        toast.success('FAQ adicionado com sucesso!');
-        onSuccess();
+      await api.post("/api/admin/faq", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success("FAQ adicionado com sucesso!");
+      onSuccess();
     } catch (err) {
-        toast.error('Ocorreu um erro ao salvar o FAQ.');
-        console.error(err);
+      toast.error("Ocorreu um erro ao salvar o FAQ.");
+      console.error(err);
     }
   };
 
@@ -77,15 +77,25 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
             />
           </div>
           <div className="form-row">
-             <label>Anexo (Opcional):</label>
-             <input
-                type="file"
-                onChange={(e) => e.target.files && setDocumentFile(e.target.files[0])}
-              />
+            <label>Anexo (Opcional):</label>
+            <input
+              type="file"
+              onChange={(e) =>
+                e.target.files && setDocumentFile(e.target.files[0])
+              }
+            />
           </div>
           <div className="modal-actions">
-            <button type="button" onClick={onClose} className="form-button-cancel">Cancelar</button>
-            <button type="submit" className="form-button">Salvar</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="form-button-cancel"
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="form-button">
+              Salvar
+            </button>
           </div>
         </form>
       </div>

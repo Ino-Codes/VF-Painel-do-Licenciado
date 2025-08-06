@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from './api.ts';
-import { useAuth } from './context/AuthContext.tsx';
-import Menu from './Menu.tsx';
-import Footer from './Footer.tsx';
-import toast from 'react-hot-toast';
-import ConfirmationModal from './ConfirmationModal.tsx';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "./api.ts";
+import { useAuth } from "./context/AuthContext.tsx";
+import Menu from "./Menu.tsx";
+import Footer from "./Footer.tsx";
+import toast from "react-hot-toast";
+import ConfirmationModal from "./ConfirmationModal.tsx";
 
 interface Notice {
   id: number;
@@ -16,29 +16,29 @@ interface Notice {
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  
+
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
 
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
-  const [editText, setEditText] = useState('');
+  const [editText, setEditText] = useState("");
 
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/');
+      navigate("/");
     }
   }, [user, loading, navigate]);
 
   const fetchNotices = async () => {
     try {
-      const res = await api.get('/api/notices');
+      const res = await api.get("/api/notices");
       setNotices(res.data);
     } catch (err) {
-      console.error('Erro ao buscar avisos:', err);
-      toast.error('Não foi possível carregar os avisos.');
+      console.error("Erro ao buscar avisos:", err);
+      toast.error("Não foi possível carregar os avisos.");
     }
   };
 
@@ -50,16 +50,16 @@ const Dashboard: React.FC = () => {
 
   const handlePostNotice = async () => {
     if (!newMessage.trim()) {
-      toast.error('O aviso não pode estar em branco.');
+      toast.error("O aviso não pode estar em branco.");
       return;
     }
     try {
-      await api.post('/api/admin/notice', { message: newMessage });
-      setNewMessage(''); 
-      fetchNotices(); 
-      toast.success('Aviso postado com sucesso!');
+      await api.post("/api/admin/notice", { message: newMessage });
+      setNewMessage("");
+      fetchNotices();
+      toast.success("Aviso postado com sucesso!");
     } catch (err) {
-      toast.error('Erro ao postar o aviso.');
+      toast.error("Erro ao postar o aviso.");
     }
   };
 
@@ -73,10 +73,10 @@ const Dashboard: React.FC = () => {
 
     try {
       await api.delete(`/api/admin/notices/${noticeToDelete}`);
-      toast.success('Aviso excluído com sucesso!');
+      toast.success("Aviso excluído com sucesso!");
       fetchNotices();
     } catch (err) {
-      toast.error('Erro ao excluir o aviso.');
+      toast.error("Erro ao excluir o aviso.");
     } finally {
       setIsConfirmModalOpen(false);
       setNoticeToDelete(null);
@@ -90,22 +90,22 @@ const Dashboard: React.FC = () => {
 
   const handleUpdateNotice = async (noticeId: number) => {
     if (!editText.trim()) {
-      toast.error('O aviso não pode estar em branco.');
+      toast.error("O aviso não pode estar em branco.");
       return;
     }
     try {
       await api.put(`/api/admin/notices/${noticeId}`, { message: editText });
-      toast.success('Aviso atualizado com sucesso!');
+      toast.success("Aviso atualizado com sucesso!");
       setEditingNoticeId(null);
-      setEditText('');
+      setEditText("");
       fetchNotices();
     } catch (err) {
-      toast.error('Erro ao atualizar o aviso.');
+      toast.error("Erro ao atualizar o aviso.");
     }
   };
 
   if (loading) {
-    return <div className="tela-loading">Carregando...</div>
+    return <div className="tela-loading">Carregando...</div>;
   }
 
   if (!user) {
@@ -122,11 +122,10 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="dashboard-grid">
-          
           <div className="notice-board">
             <h3>Mural de Avisos</h3>
-            
-            {user.role === 'admin' && (
+
+            {user.role === "admin" && (
               <div className="notice-form">
                 <textarea
                   placeholder="Digite seu novo aviso aqui..."
@@ -150,8 +149,18 @@ const Dashboard: React.FC = () => {
                           onChange={(e) => setEditText(e.target.value)}
                         />
                         <div className="notice-actions">
-                           <button className="list-button" onClick={() => setEditingNoticeId(null)}>Cancelar</button>
-                           <button className="list-button edit" onClick={() => handleUpdateNotice(notice.id)}>Salvar</button>
+                          <button
+                            className="list-button"
+                            onClick={() => setEditingNoticeId(null)}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            className="list-button edit"
+                            onClick={() => handleUpdateNotice(notice.id)}
+                          >
+                            Salvar
+                          </button>
                         </div>
                       </div>
                     ) : (
@@ -159,14 +168,33 @@ const Dashboard: React.FC = () => {
                         <p>{notice.message}</p>
                         <div className="notice-footer">
                           <small>
-                            {new Date(notice.created_at).toLocaleDateString('pt-BR', {
-                              day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                            })}
+                            {new Date(notice.created_at).toLocaleDateString(
+                              "pt-BR",
+                              {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
                           </small>
-                          {user.role === 'admin' && (
+                          {user.role === "admin" && (
                             <div className="notice-actions">
-                              <button className="list-button edit" onClick={() => handleEditNotice(notice)}>Editar</button>
-                              <button className="list-button delete" onClick={() => handleDeleteNoticeClick(notice.id)}>Excluir</button>
+                              <button
+                                className="list-button edit"
+                                onClick={() => handleEditNotice(notice)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className="list-button delete"
+                                onClick={() =>
+                                  handleDeleteNoticeClick(notice.id)
+                                }
+                              >
+                                Excluir
+                              </button>
                             </div>
                           )}
                         </div>
@@ -186,7 +214,6 @@ const Dashboard: React.FC = () => {
               <span>Gráficos e relatórios serão exibidos aqui em breve.</span>
             </div>
           </div>
-
         </div>
       </div>
       <Footer />

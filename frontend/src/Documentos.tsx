@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from './context/AuthContext.tsx';
-import api from './api.ts';
-import Menu from './Menu.tsx';
-import FileModal from './FileModal.tsx';
-import Footer from './Footer.tsx';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import ConfirmationModal from './ConfirmationModal.tsx';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "./context/AuthContext.tsx";
+import api from "./api.ts";
+import Menu from "./Menu.tsx";
+import FileModal from "./FileModal.tsx";
+import Footer from "./Footer.tsx";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import ConfirmationModal from "./ConfirmationModal.tsx";
 
 interface FileData {
   id: number;
@@ -19,16 +19,21 @@ interface FileData {
 const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  
+
   const [files, setFiles] = useState<FileData[]>([]);
-  const allCategories = ['Manuais', 'Marketing', 'Financeiro', 'Gestão Interna'];
+  const allCategories = [
+    "Manuais",
+    "Marketing",
+    "Financeiro",
+    "Gestão Interna",
+  ];
   const [visibleCategories, setVisibleCategories] = useState<string[]>([]);
-  const [category, setCategory] = useState('Manuais');
+  const [category, setCategory] = useState("Manuais");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -40,14 +45,16 @@ const Documentos: React.FC = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/');
+      navigate("/");
     }
   }, [user, loading, navigate]);
 
   useEffect(() => {
     if (user) {
-      if (user.role === 'licenciado') {
-        setVisibleCategories(allCategories.filter(cat => cat !== 'Gestão Interna'));
+      if (user.role === "licenciado") {
+        setVisibleCategories(
+          allCategories.filter((cat) => cat !== "Gestão Interna")
+        );
       } else {
         setVisibleCategories(allCategories);
       }
@@ -57,7 +64,7 @@ const Documentos: React.FC = () => {
   const fetchFiles = useCallback(async () => {
     if (!user) return;
     try {
-      const params: any = { 
+      const params: any = {
         category,
         page: currentPage,
         limit,
@@ -66,12 +73,12 @@ const Documentos: React.FC = () => {
       if (searchQuery) {
         params.search = searchQuery;
       }
-      const res = await api.get('/api/files', { params });
+      const res = await api.get("/api/files", { params });
       setFiles(res.data.files);
       setTotalFiles(res.data.totalCount);
       setTotalPages(res.data.totalPages);
     } catch (err) {
-      toast.error('Erro ao buscar arquivos.');
+      toast.error("Erro ao buscar arquivos.");
     }
   }, [user, category, currentPage, limit, searchQuery]);
 
@@ -96,10 +103,10 @@ const Documentos: React.FC = () => {
     if (fileToDelete === null) return;
     try {
       await api.delete(`/api/files/${fileToDelete}`);
-      toast.success('Arquivo excluído com sucesso!');
+      toast.success("Arquivo excluído com sucesso!");
       fetchFiles();
     } catch (err) {
-      toast.error('Erro ao excluir o arquivo.');
+      toast.error("Erro ao excluir o arquivo.");
     } finally {
       setIsConfirmModalOpen(false);
       setFileToDelete(null);
@@ -122,7 +129,7 @@ const Documentos: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="tela-loading">Carregando...</div>
+    return <div className="tela-loading">Carregando...</div>;
   }
 
   if (!user) {
@@ -135,18 +142,18 @@ const Documentos: React.FC = () => {
       <div className="content-area document-center">
         <div className="document-header">
           <h2>Central de Documentos</h2>
-          {user?.role !== 'licenciado' && (
+          {user?.role !== "licenciado" && (
             <button className="form-button" onClick={openModalForCreate}>
               + Adicionar Arquivo
             </button>
           )}
         </div>
-     
+
         <div className="tabs">
           {visibleCategories.map((cat) => (
             <button
               key={cat}
-              className={`tab-item ${category === cat ? 'active' : ''}`}
+              className={`tab-item ${category === cat ? "active" : ""}`}
               onClick={() => setCategory(cat)}
             >
               {cat}
@@ -161,9 +168,11 @@ const Documentos: React.FC = () => {
             className="form-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
-          <button className="form-button" onClick={handleSearch}>Pesquisar</button>
+          <button className="form-button" onClick={handleSearch}>
+            Pesquisar
+          </button>
         </div>
 
         <div className="file-list">
@@ -171,13 +180,28 @@ const Documentos: React.FC = () => {
             <div key={file.id} className="file-item">
               <span className="file-name">{file.originalname}</span>
               <div className="file-actions">
-                <a href={file.filename} target="_blank" rel="noopener noreferrer" download>
-                    <button className="list-button download">Baixar</button>
+                <a
+                  href={file.filename}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                >
+                  <button className="list-button download">Baixar</button>
                 </a>
-                {user?.role === 'admin' && (
+                {user?.role === "admin" && (
                   <>
-                    <button className="list-button edit" onClick={() => openModalForEdit(file)}>Editar</button>
-                    <button className="list-button delete" onClick={() => handleDeleteClick(file.id)}>Excluir</button>
+                    <button
+                      className="list-button edit"
+                      onClick={() => openModalForEdit(file)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="list-button delete"
+                      onClick={() => handleDeleteClick(file.id)}
+                    >
+                      Excluir
+                    </button>
                   </>
                 )}
               </div>
@@ -189,9 +213,9 @@ const Documentos: React.FC = () => {
           <div className="pagination-controls">
             <div className="limit-selector">
               <label htmlFor="limit">Itens por página:</label>
-              <select 
-                id="limit" 
-                value={limit} 
+              <select
+                id="limit"
+                value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
               >
                 <option value={10}>10</option>
@@ -199,16 +223,18 @@ const Documentos: React.FC = () => {
                 <option value={50}>50</option>
               </select>
             </div>
-            <span>Página {currentPage} de {totalPages}</span>
+            <span>
+              Página {currentPage} de {totalPages}
+            </span>
             <div className="page-buttons">
-              <button 
-                onClick={() => setCurrentPage(currentPage - 1)} 
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
               >
                 Anterior
               </button>
-              <button 
-                onClick={() => setCurrentPage(currentPage + 1)} 
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
                 Próxima

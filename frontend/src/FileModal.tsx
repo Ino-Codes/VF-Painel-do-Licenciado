@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import api from './api.ts';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import api from "./api.ts";
+import toast from "react-hot-toast";
 
 interface FileData {
   id: number;
@@ -14,17 +14,21 @@ interface FileModalProps {
   onSuccess: () => void;
 }
 
-const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess }) => {
-  const [originalname, setOriginalname] = useState('');
-  const [category, setCategory] = useState('Manuais');
-  const [visibility, setVisibility] = useState<'public' | 'internal'>('public');
+const FileModal: React.FC<FileModalProps> = ({
+  fileToEdit,
+  onClose,
+  onSuccess,
+}) => {
+  const [originalname, setOriginalname] = useState("");
+  const [category, setCategory] = useState("Manuais");
+  const [visibility, setVisibility] = useState<"public" | "internal">("public");
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (fileToEdit) {
       setOriginalname(fileToEdit.originalname);
       setCategory(fileToEdit.category);
-      setVisibility(fileToEdit.visibility || 'public');
+      setVisibility(fileToEdit.visibility || "public");
     }
   }, [fileToEdit]);
 
@@ -33,24 +37,28 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
 
     try {
       if (fileToEdit) {
-        await api.put(`/api/files/${fileToEdit.id}`, { originalname, category, visibility });
-        toast.success('Arquivo atualizado com sucesso!');
+        await api.put(`/api/files/${fileToEdit.id}`, {
+          originalname,
+          category,
+          visibility,
+        });
+        toast.success("Arquivo atualizado com sucesso!");
       } else {
         if (!file) {
-          toast.error('Por favor, selecione um arquivo.'); 
+          toast.error("Por favor, selecione um arquivo.");
           return;
         }
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('originalname', originalname);
-        formData.append('category', category);
-        formData.append('visibility', visibility);
-        await api.post('/api/files', formData);
-        toast.success('Arquivo incluído com sucesso!');
+        formData.append("file", file);
+        formData.append("originalname", originalname);
+        formData.append("category", category);
+        formData.append("visibility", visibility);
+        await api.post("/api/files", formData);
+        toast.success("Arquivo incluído com sucesso!");
       }
       onSuccess();
     } catch (err) {
-      toast.error('Ocorreu um erro ao salvar o arquivo.');
+      toast.error("Ocorreu um erro ao salvar o arquivo.");
       console.error(err);
     }
   };
@@ -58,7 +66,7 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>{fileToEdit ? 'Editar Arquivo' : 'Adicionar Novo Arquivo'}</h2>
+        <h2>{fileToEdit ? "Editar Arquivo" : "Adicionar Novo Arquivo"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <input
@@ -72,7 +80,11 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
           </div>
 
           <div className="form-row">
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="form-select">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="form-select"
+            >
               <option value="Manuais">Manuais</option>
               <option value="Marketing">Marketing</option>
               <option value="Financeiro">Remuneração</option>
@@ -85,8 +97,10 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={visibility === 'internal'}
-                onChange={(e) => setVisibility(e.target.checked ? 'internal' : 'public')}
+                checked={visibility === "internal"}
+                onChange={(e) =>
+                  setVisibility(e.target.checked ? "internal" : "public")
+                }
               />
               Visível apenas para Gestores e Admin
             </label>
@@ -101,10 +115,18 @@ const FileModal: React.FC<FileModalProps> = ({ fileToEdit, onClose, onSuccess })
               />
             </div>
           )}
-                    
+
           <div className="modal-actions">
-            <button type="button" onClick={onClose} className="form-button-cancel">Cancelar</button>
-            <button type="submit" className="form-button">Salvar</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="form-button-cancel"
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="form-button">
+              Salvar
+            </button>
           </div>
         </form>
       </div>
