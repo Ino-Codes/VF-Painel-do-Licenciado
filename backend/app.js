@@ -253,9 +253,9 @@ app.post('/api/solicitar-redefinicao', async (req, res) => {
         </table>
         </div>
         </center>
-        </body>
-      </html>
-
+        </body>,
+    };
+    
     await sgMail.send(msg);
 
     res.json({ message: 'Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.' });
