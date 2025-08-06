@@ -237,20 +237,118 @@ app.delete('/api/admin/notices/:id', async (req, res) => {
   }
 });
 
+// --- CENTRAL DE DOCUMENTOS (COM CONTROLE DE VISIBILIDADE) ---
+app.get('/api/files', async (req, res) => {
+  const { category, search, page = 1, limit = 10, role } = req.query;
+  try {
+    // CORREÇÃO: Garante que page e limit sejam números
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    const offset = (pageNum - 1) * limitNum;
+
+    let whereClauses = [];
+    const params = [];
+
+    if (role === 'licenciado') {
+      whereClauses.push("visibility = 'public'");
+    }
+
+    if (category) {
+      params.push(category);
+      whereClauses.push(`category = $${params.length}`);
+    }
+    if (search) {
+      params.push(`%${search}%`);
+      whereClauses.push(`originalname ILIKE $${params.length}`);
+    }
+    
+    const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const countSql = `SELECT COUNT(*) FROM files ${whereString}`;
+    const filesSql = `SELECT * FROM files ${whereString} ORDER BY uploaded_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    
+    const [countResult, filesResult] = await Promise.all([
+      pool.query(countSql, params),
+      // CORREÇÃO: Usa os valores numéricos para limit e offset
+      pool.query(filesSql, [...params, limitNum, offset])
+    ]);
+
+    const totalCount = parseInt(countResult.rows[0].count, 10);
+    res.json({
+      files: filesResult.rows,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limitNum)
+    });
+  } catch (err) {
+    console.error('Erro ao buscar arquivos:', err);
+    res.status(500).json({ error: 'Erro ao buscar arquivos' });
+  }
+});
+
+app.post('/api/files', upload.single('file'), async (req, res) => {
+  const { originalname, category, visibility } = req.body;
+  if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+  try {
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+        if (error) reject(error);
+        resolve(result);
+      }).end(req.file.buffer);
+    });
+    const fileUrl = uploadResult.secure_url;
+    const result = await pool.query(
+      'INSERT INTO files (filename, originalname, category, visibility) VALUES ($1, $2, $3, $4) RETURNING *',
+      [fileUrl, originalname, category, visibility]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro no upload de arquivo:', err);
+    res.status(500).json({ error: 'Erro no servidor durante o upload.' });
+  }
+});
+
+app.put('/api/files/:id', async (req, res) => {
+    const { id } = req.params;
+    const { originalname, category, visibility } = req.body;
+    try {
+        const result = await pool.query(
+          'UPDATE files SET originalname = $1, category = $2, visibility = $3 WHERE id = $4 RETURNING *',
+          [originalname, category, visibility, id]
+        );
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Arquivo não encontrado.' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Erro ao editar arquivo:', err);
+        res.status(500).json({ error: 'Erro ao editar arquivo.' });
+    }
+});
+
+app.delete('/api/files/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const fileResult = await pool.query('SELECT filename FROM files WHERE id = $1', [id]);
+    if (fileResult.rowCount === 0) return res.status(404).json({ error: 'Arquivo não encontrado.' });
+    const fileUrl = fileResult.rows[0].filename;
+    const publicId = fileUrl.split('/').pop().split('.')[0];
+    await cloudinary.uploader.destroy(publicId);
+    await pool.query('DELETE FROM files WHERE id = $1', [id]);
+    res.json({ success: true, message: 'Arquivo excluído com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir arquivo:', err);
+    res.status(500).json({ error: 'Erro ao excluir arquivo.' });
+  }
+});
+
 // --- VIDEOS (COM CONTROLE DE VISIBILIDADE) ---
 app.get('/api/videos', async (req, res) => {
-    // Adicionado 'role' para filtrar
     const { role } = req.query;
     try {
         let sql = 'SELECT * FROM videos';
-        const params = [];
-
         if (role === 'licenciado') {
           sql += " WHERE visibility = 'public'";
         }
         sql += ' ORDER BY created_at DESC';
 
-        const result = await pool.query(sql, params);
+        const result = await pool.query(sql);
         res.json(result.rows);
     } catch (err) {
         console.error('Erro ao buscar vídeos:', err);
@@ -259,7 +357,6 @@ app.get('/api/videos', async (req, res) => {
 });
 
 app.post('/api/videos', async (req, res) => {
-    // Adicionado 'visibility'
     const { title, description, youtube_url, visibility } = req.body;
     try {
         const result = await pool.query(
@@ -274,7 +371,6 @@ app.post('/api/videos', async (req, res) => {
 });
 
 app.put('/api/videos/:id', async (req, res) => {
-    // Adicionado 'visibility'
     const { id } = req.params;
     const { title, description, youtube_url, visibility } = req.body;
     try {
@@ -538,106 +634,6 @@ app.delete('/api/users/:id/avatar', async (req, res) => {
   } catch (err) {
     console.error('Erro ao remover avatar:', err);
     res.status(500).json({ error: 'Erro no servidor' });
-  }
-});
-
-// --- CENTRAL DE DOCUMENTOS (COM CONTROLE DE VISIBILIDADE) ---
-app.get('/api/files', async (req, res) => {
-  // Adicionado 'role' para filtrar
-  const { category, search, page = 1, limit = 10, role } = req.query;
-  try {
-    const offset = (page - 1) * limit;
-    let whereClauses = [];
-    const params = [];
-
-    // Filtro de visibilidade
-    if (role === 'licenciado') {
-      whereClauses.push("visibility = 'public'");
-    }
-
-    if (category) {
-      params.push(category);
-      whereClauses.push(`category = $${params.length}`);
-    }
-    if (search) {
-      params.push(`%${search}%`);
-      whereClauses.push(`originalname ILIKE $${params.length}`);
-    }
-    
-    const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-    const countSql = `SELECT COUNT(*) FROM files ${whereString}`;
-    const filesSql = `SELECT * FROM files ${whereString} ORDER BY uploaded_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    
-    const [countResult, filesResult] = await Promise.all([
-      pool.query(countSql, params),
-      pool.query(filesSql, [...params, limit, offset])
-    ]);
-
-    const totalCount = parseInt(countResult.rows[0].count, 10);
-    res.json({
-      files: filesResult.rows,
-      totalCount,
-      totalPages: Math.ceil(totalCount / limit)
-    });
-  } catch (err) {
-    console.error('Erro ao buscar arquivos:', err);
-    res.status(500).json({ error: 'Erro ao buscar arquivos' });
-  }
-});
-
-app.post('/api/files', upload.single('file'), async (req, res) => {
-  // Adicionado 'visibility'
-  const { originalname, category, visibility } = req.body;
-  if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
-  try {
-    const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
-        if (error) reject(error);
-        resolve(result);
-      }).end(req.file.buffer);
-    });
-    const fileUrl = uploadResult.secure_url;
-    const result = await pool.query(
-      'INSERT INTO files (filename, originalname, category, visibility) VALUES ($1, $2, $3, $4) RETURNING *',
-      [fileUrl, originalname, category, visibility]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Erro no upload de arquivo:', err);
-    res.status(500).json({ error: 'Erro no servidor durante o upload.' });
-  }
-});
-
-app.put('/api/files/:id', async (req, res) => {
-    // Adicionado 'visibility'
-    const { id } = req.params;
-    const { originalname, category, visibility } = req.body;
-    try {
-        const result = await pool.query(
-          'UPDATE files SET originalname = $1, category = $2, visibility = $3 WHERE id = $4 RETURNING *',
-          [originalname, category, visibility, id]
-        );
-        if (result.rowCount === 0) return res.status(404).json({ error: 'Arquivo não encontrado.' });
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error('Erro ao editar arquivo:', err);
-        res.status(500).json({ error: 'Erro ao editar arquivo.' });
-    }
-});
-
-app.delete('/api/files/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const fileResult = await pool.query('SELECT filename FROM files WHERE id = $1', [id]);
-    if (fileResult.rowCount === 0) return res.status(404).json({ error: 'Arquivo não encontrado.' });
-    const fileUrl = fileResult.rows[0].filename;
-    const publicId = fileUrl.split('/').pop().split('.')[0];
-    await cloudinary.uploader.destroy(publicId);
-    await pool.query('DELETE FROM files WHERE id = $1', [id]);
-    res.json({ success: true, message: 'Arquivo excluído com sucesso.' });
-  } catch (err) {
-    console.error('Erro ao excluir arquivo:', err);
-    res.status(500).json({ error: 'Erro ao excluir arquivo.' });
   }
 });
 
