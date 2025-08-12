@@ -87,17 +87,6 @@ const FileModal: React.FC<FileModalProps> = ({
           <div className="form-row">
             <input
               type="text"
-              placeholder="Nome do Arquivo"
-              value={originalname}
-              onChange={(e) => setOriginalname(e.target.value)}
-              className="form-input"
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <input
-              type="text"
               list="category-suggestions"
               placeholder="Categoria"
               value={category}
@@ -127,6 +116,17 @@ const FileModal: React.FC<FileModalProps> = ({
                 <option key={fld} value={fld} />
               ))}
             </datalist>
+          </div>
+
+          <div className="form-row">
+            <input
+              type="text"
+              placeholder="Nome do Arquivo"
+              value={originalname}
+              onChange={(e) => setOriginalname(e.target.value)}
+              className="form-input"
+              required
+            />
           </div>
 
           <div className="form-row">
