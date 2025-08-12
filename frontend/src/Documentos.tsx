@@ -148,7 +148,7 @@ const Documentos: React.FC = () => {
       <div className="content-area document-center">
         <div className="document-header">
           <h2>Central de Documentos</h2>
-          {user?.role !== "licenciado" && (
+          {user?.role === "admin" && (
             <button className="form-button" onClick={openModalForCreate}>
               + Adicionar Arquivo
             </button>
@@ -210,7 +210,7 @@ const Documentos: React.FC = () => {
                               Baixar
                             </button>
                           </a>
-                          {user?.role !== "licenciado" && (
+                          {user?.role === "admin" && (
                             <>
                               <button
                                 className="list-button edit"
