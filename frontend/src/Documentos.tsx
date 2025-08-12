@@ -13,6 +13,7 @@ interface FileData {
   originalname: string;
   filename: string;
   category: string;
+  visibility: "public" | "internal";
   uploaded_at: string;
 }
 
@@ -21,14 +22,8 @@ const Documentos: React.FC = () => {
   const navigate = useNavigate();
 
   const [files, setFiles] = useState<FileData[]>([]);
-  const allCategories = [
-    "Manuais",
-    "Marketing",
-    "Financeiro",
-    "Gestão Interna",
-  ];
-  const [visibleCategories, setVisibleCategories] = useState<string[]>([]);
-  const [category, setCategory] = useState("Manuais");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [category, setCategory] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
 
@@ -49,20 +44,32 @@ const Documentos: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      if (user.role === "licenciado") {
-        setVisibleCategories(
-          allCategories.filter((cat) => cat !== "Gestão Interna")
-        );
-      } else {
-        setVisibleCategories(allCategories);
+  const fetchCategories = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await api.get("/api/files/categories", {
+        params: { role: user.role },
+      });
+      setCategories(res.data);
+      if (!category && res.data.length > 0) {
+        setCategory(res.data[0]);
+      } else if (res.data.length === 0) {
+        setCategory(""); // Limpa a categoria se não houver nenhuma
       }
+    } catch (err) {
+      toast.error("Erro ao buscar categorias.");
     }
-  }, [user]);
+  }, [user, category]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [user]); // Roda apenas quando o usuário é carregado
 
   const fetchFiles = useCallback(async () => {
-    if (!user) return;
+    if (!user || !category) {
+      setFiles([]); // Limpa os arquivos se não houver categoria
+      return;
+    }
     try {
       const params: any = {
         category,
@@ -84,7 +91,7 @@ const Documentos: React.FC = () => {
 
   useEffect(() => {
     fetchFiles();
-  }, [category, user, currentPage, limit, searchQuery]);
+  }, [fetchFiles]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -104,7 +111,8 @@ const Documentos: React.FC = () => {
     try {
       await api.delete(`/api/files/${fileToDelete}`);
       toast.success("Arquivo excluído com sucesso!");
-      fetchFiles();
+      await fetchFiles();
+      await fetchCategories(); // Re-busca as categorias
     } catch (err) {
       toast.error("Erro ao excluir o arquivo.");
     } finally {
@@ -123,9 +131,10 @@ const Documentos: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = async () => {
     setIsModalOpen(false);
-    fetchFiles();
+    await fetchCategories();
+    await fetchFiles();
   };
 
   if (loading) {
@@ -150,7 +159,7 @@ const Documentos: React.FC = () => {
         </div>
 
         <div className="tabs">
-          {visibleCategories.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               className={`tab-item ${category === cat ? "active" : ""}`}
@@ -188,7 +197,7 @@ const Documentos: React.FC = () => {
                 >
                   <button className="list-button download">Baixar</button>
                 </a>
-                {user?.role === "admin" && (
+                {user?.role !== "licenciado" && (
                   <>
                     <button
                       className="list-button edit"
@@ -235,7 +244,7 @@ const Documentos: React.FC = () => {
               </button>
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || totalPages === 0}
               >
                 Próxima
               </button>
@@ -249,6 +258,7 @@ const Documentos: React.FC = () => {
           fileToEdit={editingFile}
           onClose={() => setIsModalOpen(false)}
           onSuccess={handleSuccess}
+          categories={categories}
         />
       )}
       <Footer />

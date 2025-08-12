@@ -6,21 +6,24 @@ interface FileData {
   id: number;
   originalname: string;
   category: string;
+  visibility: "public" | "internal";
 }
 
 interface FileModalProps {
   fileToEdit: FileData | null;
   onClose: () => void;
   onSuccess: () => void;
+  categories: string[]; // Recebe as categorias existentes como sugestão
 }
 
 const FileModal: React.FC<FileModalProps> = ({
   fileToEdit,
   onClose,
   onSuccess,
+  categories,
 }) => {
   const [originalname, setOriginalname] = useState("");
-  const [category, setCategory] = useState("Manuais");
+  const [category, setCategory] = useState("");
   const [visibility, setVisibility] = useState<"public" | "internal">("public");
   const [file, setFile] = useState<File | null>(null);
 
@@ -34,6 +37,11 @@ const FileModal: React.FC<FileModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!category.trim() || !originalname.trim()) {
+      toast.error("Nome do arquivo e categoria são obrigatórios.");
+      return;
+    }
 
     try {
       if (fileToEdit) {
@@ -80,17 +88,20 @@ const FileModal: React.FC<FileModalProps> = ({
           </div>
 
           <div className="form-row">
-            <select
+            <input
+              type="text"
+              list="category-suggestions"
+              placeholder="Digite o nome da Categoria"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="form-select"
-            >
-              <option value="Manuais">Manuais</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Financeiro">Remuneração</option>
-              {/* Aqui vão as categorias */}
-              <option value="Gestão Interna">Gestão Interna</option>
-            </select>
+              className="form-input"
+              required
+            />
+            <datalist id="category-suggestions">
+              {categories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
+            </datalist>
           </div>
 
           <div className="form-row">
@@ -102,7 +113,7 @@ const FileModal: React.FC<FileModalProps> = ({
                   setVisibility(e.target.checked ? "internal" : "public")
                 }
               />
-              Visível apenas para Gestores e Admin
+              Visível apenas para Gestores e Admins
             </label>
           </div>
 
