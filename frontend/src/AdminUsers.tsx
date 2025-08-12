@@ -11,7 +11,7 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  role: "admin" | "licenciado" | "gestor";
+  role: "admin" | "licenciado" | "gestor" | "executivo de contas";
 }
 
 // Componente para a funcionalidade de importação em massa
@@ -93,7 +93,11 @@ const AdminUsers: React.FC = () => {
     nome: "",
     email: "",
     password: "",
-    role: "licenciado" as "admin" | "licenciado" | "gestor",
+    role: "licenciado" as
+      | "admin"
+      | "licenciado"
+      | "gestor"
+      | "executivo de contas",
   });
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -255,7 +259,8 @@ const AdminUsers: React.FC = () => {
                 const newRole = e.target.value as
                   | "admin"
                   | "licenciado"
-                  | "gestor";
+                  | "gestor"
+                  | "executivo de contas";
                 if (editingUser)
                   setEditingUser({ ...editingUser, role: newRole });
                 else setForm({ ...form, role: newRole });
@@ -264,6 +269,7 @@ const AdminUsers: React.FC = () => {
               <option value="licenciado">Licenciado</option>
               <option value="admin">Admin</option>
               <option value="gestor">Gestor</option>
+              <option value="executivo de contas">Executivo de Contas</option>
             </select>
           </div>
 

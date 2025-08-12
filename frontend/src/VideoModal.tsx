@@ -94,7 +94,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
                   setVisibility(e.target.checked ? "internal" : "public")
                 }
               />
-              Visível apenas para Gestores e Admin
+              Acesso privado (apenas colaboradores internos)
             </label>
           </div>
 

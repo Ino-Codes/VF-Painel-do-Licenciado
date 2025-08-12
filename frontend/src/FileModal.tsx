@@ -138,7 +138,7 @@ const FileModal: React.FC<FileModalProps> = ({
                   setVisibility(e.target.checked ? "internal" : "public")
                 }
               />
-              Visível apenas para Gestores e Admins
+              Acesso privado (apenas colaboradores internos)
             </label>
           </div>
 
