@@ -7,15 +7,21 @@ import Footer from "./Footer.tsx";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
+import "./styles.css";
 
 interface FileData {
   id: number;
   originalname: string;
   filename: string;
   category: string;
+  folder?: string;
   visibility: "public" | "internal";
   uploaded_at: string;
 }
+
+type GroupedFiles = {
+  [folderName: string]: FileData[];
+};
 
 const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
@@ -24,6 +30,8 @@ const Documentos: React.FC = () => {
   const [files, setFiles] = useState<FileData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [category, setCategory] = useState<string>("");
+  const [activeFolder, setActiveFolder] = useState<string | null>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<FileData | null>(null);
 
@@ -251,6 +259,63 @@ const Documentos: React.FC = () => {
             </div>
           </div>
         )}
+
+        <div className="folder-list">
+          {folderNames.length > 0 ? (
+            folderNames.map((folderName) => (
+              <div key={folderName} className="folder-item">
+                <button
+                  className="folder-header"
+                  onClick={() => toggleFolder(folderName)}
+                >
+                  <span>{folderName}</span>
+                  <span className="folder-toggle">
+                    {activeFolder === folderName ? "−" : "+"}
+                  </span>
+                </button>
+                {activeFolder === folderName && (
+                  <div className="folder-content">
+                    {groupedFiles[folderName].map((file) => (
+                      <div key={file.id} className="file-item">
+                        <span className="file-name">{file.originalname}</span>
+                        <div className="file-actions">
+                          <a
+                            href={file.filename}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                          >
+                            <button className="list-button download">
+                              Baixar
+                            </button>
+                          </a>
+                          {user?.role !== "licenciado" && (
+                            <>
+                              <button
+                                className="list-button edit"
+                                onClick={() => openModalForEdit(file)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className="list-button delete"
+                                onClick={() => handleDeleteClick(file.id)}
+                              >
+                                Excluir
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p>Nenhum documento encontrado nesta categoria.</p>
+          )}
+        </div>
       </div>
 
       {isModalOpen && (
@@ -259,6 +324,7 @@ const Documentos: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           onSuccess={handleSuccess}
           categories={categories}
+          folders={folderNames}
         />
       )}
       <Footer />

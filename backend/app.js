@@ -52,14 +52,15 @@ const createTables = async () => {
   const fileTable = `
     CREATE TABLE IF NOT EXISTS files (
       id SERIAL PRIMARY KEY, filename TEXT, originalname TEXT, category TEXT,
-      visibility TEXT DEFAULT 'public', -- NOVO
+      folder TEXT,
+      visibility TEXT DEFAULT 'public', 
       uploaded_at TIMESTAMPTZ DEFAULT NOW()
     );`;
   const videoTable = `
     CREATE TABLE IF NOT EXISTS videos (
       id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT,
       youtube_url TEXT NOT NULL UNIQUE,
-      visibility TEXT DEFAULT 'public', -- NOVO
+      visibility TEXT DEFAULT 'public', 
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
   const logsTable = `
@@ -293,12 +294,8 @@ app.delete("/api/admin/notices/:id", async (req, res) => {
 
 // --- CENTRAL DE DOCUMENTOS (COM CONTROLE DE VISIBILIDADE) ---
 app.get("/api/files", async (req, res) => {
-  const { category, search, page = 1, limit = 10, role } = req.query;
+  const { category, search, role } = req.query;
   try {
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 10;
-    const offset = (pageNum - 1) * limitNum;
-
     let whereClauses = [];
     const params = [];
 
@@ -312,27 +309,27 @@ app.get("/api/files", async (req, res) => {
     }
     if (search) {
       params.push(`%${search}%`);
-      whereClauses.push(`originalname ILIKE $${params.length}`);
+      whereClauses.push(
+        `(originalname ILIKE $${params.length} OR folder ILIKE $${params.length})`
+      );
     }
 
     const whereString =
       whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-    const countSql = `SELECT COUNT(*) FROM files ${whereString}`;
-    const filesSql = `SELECT * FROM files ${whereString} ORDER BY uploaded_at DESC LIMIT $${
-      params.length + 1
-    } OFFSET $${params.length + 2}`;
+    const filesSql = `SELECT * FROM files ${whereString} ORDER BY folder ASC, originalname ASC`;
 
-    const [countResult, filesResult] = await Promise.all([
-      pool.query(countSql, params),
-      pool.query(filesSql, [...params, limitNum, offset]),
-    ]);
+    const filesResult = await pool.query(filesSql, params);
 
-    const totalCount = parseInt(countResult.rows[0].count, 10);
-    res.json({
-      files: filesResult.rows,
-      totalCount,
-      totalPages: Math.ceil(totalCount / limitNum),
-    });
+    const groupedByFolder = filesResult.rows.reduce((acc, file) => {
+      const folderName = file.folder || "Geral";
+      if (!acc[folderName]) {
+        acc[folderName] = [];
+      }
+      acc[folderName].push(file);
+      return acc;
+    }, {});
+
+    res.json(groupedByFolder);
   } catch (err) {
     console.error("Erro ao buscar arquivos:", err);
     res.status(500).json({ error: "Erro ao buscar arquivos" });
@@ -340,7 +337,7 @@ app.get("/api/files", async (req, res) => {
 });
 
 app.post("/api/files", upload.single("file"), async (req, res) => {
-  const { originalname, category, visibility } = req.body;
+  const { originalname, category, folder, visibility } = req.body;
   if (!req.file)
     return res.status(400).json({ error: "Nenhum arquivo enviado." });
   try {
@@ -354,8 +351,8 @@ app.post("/api/files", upload.single("file"), async (req, res) => {
     });
     const fileUrl = uploadResult.secure_url;
     const result = await pool.query(
-      "INSERT INTO files (filename, originalname, category, visibility) VALUES ($1, $2, $3, $4) RETURNING *",
-      [fileUrl, originalname, category, visibility]
+      "INSERT INTO files (filename, originalname, category, folder, visibility) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [fileUrl, originalname, category, folder, visibility]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -366,11 +363,11 @@ app.post("/api/files", upload.single("file"), async (req, res) => {
 
 app.put("/api/files/:id", async (req, res) => {
   const { id } = req.params;
-  const { originalname, category, visibility } = req.body;
+  const { originalname, category, folder, visibility } = req.body; // Adicionado 'folder'
   try {
     const result = await pool.query(
-      "UPDATE files SET originalname = $1, category = $2, visibility = $3 WHERE id = $4 RETURNING *",
-      [originalname, category, visibility, id]
+      "UPDATE files SET originalname = $1, category = $2, folder = $3, visibility = $4 WHERE id = $5 RETURNING *",
+      [originalname, category, folder, visibility, id]
     );
     if (result.rowCount === 0)
       return res.status(404).json({ error: "Arquivo não encontrado." });

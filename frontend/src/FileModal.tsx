@@ -6,6 +6,7 @@ interface FileData {
   id: number;
   originalname: string;
   category: string;
+  folder?: string;
   visibility: "public" | "internal";
 }
 
@@ -13,7 +14,8 @@ interface FileModalProps {
   fileToEdit: FileData | null;
   onClose: () => void;
   onSuccess: () => void;
-  categories: string[]; // Recebe as categorias existentes como sugestão
+  categories: string[];
+  folders: string[];
 }
 
 const FileModal: React.FC<FileModalProps> = ({
@@ -24,6 +26,7 @@ const FileModal: React.FC<FileModalProps> = ({
 }) => {
   const [originalname, setOriginalname] = useState("");
   const [category, setCategory] = useState("");
+  const [folder, setFolder] = useState("");
   const [visibility, setVisibility] = useState<"public" | "internal">("public");
   const [file, setFile] = useState<File | null>(null);
 
@@ -31,6 +34,7 @@ const FileModal: React.FC<FileModalProps> = ({
     if (fileToEdit) {
       setOriginalname(fileToEdit.originalname);
       setCategory(fileToEdit.category);
+      setFolder(fileToEdit.folder || "");
       setVisibility(fileToEdit.visibility || "public");
     }
   }, [fileToEdit]);
@@ -60,6 +64,7 @@ const FileModal: React.FC<FileModalProps> = ({
         formData.append("file", file);
         formData.append("originalname", originalname);
         formData.append("category", category);
+        formData.append("folder", folder);
         formData.append("visibility", visibility);
         await api.post("/api/files", formData);
         toast.success("Arquivo incluído com sucesso!");
@@ -100,6 +105,23 @@ const FileModal: React.FC<FileModalProps> = ({
             <datalist id="category-suggestions">
               {categories.map((cat) => (
                 <option key={cat} value={cat} />
+              ))}
+            </datalist>
+          </div>
+
+          <div className="form-row">
+            <input
+              type="text"
+              list="folder-suggestions"
+              placeholder="Pasta"
+              value={folder}
+              onChange={(e) => setFolder(e.target.value)}
+              className="form-input"
+              required
+            />
+            <datalist id="folder-suggestions">
+              {folders.map((fld) => (
+                <option key={fld} value={fld} />
               ))}
             </datalist>
           </div>

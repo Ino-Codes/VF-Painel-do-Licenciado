@@ -665,6 +665,59 @@ nav.main-menu {
 }
 
 /* Documentos */
+.folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.folder-item {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.folder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border: none;
+  text-align: left;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #333;
+}
+
+.folder-header:hover {
+  background-color: #e9ecef;
+}
+
+.folder-toggle {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.folder-content {
+  padding: 10px;
+  background-color: white;
+}
+
+.folder-content .file-item {
+  border: none;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 0;
+  padding: 12px 10px;
+}
+
+.folder-content .file-item:last-child {
+  border-bottom: none;
+}
+
 .document-center .document-header {
   display: flex;
   justify-content: space-between;
