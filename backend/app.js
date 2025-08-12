@@ -211,12 +211,10 @@ app.post("/api/redefinir-senha", async (req, res) => {
     const user = userResult.rows[0];
 
     if (!user) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Token inválido ou expirado. Por favor, solicite a redefinição novamente.",
-        });
+      return res.status(400).json({
+        error:
+          "Token inválido ou expirado. Por favor, solicite a redefinição novamente.",
+      });
     }
 
     const newPasswordHash = await bcrypt.hash(password, 10);
@@ -400,6 +398,26 @@ app.delete("/api/files/:id", async (req, res) => {
   } catch (err) {
     console.error("Erro ao excluir arquivo:", err);
     res.status(500).json({ error: "Erro ao excluir arquivo." });
+  }
+});
+
+// ROTA PARA BUSCAR CATEGORIAS DE DOCUMENTOS (respeitando a visibilidade)
+app.get("/api/files/categories", async (req, res) => {
+  const { role } = req.query;
+  try {
+    let query = "SELECT DISTINCT category FROM files";
+    const params = [];
+
+    if (role === "licenciado") {
+      query += " WHERE visibility = 'public'";
+    }
+    query += " ORDER BY category ASC";
+
+    const result = await pool.query(query, params);
+    res.json(result.rows.map((row) => row.category));
+  } catch (err) {
+    console.error("Erro ao buscar categorias de arquivos:", err);
+    res.status(500).json({ error: "Erro ao buscar categorias." });
   }
 });
 
