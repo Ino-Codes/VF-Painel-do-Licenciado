@@ -166,7 +166,7 @@ app.post("/api/solicitar-redefinicao", async (req, res) => {
       .createHash("sha256")
       .update(resetToken)
       .digest("hex");
-    const tokenExpiry = new Date(Date.now() + 900000); // 15 minutos
+    const tokenExpiry = new Date(Date.now() + 900000); // Em milissegundos
 
     await pool.query(
       "UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3",

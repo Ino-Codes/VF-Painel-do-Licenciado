@@ -3,7 +3,6 @@ import api from "./api.ts";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.tsx";
 
-// URL da logo hospedada, para fácil manutenção.
 const logo =
   "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";
 
@@ -18,7 +17,7 @@ const App: React.FC = () => {
   const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); // Previne o comportamento padrão do formulário
+    e.preventDefault();
     try {
       setLoginError("");
       const res = await api.post("/api/login", { email, password });
@@ -30,7 +29,7 @@ const App: React.FC = () => {
   };
 
   const handleRecuperarSenha = async (e: React.FormEvent) => {
-    e.preventDefault(); // Previne o comportamento padrão do formulário
+    e.preventDefault();
     if (!emailRecuperacao) {
       setLoginError("Por favor, insira um e-mail.");
       return;
@@ -47,16 +46,14 @@ const App: React.FC = () => {
     }
   };
 
-  // Função para alternar para a visão de recuperação de senha
   const toggleRecuperacao = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault(); // Previne o link de pular a página
+    e.preventDefault();
     setMostrarRecuperacao(true);
     setLoginError("");
   };
 
-  // Função para voltar para a visão de login
   const toggleLogin = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault(); // Previne o link de pular a página
+    e.preventDefault();
     setMostrarRecuperacao(false);
     setRecoveryMessage("");
     setLoginError("");
@@ -69,7 +66,7 @@ const App: React.FC = () => {
       </div>
       <div className="p-1">
         <h2 className="titulo-login">
-          {!mostrarRecuperacao ? "Painel do Licenciado" : "Recuperar Senha"}
+          {!mostrarRecuperacao ? "Painel Valor Fiscal" : "Recuperar Senha"}
         </h2>
 
         {loginError && <div className="login-error-message">{loginError}</div>}
