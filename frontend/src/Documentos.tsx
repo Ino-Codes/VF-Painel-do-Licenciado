@@ -19,6 +19,7 @@ interface FileData {
   uploaded_at: string;
 }
 
+// Tipo para os arquivos agrupados por pasta
 type GroupedFiles = {
   [folderName: string]: FileData[];
 };
@@ -27,7 +28,7 @@ const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const [files, setFiles] = useState<FileData[]>([]);
+  const [groupedFiles, setGroupedFiles] = useState<GroupedFiles>({});
   const [categories, setCategories] = useState<string[]>([]);
   const [category, setCategory] = useState<string>("");
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
@@ -37,11 +38,6 @@ const Documentos: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [totalFiles, setTotalFiles] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<number | null>(null);
@@ -62,7 +58,7 @@ const Documentos: React.FC = () => {
       if (!category && res.data.length > 0) {
         setCategory(res.data[0]);
       } else if (res.data.length === 0) {
-        setCategory(""); // Limpa a categoria se não houver nenhuma
+        setCategory("");
       }
     } catch (err) {
       toast.error("Erro ao buscar categorias.");
@@ -71,43 +67,34 @@ const Documentos: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, [user]); // Roda apenas quando o usuário é carregado
+  }, [user]);
 
   const fetchFiles = useCallback(async () => {
     if (!user || !category) {
-      setFiles([]); // Limpa os arquivos se não houver categoria
+      setGroupedFiles({});
       return;
     }
     try {
-      const params: any = {
-        category,
-        page: currentPage,
-        limit,
-        role: user.role,
-      };
+      const params: any = { category, role: user.role };
       if (searchQuery) {
         params.search = searchQuery;
       }
       const res = await api.get("/api/files", { params });
-      setFiles(res.data.files);
-      setTotalFiles(res.data.totalCount);
-      setTotalPages(res.data.totalPages);
+      setGroupedFiles(res.data); // Define o estado com o objeto de pastas retornado pela API
     } catch (err) {
       toast.error("Erro ao buscar arquivos.");
     }
-  }, [user, category, currentPage, limit, searchQuery]);
+  }, [user, category, searchQuery]);
 
   useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [category, limit, searchQuery]);
-
-  const handleSearch = () => {
-    setSearchQuery(searchTerm);
+  const toggleFolder = (folderName: string) => {
+    setActiveFolder(activeFolder === folderName ? null : folderName);
   };
+
+  const handleSearch = () => setSearchQuery(searchTerm);
 
   const handleDeleteClick = (fileId: number) => {
     setFileToDelete(fileId);
@@ -120,7 +107,7 @@ const Documentos: React.FC = () => {
       await api.delete(`/api/files/${fileToDelete}`);
       toast.success("Arquivo excluído com sucesso!");
       await fetchFiles();
-      await fetchCategories(); // Re-busca as categorias
+      await fetchCategories();
     } catch (err) {
       toast.error("Erro ao excluir o arquivo.");
     } finally {
@@ -153,6 +140,8 @@ const Documentos: React.FC = () => {
     return null;
   }
 
+  const folderNames = Object.keys(groupedFiles);
+
   return (
     <div className="p-2">
       <Menu />
@@ -181,7 +170,7 @@ const Documentos: React.FC = () => {
         <div className="search-bar">
           <input
             type="search"
-            placeholder="Pesquisar por nome do arquivo..."
+            placeholder="Pesquisar por nome do arquivo ou pasta..."
             className="form-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -191,74 +180,6 @@ const Documentos: React.FC = () => {
             Pesquisar
           </button>
         </div>
-
-        <div className="file-list">
-          {files.map((file) => (
-            <div key={file.id} className="file-item">
-              <span className="file-name">{file.originalname}</span>
-              <div className="file-actions">
-                <a
-                  href={file.filename}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                >
-                  <button className="list-button download">Baixar</button>
-                </a>
-                {user?.role !== "licenciado" && (
-                  <>
-                    <button
-                      className="list-button edit"
-                      onClick={() => openModalForEdit(file)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="list-button delete"
-                      onClick={() => handleDeleteClick(file.id)}
-                    >
-                      Excluir
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {totalFiles > 0 && (
-          <div className="pagination-controls">
-            <div className="limit-selector">
-              <label htmlFor="limit">Itens por página:</label>
-              <select
-                id="limit"
-                value={limit}
-                onChange={(e) => setLimit(Number(e.target.value))}
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
-            <span>
-              Página {currentPage} de {totalPages}
-            </span>
-            <div className="page-buttons">
-              <button
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Anterior
-              </button>
-              <button
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages || totalPages === 0}
-              >
-                Próxima
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="folder-list">
           {folderNames.length > 0 ? (

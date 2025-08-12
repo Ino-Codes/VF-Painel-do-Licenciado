@@ -23,6 +23,7 @@ const FileModal: React.FC<FileModalProps> = ({
   onClose,
   onSuccess,
   categories,
+  folders, // Prop corrigida
 }) => {
   const [originalname, setOriginalname] = useState("");
   const [category, setCategory] = useState("");
@@ -42,16 +43,18 @@ const FileModal: React.FC<FileModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!category.trim() || !originalname.trim()) {
-      toast.error("Nome do arquivo e categoria são obrigatórios.");
+    if (!category.trim() || !originalname.trim() || !folder.trim()) {
+      toast.error("Nome, Categoria e Pasta são obrigatórios.");
       return;
     }
 
     try {
       if (fileToEdit) {
+        // Lógica de submit corrigida para incluir 'folder'
         await api.put(`/api/files/${fileToEdit.id}`, {
           originalname,
           category,
+          folder,
           visibility,
         });
         toast.success("Arquivo atualizado com sucesso!");
@@ -96,7 +99,7 @@ const FileModal: React.FC<FileModalProps> = ({
             <input
               type="text"
               list="category-suggestions"
-              placeholder="Digite o nome da Categoria"
+              placeholder="Categoria"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="form-input"
