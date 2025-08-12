@@ -129,7 +129,7 @@ const Videos: React.FC = () => {
               <div className="video-info">
                 <h3>{video.title}</h3>
                 <p>{video.description}</p>
-                {user.role !== "licenciado" && (
+                {user.role === "admin" && (
                   <div className="video-actions">
                     <button
                       className="list-button edit"
