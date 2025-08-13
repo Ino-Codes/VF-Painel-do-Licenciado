@@ -19,9 +19,17 @@ interface FileData {
   uploaded_at: string;
 }
 
-// Tipo para os arquivos agrupados por pasta
 type GroupedFiles = {
   [folderName: string]: FileData[];
+};
+
+const getDownloadUrl = (url: string, desiredFilename: string): string => {
+  if (!url) return "#";
+  const parts = url.split("/upload/");
+  if (parts.length !== 2) {
+    return url;
+  }
+  return `${parts[0]}/upload/fl_attachment:${desiredFilename}/${parts[1]}`;
 };
 
 const Documentos: React.FC = () => {
@@ -80,7 +88,7 @@ const Documentos: React.FC = () => {
         params.search = searchQuery;
       }
       const res = await api.get("/api/files", { params });
-      setGroupedFiles(res.data); // Define o estado com o objeto de pastas retornado pela API
+      setGroupedFiles(res.data);
     } catch (err) {
       toast.error("Erro ao buscar arquivos.");
     }
@@ -201,10 +209,11 @@ const Documentos: React.FC = () => {
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
                           <a
-                            href={file.filename}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download
+                            href={getDownloadUrl(
+                              file.filename,
+                              file.originalname
+                            )}
+                            download={file.originalname}
                           >
                             <button className="list-button download">
                               Baixar
