@@ -118,7 +118,12 @@ const Dashboard: React.FC = () => {
       <div className="content-area">
         <div className="dashboard-header">
           <h2>Bem-vindo, {user.nome}!</h2>
-          <p>Este é o seu novo Painel do Licenciado</p>
+          <p>
+            Este é o seu novo Painel da Valor Fiscal!
+            <br />
+            Aqui você encontra os principais documetos e treinamentos para atuar
+            conosco.
+          </p>
         </div>
 
         <div className="dashboard-grid">
