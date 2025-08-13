@@ -378,6 +378,46 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
+app.get("/api/files/download/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 1. Busca os dados do arquivo no banco de dados
+    const fileResult = await pool.query(
+      "SELECT filename, originalname FROM files WHERE id = $1",
+      [id]
+    );
+
+    if (fileResult.rowCount === 0) {
+      return res.status(404).send("Arquivo não encontrado no banco de dados.");
+    }
+
+    const { filename: fileUrl, originalname } = fileResult.rows[0];
+
+    // 2. Extrai o public_id e o tipo de recurso da URL do Cloudinary
+    // Ex: https://res.cloudinary.com/cloud/image/upload/v123/public_id.pdf
+    const urlParts = fileUrl.split("/");
+    const publicIdWithExtension = urlParts.pop();
+    const publicId = publicIdWithExtension.split(".")[0];
+    const resourceType = urlParts[urlParts.indexOf("upload") - 1]; // 'image' ou 'raw'
+
+    // 3. Gera uma URL de download assinada e segura do Cloudinary
+    //    Esta URL força o download ('attachment') e define o nome do arquivo.
+    const signedDownloadUrl = cloudinary.utils.private_download_url(publicId, {
+      resource_type: resourceType,
+      type: "upload",
+      attachment: true,
+      filename: originalname,
+    });
+
+    // 4. Redireciona o navegador do usuário para a URL de download
+    res.redirect(signedDownloadUrl);
+  } catch (err) {
+    console.error("Erro ao gerar link de download:", err);
+    res.status(500).send("Erro interno ao processar o download.");
+  }
+});
+
 app.delete("/api/files/:id", async (req, res) => {
   const { id } = req.params;
   try {

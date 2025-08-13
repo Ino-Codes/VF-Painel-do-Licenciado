@@ -23,34 +23,7 @@ type GroupedFiles = {
   [folderName: string]: FileData[];
 };
 
-// --- FUNÇÃO CORRIGIDA E MAIS INTELIGENTE ---
-const getDownloadUrl = (fileUrl: string, originalFilename: string): string => {
-  if (!fileUrl) return "#";
-
-  let correctedUrl = fileUrl;
-  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
-  const fileExtension = originalFilename
-    .slice(originalFilename.lastIndexOf("."))
-    .toLowerCase();
-
-  // 1. Corrige o tipo de recurso na URL se necessário
-  // Se a URL contém /image/ mas o arquivo não é uma imagem, troca para /raw/
-  if (
-    fileUrl.includes("/image/upload") &&
-    !imageExtensions.includes(fileExtension)
-  ) {
-    correctedUrl = fileUrl.replace("/image/upload", "/raw/upload");
-  }
-
-  // 2. Adiciona o flag de download
-  const parts = correctedUrl.split("/upload/");
-  if (parts.length !== 2) {
-    return correctedUrl; // Retorna a URL corrigida (ou original) se não for padrão
-  }
-
-  // Retorna a URL final com o flag 'fl_attachment'
-  return `${parts[0]}/upload/fl_attachment/${parts[1]}`;
-};
+// A FUNÇÃO getDownloadUrl FOI REMOVIDA
 
 const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
@@ -168,6 +141,9 @@ const Documentos: React.FC = () => {
     return null;
   }
 
+  // Obtém a URL base da API a partir da instância do axios
+  const baseURL = api.defaults.baseURL;
+
   const folderNames = Object.keys(groupedFiles);
 
   return (
@@ -229,13 +205,8 @@ const Documentos: React.FC = () => {
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
                           {/* --- TRECHO ALTERADO --- */}
-                          <a
-                            href={getDownloadUrl(
-                              file.filename,
-                              file.originalname
-                            )}
-                            download={file.originalname}
-                          >
+                          {/* Aponta para o novo endpoint do backend */}
+                          <a href={`${baseURL}/api/files/download/${file.id}`}>
                             <button className="list-button download">
                               Baixar
                             </button>
