@@ -173,7 +173,7 @@ app.post("/api/solicitar-redefinicao", async (req, res) => {
       [hashedToken, tokenExpiry, user.id]
     );
 
-    const resetUrl = `https://licenciados.valorfiscal.com/reset-password?token=${resetToken}`;
+    const resetUrl = `https://painel.valorfiscal.com/reset-password?token=${resetToken}`;
 
     const msg = {
       to: user.email,
