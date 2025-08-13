@@ -23,13 +23,18 @@ type GroupedFiles = {
   [folderName: string]: FileData[];
 };
 
-const getDownloadUrl = (url: string, desiredFilename: string): string => {
+// --- FUNÇÃO CORRIGIDA ---
+// Adiciona o flag 'fl_attachment' à URL do Cloudinary para forçar o download.
+// Desta vez, SEM adicionar o nome do arquivo na URL.
+const getDownloadUrl = (url: string): string => {
   if (!url) return "#";
   const parts = url.split("/upload/");
   if (parts.length !== 2) {
+    // Se não for uma URL padrão do Cloudinary, retorna a original
     return url;
   }
-  return `${parts[0]}/upload/fl_attachment:${desiredFilename}/${parts[1]}`;
+  // Insere APENAS o flag 'fl_attachment'
+  return `${parts[0]}/upload/fl_attachment/${parts[1]}`;
 };
 
 const Documentos: React.FC = () => {
@@ -208,11 +213,9 @@ const Documentos: React.FC = () => {
                       <div key={file.id} className="file-item">
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
+                          {/* --- TRECHO ALTERADO --- */}
                           <a
-                            href={getDownloadUrl(
-                              file.filename,
-                              file.originalname
-                            )}
+                            href={getDownloadUrl(file.filename)}
                             download={file.originalname}
                           >
                             <button className="list-button download">
