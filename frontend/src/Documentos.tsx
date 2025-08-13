@@ -23,7 +23,31 @@ type GroupedFiles = {
   [folderName: string]: FileData[];
 };
 
-// A FUNÇÃO getDownloadUrl FOI REMOVIDA
+// --- FUNÇÃO FINAL E CORRETA ---
+const getDownloadUrl = (fileUrl: string, originalFilename: string): string => {
+  if (!fileUrl) return "#";
+
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
+  const fileExtension = originalFilename
+    .slice(originalFilename.lastIndexOf("."))
+    .toLowerCase();
+
+  // Divide a URL na parte de 'upload/'
+  const parts = fileUrl.split("/upload/");
+  if (parts.length !== 2) {
+    return fileUrl; // Retorna a URL original se não for um formato padrão
+  }
+
+  let transformations = "fl_attachment";
+
+  // Se o arquivo NÃO é uma imagem (ex: PDF, PPTX), adiciona o flag pg_all
+  if (!imageExtensions.includes(fileExtension)) {
+    transformations += ",pg_all";
+  }
+
+  // Monta a URL final com as transformações corretas
+  return `${parts[0]}/upload/${transformations}/${parts[1]}`;
+};
 
 const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
@@ -141,9 +165,6 @@ const Documentos: React.FC = () => {
     return null;
   }
 
-  // Obtém a URL base da API a partir da instância do axios
-  const baseURL = api.defaults.baseURL;
-
   const folderNames = Object.keys(groupedFiles);
 
   return (
@@ -204,9 +225,13 @@ const Documentos: React.FC = () => {
                       <div key={file.id} className="file-item">
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
-                          {/* --- TRECHO ALTERADO --- */}
-                          {/* Aponta para o novo endpoint do backend */}
-                          <a href={`${baseURL}/api/files/download/${file.id}`}>
+                          <a
+                            href={getDownloadUrl(
+                              file.filename,
+                              file.originalname
+                            )}
+                            download={file.originalname}
+                          >
                             <button className="list-button download">
                               Baixar
                             </button>

@@ -341,14 +341,22 @@ app.post("/api/files", upload.single("file"), async (req, res) => {
   if (!req.file)
     return res.status(400).json({ error: "Nenhum arquivo enviado." });
   try {
+    // --- LÓGICA DE CORREÇÃO ADICIONADA ---
+    // Determina o tipo de recurso com base no mimetype do arquivo
+    const resourceType = req.file.mimetype.startsWith("image")
+      ? "image"
+      : "raw";
+
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader
-        .upload_stream({ resource_type: "auto" }, (error, result) => {
+        .upload_stream({ resource_type: resourceType }, (error, result) => {
+          // Usa a variável corrigida
           if (error) reject(error);
           resolve(result);
         })
         .end(req.file.buffer);
     });
+
     const fileUrl = uploadResult.secure_url;
     const result = await pool.query(
       "INSERT INTO files (filename, originalname, category, folder, visibility) VALUES ($1, $2, $3, $4, $5) RETURNING *",
