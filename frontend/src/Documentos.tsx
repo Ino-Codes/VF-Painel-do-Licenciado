@@ -23,17 +23,32 @@ type GroupedFiles = {
   [folderName: string]: FileData[];
 };
 
-// --- FUNÇÃO CORRIGIDA ---
-// Adiciona o flag 'fl_attachment' à URL do Cloudinary para forçar o download.
-// Desta vez, SEM adicionar o nome do arquivo na URL.
-const getDownloadUrl = (url: string): string => {
-  if (!url) return "#";
-  const parts = url.split("/upload/");
-  if (parts.length !== 2) {
-    // Se não for uma URL padrão do Cloudinary, retorna a original
-    return url;
+// --- FUNÇÃO CORRIGIDA E MAIS INTELIGENTE ---
+const getDownloadUrl = (fileUrl: string, originalFilename: string): string => {
+  if (!fileUrl) return "#";
+
+  let correctedUrl = fileUrl;
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
+  const fileExtension = originalFilename
+    .slice(originalFilename.lastIndexOf("."))
+    .toLowerCase();
+
+  // 1. Corrige o tipo de recurso na URL se necessário
+  // Se a URL contém /image/ mas o arquivo não é uma imagem, troca para /raw/
+  if (
+    fileUrl.includes("/image/upload") &&
+    !imageExtensions.includes(fileExtension)
+  ) {
+    correctedUrl = fileUrl.replace("/image/upload", "/raw/upload");
   }
-  // Insere APENAS o flag 'fl_attachment'
+
+  // 2. Adiciona o flag de download
+  const parts = correctedUrl.split("/upload/");
+  if (parts.length !== 2) {
+    return correctedUrl; // Retorna a URL corrigida (ou original) se não for padrão
+  }
+
+  // Retorna a URL final com o flag 'fl_attachment'
   return `${parts[0]}/upload/fl_attachment/${parts[1]}`;
 };
 
@@ -215,7 +230,10 @@ const Documentos: React.FC = () => {
                         <div className="file-actions">
                           {/* --- TRECHO ALTERADO --- */}
                           <a
-                            href={getDownloadUrl(file.filename)}
+                            href={getDownloadUrl(
+                              file.filename,
+                              file.originalname
+                            )}
                             download={file.originalname}
                           >
                             <button className="list-button download">
