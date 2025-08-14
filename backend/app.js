@@ -347,14 +347,37 @@ app.post("/api/files", upload.single("file"), async (req, res) => {
       ? "image"
       : "raw";
 
-    const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream({ resource_type: resourceType }, (error, result) => {
-          // Usa a variável corrigida
-          if (error) reject(error);
-          resolve(result);
-        })
-        .end(req.file.buffer);
+    app.post("/api/files", upload.single("file"), async (req, res) => {
+      const { originalname, category, folder, visibility } = req.body;
+      if (!req.file)
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      try {
+        // --- LÓGICA DE CORREÇÃO ADICIONADA ---
+        // Determina o tipo de recurso com base no mimetype do arquivo
+        const resourceType = req.file.mimetype.startsWith("image")
+          ? "image"
+          : "raw";
+
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: resourceType }, (error, result) => {
+              // Usa a variável corrigida
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+
+        const fileUrl = uploadResult.secure_url;
+        const result = await pool.query(
+          "INSERT INTO files (filename, originalname, category, folder, visibility) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+          [fileUrl, originalname, category, folder, visibility]
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro no upload de arquivo:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
+      }
     });
 
     const fileUrl = uploadResult.secure_url;
