@@ -10,6 +10,7 @@ const sgMail = require("@sendgrid/mail");
 const crypto = require("crypto");
 const csv = require("csv-parser");
 const { Readable } = require("stream");
+const https = require("https");
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -384,37 +385,34 @@ app.put("/api/files/:id", async (req, res) => {
 });
 
 app.get("/api/files/download/:id", async (req, res) => {
-  const { id } = req.params;
   try {
     const fileResult = await pool.query(
       "SELECT filename, originalname FROM files WHERE id = $1",
-      [id]
+      [req.params.id]
     );
     if (fileResult.rowCount === 0) {
-      return res.status(404).send("Arquivo não encontrado no banco de dados.");
+      return res.status(404).send("Arquivo não encontrado.");
     }
-
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
-    const fileExtension = path.extname(originalname).toLowerCase();
-    const isImage = imageExtensions.includes(fileExtension);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(originalname)}"`
+    );
+    res.setHeader("Content-Type", "application/octet-stream");
 
-    const urlParts = fileUrl.split("/upload/");
-    if (urlParts.length !== 2) {
-      return res.redirect(fileUrl);
-    }
-
-    let transformations = "fl_attachment";
-
-    if (!isImage) {
-      transformations += ".pg_all";
-    }
-
-    const finalDownloadUrl = `${urlParts[0]}/upload/${transformations}/${urlParts[1]}`;
-    res.redirect(finalDownloadUrl);
-  } catch (err) {
-    console.error("Erro ao gerar link de download:", err);
+    https
+      .get(fileUrl, (cloudinaryResponse) => {
+        cloudinaryResponse.pipe(res);
+      })
+      .on("error", (e) => {
+        console.error("Erro ao buscar arquivo do Cloudinary:", e);
+        res
+          .status(500)
+          .send("Não foi possível buscar o arquivo do provedor de nuvem.");
+      });
+  } catch (dbError) {
+    console.error("Erro de banco de dados ao tentar baixar arquivo:", dbError);
     res.status(500).send("Erro interno ao processar o download.");
   }
 });
