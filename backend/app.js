@@ -383,7 +383,6 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
-// NOVA ROTA DE DOWNLOAD DE ARQUIVOS (COM SINTAXE CORRIGIDA)
 app.get("/api/files/download/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -415,9 +414,7 @@ app.get("/api/files/download/:id", async (req, res) => {
 
     let transformations = "fl_attachment";
 
-    // Se o arquivo NÃO é uma imagem (ex: PDF), adiciona o flag pg_all
     if (!imageExtensions.includes(fileExtension)) {
-      // CORREÇÃO: trocado vírgula por ponto
       transformations += ".pg_all";
     }
 
@@ -437,20 +434,25 @@ app.delete("/api/files/:id", async (req, res) => {
       "SELECT filename FROM files WHERE id = $1",
       [id]
     );
-    if (fileResult.rowCount === 0)
+    if (fileResult.rowCount === 0) {
       return res.status(404).json({ error: "Arquivo não encontrado." });
+    }
 
     const fileUrl = fileResult.rows[0].filename;
+
     const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
+
     const publicIdWithExtension = fileUrl.split("/").pop();
     const publicId = publicIdWithExtension.substring(
       0,
       publicIdWithExtension.lastIndexOf(".")
     );
 
-    await cloudinary.uploader.destroy(publicId, {
-      resource_type: resourceType,
-    });
+    if (publicId) {
+      await cloudinary.uploader.destroy(publicId, {
+        resource_type: resourceType,
+      });
+    }
 
     await pool.query("DELETE FROM files WHERE id = $1", [id]);
     res.json({ success: true, message: "Arquivo excluído com sucesso." });
@@ -460,7 +462,6 @@ app.delete("/api/files/:id", async (req, res) => {
   }
 });
 
-// ROTA PARA BUSCAR CATEGORIAS DE DOCUMENTOS (respeitando a visibilidade)
 app.get("/api/files/categories", async (req, res) => {
   const { role } = req.query;
   try {
@@ -1012,8 +1013,9 @@ app.delete("/api/admin/faq/:id", async (req, res) => {
       "SELECT document_url FROM faq WHERE id = $1",
       [id]
     );
-    if (faqResult.rowCount === 0)
+    if (faqResult.rowCount === 0) {
       return res.status(404).json({ error: "FAQ não encontrado." });
+    }
 
     const docUrl = faqResult.rows[0].document_url;
     if (docUrl) {
@@ -1023,9 +1025,12 @@ app.delete("/api/admin/faq/:id", async (req, res) => {
         0,
         publicIdWithExtension.lastIndexOf(".")
       );
-      await cloudinary.uploader.destroy(publicId, {
-        resource_type: resourceType,
-      });
+
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId, {
+          resource_type: resourceType,
+        });
+      }
     }
 
     await pool.query("DELETE FROM faq WHERE id = $1", [id]);
