@@ -434,31 +434,41 @@ app.delete("/api/files/:id", async (req, res) => {
       "SELECT filename FROM files WHERE id = $1",
       [id]
     );
+
     if (fileResult.rowCount === 0) {
       return res.status(404).json({ error: "Arquivo não encontrado." });
     }
 
     const fileUrl = fileResult.rows[0].filename;
 
-    const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
+    if (fileUrl) {
+      const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
 
-    const publicIdWithExtension = fileUrl.split("/").pop();
-    const publicId = publicIdWithExtension.substring(
-      0,
-      publicIdWithExtension.lastIndexOf(".")
-    );
+      const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.\w+$/);
+      const publicId = publicIdMatch ? publicIdMatch[1] : null;
 
-    if (publicId) {
-      await cloudinary.uploader.destroy(publicId, {
-        resource_type: resourceType,
-      });
+      if (publicId) {
+        const destructionResult = await cloudinary.uploader.destroy(publicId, {
+          resource_type: resourceType,
+        });
+
+        console.log(
+          `Tentativa de exclusão no Cloudinary para public_id '${publicId}' com resource_type '${resourceType}'. Resultado:`,
+          destructionResult.result
+        );
+      } else {
+        console.warn(`Não foi possível extrair o public_id da URL: ${fileUrl}`);
+      }
     }
 
     await pool.query("DELETE FROM files WHERE id = $1", [id]);
+
     res.json({ success: true, message: "Arquivo excluído com sucesso." });
   } catch (err) {
     console.error("Erro ao excluir arquivo:", err);
-    res.status(500).json({ error: "Erro ao excluir arquivo." });
+    res
+      .status(500)
+      .json({ error: "Erro no servidor ao tentar excluir o arquivo." });
   }
 });
 
@@ -1020,16 +1030,21 @@ app.delete("/api/admin/faq/:id", async (req, res) => {
     const docUrl = faqResult.rows[0].document_url;
     if (docUrl) {
       const resourceType = docUrl.includes("/image/") ? "image" : "raw";
-      const publicIdWithExtension = docUrl.split("/").pop();
-      const publicId = publicIdWithExtension.substring(
-        0,
-        publicIdWithExtension.lastIndexOf(".")
-      );
+      const publicIdMatch = docUrl.match(/\/v\d+\/(.+)\.\w+$/);
+      const publicId = publicIdMatch ? publicIdMatch[1] : null;
 
       if (publicId) {
-        await cloudinary.uploader.destroy(publicId, {
+        const destructionResult = await cloudinary.uploader.destroy(publicId, {
           resource_type: resourceType,
         });
+        console.log(
+          `Tentativa de exclusão de anexo de FAQ no Cloudinary. Resultado:`,
+          destructionResult.result
+        );
+      } else {
+        console.warn(
+          `Não foi possível extrair o public_id da URL do anexo de FAQ: ${docUrl}`
+        );
       }
     }
 
