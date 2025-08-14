@@ -12,6 +12,8 @@ const csv = require("csv-parser");
 const { Readable } = require("stream");
 const https = require("https");
 const mime = require("mime-types");
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -387,7 +389,6 @@ app.put("/api/files/:id", async (req, res) => {
 
 app.get("/api/files/download/:id", async (req, res) => {
   try {
-    // 1. Busca no banco
     const fileResult = await pool.query(
       "SELECT filename, originalname FROM files WHERE id = $1",
       [req.params.id]
@@ -399,54 +400,15 @@ app.get("/api/files/download/:id", async (req, res) => {
 
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    // 2. Detecta tipo do recurso
-    const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
-
-    // Regex para pegar o public_id sem extensão
-    const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
-    const publicId = publicIdMatch
-      ? decodeURIComponent(publicIdMatch[1])
-      : null;
-
-    if (!publicId) {
-      return res.status(500).send("Não foi possível extrair o public_id.");
-    }
-
-    // 3. Gera URL assinada
-    const signedUrlForFetching = cloudinary.url(publicId, {
-      resource_type: resourceType,
-      sign_url: true,
-      expires_at: Math.floor(Date.now() / 1000) + 120,
-    });
-
-    // 4. Faz download do Cloudinary
-    const cloudRes = await fetch(signedUrlForFetching);
-
-    if (!cloudRes.ok) {
-      console.error(`Cloudinary retornou status ${cloudRes.status}`);
-      return res.status(502).send("Erro ao acessar o arquivo na nuvem.");
-    }
-
-    // 5. Define headers
-    const contentType =
-      mime.lookup(originalname) ||
-      cloudRes.headers.get("content-type") ||
-      "application/octet-stream";
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${encodeURIComponent(originalname)}"`
+    // Força download no Cloudinary
+    const downloadUrl = fileUrl.replace(
+      "/upload/",
+      `/upload/fl_attachment:${encodeURIComponent(originalname)}/`
     );
-    res.setHeader("Content-Type", contentType);
 
-    const contentLength = cloudRes.headers.get("content-length");
-    if (contentLength) {
-      res.setHeader("Content-Length", contentLength);
-    }
-
-    // 6. Envia stream para o cliente
-    cloudRes.body.pipe(res);
+    return res.redirect(downloadUrl);
   } catch (err) {
-    console.error("Erro ao processar download:", err);
+    console.error("Erro ao gerar link de download:", err);
     res.status(500).send("Erro interno ao processar o download.");
   }
 });
