@@ -341,43 +341,17 @@ app.post("/api/files", upload.single("file"), async (req, res) => {
   if (!req.file)
     return res.status(400).json({ error: "Nenhum arquivo enviado." });
   try {
-    // --- LÓGICA DE CORREÇÃO ADICIONADA ---
-    // Determina o tipo de recurso com base no mimetype do arquivo
     const resourceType = req.file.mimetype.startsWith("image")
       ? "image"
       : "raw";
 
-    app.post("/api/files", upload.single("file"), async (req, res) => {
-      const { originalname, category, folder, visibility } = req.body;
-      if (!req.file)
-        return res.status(400).json({ error: "Nenhum arquivo enviado." });
-      try {
-        // --- LÓGICA DE CORREÇÃO ADICIONADA ---
-        // Determina o tipo de recurso com base no mimetype do arquivo
-        const resourceType = req.file.mimetype.startsWith("image")
-          ? "image"
-          : "raw";
-
-        const uploadResult = await new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ resource_type: resourceType }, (error, result) => {
-              // Usa a variável corrigida
-              if (error) reject(error);
-              resolve(result);
-            })
-            .end(req.file.buffer);
-        });
-
-        const fileUrl = uploadResult.secure_url;
-        const result = await pool.query(
-          "INSERT INTO files (filename, originalname, category, folder, visibility) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-          [fileUrl, originalname, category, folder, visibility]
-        );
-        res.status(201).json(result.rows[0]);
-      } catch (err) {
-        console.error("Erro no upload de arquivo:", err);
-        res.status(500).json({ error: "Erro no servidor durante o upload." });
-      }
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream({ resource_type: resourceType }, (error, result) => {
+          if (error) reject(error);
+          resolve(result);
+        })
+        .end(req.file.buffer);
     });
 
     const fileUrl = uploadResult.secure_url;
@@ -394,7 +368,7 @@ app.post("/api/files", upload.single("file"), async (req, res) => {
 
 app.put("/api/files/:id", async (req, res) => {
   const { id } = req.params;
-  const { originalname, category, folder, visibility } = req.body; // Adicionado 'folder'
+  const { originalname, category, folder, visibility } = req.body;
   try {
     const result = await pool.query(
       "UPDATE files SET originalname = $1, category = $2, folder = $3, visibility = $4 WHERE id = $5 RETURNING *",
@@ -409,40 +383,44 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
+// NOVA ROTA DE DOWNLOAD DE ARQUIVOS
 app.get("/api/files/download/:id", async (req, res) => {
   const { id } = req.params;
-
   try {
-    // 1. Busca os dados do arquivo no banco de dados
     const fileResult = await pool.query(
       "SELECT filename, originalname FROM files WHERE id = $1",
       [id]
     );
-
     if (fileResult.rowCount === 0) {
       return res.status(404).send("Arquivo não encontrado no banco de dados.");
     }
 
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    // 2. Extrai o public_id e o tipo de recurso da URL do Cloudinary
-    // Ex: https://res.cloudinary.com/cloud/image/upload/v123/public_id.pdf
-    const urlParts = fileUrl.split("/");
-    const publicIdWithExtension = urlParts.pop();
-    const publicId = publicIdWithExtension.split(".")[0];
-    const resourceType = urlParts[urlParts.indexOf("upload") - 1]; // 'image' ou 'raw'
+    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
+    const fileExtension = path.extname(originalname).toLowerCase();
 
-    // 3. Gera uma URL de download assinada e segura do Cloudinary
-    //    Esta URL força o download ('attachment') e define o nome do arquivo.
-    const signedDownloadUrl = cloudinary.utils.private_download_url(publicId, {
-      resource_type: resourceType,
-      type: "upload",
-      attachment: true,
-      filename: originalname,
-    });
+    let correctedUrl = fileUrl;
+    if (
+      fileUrl.includes("/image/upload") &&
+      !imageExtensions.includes(fileExtension)
+    ) {
+      correctedUrl = fileUrl.replace("/image/upload", "/raw/upload");
+    }
 
-    // 4. Redireciona o navegador do usuário para a URL de download
-    res.redirect(signedDownloadUrl);
+    const urlParts = correctedUrl.split("/upload/");
+    if (urlParts.length !== 2) {
+      return res.status(500).send("URL do arquivo em formato inválido.");
+    }
+
+    let transformations = "fl_attachment";
+    if (!imageExtensions.includes(fileExtension)) {
+      transformations += ",pg_all";
+    }
+
+    const finalDownloadUrl = `${urlParts[0]}/upload/${transformations}/${urlParts[1]}`;
+
+    res.redirect(finalDownloadUrl);
   } catch (err) {
     console.error("Erro ao gerar link de download:", err);
     res.status(500).send("Erro interno ao processar o download.");
@@ -458,9 +436,19 @@ app.delete("/api/files/:id", async (req, res) => {
     );
     if (fileResult.rowCount === 0)
       return res.status(404).json({ error: "Arquivo não encontrado." });
+
     const fileUrl = fileResult.rows[0].filename;
-    const publicId = fileUrl.split("/").pop().split(".")[0];
-    await cloudinary.uploader.destroy(publicId);
+    const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
+    const publicIdWithExtension = fileUrl.split("/").pop();
+    const publicId = publicIdWithExtension.substring(
+      0,
+      publicIdWithExtension.lastIndexOf(".")
+    );
+
+    await cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType,
+    });
+
     await pool.query("DELETE FROM files WHERE id = $1", [id]);
     res.json({ success: true, message: "Arquivo excluído com sucesso." });
   } catch (err) {
@@ -988,9 +976,12 @@ app.post("/api/admin/faq", upload.single("document"), async (req, res) => {
 
   try {
     if (req.file) {
+      const resourceType = req.file.mimetype.startsWith("image")
+        ? "image"
+        : "raw";
       const uploadResult = await new Promise((resolve, reject) => {
         cloudinary.uploader
-          .upload_stream({ resource_type: "auto" }, (error, result) => {
+          .upload_stream({ resource_type: resourceType }, (error, result) => {
             if (error) reject(error);
             resolve(result);
           })
@@ -1023,8 +1014,15 @@ app.delete("/api/admin/faq/:id", async (req, res) => {
 
     const docUrl = faqResult.rows[0].document_url;
     if (docUrl) {
-      const publicId = docUrl.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(publicId);
+      const resourceType = docUrl.includes("/image/") ? "image" : "raw";
+      const publicIdWithExtension = docUrl.split("/").pop();
+      const publicId = publicIdWithExtension.substring(
+        0,
+        publicIdWithExtension.lastIndexOf(".")
+      );
+      await cloudinary.uploader.destroy(publicId, {
+        resource_type: resourceType,
+      });
     }
 
     await pool.query("DELETE FROM faq WHERE id = $1", [id]);
