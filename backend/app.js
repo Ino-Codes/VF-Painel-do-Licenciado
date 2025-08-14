@@ -403,22 +403,20 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
-// ROTA DE DOWNLOAD FINAL E DEFINITIVA
+// ROTA DE DOWNLOAD FINAL (MÉTODO ROBUSTO E DIRETO DO SDK)
 app.get("/api/files/download/:id", async (req, res) => {
   try {
-    // 1. Busca os dados do arquivo no banco
+    // 1. Busca os dados do arquivo no banco de dados
     const fileResult = await pool.query(
       "SELECT filename, originalname FROM files WHERE id = $1",
       [req.params.id]
     );
-
     if (fileResult.rowCount === 0) {
       return res.status(404).send("Arquivo não encontrado.");
     }
-
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    // 2. Extrai o public_id e o resource_type da URL
+    // 2. Extrai o public_id e o resource_type da URL, como antes
     const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
     const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
     const publicId = publicIdMatch
@@ -431,30 +429,16 @@ app.get("/api/files/download/:id", async (req, res) => {
         .send("Não foi possível analisar a URL do arquivo.");
     }
 
-    // 3. Determina a extensão a partir da URL do Cloudinary (fonte segura)
-    const fileExtension = path.extname(fileUrl).toLowerCase();
-    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
-    const isImage = imageExtensions.includes(fileExtension);
-
-    // 4. Cria um objeto de opções base para a URL de download
-    const options = {
+    // 3. Gera a URL de download assinada usando o método direto do SDK
+    // O SDK irá construir a transformação 'fl_attachment:nome_do_arquivo' corretamente
+    const signedUrl = cloudinary.url(publicId, {
       resource_type: resourceType,
       sign_url: true,
       expires_at: Math.floor(Date.now() / 1000) + 120, // Link válido por 2 minutos
-      attachment: originalname, // Garante o nome correto no download
-      flags: "attachment", // Força o download para TODOS os tipos de arquivo
-    };
+      attachment: originalname, // Esta é a instrução chave
+    });
 
-    // 5. Para PDFs e outros, ADICIONA a conversão de formato
-    if (!isImage) {
-      // ex: '.pdf' vira 'pdf'
-      options.fetch_format = fileExtension.slice(1);
-    }
-
-    // 6. Gera a URL assinada com as opções corretas
-    const signedUrl = cloudinary.url(publicId, options);
-
-    // 7. Redireciona o usuário para o link final
+    // 4. Redireciona o navegador para a URL gerada
     res.redirect(signedUrl);
   } catch (err) {
     console.error("Erro ao gerar link de download:", err);
