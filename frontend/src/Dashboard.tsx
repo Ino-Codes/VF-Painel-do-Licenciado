@@ -121,8 +121,8 @@ const Dashboard: React.FC = () => {
           <p>
             Este é o seu novo Painel da Valor Fiscal!
             <br />
-            Aqui você encontra os principais documetos e treinamentos para atuar
-            conosco.
+            Aqui você encontra os principais documentos e treinamentos para
+            atuar conosco.
           </p>
         </div>
 
