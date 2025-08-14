@@ -383,7 +383,7 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
-// NOVA ROTA DE DOWNLOAD DE ARQUIVOS
+// NOVA ROTA DE DOWNLOAD DE ARQUIVOS (COM SINTAXE CORRIGIDA)
 app.get("/api/files/download/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -400,9 +400,25 @@ app.get("/api/files/download/:id", async (req, res) => {
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
     const fileExtension = path.extname(originalname).toLowerCase();
 
+    let correctedUrl = fileUrl;
+    if (
+      fileUrl.includes("/image/upload") &&
+      !imageExtensions.includes(fileExtension)
+    ) {
+      correctedUrl = fileUrl.replace("/image/upload", "/raw/upload");
+    }
+
     const urlParts = correctedUrl.split("/upload/");
     if (urlParts.length !== 2) {
       return res.status(500).send("URL do arquivo em formato inválido.");
+    }
+
+    let transformations = "fl_attachment";
+
+    // Se o arquivo NÃO é uma imagem (ex: PDF), adiciona o flag pg_all
+    if (!imageExtensions.includes(fileExtension)) {
+      // CORREÇÃO: trocado vírgula por ponto
+      transformations += ".pg_all";
     }
 
     const finalDownloadUrl = `${urlParts[0]}/upload/${transformations}/${urlParts[1]}`;
