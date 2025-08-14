@@ -385,8 +385,10 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
+// ROTA DE DOWNLOAD DEFINITIVA (USANDO URLs ASSINADAS)
 app.get("/api/files/download/:id", async (req, res) => {
   try {
+    // 1. Busca os dados do arquivo no banco
     const fileResult = await pool.query(
       "SELECT filename, originalname FROM files WHERE id = $1",
       [req.params.id]
@@ -396,6 +398,7 @@ app.get("/api/files/download/:id", async (req, res) => {
     }
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
+    // 2. Extrai o public_id e o resource_type de forma robusta
     const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
     const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.\w+$/);
     const publicId = publicIdMatch ? publicIdMatch[1] : null;
@@ -406,20 +409,26 @@ app.get("/api/files/download/:id", async (req, res) => {
         .json({ error: "Não foi possível analisar a URL do arquivo." });
     }
 
+    // 3. Determina se o arquivo é uma imagem para lógica de flags
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
     const fileExtension = path.extname(originalname).toLowerCase();
     const isImage = imageExtensions.includes(fileExtension);
 
+    // 4. Prepara os flags de transformação 
     const flags = ["attachment"];
     if (!isImage) {
       flags.push("pg_all");
     }
 
+    // 5. Gera uma URL ASSINADA que autoriza a transformação de download
     const downloadUrl = cloudinary.url(publicId, {
       resource_type: resourceType,
       flags: flags,
+      sign_url: true, // <-- A CHAVE DA SOLUÇÃO: CRIA A ASSINATURA
+      expires_at: Math.floor(Date.now() / 1000) + 120, // Link válido por 2 minutos
     });
 
+    // 6. Redireciona o navegador do usuário para a URL assinada
     res.redirect(downloadUrl);
   } catch (err) {
     console.error("Erro ao gerar link de download:", err);
