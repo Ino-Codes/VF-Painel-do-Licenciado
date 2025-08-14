@@ -400,7 +400,7 @@ app.get("/api/files/download/:id", async (req, res) => {
 
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    // Detecta tipo do recurso
+    // Detecta tipo
     const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
 
     // Extrai public_id
@@ -408,21 +408,24 @@ app.get("/api/files/download/:id", async (req, res) => {
     const publicId = publicIdMatch
       ? decodeURIComponent(publicIdMatch[1])
       : null;
-
     if (!publicId) {
       return res.status(500).send("Não foi possível extrair o public_id.");
     }
 
-    // Gera URL assinada forçando download
+    // Assina já com transformação de attachment
     const signedUrl = cloudinary.url(publicId, {
       resource_type: resourceType,
+      type: "authenticated", // garante que é privada
       sign_url: true,
       expires_at: Math.floor(Date.now() / 1000) + 120,
-      flags: "attachment", // força download
-      attachment: originalname,
+      transformation: [
+        {
+          flags: "attachment",
+          attachment: originalname,
+        },
+      ],
     });
 
-    // Redireciona o usuário para o link assinado
     res.redirect(signedUrl);
   } catch (err) {
     console.error("Erro ao gerar link de download:", err);
