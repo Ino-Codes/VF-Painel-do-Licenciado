@@ -385,76 +385,68 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
-// ROTA DE DOWNLOAD DEFINITIVA (USANDO URLs ASSINADAS)
-// ROTA DE DOWNLOAD DEFINITIVA - MÉTODO DE ACESSO AUTENTICADO VIA BACKEND
 app.get("/api/files/download/:id", async (req, res) => {
   try {
-    // 1. Busca os dados do arquivo no banco de dados
+    // 1. Busca no banco
     const fileResult = await pool.query(
       "SELECT filename, originalname FROM files WHERE id = $1",
       [req.params.id]
     );
+
     if (fileResult.rowCount === 0) {
       return res.status(404).send("Arquivo não encontrado.");
     }
+
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    // 2. Extrai o public_id e o resource_type da URL original
+    // 2. Detecta tipo do recurso
     const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
-    const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.\w+$/);
-    const publicId = publicIdMatch ? publicIdMatch[1] : null;
+
+    // Regex para pegar o public_id sem extensão
+    const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
+    const publicId = publicIdMatch
+      ? decodeURIComponent(publicIdMatch[1])
+      : null;
 
     if (!publicId) {
-      return res
-        .status(500)
-        .send("Não foi possível analisar a URL do arquivo.");
+      return res.status(500).send("Não foi possível extrair o public_id.");
     }
 
-    // 3. Gera uma URL assinada APENAS para o backend usar como chave de acesso
-    // Nenhuma transformação de download é necessária aqui.
+    // 3. Gera URL assinada
     const signedUrlForFetching = cloudinary.url(publicId, {
       resource_type: resourceType,
       sign_url: true,
-      expires_at: Math.floor(Date.now() / 1000) + 120, // Chave válida por 2 minutos
+      expires_at: Math.floor(Date.now() / 1000) + 120,
     });
 
-    // 4. O backend usa a chave (URL assinada) para buscar o arquivo no Cloudinary
-    https
-      .get(signedUrlForFetching, (cloudinaryResponse) => {
-        // Se o Cloudinary retornar um erro (mesmo com a chave), informa o usuário
-        if (cloudinaryResponse.statusCode !== 200) {
-          console.error(
-            `Cloudinary retornou status ${cloudinaryResponse.statusCode}`
-          );
-          return res.status(502).send("Erro ao acessar o arquivo na nuvem."); // 502 = Bad Gateway
-        }
+    // 4. Faz download do Cloudinary
+    const cloudRes = await fetch(signedUrlForFetching);
 
-        // 5. Define os cabeçalhos da resposta final para o navegador do usuário
-        const contentType =
-          mime.lookup(originalname) || "application/octet-stream";
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename="${originalname}"`
-        );
-        res.setHeader("Content-Type", contentType);
-        if (cloudinaryResponse.headers["content-length"]) {
-          res.setHeader(
-            "Content-Length",
-            cloudinaryResponse.headers["content-length"]
-          );
-        }
+    if (!cloudRes.ok) {
+      console.error(`Cloudinary retornou status ${cloudRes.status}`);
+      return res.status(502).send("Erro ao acessar o arquivo na nuvem.");
+    }
 
-        // 6. Transmite o arquivo do Cloudinary diretamente para o navegador do usuário
-        cloudinaryResponse.pipe(res);
-      })
-      .on("error", (e) => {
-        console.error("Erro na requisição HTTPS para o Cloudinary:", e);
-        res
-          .status(500)
-          .send("Não foi possível buscar o arquivo do provedor de nuvem.");
-      });
-  } catch (dbError) {
-    console.error("Erro de banco de dados ao tentar baixar arquivo:", dbError);
+    // 5. Define headers
+    const contentType =
+      mime.lookup(originalname) ||
+      cloudRes.headers.get("content-type") ||
+      "application/octet-stream";
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(originalname)}"`
+    );
+    res.setHeader("Content-Type", contentType);
+
+    const contentLength = cloudRes.headers.get("content-length");
+    if (contentLength) {
+      res.setHeader("Content-Length", contentLength);
+    }
+
+    // 6. Envia stream para o cliente
+    cloudRes.body.pipe(res);
+  } catch (err) {
+    console.error("Erro ao processar download:", err);
     res.status(500).send("Erro interno ao processar o download.");
   }
 });
