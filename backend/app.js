@@ -392,43 +392,38 @@ app.get("/api/files/download/:id", async (req, res) => {
       [req.params.id]
     );
     if (fileResult.rowCount === 0) {
-      return res.status(404).send("Arquivo não encontrado.");
+      return res.status(404).json({ error: "Arquivo não encontrado." });
     }
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    https
-      .get(fileUrl, (cloudinaryResponse) => {
-        if (cloudinaryResponse.statusCode !== 200) {
-          return res
-            .status(cloudinaryResponse.statusCode)
-            .send("Erro ao acessar o arquivo na nuvem.");
-        }
+    const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
+    const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.\w+$/);
+    const publicId = publicIdMatch ? publicIdMatch[1] : null;
 
-        const contentType =
-          mime.lookup(originalname) || "application/octet-stream";
+    if (!publicId) {
+      return res
+        .status(500)
+        .json({ error: "Não foi possível analisar a URL do arquivo." });
+    }
 
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename="${originalname}"`
-        );
-        res.setHeader("Content-Type", contentType);
+    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
+    const fileExtension = path.extname(originalname).toLowerCase();
+    const isImage = imageExtensions.includes(fileExtension);
 
-        const contentLength = cloudinaryResponse.headers["content-length"];
-        if (contentLength) {
-          res.setHeader("Content-Length", contentLength);
-        }
+    const flags = ["attachment"];
+    if (!isImage) {
+      flags.push("pg_all");
+    }
 
-        cloudinaryResponse.pipe(res);
-      })
-      .on("error", (e) => {
-        console.error("Erro ao buscar arquivo do Cloudinary:", e);
-        res
-          .status(500)
-          .send("Não foi possível buscar o arquivo do provedor de nuvem.");
-      });
-  } catch (dbError) {
-    console.error("Erro de banco de dados ao tentar baixar arquivo:", dbError);
-    res.status(500).send("Erro interno ao processar o download.");
+    const downloadUrl = cloudinary.url(publicId, {
+      resource_type: resourceType,
+      flags: flags,
+    });
+
+    res.redirect(downloadUrl);
+  } catch (err) {
+    console.error("Erro ao gerar link de download:", err);
+    res.status(500).json({ error: "Erro interno ao processar o download." });
   }
 });
 
