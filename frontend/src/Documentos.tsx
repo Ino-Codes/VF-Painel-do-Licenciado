@@ -141,7 +141,6 @@ const Documentos: React.FC = () => {
     return null;
   }
 
-  // Obtém a URL base da API a partir da instância do axios para criar o link de download
   const baseURL = api.defaults.baseURL;
   const folderNames = Object.keys(groupedFiles);
 
@@ -203,8 +202,6 @@ const Documentos: React.FC = () => {
                       <div key={file.id} className="file-item">
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
-                          {/* --- TRECHO CORRIGIDO --- */}
-                          {/* O link agora aponta para a nova rota do backend */}
                           <a href={`${baseURL}/api/files/download/${file.id}`}>
                             <button className="list-button download">
                               Baixar

@@ -398,28 +398,20 @@ app.get("/api/files/download/:id", async (req, res) => {
 
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
     const fileExtension = path.extname(originalname).toLowerCase();
+    const isImage = imageExtensions.includes(fileExtension);
 
-    let correctedUrl = fileUrl;
-    if (
-      fileUrl.includes("/image/upload") &&
-      !imageExtensions.includes(fileExtension)
-    ) {
-      correctedUrl = fileUrl.replace("/image/upload", "/raw/upload");
-    }
-
-    const urlParts = correctedUrl.split("/upload/");
+    const urlParts = fileUrl.split("/upload/");
     if (urlParts.length !== 2) {
-      return res.status(500).send("URL do arquivo em formato inválido.");
+      return res.redirect(fileUrl);
     }
 
     let transformations = "fl_attachment";
 
-    if (!imageExtensions.includes(fileExtension)) {
+    if (!isImage) {
       transformations += ".pg_all";
     }
 
     const finalDownloadUrl = `${urlParts[0]}/upload/${transformations}/${urlParts[1]}`;
-
     res.redirect(finalDownloadUrl);
   } catch (err) {
     console.error("Erro ao gerar link de download:", err);
