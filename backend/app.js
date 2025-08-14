@@ -389,6 +389,7 @@ app.put("/api/files/:id", async (req, res) => {
 
 app.get("/api/files/download/:id", async (req, res) => {
   try {
+    // 1. Busca os dados do arquivo no banco
     const fileResult = await pool.query(
       "SELECT filename, originalname FROM files WHERE id = $1",
       [req.params.id]
@@ -400,10 +401,10 @@ app.get("/api/files/download/:id", async (req, res) => {
 
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    // Detecta tipo do recurso
+    // 2. Detecta o tipo de recurso da URL original
     const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
 
-    // Extrai public_id
+    // 3. Extrai o public_id de forma segura (como no seu código atual)
     const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
     const publicId = publicIdMatch
       ? decodeURIComponent(publicIdMatch[1])
@@ -413,16 +414,29 @@ app.get("/api/files/download/:id", async (req, res) => {
       return res.status(500).send("Não foi possível extrair o public_id.");
     }
 
-    // Gera URL assinada forçando download
+    // --- LÓGICA DE CORREÇÃO FINAL ---
+
+    // 4. Determina se o arquivo é uma imagem pela extensão original
+    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
+    const fileExtension = path.extname(originalname).toLowerCase();
+    const isImage = imageExtensions.includes(fileExtension);
+
+    // 5. Define os flags de transformação de forma dinâmica
+    const flags = ["attachment"]; // 'attachment' é a base para forçar o download
+    if (!isImage) {
+      // Se NÃO for uma imagem (ex: PDF, PPTX), adiciona o flag 'pg_all'
+      flags.push("pg_all");
+    }
+
+    // 6. Gera a URL assinada com os flags corretos para cada tipo de arquivo
     const signedUrl = cloudinary.url(publicId, {
       resource_type: resourceType,
       sign_url: true,
-      expires_at: Math.floor(Date.now() / 1000) + 120,
-      flags: "attachment", // força download
-      attachment: originalname,
+      expires_at: Math.floor(Date.now() / 1000) + 120, // Link válido por 2 minutos
+      flags: flags, // Usa o array de flags que acabamos de criar
     });
 
-    // Redireciona o usuário para o link assinado
+    // 7. Redireciona o usuário para o link assinado, que agora será válido para todos os tipos
     res.redirect(signedUrl);
   } catch (err) {
     console.error("Erro ao gerar link de download:", err);
