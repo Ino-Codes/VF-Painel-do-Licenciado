@@ -11,6 +11,7 @@ const crypto = require("crypto");
 const csv = require("csv-parser");
 const { Readable } = require("stream");
 const https = require("https");
+const mime = require("mime-types");
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -395,14 +396,28 @@ app.get("/api/files/download/:id", async (req, res) => {
     }
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${encodeURIComponent(originalname)}"`
-    );
-    res.setHeader("Content-Type", "application/octet-stream");
-
     https
       .get(fileUrl, (cloudinaryResponse) => {
+        if (cloudinaryResponse.statusCode !== 200) {
+          return res
+            .status(cloudinaryResponse.statusCode)
+            .send("Erro ao acessar o arquivo na nuvem.");
+        }
+
+        const contentType =
+          mime.lookup(originalname) || "application/octet-stream";
+
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${originalname}"`
+        );
+        res.setHeader("Content-Type", contentType);
+
+        const contentLength = cloudinaryResponse.headers["content-length"];
+        if (contentLength) {
+          res.setHeader("Content-Length", contentLength);
+        }
+
         cloudinaryResponse.pipe(res);
       })
       .on("error", (e) => {
