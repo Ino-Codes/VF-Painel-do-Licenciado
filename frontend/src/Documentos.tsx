@@ -202,7 +202,12 @@ const Documentos: React.FC = () => {
                       <div key={file.id} className="file-item">
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
-                          <a href={`${baseURL}/api/files/download/${file.id}`}>
+                          {/* --- TRECHO CORRIGIDO --- */}
+                          <a
+                            href={`${baseURL}/api/files/download/${file.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             <button className="list-button download">
                               Baixar
                             </button>
