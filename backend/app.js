@@ -387,6 +387,7 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
+// ROTA DE DOWNLOAD DEFINITIVA (COM LÓGICA DE EXTENSÃO CORRIGIDA)
 app.get("/api/files/download/:id", async (req, res) => {
   try {
     // 1. Busca os dados do arquivo no banco
@@ -401,42 +402,42 @@ app.get("/api/files/download/:id", async (req, res) => {
 
     const { filename: fileUrl, originalname } = fileResult.rows[0];
 
-    // 2. Detecta o tipo de recurso da URL original
+    // 2. Extrai o public_id e o resource_type da URL original
     const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
-
-    // 3. Extrai o public_id de forma segura (como no seu código atual)
     const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
     const publicId = publicIdMatch
       ? decodeURIComponent(publicIdMatch[1])
       : null;
 
     if (!publicId) {
-      return res.status(500).send("Não foi possível extrair o public_id.");
+      return res
+        .status(500)
+        .send("Não foi possível analisar a URL do arquivo.");
     }
 
-    // --- LÓGICA DE CORREÇÃO FINAL ---
+    // --- LÓGICA DE CORREÇÃO FINAL E ROBUSTA ---
 
-    // 4. Determina se o arquivo é uma imagem pela extensão original
+    // 3. Determina a extensão a partir da URL do Cloudinary (fonte segura)
+    const fileExtension = path.extname(fileUrl).toLowerCase();
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
-    const fileExtension = path.extname(originalname).toLowerCase();
     const isImage = imageExtensions.includes(fileExtension);
 
-    // 5. Define os flags de transformação de forma dinâmica
-    const flags = ["attachment"]; // 'attachment' é a base para forçar o download
+    // 4. Define os flags de transformação dinamicamente
+    const flags = ["attachment"];
     if (!isImage) {
-      // Se NÃO for uma imagem (ex: PDF, PPTX), adiciona o flag 'pg_all'
       flags.push("pg_all");
     }
 
-    // 6. Gera a URL assinada com os flags corretos para cada tipo de arquivo
+    // 5. Gera a URL assinada, incluindo o nome original do arquivo para o download
     const signedUrl = cloudinary.url(publicId, {
       resource_type: resourceType,
       sign_url: true,
       expires_at: Math.floor(Date.now() / 1000) + 120, // Link válido por 2 minutos
-      flags: flags, // Usa o array de flags que acabamos de criar
+      flags: flags,
+      attachment: originalname, // Garante o nome correto no download
     });
 
-    // 7. Redireciona o usuário para o link assinado, que agora será válido para todos os tipos
+    // 6. Redireciona o usuário para o link final
     res.redirect(signedUrl);
   } catch (err) {
     console.error("Erro ao gerar link de download:", err);
