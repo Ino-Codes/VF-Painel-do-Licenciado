@@ -403,7 +403,7 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
-// ROTA DE DOWNLOAD FINAL (COM LÓGICA CONDICIONAL PARA PDFS)
+// ROTA DE DOWNLOAD FINAL E DEFINITIVA
 app.get("/api/files/download/:id", async (req, res) => {
   try {
     // 1. Busca os dados do arquivo no banco
@@ -431,28 +431,24 @@ app.get("/api/files/download/:id", async (req, res) => {
         .send("Não foi possível analisar a URL do arquivo.");
     }
 
-    // --- LÓGICA DE CORREÇÃO FINAL ---
-
     // 3. Determina a extensão a partir da URL do Cloudinary (fonte segura)
     const fileExtension = path.extname(fileUrl).toLowerCase();
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
     const isImage = imageExtensions.includes(fileExtension);
 
-    // 4. Cria um objeto de opções base para a URL
+    // 4. Cria um objeto de opções base para a URL de download
     const options = {
       resource_type: resourceType,
       sign_url: true,
       expires_at: Math.floor(Date.now() / 1000) + 120, // Link válido por 2 minutos
-      attachment: originalname,
+      attachment: originalname, // Garante o nome correto no download
+      flags: "attachment", // Força o download para TODOS os tipos de arquivo
     };
 
-    // 5. Aplica a transformação correta para cada tipo de arquivo
-    if (isImage) {
-      // Para imagens, que já funcionam, apenas o flag de anexo é necessário
-      options.flags = "attachment";
-    } else {
-      // Para PDFs e outros, forçamos o formato de entrega para o formato original
-      options.fetch_format = fileExtension.slice(1); // ex: '.pdf' vira 'pdf'
+    // 5. Para PDFs e outros, ADICIONA a conversão de formato
+    if (!isImage) {
+      // ex: '.pdf' vira 'pdf'
+      options.fetch_format = fileExtension.slice(1);
     }
 
     // 6. Gera a URL assinada com as opções corretas
