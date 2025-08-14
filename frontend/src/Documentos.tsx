@@ -65,8 +65,10 @@ const Documentos: React.FC = () => {
   }, [user, category]);
 
   useEffect(() => {
-    fetchCategories();
-  }, [user]);
+    if (user) {
+      fetchCategories();
+    }
+  }, [user, fetchCategories]);
 
   const fetchFiles = useCallback(async () => {
     if (!user || !category) {
@@ -139,6 +141,8 @@ const Documentos: React.FC = () => {
     return null;
   }
 
+  // Obtém a URL base da API a partir da instância do axios para criar o link de download
+  const baseURL = api.defaults.baseURL;
   const folderNames = Object.keys(groupedFiles);
 
   return (
@@ -199,9 +203,13 @@ const Documentos: React.FC = () => {
                       <div key={file.id} className="file-item">
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
-                          <button className="list-button download">
-                            Baixar
-                          </button>
+                          {/* --- TRECHO CORRIGIDO --- */}
+                          {/* O link agora aponta para a nova rota do backend */}
+                          <a href={`${baseURL}/api/files/download/${file.id}`}>
+                            <button className="list-button download">
+                              Baixar
+                            </button>
+                          </a>
 
                           {user?.role === "admin" && (
                             <>
