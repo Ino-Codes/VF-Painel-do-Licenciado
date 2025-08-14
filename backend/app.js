@@ -342,6 +342,22 @@ app.get("/api/files", async (req, res) => {
 
 app.post("/api/files", upload.single("file"), async (req, res) => {
   const { originalname, category, folder, visibility } = req.body;
+  const uploadResult = await new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        {
+          resource_type: resourceType,
+          folder: category,
+          tags: [category, folder],
+        },
+        (error, result) => {
+          if (error) reject(error);
+          resolve(result);
+        }
+      )
+      .end(req.file.buffer);
+  });
+
   if (!req.file)
     return res.status(400).json({ error: "Nenhum arquivo enviado." });
   try {
