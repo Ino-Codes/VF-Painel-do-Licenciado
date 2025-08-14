@@ -403,10 +403,10 @@ app.put("/api/files/:id", async (req, res) => {
   }
 });
 
-// ROTA DE DOWNLOAD FINAL (MÉTODO SIMPLIFICADO E CORRETO)
+// ROTA DE DOWNLOAD FINAL (COM TRANSFORMAÇÃO EXPLÍCITA)
 app.get("/api/files/download/:id", async (req, res) => {
   try {
-    // 1. Busca os dados do arquivo no banco de dados
+    // 1. Busca os dados do arquivo no banco
     const fileResult = await pool.query(
       "SELECT filename, originalname FROM files WHERE id = $1",
       [req.params.id]
@@ -429,16 +429,29 @@ app.get("/api/files/download/:id", async (req, res) => {
         .send("Não foi possível analisar a URL do arquivo.");
     }
 
-    // 3. Gera a URL de download assinada usando o método direto do SDK
-    // O parâmetro 'attachment' instrui o Cloudinary a forçar o download com o nome de arquivo especificado.
+    // 3. Determina a extensão a partir da URL do Cloudinary (fonte segura)
+    const fileExtension = path.extname(fileUrl).toLowerCase();
+    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
+    const isImage = imageExtensions.includes(fileExtension);
+
+    // 4. Constrói os flags de forma explícita e manual
+    // Esta é a instrução direta para forçar o download com o nome de arquivo original.
+    const flags = [`attachment:${originalname}`];
+
+    // Se não for uma imagem, adiciona o flag 'pg_all'
+    if (!isImage) {
+      flags.push("pg_all");
+    }
+
+    // 5. Gera a URL assinada com as instruções explícitas
     const signedUrl = cloudinary.url(publicId, {
       resource_type: resourceType,
       sign_url: true,
       expires_at: Math.floor(Date.now() / 1000) + 120, // Link válido por 2 minutos
-      attachment: originalname, // Esta é a instrução chave e universal
+      flags: flags, // Usa o array de flags explícito
     });
 
-    // 4. Redireciona o navegador para a URL gerada
+    // 6. Redireciona o usuário para o link final
     res.redirect(signedUrl);
   } catch (err) {
     console.error("Erro ao gerar link de download:", err);
