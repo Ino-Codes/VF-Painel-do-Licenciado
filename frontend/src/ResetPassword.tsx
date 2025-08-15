@@ -38,7 +38,10 @@ const ResetPassword = () => {
     }
 
     try {
-      const res = await api.post("/api/redefinir-senha", { token, password });
+      const res = await api.post("/api/auth/redefinir-senha", {
+        token,
+        password,
+      });
       toast.success(res.data.message || "Senha alterada com sucesso!");
       navigate("/");
     } catch (err: any) {

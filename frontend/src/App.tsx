@@ -20,7 +20,7 @@ const App: React.FC = () => {
     e.preventDefault();
     try {
       setLoginError("");
-      const res = await api.post("/api/login", { email, password });
+      const res = await api.post("/api/auth/login", { email, password });
       login(res.data);
       navigate("/dashboard");
     } catch (err) {
@@ -36,7 +36,7 @@ const App: React.FC = () => {
     }
     try {
       setLoginError("");
-      const res = await api.post("/api/solicitar-redefinicao", {
+      const res = await api.post("/api/auth/solicitar-redefinicao", {
         email: emailRecuperacao,
       });
       setRecoveryMessage(res.data.message);

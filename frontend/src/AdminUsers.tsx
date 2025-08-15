@@ -37,7 +37,7 @@ const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
     formData.append("file", file);
 
     try {
-      const res = await api.post("/api/admin/users/bulk-upload", formData, {
+      const res = await api.post("/api/users/admin/bulk-upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -129,7 +129,7 @@ const AdminUsers: React.FC = () => {
       if (searchQuery) {
         params.search = searchQuery;
       }
-      const res = await api.get("/api/admin/users", { params });
+      const res = await api.get("/api/users/admin", { params });
       setUsers(res.data.users);
       setTotalUsers(res.data.totalCount);
       setTotalPages(res.data.totalPages);
@@ -151,14 +151,14 @@ const AdminUsers: React.FC = () => {
     e.preventDefault();
     try {
       if (editingUser) {
-        await api.put(`/api/admin/users/${editingUser.id}`, {
+        await api.put(`/api/users/admin/${editingUser.id}`, {
           nome: editingUser.nome,
           role: editingUser.role,
         });
         toast.success("Usuário atualizado com sucesso!");
         setEditingUser(null);
       } else {
-        await api.post("/api/admin/users", form);
+        await api.post("/api/users/admin", form);
         toast.success("Usuário criado com sucesso!");
         setForm({ nome: "", email: "", password: "", role: "licenciado" });
       }
@@ -180,7 +180,7 @@ const AdminUsers: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (userToDelete === null) return;
     try {
-      await api.delete(`/api/admin/users/${userToDelete}`);
+      await api.delete(`/api/users/admin/${userToDelete}`);
       toast.success("Usuário excluído com sucesso!");
       fetchUsers();
     } catch (err) {
