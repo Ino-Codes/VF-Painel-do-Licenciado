@@ -4,7 +4,7 @@ const router = express.Router();
 
 module.exports = function (pool, cloudinary, upload) {
   // CENTRAL DE DOCUMENTOS (COM CONTROLE DE VISIBILIDADE)
-  app.get("/api/files", async (req, res) => {
+  router.get("/api/files", async (req, res) => {
     const { category, search, role } = req.query;
     try {
       let whereClauses = [];
@@ -47,7 +47,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  app.post("/api/files", upload.single("file"), async (req, res) => {
+  router.post("/api/files", upload.single("file"), async (req, res) => {
     const { originalname, category, folder, visibility } = req.body;
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader
@@ -93,7 +93,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  app.put("/api/files/:id", async (req, res) => {
+  router.put("/api/files/:id", async (req, res) => {
     const { id } = req.params;
     const { originalname, category, folder, visibility } = req.body;
     try {
@@ -111,7 +111,7 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // ROTA DE DOWNLOAD FINAL (COM LÓGICA SEPARADA PARA PDFS)
-  app.get("/api/files/download/:id", async (req, res) => {
+  router.get("/api/files/download/:id", async (req, res) => {
     try {
       const fileResult = await pool.query(
         "SELECT filename, originalname FROM files WHERE id = $1",
@@ -161,7 +161,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  app.delete("/api/files/:id", async (req, res) => {
+  router.delete("/api/files/:id", async (req, res) => {
     const { id } = req.params;
     try {
       const fileResult = await pool.query(
@@ -211,7 +211,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  app.get("/api/files/categories", async (req, res) => {
+  router.get("/api/files/categories", async (req, res) => {
     const { role } = req.query;
     try {
       let query = "SELECT DISTINCT category FROM files";
