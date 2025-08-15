@@ -1,0 +1,140 @@
+const express = require("express");
+const router = express.Router();
+
+module.exports = function (pool, cloudinary, upload) {
+  // GET /api/faq
+  router.get("/", async (req, res) => {
+    const { category, search, page = 1, limit = 15 } = req.query;
+    try {
+      const offset = (page - 1) * limit;
+      let whereClauses = [];
+      const params = [];
+
+      if (category) {
+        params.push(category);
+        whereClauses.push(`category = $${params.length}`);
+      }
+      if (search) {
+        params.push(`%${search}%`);
+        whereClauses.push(
+          `(question ILIKE $${params.length} OR answer ILIKE $${params.length})`
+        );
+      }
+
+      const whereString =
+        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+      const countSql = `SELECT COUNT(*) FROM faq ${whereString}`;
+      const faqSql = `SELECT * FROM faq ${whereString} ORDER BY category, question ASC LIMIT $${
+        params.length + 1
+      } OFFSET $${params.length + 2}`;
+
+      const [countResult, faqResult] = await Promise.all([
+        pool.query(countSql, params),
+        pool.query(faqSql, [...params, limit, offset]),
+      ]);
+
+      const totalCount = parseInt(countResult.rows[0].count, 10);
+      res.json({
+        faqs: faqResult.rows,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      });
+    } catch (err) {
+      console.error("Erro ao buscar FAQs:", err);
+      res.status(500).json({ error: "Erro ao buscar FAQs" });
+    }
+  });
+
+  // GET /api/faq/categories
+  router.get("/categories", async (req, res) => {
+    try {
+      const result = await pool.query(
+        "SELECT DISTINCT category FROM faq ORDER BY category ASC"
+      );
+      res.json(result.rows.map((row) => row.category));
+    } catch (err) {
+      console.error("Erro ao buscar categorias do FAQ:", err);
+      res.status(500).json({ error: "Erro ao buscar categorias." });
+    }
+  });
+
+  // POST /api/faq/admin
+  router.post("/admin", upload.single("document"), async (req, res) => {
+    const { category, question, answer } = req.body;
+    let document_url = null;
+    let document_originalname = null;
+
+    try {
+      if (req.file) {
+        const resourceType = req.file.mimetype.startsWith("image")
+          ? "image"
+          : "raw";
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: resourceType }, (error, result) => {
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+        document_url = uploadResult.secure_url;
+        document_originalname = req.file.originalname;
+      }
+
+      const result = await pool.query(
+        "INSERT INTO faq (category, question, answer, document_url, document_originalname) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        [category, question, answer, document_url, document_originalname]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Erro ao criar FAQ:", err);
+      res.status(500).json({ error: "Erro ao criar FAQ." });
+    }
+  });
+
+  // DELETE /api/faq/admin/:id
+  router.delete("/admin/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const faqResult = await pool.query(
+        "SELECT document_url FROM faq WHERE id = $1",
+        [id]
+      );
+      if (faqResult.rowCount === 0) {
+        return res.status(404).json({ error: "FAQ não encontrado." });
+      }
+
+      const docUrl = faqResult.rows[0].document_url;
+      if (docUrl) {
+        const resourceType = docUrl.includes("/image/") ? "image" : "raw";
+        const publicIdMatch = docUrl.match(/\/v\d+\/(.+)\.\w+$/);
+        const publicId = publicIdMatch ? publicIdMatch[1] : null;
+
+        if (publicId) {
+          const destructionResult = await cloudinary.uploader.destroy(
+            publicId,
+            {
+              resource_type: resourceType,
+            }
+          );
+          console.log(
+            `Tentativa de exclusão de anexo de FAQ no Cloudinary. Resultado:`,
+            destructionResult.result
+          );
+        } else {
+          console.warn(
+            `Não foi possível extrair o public_id da URL do anexo de FAQ: ${docUrl}`
+          );
+        }
+      }
+
+      await pool.query("DELETE FROM faq WHERE id = $1", [id]);
+      res.json({ success: true, message: "FAQ excluído com sucesso." });
+    } catch (err) {
+      console.error("Erro ao excluir FAQ:", err);
+      res.status(500).json({ error: "Erro ao excluir FAQ." });
+    }
+  });
+
+  return router;
+};
