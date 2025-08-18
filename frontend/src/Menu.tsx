@@ -54,6 +54,15 @@ const Menu: React.FC = () => {
         </NavLink>
 
         <NavLink
+          to="/courses"
+          className={({ isActive }) =>
+            isActive ? "menu-item active" : "menu-item"
+          }
+        >
+          Trilhas
+        </NavLink>
+
+        <NavLink
           to="/faq"
           className={({ isActive }) =>
             isActive ? "menu-item active" : "menu-item"

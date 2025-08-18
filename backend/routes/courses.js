@@ -163,5 +163,41 @@ module.exports = function (pool) {
     }
   });
 
+  // --- ROTAS PARA ALUNOS ---
+
+  const checkLoggedIn = isLoggedIn(pool);
+
+  router.get("/public", checkLoggedIn, async (req, res) => {
+    try {
+      const result = await pool.query(
+        "SELECT * FROM courses WHERE is_active = TRUE ORDER BY title ASC"
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Erro ao buscar cursos públicos:", err);
+      res.status(500).json({ error: "Erro ao buscar cursos." });
+    }
+  });
+
+  router.post(
+    "/lessons/:lessonId/complete",
+    checkLoggedIn,
+    async (req, res) => {
+      const { lessonId } = req.params;
+      const { id: userId } = req.user;
+
+      try {
+        await pool.query(
+          "INSERT INTO progress (user_id, lesson_id) VALUES ($1, $2) ON CONFLICT (user_id, lesson_id) DO NOTHING",
+          [userId, lessonId]
+        );
+        res.status(200).json({ message: "Progresso salvo com sucesso." });
+      } catch (err) {
+        console.error("Erro ao salvar progresso:", err);
+        res.status(500).json({ error: "Erro ao salvar progresso." });
+      }
+    }
+  );
+
   return router;
 };
