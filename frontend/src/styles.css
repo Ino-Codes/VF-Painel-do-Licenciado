@@ -165,7 +165,7 @@ body::before {
 
 .botao-logout {
   display: block;
-  margin: 0 auto;
+  margin: 10px auto;
   min-width: auto;
 
   width: 140px;
