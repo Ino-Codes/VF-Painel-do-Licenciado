@@ -19,7 +19,6 @@ module.exports = function (pool) {
     }
   });
 
-  // ROTA ADICIONADA: Buscar um único curso com seus módulos e aulas
   router.get("/:id", checkAdmin, async (req, res) => {
     const { id } = req.params;
     try {
@@ -110,7 +109,6 @@ module.exports = function (pool) {
 
   // --- ROTAS PARA MÓDULOS ---
 
-  // ROTA ADICIONADA: Criar um novo módulo para um curso
   router.post("/:courseId/modules", checkAdmin, async (req, res) => {
     const { courseId } = req.params;
     const { title, module_order } = req.body;
@@ -126,7 +124,6 @@ module.exports = function (pool) {
     }
   });
 
-  // ROTA ADICIONADA: Deletar um módulo
   router.delete("/modules/:moduleId", checkAdmin, async (req, res) => {
     const { moduleId } = req.params;
     try {
@@ -140,7 +137,6 @@ module.exports = function (pool) {
 
   // --- ROTAS PARA AULAS ---
 
-  // ROTA ADICIONADA: Criar uma nova aula para um módulo
   router.post("/modules/:moduleId/lessons", checkAdmin, async (req, res) => {
     const { moduleId } = req.params;
     const { title, content_type, content_data, lesson_order } = req.body;
@@ -156,7 +152,6 @@ module.exports = function (pool) {
     }
   });
 
-  // ROTA ADICIONADA: Deletar uma aula
   router.delete("/lessons/:lessonId", checkAdmin, async (req, res) => {
     const { lessonId } = req.params;
     try {

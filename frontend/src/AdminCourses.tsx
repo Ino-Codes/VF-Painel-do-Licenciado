@@ -119,6 +119,10 @@ const AdminCourses: React.FC = () => {
     setForm({ title: "", description: "", thumbnail_url: "" });
   };
 
+  const handleManageContent = (courseId: number) => {
+    navigate(`/admin/courses/${courseId}`);
+  };
+
   if (loading || !user || user.role !== "admin") {
     return <div className="tela-loading">Carregando...</div>;
   }
@@ -184,6 +188,12 @@ const AdminCourses: React.FC = () => {
                 <span>{course.description}</span>
               </div>
               <div className="user-actions">
+                <button
+                  className="list-button"
+                  onClick={() => handleManageContent(course.id)}
+                >
+                  Gerenciar
+                </button>
                 <button
                   className="list-button edit"
                   onClick={() => startEdit(course)}

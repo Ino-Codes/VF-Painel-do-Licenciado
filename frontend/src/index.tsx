@@ -14,6 +14,7 @@ import ActivityLogs from "./ActivityLogs.tsx";
 import Faq from "./Faq.tsx";
 import ResetPassword from "./ResetPassword.tsx";
 import AdminCourses from "./AdminCourses.tsx";
+import AdminCourseEditor from "./AdminCourseEditor.tsx";
 
 import "./styles.css";
 
@@ -51,6 +52,10 @@ const AppRouter: React.FC = () => {
           {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
+          <Route
+            path="/admin/courses/:courseId"
+            element={<AdminCourseEditor />}
+          />
           <Route path="/admin/users" element={<AdminUsers />} />
         </Routes>
       </Router>
