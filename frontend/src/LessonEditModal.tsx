@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-
-interface Lesson {
-  id: number;
-  title: string;
-  content_type: "video" | "text";
-  content_data: string;
-}
+import { Lesson } from "./AdminCourseEditor.tsx"; // Reutilizaremos a interface
 
 interface LessonEditModalProps {
   lesson: Lesson | null;
@@ -52,6 +46,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
       toast.error("O título da aula é obrigatório.");
       return;
     }
+    // Envia o objeto 'lesson' completo com os dados do formulário atualizados
     await onSave({ ...lesson, ...formData });
   };
 
@@ -72,6 +67,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
             />
           </div>
           <div className="form-row">
+            <label>Tipo de Conteúdo:</label>
             <select
               name="content_type"
               value={formData.content_type}
@@ -83,9 +79,10 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
             </select>
           </div>
           <div className="form-row">
+            <label>Conteúdo (URL ou Texto):</label>
             <textarea
               name="content_data"
-              placeholder="URL do vídeo ou conteúdo de texto..."
+              placeholder="https://www.youtube.com/embed/..."
               value={formData.content_data}
               onChange={handleChange}
               className="form-input"

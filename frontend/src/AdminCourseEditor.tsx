@@ -5,20 +5,22 @@ import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
+import ConfirmationModal from "./ConfirmationModal.tsx";
+import LessonEditModal from "./LessonEditModal.tsx"; // Importa o novo modal
 
-// Interfaces para tipagem dos dados
-interface Lesson {
+// Interfaces (exportadas para serem usadas pelo Modal)
+export interface Lesson {
   id: number;
   title: string;
+  content_type: "video" | "text";
+  content_data: string;
 }
-
-interface Module {
+export interface Module {
   id: number;
   title: string;
   lessons: Lesson[];
 }
-
-interface Course {
+export interface Course {
   id: number;
   title: string;
   modules: Module[];
@@ -35,70 +37,67 @@ const AdminCourseEditor: React.FC = () => {
     [key: number]: string;
   }>({});
 
+  // Novos estados para controlar os modais
+  const [itemToDelete, setItemToDelete] = useState<{
+    type: "module" | "lesson";
+    id: number;
+  } | null>(null);
+  const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
+
   const getAuthHeaders = useCallback(() => {
-    if (!user) return {};
-    return { headers: { "x-user-id": user.id } };
+    /* ... (código existente) ... */
   }, [user]);
-
   const fetchCourseDetails = useCallback(async () => {
-    if (!user || !courseId) return;
-    try {
-      const res = await api.get(
-        `/api/admin/courses/${courseId}`,
-        getAuthHeaders()
-      );
-      setCourse(res.data);
-    } catch (err) {
-      toast.error("Falha ao carregar detalhes da trilha.");
-      navigate("/admin/courses");
-    }
+    /* ... (código existente) ... */
   }, [user, courseId, getAuthHeaders, navigate]);
-
   useEffect(() => {
-    fetchCourseDetails();
-  }, [fetchCourseDetails]);
-
+    if (user) fetchCourseDetails();
+  }, [user, fetchCourseDetails]);
   const handleAddModule = async () => {
-    if (!newModuleTitle.trim() || !course) return;
+    /* ... (código existente) ... */
+  };
+  const handleAddLesson = async (moduleId: number) => {
+    /* ... (código existente) ... */
+  };
+
+  // --- NOVAS FUNÇÕES ---
+  const handleDeleteClick = (type: "module" | "lesson", id: number) => {
+    setItemToDelete({ type, id });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    const { type, id } = itemToDelete;
+    const url =
+      type === "module"
+        ? `/api/admin/courses/modules/${id}`
+        : `/api/admin/courses/lessons/${id}`;
+
     try {
-      const newOrder = course.modules.length + 1;
-      await api.post(
-        `/api/admin/courses/${course.id}/modules`,
-        {
-          title: newModuleTitle,
-          module_order: newOrder,
-        },
-        getAuthHeaders()
+      await api.delete(url, getAuthHeaders());
+      toast.success(
+        `${type === "module" ? "Módulo" : "Aula"} excluído com sucesso!`
       );
-      toast.success("Módulo adicionado!");
-      setNewModuleTitle("");
       fetchCourseDetails(); // Recarrega os dados
     } catch (err) {
-      toast.error("Erro ao adicionar módulo.");
+      toast.error(`Erro ao excluir ${type}.`);
+    } finally {
+      setItemToDelete(null); // Fecha o modal
     }
   };
 
-  const handleAddLesson = async (moduleId: number) => {
-    const lessonTitle = newLessonTitles[moduleId];
-    const module = course?.modules.find((m) => m.id === moduleId);
-    if (!lessonTitle.trim() || !module) return;
+  const handleUpdateLesson = async (updatedLesson: Lesson) => {
     try {
-      const newOrder = module.lessons.length + 1;
-      await api.post(
-        `/api/admin/courses/modules/${moduleId}/lessons`,
-        {
-          title: lessonTitle,
-          content_type: "video", // Placeholder, podemos evoluir depois
-          content_data: "", // Placeholder
-          lesson_order: newOrder,
-        },
+      await api.put(
+        `/api/admin/courses/lessons/${updatedLesson.id}`,
+        updatedLesson,
         getAuthHeaders()
       );
-      toast.success("Aula adicionada!");
-      setNewLessonTitles({ ...newLessonTitles, [moduleId]: "" });
+      toast.success("Aula atualizada com sucesso!");
+      setLessonToEdit(null); // Fecha o modal
       fetchCourseDetails(); // Recarrega os dados
     } catch (err) {
-      toast.error("Erro ao adicionar aula.");
+      toast.error("Erro ao atualizar aula.");
     }
   };
 
@@ -118,17 +117,37 @@ const AdminCourseEditor: React.FC = () => {
         </button>
         <h2>Editor da Trilha: {course.title}</h2>
 
-        {/* Listagem de Módulos e Aulas */}
         <div className="modules-list">
           {course.modules.map((module) => (
             <div key={module.id} className="module-item">
-              <h3>Módulo: {module.title}</h3>
+              <div className="module-header">
+                <h3>Módulo: {module.title}</h3>
+                {/* Botão de Excluir Módulo */}
+                <button
+                  onClick={() => handleDeleteClick("module", module.id)}
+                  className="delete-button"
+                >
+                  Excluir Módulo
+                </button>
+              </div>
               <ul className="lesson-list">
                 {module.lessons.map((lesson) => (
-                  <li key={lesson.id}>{lesson.title}</li>
+                  <li key={lesson.id} className="lesson-item">
+                    <span>{lesson.title}</span>
+                    {/* Botões de Editar e Excluir Aula */}
+                    <div className="lesson-actions">
+                      <button onClick={() => setLessonToEdit(lesson)}>
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick("lesson", lesson.id)}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </li>
                 ))}
               </ul>
-              {/* Formulário para adicionar nova aula */}
               <div className="add-lesson-form">
                 <input
                   type="text"
@@ -147,24 +166,45 @@ const AdminCourseEditor: React.FC = () => {
           ))}
         </div>
 
-        {/* Formulário para adicionar novo módulo */}
         <div className="admin-form mt-4">
-          <h3>Adicionar Novo Módulo</h3>
-          <div className="form-row">
-            <input
-              className="form-input"
-              type="text"
-              placeholder="Título do novo módulo"
-              value={newModuleTitle}
-              onChange={(e) => setNewModuleTitle(e.target.value)}
-            />
-            <button className="form-button" onClick={handleAddModule}>
-              Adicionar Módulo
-            </button>
+          <div className="admin-form mt-4">
+            <h3>Adicionar Novo Módulo</h3>
+            <div className="form-row">
+              <input
+                className="form-input"
+                type="text"
+                placeholder="Título do novo módulo"
+                value={newModuleTitle}
+                onChange={(e) => setNewModuleTitle(e.target.value)}
+              />
+              <button className="form-button" onClick={handleAddModule}>
+                Adicionar Módulo
+              </button>
+            </div>
           </div>
         </div>
       </div>
       <Footer />
+
+      {/* Renderização dos novos modais */}
+      {lessonToEdit && (
+        <LessonEditModal
+          lesson={lessonToEdit}
+          onClose={() => setLessonToEdit(null)}
+          onSave={handleUpdateLesson}
+        />
+      )}
+      <ConfirmationModal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Exclusão"
+        message={`Tem certeza que deseja excluir este item? ${
+          itemToDelete?.type === "module"
+            ? "Todas as aulas dentro dele também serão perdidas."
+            : ""
+        }`}
+      />
     </div>
   );
 };
