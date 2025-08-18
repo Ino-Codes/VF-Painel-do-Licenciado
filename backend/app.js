@@ -103,6 +103,61 @@ const createTables = async () => {
       document_url TEXT, document_originalname TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
 
+  const coursesTable = `
+    CREATE TABLE IF NOT EXISTS courses (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      thumbnail_url TEXT,
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+
+  const modulesTable = `
+    CREATE TABLE IF NOT EXISTS modules (
+      id SERIAL PRIMARY KEY,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      module_order INTEGER NOT NULL
+    );`;
+
+  const lessonsTable = `
+    CREATE TABLE IF NOT EXISTS lessons (
+      id SERIAL PRIMARY KEY,
+      module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      content_type TEXT NOT NULL, -- 'video', 'text'
+      content_data TEXT, -- URL do vídeo, texto em markdown, etc.
+      lesson_order INTEGER NOT NULL
+    );`;
+
+  const userCoursesTable = `
+    CREATE TABLE IF NOT EXISTS user_courses (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, course_id)
+    );`;
+
+  const progressTable = `
+    CREATE TABLE IF NOT EXISTS progress (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+      completed_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, lesson_id)
+    );`;
+
+  const certificatesTable = `
+    CREATE TABLE IF NOT EXISTS certificates (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      completion_date TIMESTAMPTZ DEFAULT NOW(),
+      unique_code TEXT NOT NULL UNIQUE
+    );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -110,6 +165,13 @@ const createTables = async () => {
     await pool.query(videoTable);
     await pool.query(logsTable);
     await pool.query(faqTable);
+    await pool.query(coursesTable);
+    await pool.query(modulesTable);
+    await pool.query(lessonsTable);
+    await pool.query(userCoursesTable);
+    await pool.query(progressTable);
+    await pool.query(certificatesTable);
+
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
     console.error("Erro ao criar tabelas:", err);

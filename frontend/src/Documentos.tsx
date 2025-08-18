@@ -148,7 +148,6 @@ const Documentos: React.FC = () => {
   }
 
   const baseURL = api.defaults.baseURL;
-  // const folderNames = Object.keys(groupedFiles);
 
   return (
     <div className="p-2">
