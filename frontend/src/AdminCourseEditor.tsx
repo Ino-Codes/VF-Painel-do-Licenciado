@@ -1,13 +1,20 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "react-beautiful-dnd";
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
-import LessonEditModal from "./LessonEditModal.tsx";
 import toast from "react-hot-toast";
+import ConfirmationModal from "./ConfirmationModal.tsx";
+import LessonEditModal from "./LessonEditModal.tsx";
 
-// Interfaces para tipagem dos dados
+// Interfaces
 interface Lesson {
   id: number;
   title: string;
@@ -15,14 +22,12 @@ interface Lesson {
   content_data: string;
   lesson_order: number;
 }
-
 interface Module {
   id: number;
   title: string;
   module_order: number;
   lessons: Lesson[];
 }
-
 interface Course {
   id: number;
   title: string;
@@ -30,21 +35,21 @@ interface Course {
 }
 
 const AdminCourseEditor: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-
-  const [itemToDelete, setItemToDelete] = useState<{
-    type: "module" | "lesson";
-    id: number;
-  } | null>(null);
-  const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
 
   const [course, setCourse] = useState<Course | null>(null);
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [newLessonTitles, setNewLessonTitles] = useState<{
     [key: number]: string;
   }>({});
+
+  const [itemToDelete, setItemToDelete] = useState<{
+    type: "module" | "lesson";
+    id: number;
+  } | null>(null);
+  const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
 
   const getAuthHeaders = useCallback(() => {
     if (!user) return {};
@@ -66,8 +71,10 @@ const AdminCourseEditor: React.FC = () => {
   }, [user, courseId, getAuthHeaders, navigate]);
 
   useEffect(() => {
-    fetchCourseDetails();
-  }, [fetchCourseDetails]);
+    if (user) {
+      fetchCourseDetails();
+    }
+  }, [user, fetchCourseDetails]);
 
   const handleAddModule = async () => {
     if (!newModuleTitle.trim() || !course) return;
@@ -83,7 +90,7 @@ const AdminCourseEditor: React.FC = () => {
       );
       toast.success("Módulo adicionado!");
       setNewModuleTitle("");
-      fetchCourseDetails(); // Recarrega os dados
+      fetchCourseDetails();
     } catch (err) {
       toast.error("Erro ao adicionar módulo.");
     }
@@ -92,22 +99,22 @@ const AdminCourseEditor: React.FC = () => {
   const handleAddLesson = async (moduleId: number) => {
     const lessonTitle = newLessonTitles[moduleId];
     const module = course?.modules.find((m) => m.id === moduleId);
-    if (!lessonTitle.trim() || !module) return;
+    if (!lessonTitle || !lessonTitle.trim() || !module) return;
     try {
       const newOrder = module.lessons.length + 1;
       await api.post(
         `/api/admin/courses/modules/${moduleId}/lessons`,
         {
           title: lessonTitle,
-          content_type: "video", // Placeholder, podemos evoluir depois
-          content_data: "", // Placeholder
+          content_type: "video",
+          content_data: "",
           lesson_order: newOrder,
         },
         getAuthHeaders()
       );
       toast.success("Aula adicionada!");
       setNewLessonTitles({ ...newLessonTitles, [moduleId]: "" });
-      fetchCourseDetails(); // Recarrega os dados
+      fetchCourseDetails();
     } catch (err) {
       toast.error("Erro ao adicionar aula.");
     }
@@ -160,7 +167,7 @@ const AdminCourseEditor: React.FC = () => {
       const [movedModule] = reorderedModules.splice(source.index, 1);
       reorderedModules.splice(destination.index, 0, movedModule);
 
-      setCourse({ ...course, modules: reorderedModules }); // Atualização otimista
+      setCourse({ ...course, modules: reorderedModules });
 
       const orderedModuleIds = reorderedModules.map((m) => m.id);
       try {
@@ -169,16 +176,15 @@ const AdminCourseEditor: React.FC = () => {
           { orderedModuleIds },
           getAuthHeaders()
         );
+        toast.success("Ordem dos módulos salva!");
       } catch (err) {
         toast.error("Falha ao salvar a nova ordem dos módulos.");
-        fetchCourseDetails(); // Reverte em caso de erro
+        fetchCourseDetails();
       }
     }
   };
 
-  if (loading || !course) {
-    return <div className="tela-loading">Carregando...</div>;
-  }
+  if (!course) return <div className="tela-loading">Carregando...</div>;
 
   return (
     <div className="p-2">
@@ -255,6 +261,9 @@ const AdminCourseEditor: React.FC = () => {
                               })
                             }
                           />
+                          <button onClick={() => handleAddLesson(module.id)}>
+                            +
+                          </button>
                         </div>
                       </div>
                     )}
@@ -276,7 +285,11 @@ const AdminCourseEditor: React.FC = () => {
               value={newModuleTitle}
               onChange={(e) => setNewModuleTitle(e.target.value)}
             />
-            <button className="form-button" onClick={handleAddModule}>
+            <button
+              className="form-button"
+              type="button"
+              onClick={handleAddModule}
+            >
               Adicionar Módulo
             </button>
           </div>
