@@ -60,7 +60,6 @@ const App: React.FC = () => {
   };
 
   return (
-    // Usando as classes do CSS Module
     <div className="p-login">
       <div className="p-img">
         <img alt="Logo da Valor Fiscal" src={logo} />

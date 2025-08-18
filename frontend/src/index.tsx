@@ -45,22 +45,25 @@ const AppRouter: React.FC = () => {
         />
         <Routes>
           <Route path="/" element={<App />} />
-          <Route path="/reset-password" element={<ResetPassword />} />{" "}
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/perfil" element={<Perfil />} />
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/videos" element={<Videos />} />
-          <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/courses/:courseId" element={<LessonPlayer />} />
           <Route path="/faq" element={<Faq />} />
-          {/* Rotas de Admin */}
+          <Route path="/perfil" element={<Perfil />} />
+          {/* --- ROTAS DO MÓDULO DE ESTUDOS --- */}
+          <Route path="/courses" element={<CoursesPage />} />{" "}
+          {/* Catálogo de Cursos */}
+          <Route path="/courses/:courseId" element={<LessonPlayer />} />{" "}
+          {/* Sala de Aula do Aluno */}
+          {/* --- ROTAS DE ADMINISTRAÇÃO --- */}
+          <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
           <Route
             path="/admin/courses/:courseId"
             element={<AdminCourseEditor />}
           />
-          <Route path="/admin/users" element={<AdminUsers />} />
         </Routes>
       </Router>
     </AuthProvider>
