@@ -133,6 +133,12 @@ const Documentos: React.FC = () => {
     await fetchFiles();
   };
 
+  const folderNames = Object.keys(groupedFiles).sort((a, b) => {
+    if (a === "Geral") return -1;
+    if (b === "Geral") return 1;
+    return a.localeCompare(b);
+  });
+
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
