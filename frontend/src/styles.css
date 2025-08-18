@@ -505,8 +505,7 @@ body::before {
 }
 
 .sidebar-lesson-item.active {
-  background-color: #daa520;
-  color: white;
+  border: 2px solid #daa520;
 }
 
 .sidebar-lesson-item.completed {
