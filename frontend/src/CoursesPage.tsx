@@ -33,6 +33,7 @@ const CoursesPage: React.FC = () => {
     const fetchCourses = async () => {
       if (!user) return;
       try {
+        // A URL da API está correta, não precisa mudar
         const res = await api.get(
           "/api/admin/courses/public",
           getAuthHeaders()
@@ -42,12 +43,20 @@ const CoursesPage: React.FC = () => {
         toast.error("Não foi possível carregar as trilhas.");
       }
     };
-    fetchCourses();
+    if (user) {
+      fetchCourses();
+    }
   }, [user, getAuthHeaders]);
 
-  if (loading) {
+  if (loading || !user) {
     return <div className="tela-loading">Carregando...</div>;
   }
+
+  // CORREÇÃO: Função de navegação para a futura página do aluno
+  const handleCourseClick = (courseId: number) => {
+    // Vamos navegar para a futura página do aluno, e não a de admin
+    navigate(`/courses/${courseId}`);
+  };
 
   return (
     <div className="p-2">
@@ -58,10 +67,11 @@ const CoursesPage: React.FC = () => {
         </div>
         <div className="courses-grid">
           {courses.map((course) => (
+            // CORREÇÃO: onClick agora chama a função correta
             <div
               key={course.id}
               className="course-card"
-              onClick={() => navigate(`/admin/courses/${course.id}`)}
+              onClick={() => handleCourseClick(course.id)}
             >
               <img
                 src={
