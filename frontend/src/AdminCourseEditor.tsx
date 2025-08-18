@@ -35,7 +35,6 @@ interface Course {
 }
 
 const AdminCourseEditor: React.FC = () => {
-  // --- MUDANÇA 1: Adicionar 'loading' do useAuth ---
   const { user, loading } = useAuth();
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
@@ -185,13 +184,10 @@ const AdminCourseEditor: React.FC = () => {
     }
   };
 
-  // --- MUDANÇA 2: Adicionar verificação de 'loading' ---
-  // Garante que a autenticação foi concluída antes de tentar renderizar
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
 
-  // Esta verificação agora acontece depois de sabermos que a autenticação não está mais carregando
   if (!course) {
     return <div className="tela-loading">Carregando dados da trilha...</div>;
   }
@@ -199,117 +195,117 @@ const AdminCourseEditor: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
+
+      {/* --- ESTRUTURA JSX CORRIGIDA --- */}
       <div className="content-area">
-        <div className="content-area">
-          <button
-            onClick={() => navigate("/admin/courses")}
-            className="form-button-cancel mb-4"
-          >
-            &larr; Voltar
-          </button>
-          <h2>Editor da Trilha: {course.title}</h2>
+        <button
+          onClick={() => navigate("/admin/courses")}
+          className="form-button-cancel mb-4"
+        >
+          &larr; Voltar
+        </button>
+        <h2>Editor da Trilha: {course.title}</h2>
 
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="all-modules" type="MODULE">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="modules-list"
-                >
-                  {course.modules.map((module, index) => (
-                    <Draggable
-                      key={module.id}
-                      draggableId={String(module.id)}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="module-item"
-                        >
-                          <div className="module-header">
-                            <h3>Módulo: {module.title}</h3>
-                            <button
-                              onClick={() =>
-                                handleDeleteClick("module", module.id)
-                              }
-                              className="delete-button"
-                            >
-                              Excluir Módulo
-                            </button>
-                          </div>
-                          <ul className="lesson-list">
-                            {module.lessons.map((lesson) => (
-                              <li key={lesson.id} className="lesson-item">
-                                <span>{lesson.title}</span>
-                                <div className="lesson-actions">
-                                  <button
-                                    onClick={() => setLessonToEdit(lesson)}
-                                  >
-                                    Editar
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      handleDeleteClick("lesson", lesson.id)
-                                    }
-                                  >
-                                    Excluir
-                                  </button>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                          <div className="add-lesson-form">
-                            <input
-                              type="text"
-                              placeholder="Título da nova aula"
-                              value={newLessonTitles[module.id] || ""}
-                              onChange={(e) =>
-                                setNewLessonTitles({
-                                  ...newLessonTitles,
-                                  [module.id]: e.target.value,
-                                })
-                              }
-                            />
-                            <button onClick={() => handleAddLesson(module.id)}>
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-
-          <div className="admin-form mt-4">
-            <h3>Adicionar Novo Módulo</h3>
-            <div className="form-row">
-              <input
-                className="form-input"
-                type="text"
-                placeholder="Título do novo módulo"
-                value={newModuleTitle}
-                onChange={(e) => setNewModuleTitle(e.target.value)}
-              />
-              <button
-                className="form-button"
-                type="button"
-                onClick={handleAddModule}
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="all-modules" type="MODULE">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="modules-list"
               >
-                Adicionar Módulo
-              </button>
-            </div>
+                {course.modules.map((module, index) => (
+                  <Draggable
+                    key={module.id}
+                    draggableId={String(module.id)}
+                    index={index}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="module-item"
+                      >
+                        <div className="module-header">
+                          <h3>Módulo: {module.title}</h3>
+                          <button
+                            onClick={() =>
+                              handleDeleteClick("module", module.id)
+                            }
+                            className="delete-button"
+                          >
+                            Excluir Módulo
+                          </button>
+                        </div>
+                        <ul className="lesson-list">
+                          {module.lessons.map((lesson) => (
+                            <li key={lesson.id} className="lesson-item">
+                              <span>{lesson.title}</span>
+                              <div className="lesson-actions">
+                                <button onClick={() => setLessonToEdit(lesson)}>
+                                  Editar
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteClick("lesson", lesson.id)
+                                  }
+                                >
+                                  Excluir
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="add-lesson-form">
+                          <input
+                            type="text"
+                            placeholder="Título da nova aula"
+                            value={newLessonTitles[module.id] || ""}
+                            onChange={(e) =>
+                              setNewLessonTitles({
+                                ...newLessonTitles,
+                                [module.id]: e.target.value,
+                              })
+                            }
+                          />
+                          <button onClick={() => handleAddLesson(module.id)}>
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+
+        <div className="admin-form mt-4">
+          <h3>Adicionar Novo Módulo</h3>
+          <div className="form-row">
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Título do novo módulo"
+              value={newModuleTitle}
+              onChange={(e) => setNewModuleTitle(e.target.value)}
+            />
+            <button
+              className="form-button"
+              type="button"
+              onClick={handleAddModule}
+            >
+              Adicionar Módulo
+            </button>
           </div>
         </div>
       </div>
+
       <Footer />
+
       {lessonToEdit && (
         <LessonEditModal
           lesson={lessonToEdit}
