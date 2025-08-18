@@ -63,25 +63,32 @@ const Menu: React.FC = () => {
         </NavLink>
 
         {user && user.role === "admin" && (
-          <NavLink
-            to="/admin/users"
-            className={({ isActive }) =>
-              isActive ? "menu-item active" : "menu-item"
-            }
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Usuários
-          </NavLink>
-        )}
-        {user && user.role === "admin" && (
-          <NavLink
-            to="/admin/logs"
-            className={({ isActive }) =>
-              isActive ? "menu-item active" : "menu-item"
-            }
-          >
-            Logs de Atividade
-          </NavLink>
+          <>
+            <NavLink
+              to="/admin/users"
+              className={({ isActive }) =>
+                isActive ? "menu-item active" : "menu-item"
+              }
+            >
+              Usuários
+            </NavLink>
+            <NavLink
+              to="/admin/courses"
+              className={({ isActive }) =>
+                isActive ? "menu-item active" : "menu-item"
+              }
+            >
+              Trilhas
+            </NavLink>
+            <NavLink
+              to="/admin/logs"
+              className={({ isActive }) =>
+                isActive ? "menu-item active" : "menu-item"
+              }
+            >
+              Logs de Atividade
+            </NavLink>
+          </>
         )}
       </div>
 
