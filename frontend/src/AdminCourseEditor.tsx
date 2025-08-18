@@ -188,8 +188,8 @@ const AdminCourseEditor: React.FC = () => {
     return <div className="tela-loading">Carregando...</div>;
   }
 
-  if (!course) {
-    return <div className="tela-loading">Carregando dados da trilha...</div>;
+  if (loading || !course) {
+    return <div className="tela-loading">Carregando...</div>;
   }
 
   return (
