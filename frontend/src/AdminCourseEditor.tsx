@@ -1,33 +1,23 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
-import ConfirmationModal from "./ConfirmationModal.tsx";
-import LessonEditModal from "./LessonEditModal.tsx";
 
-// Interfaces
+// Interfaces para tipagem dos dados
 interface Lesson {
   id: number;
   title: string;
-  content_type: "video" | "text";
-  content_data: string;
-  lesson_order: number;
 }
+
 interface Module {
   id: number;
   title: string;
-  module_order: number;
   lessons: Lesson[];
 }
+
 interface Course {
   id: number;
   title: string;
@@ -44,12 +34,6 @@ const AdminCourseEditor: React.FC = () => {
   const [newLessonTitles, setNewLessonTitles] = useState<{
     [key: number]: string;
   }>({});
-
-  const [itemToDelete, setItemToDelete] = useState<{
-    type: "module" | "lesson";
-    id: number;
-  } | null>(null);
-  const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
 
   const getAuthHeaders = useCallback(() => {
     if (!user) return {};
@@ -71,10 +55,8 @@ const AdminCourseEditor: React.FC = () => {
   }, [user, courseId, getAuthHeaders, navigate]);
 
   useEffect(() => {
-    if (user) {
-      fetchCourseDetails();
-    }
-  }, [user, fetchCourseDetails]);
+    fetchCourseDetails();
+  }, [fetchCourseDetails]);
 
   const handleAddModule = async () => {
     if (!newModuleTitle.trim() || !course) return;
@@ -90,7 +72,7 @@ const AdminCourseEditor: React.FC = () => {
       );
       toast.success("Módulo adicionado!");
       setNewModuleTitle("");
-      fetchCourseDetails();
+      fetchCourseDetails(); // Recarrega os dados
     } catch (err) {
       toast.error("Erro ao adicionar módulo.");
     }
@@ -99,94 +81,26 @@ const AdminCourseEditor: React.FC = () => {
   const handleAddLesson = async (moduleId: number) => {
     const lessonTitle = newLessonTitles[moduleId];
     const module = course?.modules.find((m) => m.id === moduleId);
-    if (!lessonTitle || !lessonTitle.trim() || !module) return;
+    if (!lessonTitle.trim() || !module) return;
     try {
       const newOrder = module.lessons.length + 1;
       await api.post(
         `/api/admin/courses/modules/${moduleId}/lessons`,
         {
           title: lessonTitle,
-          content_type: "video",
-          content_data: "",
+          content_type: "video", // Placeholder, podemos evoluir depois
+          content_data: "", // Placeholder
           lesson_order: newOrder,
         },
         getAuthHeaders()
       );
       toast.success("Aula adicionada!");
       setNewLessonTitles({ ...newLessonTitles, [moduleId]: "" });
-      fetchCourseDetails();
+      fetchCourseDetails(); // Recarrega os dados
     } catch (err) {
       toast.error("Erro ao adicionar aula.");
     }
   };
-
-  const handleDeleteClick = (type: "module" | "lesson", id: number) =>
-    setItemToDelete({ type, id });
-
-  const handleConfirmDelete = async () => {
-    if (!itemToDelete) return;
-    const { type, id } = itemToDelete;
-    const url =
-      type === "module"
-        ? `/api/admin/courses/modules/${id}`
-        : `/api/admin/courses/lessons/${id}`;
-    try {
-      await api.delete(url, getAuthHeaders());
-      toast.success(
-        `${type === "module" ? "Módulo" : "Aula"} excluído com sucesso!`
-      );
-      fetchCourseDetails();
-    } catch (err) {
-      toast.error(`Erro ao excluir ${type}.`);
-    } finally {
-      setItemToDelete(null);
-    }
-  };
-
-  const handleUpdateLesson = async (updatedLesson: Lesson) => {
-    try {
-      await api.put(
-        `/api/admin/courses/lessons/${updatedLesson.id}`,
-        updatedLesson,
-        getAuthHeaders()
-      );
-      toast.success("Aula atualizada com sucesso!");
-      setLessonToEdit(null);
-      fetchCourseDetails();
-    } catch (err) {
-      toast.error("Erro ao atualizar aula.");
-    }
-  };
-
-  const onDragEnd = async (result: DropResult) => {
-    const { source, destination, type } = result;
-    if (!destination || !course) return;
-
-    if (type === "MODULE") {
-      const reorderedModules = Array.from(course.modules);
-      const [movedModule] = reorderedModules.splice(source.index, 1);
-      reorderedModules.splice(destination.index, 0, movedModule);
-
-      setCourse({ ...course, modules: reorderedModules });
-
-      const orderedModuleIds = reorderedModules.map((m) => m.id);
-      try {
-        await api.put(
-          `/api/admin/courses/${courseId}/modules/order`,
-          { orderedModuleIds },
-          getAuthHeaders()
-        );
-        toast.success("Ordem dos módulos salva!");
-      } catch (err) {
-        toast.error("Falha ao salvar a nova ordem dos módulos.");
-        fetchCourseDetails();
-      }
-    }
-  };
-
-  if (loading) {
-    return <div className="tela-loading">Carregando...</div>;
-  }
 
   if (loading || !course) {
     return <div className="tela-loading">Carregando...</div>;
@@ -195,94 +109,45 @@ const AdminCourseEditor: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-
-      {/* --- ESTRUTURA JSX CORRIGIDA --- */}
       <div className="content-area">
         <button
           onClick={() => navigate("/admin/courses")}
           className="form-button-cancel mb-4"
         >
-          &larr; Voltar
+          &larr; Voltar para todas as trilhas
         </button>
         <h2>Editor da Trilha: {course.title}</h2>
 
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="all-modules" type="MODULE">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="modules-list"
-              >
-                {course.modules.map((module, index) => (
-                  <Draggable
-                    key={module.id}
-                    draggableId={String(module.id)}
-                    index={index}
-                  >
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="module-item"
-                      >
-                        <div className="module-header">
-                          <h3>Módulo: {module.title}</h3>
-                          <button
-                            onClick={() =>
-                              handleDeleteClick("module", module.id)
-                            }
-                            className="delete-button"
-                          >
-                            Excluir Módulo
-                          </button>
-                        </div>
-                        <ul className="lesson-list">
-                          {module.lessons.map((lesson) => (
-                            <li key={lesson.id} className="lesson-item">
-                              <span>{lesson.title}</span>
-                              <div className="lesson-actions">
-                                <button onClick={() => setLessonToEdit(lesson)}>
-                                  Editar
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteClick("lesson", lesson.id)
-                                  }
-                                >
-                                  Excluir
-                                </button>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="add-lesson-form">
-                          <input
-                            type="text"
-                            placeholder="Título da nova aula"
-                            value={newLessonTitles[module.id] || ""}
-                            onChange={(e) =>
-                              setNewLessonTitles({
-                                ...newLessonTitles,
-                                [module.id]: e.target.value,
-                              })
-                            }
-                          />
-                          <button onClick={() => handleAddLesson(module.id)}>
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
+        {/* Listagem de Módulos e Aulas */}
+        <div className="modules-list">
+          {course.modules.map((module) => (
+            <div key={module.id} className="module-item">
+              <h3>Módulo: {module.title}</h3>
+              <ul className="lesson-list">
+                {module.lessons.map((lesson) => (
+                  <li key={lesson.id}>{lesson.title}</li>
                 ))}
-                {provided.placeholder}
+              </ul>
+              {/* Formulário para adicionar nova aula */}
+              <div className="add-lesson-form">
+                <input
+                  type="text"
+                  placeholder="Título da nova aula"
+                  value={newLessonTitles[module.id] || ""}
+                  onChange={(e) =>
+                    setNewLessonTitles({
+                      ...newLessonTitles,
+                      [module.id]: e.target.value,
+                    })
+                  }
+                />
+                <button onClick={() => handleAddLesson(module.id)}>+</button>
               </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+            </div>
+          ))}
+        </div>
 
+        {/* Formulário para adicionar novo módulo */}
         <div className="admin-form mt-4">
           <h3>Adicionar Novo Módulo</h3>
           <div className="form-row">
@@ -293,37 +158,13 @@ const AdminCourseEditor: React.FC = () => {
               value={newModuleTitle}
               onChange={(e) => setNewModuleTitle(e.target.value)}
             />
-            <button
-              className="form-button"
-              type="button"
-              onClick={handleAddModule}
-            >
+            <button className="form-button" onClick={handleAddModule}>
               Adicionar Módulo
             </button>
           </div>
         </div>
       </div>
-
       <Footer />
-
-      {lessonToEdit && (
-        <LessonEditModal
-          lesson={lessonToEdit}
-          onClose={() => setLessonToEdit(null)}
-          onSave={handleUpdateLesson}
-        />
-      )}
-      <ConfirmationModal
-        isOpen={!!itemToDelete}
-        onClose={() => setItemToDelete(null)}
-        onConfirm={handleConfirmDelete}
-        title="Confirmar Exclusão"
-        message={`Tem certeza que deseja excluir este item? ${
-          itemToDelete?.type === "module"
-            ? "Todas as aulas dentro dele serão perdidas."
-            : ""
-        }`}
-      />
     </div>
   );
 };
