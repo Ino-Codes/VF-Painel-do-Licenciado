@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
+// Importação de todos os componentes de página
 import App from "./App.tsx";
 import Dashboard from "./Dashboard.tsx";
 import AdminUsers from "./AdminUsers.tsx";
@@ -17,10 +18,7 @@ import AdminCourses from "./AdminCourses.tsx";
 import AdminCourseEditor from "./AdminCourseEditor.tsx";
 import CoursesPage from "./CoursesPage.tsx";
 import LessonPlayer from "./LessonPlayer.tsx";
-
 import "./styles.css";
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
 const AppRouter: React.FC = () => {
   return (
@@ -43,20 +41,24 @@ const AppRouter: React.FC = () => {
             },
           }}
         />
+        {/* --- Estrutura de Rotas Corrigida e Completa --- */}
         <Routes>
+          {/* Rotas Públicas e de Autenticação */}
           <Route path="/" element={<App />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Rotas de Usuário Logado */}
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/perfil" element={<Perfil />} />
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/faq" element={<Faq />} />
-          <Route path="/perfil" element={<Perfil />} />
-          {/* --- ROTAS DO MÓDULO DE ESTUDOS --- */}
-          <Route path="/courses" element={<CoursesPage />} />{" "}
-          {/* Catálogo de Cursos */}
-          <Route path="/courses/:courseId" element={<LessonPlayer />} />{" "}
-          {/* Sala de Aula do Aluno */}
-          {/* --- ROTAS DE ADMINISTRAÇÃO --- */}
+
+          {/* Rotas do Módulo de Estudos (Aluno) */}
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses/:courseId" element={<LessonPlayer />} />
+
+          {/* Rotas de Administração */}
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
