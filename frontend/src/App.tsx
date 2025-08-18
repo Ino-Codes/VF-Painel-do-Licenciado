@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import api from "./api.ts";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.tsx";
-
-// Importando o CSS Module
 import styles from './App.module.css';
 
 const logo =
