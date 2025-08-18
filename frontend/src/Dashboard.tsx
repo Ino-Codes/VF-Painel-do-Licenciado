@@ -34,7 +34,7 @@ const Dashboard: React.FC = () => {
 
   const fetchNotices = async () => {
     try {
-      const res = await api.get("/api/notices/admin");
+      const res = await api.get("/api/notices");
       setNotices(res.data);
     } catch (err) {
       console.error("Erro ao buscar avisos:", err);
@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
       return;
     }
     try {
-      await api.post("/api/admin/notice", { message: newMessage });
+      await api.post("/api/notices/admin", { message: newMessage });
       setNewMessage("");
       fetchNotices();
       toast.success("Aviso postado com sucesso!");
@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
     if (noticeToDelete === null) return;
 
     try {
-      await api.delete(`/api/admin/notices/${noticeToDelete}`);
+      await api.delete(`/api/notices/admin/${noticeToDelete}`);
       toast.success("Aviso excluído com sucesso!");
       fetchNotices();
     } catch (err) {
@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
       return;
     }
     try {
-      await api.put(`/api/admin/notices/${noticeId}`, { message: editText });
+      await api.put(`/api/notices/admin/${noticeId}`, { message: editText });
       toast.success("Aviso atualizado com sucesso!");
       setEditingNoticeId(null);
       setEditText("");
