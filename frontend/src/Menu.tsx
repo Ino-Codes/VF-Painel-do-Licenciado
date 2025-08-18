@@ -79,7 +79,7 @@ const Menu: React.FC = () => {
                 isActive ? "menu-item active" : "menu-item"
               }
             >
-              Admin Usuários
+              🔒 Usuários
             </NavLink>
             <NavLink
               to="/admin/courses"
@@ -87,7 +87,7 @@ const Menu: React.FC = () => {
                 isActive ? "menu-item active" : "menu-item"
               }
             >
-              Admin Cursos
+              🔒 Cursos
             </NavLink>
             <NavLink
               to="/admin/logs"
@@ -95,7 +95,7 @@ const Menu: React.FC = () => {
                 isActive ? "menu-item active" : "menu-item"
               }
             >
-              Admin Logs
+              🔒 Logs
             </NavLink>
           </>
         )}
