@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { isAdmin } = require("../middleware/auth.js");
+const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 
 module.exports = function (pool) {
   const checkAdmin = isAdmin(pool);
