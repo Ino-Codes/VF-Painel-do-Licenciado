@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
-// Importamos nosso novo middleware de autenticação
 const { isAdmin } = require("../middleware/auth.js");
 
 module.exports = function (pool) {
-  const checkAdmin = isAdmin(pool); // Inicializamos o middleware com a conexão do banco
+  const checkAdmin = isAdmin(pool);
 
-  // ROTA PARA LISTAR TODOS OS CURSOS (apenas para admins)
+  // --- ROTAS DE CURSOS (Trilhas) ---
+
   router.get("/", checkAdmin, async (req, res) => {
     try {
       const result = await pool.query(
@@ -19,7 +19,44 @@ module.exports = function (pool) {
     }
   });
 
-  // ROTA PARA CRIAR UM NOVO CURSO (apenas para admins)
+  // ROTA ADICIONADA: Buscar um único curso com seus módulos e aulas
+  router.get("/:id", checkAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+      // Busca o curso principal
+      const courseResult = await pool.query(
+        "SELECT * FROM courses WHERE id = $1",
+        [id]
+      );
+      if (courseResult.rowCount === 0) {
+        return res.status(404).json({ error: "Curso não encontrado." });
+      }
+      const course = courseResult.rows[0];
+
+      // Busca os módulos do curso
+      const modulesResult = await pool.query(
+        "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
+        [id]
+      );
+      const modules = modulesResult.rows;
+
+      // Para cada módulo, busca suas aulas
+      for (const module of modules) {
+        const lessonsResult = await pool.query(
+          "SELECT * FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
+          [module.id]
+        );
+        module.lessons = lessonsResult.rows;
+      }
+
+      course.modules = modules;
+      res.json(course);
+    } catch (err) {
+      console.error("Erro ao buscar detalhes do curso:", err);
+      res.status(500).json({ error: "Erro ao buscar detalhes do curso." });
+    }
+  });
+
   router.post("/", checkAdmin, async (req, res) => {
     const { title, description, thumbnail_url } = req.body;
     if (!title) {
@@ -37,7 +74,6 @@ module.exports = function (pool) {
     }
   });
 
-  // ROTA PARA ATUALIZAR UM CURSO (apenas para admins)
   router.put("/:id", checkAdmin, async (req, res) => {
     const { id } = req.params;
     const { title, description, thumbnail_url, is_active } = req.body;
@@ -56,7 +92,6 @@ module.exports = function (pool) {
     }
   });
 
-  // ROTA PARA DELETAR UM CURSO (apenas para admins)
   router.delete("/:id", checkAdmin, async (req, res) => {
     const { id } = req.params;
     try {
@@ -66,10 +101,70 @@ module.exports = function (pool) {
       if (result.rowCount === 0) {
         return res.status(404).json({ error: "Curso não encontrado." });
       }
-      res.status(204).send(); // 204 No Content - sucesso, sem corpo de resposta
+      res.status(204).send();
     } catch (err) {
       console.error("Erro ao deletar curso:", err);
       res.status(500).json({ error: "Erro ao deletar curso." });
+    }
+  });
+
+  // --- ROTAS PARA MÓDULOS ---
+
+  // ROTA ADICIONADA: Criar um novo módulo para um curso
+  router.post("/:courseId/modules", checkAdmin, async (req, res) => {
+    const { courseId } = req.params;
+    const { title, module_order } = req.body;
+    try {
+      const result = await pool.query(
+        "INSERT INTO modules (course_id, title, module_order) VALUES ($1, $2, $3) RETURNING *",
+        [courseId, title, module_order]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Erro ao criar módulo:", err);
+      res.status(500).json({ error: "Erro ao criar módulo." });
+    }
+  });
+
+  // ROTA ADICIONADA: Deletar um módulo
+  router.delete("/modules/:moduleId", checkAdmin, async (req, res) => {
+    const { moduleId } = req.params;
+    try {
+      await pool.query("DELETE FROM modules WHERE id = $1", [moduleId]);
+      res.status(204).send();
+    } catch (err) {
+      console.error("Erro ao deletar módulo:", err);
+      res.status(500).json({ error: "Erro ao deletar módulo." });
+    }
+  });
+
+  // --- ROTAS PARA AULAS ---
+
+  // ROTA ADICIONADA: Criar uma nova aula para um módulo
+  router.post("/modules/:moduleId/lessons", checkAdmin, async (req, res) => {
+    const { moduleId } = req.params;
+    const { title, content_type, content_data, lesson_order } = req.body;
+    try {
+      const result = await pool.query(
+        "INSERT INTO lessons (module_id, title, content_type, content_data, lesson_order) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        [moduleId, title, content_type, content_data, lesson_order]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Erro ao criar aula:", err);
+      res.status(500).json({ error: "Erro ao criar aula." });
+    }
+  });
+
+  // ROTA ADICIONADA: Deletar uma aula
+  router.delete("/lessons/:lessonId", checkAdmin, async (req, res) => {
+    const { lessonId } = req.params;
+    try {
+      await pool.query("DELETE FROM lessons WHERE id = $1", [lessonId]);
+      res.status(204).send();
+    } catch (err) {
+      console.error("Erro ao deletar aula:", err);
+      res.status(500).json({ error: "Erro ao deletar aula." });
     }
   });
 
