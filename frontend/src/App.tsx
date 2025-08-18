@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import api from "./api.ts";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.tsx";
-import styles from './App.module.css';
 
 const logo =
   "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";
@@ -62,23 +61,23 @@ const App: React.FC = () => {
 
   return (
     // Usando as classes do CSS Module
-    <div className={styles.pLogin}>
-      <div className={styles.pImg}>
+    <div className="p-login">
+      <div className="p-img">
         <img alt="Logo da Valor Fiscal" src={logo} />
       </div>
-      <div className={styles.p1}>
-        <h2 className={styles.tituloLogin}>
+      <div className="p-1">
+        <h2 className="titulo-login">
           {!mostrarRecuperacao ? "Painel Valor Fiscal" : "Recuperar Senha"}
         </h2>
 
-        {loginError && <div className={styles.loginErrorMessage}>{loginError}</div>}
+        {loginError && <div className="login-error-message">{loginError}</div>}
 
         {!mostrarRecuperacao ? (
           <form onSubmit={handleLogin}>
             <input
               type="email"
               placeholder="Email"
-              className={styles.inputLogin}
+              className="input-login"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -89,7 +88,7 @@ const App: React.FC = () => {
             <input
               type="password"
               placeholder="Senha"
-              className={styles.inputLogin}
+              className="input-login"
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -97,10 +96,10 @@ const App: React.FC = () => {
               }}
               required
             />
-            <button className={styles.botaoLogin} type="submit">
+            <button className="botao-login" type="submit">
               Login
             </button>
-            <p className={styles.esqueceuSenha}>
+            <p className="esqueceu-senha">
               <a href="#" onClick={toggleRecuperacao}>
                 Esqueceu sua senha?
               </a>
@@ -122,17 +121,17 @@ const App: React.FC = () => {
                 <input
                   type="email"
                   placeholder="Digite seu e-mail"
-                  className={styles.inputLogin}
+                  className="input-login"
                   value={emailRecuperacao}
                   onChange={(e) => setEmailRecuperacao(e.target.value)}
                   required
                 />
-                <button className={styles.botaoLogin} type="submit">
+                <button className="botao-login" type="submit">
                   Enviar
                 </button>
               </form>
             ) : (
-              <p className={styles.feedbackMessage}>{recoveryMessage}</p>
+              <p className="feedback-message">{recoveryMessage}</p>
             )}
             <p style={{ marginTop: "20px" }}>
               <a href="#" onClick={toggleLogin}>

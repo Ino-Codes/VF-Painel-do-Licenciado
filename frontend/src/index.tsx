@@ -41,7 +41,6 @@ const AppRouter: React.FC = () => {
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/reset-password" element={<ResetPassword />} />{" "}
-          {/* ADICIONE ESTA ROTA */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/perfil" element={<Perfil />} />
