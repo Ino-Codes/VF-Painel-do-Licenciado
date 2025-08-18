@@ -13,7 +13,7 @@ import Videos from "./Videos.tsx";
 import ActivityLogs from "./ActivityLogs.tsx";
 import Faq from "./Faq.tsx";
 import ResetPassword from "./ResetPassword.tsx";
-import "./App.module.css";
+import "./styles.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
