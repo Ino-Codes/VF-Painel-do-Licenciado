@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 // Importamos nosso novo middleware de autenticação
-const { isAdmin } = require("../middleware/auth.js");
+const { isAdmin } = require(".../middleware/auth.js");
 
 module.exports = function (pool) {
   const checkAdmin = isAdmin(pool); // Inicializamos o middleware com a conexão do banco
