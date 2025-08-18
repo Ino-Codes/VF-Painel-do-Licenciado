@@ -34,7 +34,7 @@ const Dashboard: React.FC = () => {
 
   const fetchNotices = async () => {
     try {
-      const res = await api.get("/api/notices");
+      const res = await api.get("/api/notices/admin");
       setNotices(res.data);
     } catch (err) {
       console.error("Erro ao buscar avisos:", err);
