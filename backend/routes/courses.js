@@ -44,6 +44,25 @@ module.exports = function (pool) {
     }
   );
 
+  router.delete(
+    "/lessons/:lessonId/progress",
+    checkLoggedIn,
+    async (req, res) => {
+      const { lessonId } = req.params;
+      const { id: userId } = req.user;
+      try {
+        await pool.query(
+          "DELETE FROM progress WHERE user_id = $1 AND lesson_id = $2",
+          [userId, lessonId]
+        );
+        res.status(200).json({ message: "Progresso removido." });
+      } catch (err) {
+        console.error("Erro ao remover progresso:", err);
+        res.status(500).json({ error: "Erro ao remover progresso." });
+      }
+    }
+  );
+
   // --- ROTAS DE ADMINISTRAÇÃO ---
 
   // ROTA PARA LISTAR TODOS OS CURSOS (admin)
@@ -178,6 +197,28 @@ module.exports = function (pool) {
     }
   });
 
+  router.put("/:courseId/modules/order", checkAdmin, async (req, res) => {
+    const { orderedModuleIds } = req.body; // Espera um array de IDs na nova ordem
+    try {
+      const client = await pool.connect();
+      await client.query("BEGIN");
+      for (let i = 0; i < orderedModuleIds.length; i++) {
+        const moduleId = orderedModuleIds[i];
+        const newOrder = i + 1;
+        await client.query(
+          "UPDATE modules SET module_order = $1 WHERE id = $2",
+          [newOrder, moduleId]
+        );
+      }
+      await client.query("COMMIT");
+      client.release();
+      res.status(200).json({ message: "Ordem dos módulos atualizada." });
+    } catch (err) {
+      console.error("Erro ao reordenar módulos:", err);
+      res.status(500).json({ error: "Erro ao reordenar módulos." });
+    }
+  });
+
   // --- ROTAS PARA AULAS ---
 
   // ROTA PARA CRIAR UMA NOVA AULA (admin)
@@ -193,6 +234,25 @@ module.exports = function (pool) {
     } catch (err) {
       console.error("Erro ao criar aula:", err);
       res.status(500).json({ error: "Erro ao criar aula." });
+    }
+  });
+
+  // ROTA ADICIONADA: Editar uma aula
+  router.put("/lessons/:lessonId", checkAdmin, async (req, res) => {
+    const { lessonId } = req.params;
+    const { title, content_type, content_data } = req.body;
+    try {
+      const result = await pool.query(
+        "UPDATE lessons SET title = $1, content_type = $2, content_data = $3 WHERE id = $4 RETURNING *",
+        [title, content_type, content_data, lessonId]
+      );
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Aula não encontrada." });
+      }
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Erro ao editar aula:", err);
+      res.status(500).json({ error: "Erro ao editar aula." });
     }
   });
 
@@ -258,6 +318,33 @@ module.exports = function (pool) {
       res.status(500).json({ error: "Erro ao buscar detalhes do curso." });
     }
   });
+
+  // ROTA ADICIONADA: Reordenar aulas
+  router.put(
+    "/modules/:moduleId/lessons/order",
+    checkAdmin,
+    async (req, res) => {
+      const { orderedLessonIds } = req.body; // Espera um array de IDs na nova ordem
+      try {
+        const client = await pool.connect();
+        await client.query("BEGIN");
+        for (let i = 0; i < orderedLessonIds.length; i++) {
+          const lessonId = orderedLessonIds[i];
+          const newOrder = i + 1;
+          await client.query(
+            "UPDATE lessons SET lesson_order = $1 WHERE id = $2",
+            [newOrder, lessonId]
+          );
+        }
+        await client.query("COMMIT");
+        client.release();
+        res.status(200).json({ message: "Ordem das aulas atualizada." });
+      } catch (err) {
+        console.error("Erro ao reordenar aulas:", err);
+        res.status(500).json({ error: "Erro ao reordenar aulas." });
+      }
+    }
+  );
 
   return router;
 };
