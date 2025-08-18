@@ -16,6 +16,7 @@ import ResetPassword from "./ResetPassword.tsx";
 import AdminCourses from "./AdminCourses.tsx";
 import AdminCourseEditor from "./AdminCourseEditor.tsx";
 import CoursesPage from "./CoursesPage.tsx";
+import LessonPlayer from "./LessonPlayer.tsx";
 
 import "./styles.css";
 
@@ -50,6 +51,7 @@ const AppRouter: React.FC = () => {
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses/:courseId" element={<LessonPlayer />} />
           <Route path="/faq" element={<Faq />} />
           {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />

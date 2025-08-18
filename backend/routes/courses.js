@@ -208,5 +208,56 @@ module.exports = function (pool) {
     }
   });
 
+  // ROTA PARA BUSCAR DETALHES DE UM CURSO E PROGRESSO DO ALUNO
+  router.get("/public/:id", checkLoggedIn, async (req, res) => {
+    const { id: courseId } = req.params;
+    const { id: userId } = req.user;
+
+    try {
+      // Busca o curso principal
+      const courseResult = await pool.query(
+        "SELECT * FROM courses WHERE id = $1 AND is_active = TRUE",
+        [courseId]
+      );
+      if (courseResult.rowCount === 0) {
+        return res
+          .status(404)
+          .json({ error: "Curso não encontrado ou inativo." });
+      }
+      const course = courseResult.rows[0];
+
+      // Busca os módulos e aulas (como na rota de admin)
+      const modulesResult = await pool.query(
+        "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
+        [courseId]
+      );
+      const modules = modulesResult.rows;
+
+      for (const module of modules) {
+        const lessonsResult = await pool.query(
+          "SELECT * FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
+          [module.id]
+        );
+        module.lessons = lessonsResult.rows;
+      }
+      course.modules = modules;
+
+      // Busca o progresso do usuário para este curso
+      const progressResult = await pool.query(
+        "SELECT lesson_id FROM progress WHERE user_id = $1",
+        [userId]
+      );
+      const completedLessons = progressResult.rows.map((row) => row.lesson_id);
+
+      // Adiciona a informação de progresso ao objeto do curso
+      course.completedLessons = completedLessons;
+
+      res.json(course);
+    } catch (err) {
+      console.error("Erro ao buscar detalhes do curso para o aluno:", err);
+      res.status(500).json({ error: "Erro ao buscar detalhes do curso." });
+    }
+  });
+
   return router;
 };
