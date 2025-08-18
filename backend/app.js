@@ -55,6 +55,7 @@ const fileRoutes = require("./routes/files.js");
 const videoRoutes = require("./routes/videos.js");
 const faqRoutes = require("./routes/faq.js");
 const logRoutes = require("./routes/logs.js");
+const courseRoutes = require("./routes/courses.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
@@ -64,6 +65,7 @@ app.use("/api/files", fileRoutes(pool, cloudinary, upload, path));
 app.use("/api/videos", videoRoutes(pool));
 app.use("/api/faq", faqRoutes(pool, cloudinary, upload));
 app.use("/api/admin/logs", logRoutes(pool));
+app.use("/api/admin/courses", courseRoutes(pool));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
