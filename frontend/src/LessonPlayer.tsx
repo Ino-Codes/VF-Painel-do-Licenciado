@@ -81,6 +81,26 @@ const LessonPlayer: React.FC = () => {
     }
   };
 
+  const handleUnmarkAsComplete = async () => {
+    if (!activeLesson || !course) return;
+    try {
+      await api.delete(
+        `/api/admin/courses/lessons/${activeLesson.id}/progress`,
+        getAuthHeaders()
+      );
+      toast.success("Progresso removido!");
+      // Atualiza o estado local
+      setCourse({
+        ...course,
+        completedLessons: course.completedLessons.filter(
+          (id) => id !== activeLesson.id
+        ),
+      });
+    } catch (error) {
+      toast.error("Erro ao remover progresso.");
+    }
+  };
+
   if (loading || !course) {
     return <div className="tela-loading">Carregando sala de aula...</div>;
   }

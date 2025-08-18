@@ -4,17 +4,22 @@ import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
+import LessonEditModal from "./LessonEditModal.tsx";
 import toast from "react-hot-toast";
 
 // Interfaces para tipagem dos dados
 interface Lesson {
   id: number;
   title: string;
+  content_type: "video" | "text";
+  content_data: string;
+  lesson_order: number;
 }
 
 interface Module {
   id: number;
   title: string;
+  module_order: number;
   lessons: Lesson[];
 }
 
@@ -28,6 +33,12 @@ const AdminCourseEditor: React.FC = () => {
   const { user, loading } = useAuth();
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+
+  const [itemToDelete, setItemToDelete] = useState<{
+    type: "module" | "lesson";
+    id: number;
+  } | null>(null);
+  const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
 
   const [course, setCourse] = useState<Course | null>(null);
   const [newModuleTitle, setNewModuleTitle] = useState("");
@@ -102,6 +113,69 @@ const AdminCourseEditor: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (type: "module" | "lesson", id: number) =>
+    setItemToDelete({ type, id });
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    const { type, id } = itemToDelete;
+    const url =
+      type === "module"
+        ? `/api/admin/courses/modules/${id}`
+        : `/api/admin/courses/lessons/${id}`;
+    try {
+      await api.delete(url, getAuthHeaders());
+      toast.success(
+        `${type === "module" ? "Módulo" : "Aula"} excluído com sucesso!`
+      );
+      fetchCourseDetails();
+    } catch (err) {
+      toast.error(`Erro ao excluir ${type}.`);
+    } finally {
+      setItemToDelete(null);
+    }
+  };
+
+  const handleUpdateLesson = async (updatedLesson: Lesson) => {
+    try {
+      await api.put(
+        `/api/admin/courses/lessons/${updatedLesson.id}`,
+        updatedLesson,
+        getAuthHeaders()
+      );
+      toast.success("Aula atualizada com sucesso!");
+      setLessonToEdit(null);
+      fetchCourseDetails();
+    } catch (err) {
+      toast.error("Erro ao atualizar aula.");
+    }
+  };
+
+  const onDragEnd = async (result: DropResult) => {
+    const { source, destination, type } = result;
+    if (!destination || !course) return;
+
+    if (type === "MODULE") {
+      const reorderedModules = Array.from(course.modules);
+      const [movedModule] = reorderedModules.splice(source.index, 1);
+      reorderedModules.splice(destination.index, 0, movedModule);
+
+      setCourse({ ...course, modules: reorderedModules }); // Atualização otimista
+
+      const orderedModuleIds = reorderedModules.map((m) => m.id);
+      try {
+        await api.put(
+          `/api/admin/courses/${courseId}/modules/order`,
+          { orderedModuleIds },
+          getAuthHeaders()
+        );
+      } catch (err) {
+        toast.error("Falha ao salvar a nova ordem dos módulos.");
+        fetchCourseDetails(); // Reverte em caso de erro
+      }
+    }
+  };
+
   if (loading || !course) {
     return <div className="tela-loading">Carregando...</div>;
   }
@@ -114,40 +188,84 @@ const AdminCourseEditor: React.FC = () => {
           onClick={() => navigate("/admin/courses")}
           className="form-button-cancel mb-4"
         >
-          &larr; Voltar para todas as trilhas
+          &larr; Voltar
         </button>
         <h2>Editor da Trilha: {course.title}</h2>
 
-        {/* Listagem de Módulos e Aulas */}
-        <div className="modules-list">
-          {course.modules.map((module) => (
-            <div key={module.id} className="module-item">
-              <h3>Módulo: {module.title}</h3>
-              <ul className="lesson-list">
-                {module.lessons.map((lesson) => (
-                  <li key={lesson.id}>{lesson.title}</li>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="all-modules" type="MODULE">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="modules-list"
+              >
+                {course.modules.map((module, index) => (
+                  <Draggable
+                    key={module.id}
+                    draggableId={String(module.id)}
+                    index={index}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="module-item"
+                      >
+                        <div className="module-header">
+                          <h3>Módulo: {module.title}</h3>
+                          <button
+                            onClick={() =>
+                              handleDeleteClick("module", module.id)
+                            }
+                            className="delete-button"
+                          >
+                            Excluir Módulo
+                          </button>
+                        </div>
+                        <ul className="lesson-list">
+                          {module.lessons.map((lesson) => (
+                            <li key={lesson.id} className="lesson-item">
+                              <span>{lesson.title}</span>
+                              <div className="lesson-actions">
+                                <button onClick={() => setLessonToEdit(lesson)}>
+                                  Editar
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteClick("lesson", lesson.id)
+                                  }
+                                >
+                                  Excluir
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="add-lesson-form">
+                          <input
+                            type="text"
+                            placeholder="Título da nova aula"
+                            value={newLessonTitles[module.id] || ""}
+                            onChange={(e) =>
+                              setNewLessonTitles({
+                                ...newLessonTitles,
+                                [module.id]: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
                 ))}
-              </ul>
-              {/* Formulário para adicionar nova aula */}
-              <div className="add-lesson-form">
-                <input
-                  type="text"
-                  placeholder="Título da nova aula"
-                  value={newLessonTitles[module.id] || ""}
-                  onChange={(e) =>
-                    setNewLessonTitles({
-                      ...newLessonTitles,
-                      [module.id]: e.target.value,
-                    })
-                  }
-                />
-                <button onClick={() => handleAddLesson(module.id)}>+</button>
+                {provided.placeholder}
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
 
-        {/* Formulário para adicionar novo módulo */}
         <div className="admin-form mt-4">
           <h3>Adicionar Novo Módulo</h3>
           <div className="form-row">
@@ -165,6 +283,24 @@ const AdminCourseEditor: React.FC = () => {
         </div>
       </div>
       <Footer />
+      {lessonToEdit && (
+        <LessonEditModal
+          lesson={lessonToEdit}
+          onClose={() => setLessonToEdit(null)}
+          onSave={handleUpdateLesson}
+        />
+      )}
+      <ConfirmationModal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Exclusão"
+        message={`Tem certeza que deseja excluir este item? ${
+          itemToDelete?.type === "module"
+            ? "Todas as aulas dentro dele serão perdidas."
+            : ""
+        }`}
+      />
     </div>
   );
 };
