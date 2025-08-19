@@ -167,20 +167,18 @@ const AdminCourseEditor: React.FC = () => {
         </div>
 
         <div className="admin-form mt-4">
-          <div className="admin-form mt-4">
-            <h3>Adicionar Novo Módulo</h3>
-            <div className="form-row">
-              <input
-                className="form-input"
-                type="text"
-                placeholder="Título do novo módulo"
-                value={newModuleTitle}
-                onChange={(e) => setNewModuleTitle(e.target.value)}
-              />
-              <button className="form-button" onClick={handleAddModule}>
-                Adicionar Módulo
-              </button>
-            </div>
+          <h3>Adicionar Novo Módulo</h3>
+          <div className="form-row">
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Título do novo módulo"
+              value={newModuleTitle}
+              onChange={(e) => setNewModuleTitle(e.target.value)}
+            />
+            <button className="form-button" onClick={handleAddModule}>
+              Adicionar Módulo
+            </button>
           </div>
         </div>
       </div>
