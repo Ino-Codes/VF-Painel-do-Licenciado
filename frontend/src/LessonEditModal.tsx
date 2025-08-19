@@ -3,10 +3,11 @@ import toast from "react-hot-toast";
 import { Lesson } from "./types.ts";
 
 interface LessonEditModalProps {
-  lesson: Partial<Lesson>;
+  lesson: Partial<Lesson>; // Usamos Partial para permitir um objeto vazio na criação
   onClose: () => void;
-  onSave: (lessonData: Omit<Lesson, "id" | "lesson_order">) => Promise<void>;
-  moduleId?: number;
+  onSave: (
+    lessonData: Omit<Lesson, "id" | "lesson_order" | "module_id">
+  ) => Promise<void>;
 }
 
 const LessonEditModal: React.FC<LessonEditModalProps> = ({
@@ -45,7 +46,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
       toast.error("O título da aula é obrigatório.");
       return;
     }
-    await onSave({ ...lesson, ...formData });
+    await onSave(formData);
   };
 
   return (
@@ -69,7 +70,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
             <input
               type="text"
               name="video_url"
-              placeholder="https://www.youtube.com/embed/..."
+              placeholder="https://www.youtube.com/watch?v=..."
               value={formData.video_url}
               onChange={handleChange}
               className="form-input"

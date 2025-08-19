@@ -5,9 +5,8 @@ import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
-import { Course, Module, Lesson } from "./types";
+import { Course, Module, Lesson } from "./types.ts";
 
-// Helper para converter URL do YouTube
 const getYoutubeEmbedUrl = (url: string): string => {
   if (!url) return "";
   let videoId = "";
@@ -18,12 +17,11 @@ const getYoutubeEmbedUrl = (url: string): string => {
     } else if (urlObj.hostname.includes("youtube.com")) {
       videoId = urlObj.searchParams.get("v") || "";
     } else if (urlObj.hostname.includes("https://www.youtube.com/embed/$")) {
-      return url; // Já está no formato embed
+      return url;
     }
   } catch (e) {
     if (!url.includes("http")) videoId = url;
   }
-
   if (videoId) return `https://www.youtube.com/embed/${videoId}`;
   return url;
 };
@@ -53,7 +51,6 @@ const LessonPlayer: React.FC = () => {
         getAuthHeaders()
       );
       setCourse(res.data);
-      // Define a primeira aula como ativa ao carregar
       if (res.data.modules?.[0]?.lessons?.[0]) {
         setActiveLesson(res.data.modules[0].lessons[0]);
       }
