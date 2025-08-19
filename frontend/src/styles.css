@@ -548,9 +548,6 @@ body::before {
   padding-top: 56.25%;
   background-color: #000;
   border-radius: 8px;
-  max-width: 100%;
-  height: 100%;
-  margin: 0 auto;
 }
 
 .lesson-content-video iframe {
@@ -1436,11 +1433,47 @@ nav.main-menu {
   .modal-content {
     width: 95%;
   }
+
+  /* Aula */
+  .lesson-player-layout {
+    /* Muda o layout de 2 colunas para 1 coluna */
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-sidebar {
+    /* Esconde a sidebar por padrão em telas pequenas */
+    display: none;
+    margin-top: 20px;
+  }
+
+  .lesson-sidebar.open {
+    /* Mostra a sidebar quando ela tem a classe 'open' */
+    display: block;
+  }
+
+  .sidebar-toggle-button {
+    /* Mostra o botão em telas pequenas */
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    background-color: #343a40;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    text-align: center;
+  }
 }
 
 /* Oculta o menu mobile (Telas maiores que 900px) */
 @media (min-width: 901px) {
   .hamburger-menu {
+    display: none;
+  }
+
+  .sidebar-toggle-button {
     display: none;
   }
 }

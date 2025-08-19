@@ -38,6 +38,8 @@ const LessonPlayer: React.FC = () => {
   const [course, setCourse] = useState<CourseWithProgress | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const getAuthHeaders = useCallback(() => {
     if (!user) return {};
     return { headers: { "x-user-id": user.id } };
@@ -136,12 +138,19 @@ const LessonPlayer: React.FC = () => {
           </Link>
           <h2>{course.title}</h2>
         </div>
+
+        <button
+          className="sidebar-toggle-button"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        >
+          {isSidebarOpen ? "Fechar Menu de Aulas" : "Ver Aulas da Trilha"}
+        </button>
+
         <div className="lesson-player-layout">
           <div className="lesson-content">
             {activeLesson ? (
               <>
                 <h3>{activeLesson.title}</h3>
-
                 {activeLesson.video_url && (
                   <div className="lesson-content-video">
                     <iframe
@@ -153,7 +162,6 @@ const LessonPlayer: React.FC = () => {
                     ></iframe>
                   </div>
                 )}
-
                 {activeLesson.text_content && (
                   <div
                     className="lesson-content-text"
@@ -165,7 +173,6 @@ const LessonPlayer: React.FC = () => {
                     {activeLesson.text_content}
                   </div>
                 )}
-
                 {isLessonCompleted ? (
                   <button
                     onClick={handleUnmarkAsComplete}
@@ -187,7 +194,7 @@ const LessonPlayer: React.FC = () => {
             )}
           </div>
 
-          <aside className="lesson-sidebar">
+          <aside className={`lesson-sidebar ${isSidebarOpen ? "open" : ""}`}>
             {course.modules.map((module) => (
               <div key={module.id}>
                 <h4 className="sidebar-module-title">{module.title}</h4>
@@ -203,6 +210,7 @@ const LessonPlayer: React.FC = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveLesson(lesson);
+                        setIsSidebarOpen(false);
                       }}
                       className={`sidebar-lesson-item ${
                         isActive ? "active" : ""
