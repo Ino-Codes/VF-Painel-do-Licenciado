@@ -68,31 +68,99 @@ app.use("/api/admin/logs", logRoutes(pool));
 app.use("/api/admin/courses", courseRoutes(pool, cloudinary, upload));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
-// --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
-  // Comando para excluir a tabela 'lessons' e suas dependências
-  const dropLessonsTable = `DROP TABLE IF EXISTS lessons CASCADE;`;
+  const userTable = `
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL,
+      role TEXT NOT NULL, nome TEXT, avatar_url TEXT,
+      reset_token TEXT, reset_token_expires TIMESTAMPTZ
+    );`;
+  const noticeTable = `
+    CREATE TABLE IF NOT EXISTS notices (
+      id SERIAL PRIMARY KEY, message TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+  const fileTable = `
+    CREATE TABLE IF NOT EXISTS files (
+      id SERIAL PRIMARY KEY, filename TEXT, originalname TEXT, category TEXT,
+      folder TEXT,
+      visibility TEXT DEFAULT 'public', 
+      uploaded_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+  const videoTable = `
+    CREATE TABLE IF NOT EXISTS videos (
+      id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT,
+      youtube_url TEXT NOT NULL UNIQUE,
+      visibility TEXT DEFAULT 'public', 
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+  const logsTable = `
+    CREATE TABLE IF NOT EXISTS activity_logs (
+      id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      user_email TEXT, action TEXT NOT NULL, details TEXT, ip_address TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+  const faqTable = `
+    CREATE TABLE IF NOT EXISTS faq (
+      id SERIAL PRIMARY KEY, category TEXT NOT NULL, question TEXT NOT NULL, answer TEXT NOT NULL,
+      document_url TEXT, document_originalname TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
 
-  // Definições das outras tabelas (sem a 'lessonsTable')
-  const userTable = `...`; // Mantenha seu código aqui
-  const noticeTable = `...`; // Mantenha seu código aqui
-  const fileTable = `...`; // Mantenha seu código aqui
-  const videoTable = `...`; // Mantenha seu código aqui
-  const logsTable = `...`; // Mantenha seu código aqui
-  const faqTable = `...`; // Mantenha seu código aqui
-  const coursesTable = `...`; // Mantenha seu código aqui
-  const modulesTable = `...`; // Mantenha seu código aqui
-  // A lessonsTable foi removida daqui por enquanto
-  const userCoursesTable = `...`; // Mantenha seu código aqui
-  const progressTable = `...`; // Mantenha seu código aqui
-  const certificatesTable = `...`; // Mantenha seu código aqui
+  const coursesTable = `
+    CREATE TABLE IF NOT EXISTS courses (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      thumbnail_url TEXT,
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+
+  const modulesTable = `
+    CREATE TABLE IF NOT EXISTS modules (
+      id SERIAL PRIMARY KEY,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      module_order INTEGER NOT NULL
+    );`;
+
+  const lessonsTable = `
+    CREATE TABLE IF NOT EXISTS lessons (
+      id SERIAL PRIMARY KEY,
+      module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      video_url TEXT, -- Nova coluna para vídeo
+      text_content TEXT, -- Nova coluna para texto
+      lesson_order INTEGER NOT NULL
+    );`;
+
+  const userCoursesTable = `
+    CREATE TABLE IF NOT EXISTS user_courses (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, course_id)
+    );`;
+
+  const progressTable = `
+    CREATE TABLE IF NOT EXISTS progress (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+      completed_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, lesson_id)
+    );`;
+
+  const certificatesTable = `
+    CREATE TABLE IF NOT EXISTS certificates (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      completion_date TIMESTAMPTZ DEFAULT NOW(),
+      unique_code TEXT NOT NULL UNIQUE
+    );`;
 
   try {
-    // Executa o comando para apagar a tabela primeiro
-    await pool.query(dropLessonsTable);
-    console.log("Tabela 'lessons' antiga excluída com sucesso (se existia).");
-
-    // Recria as outras tabelas
     await pool.query(userTable);
     await pool.query(noticeTable);
     await pool.query(fileTable);
@@ -101,13 +169,14 @@ const createTables = async () => {
     await pool.query(faqTable);
     await pool.query(coursesTable);
     await pool.query(modulesTable);
+    await pool.query(lessonsTable);
     await pool.query(userCoursesTable);
     await pool.query(progressTable);
     await pool.query(certificatesTable);
 
-    console.log("Tabelas (exceto lessons) verificadas/criadas com sucesso.");
+    console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
-    console.error("Erro ao modificar tabelas:", err);
+    console.error("Erro ao criar tabelas:", err);
   }
 };
 
