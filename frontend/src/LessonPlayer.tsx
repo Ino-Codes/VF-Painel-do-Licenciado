@@ -139,14 +139,45 @@ const LessonPlayer: React.FC = () => {
           <h2>{course.title}</h2>
         </div>
 
-        <button
-          className="sidebar-toggle-button"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        >
-          {isSidebarOpen ? "Fechar Menu de Aulas" : "Ver Aulas da Trilha"}
-        </button>
-
         <div className="lesson-player-layout">
+          <button
+            className="sidebar-toggle-button"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            {isSidebarOpen ? "Fechar Menu de Aulas" : "Ver Aulas do Curso"}
+          </button>
+
+          <aside className={`lesson-sidebar ${isSidebarOpen ? "open" : ""}`}>
+            {course.modules.map((module) => (
+              <div key={module.id}>
+                <h4 className="sidebar-module-title">{module.title}</h4>
+                {module.lessons.map((lesson) => {
+                  const isCompleted = course.completedLessons.includes(
+                    lesson.id
+                  );
+                  const isActive = activeLesson?.id === lesson.id;
+                  return (
+                    <a
+                      key={lesson.id}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveLesson(lesson);
+                        setIsSidebarOpen(false);
+                      }}
+                      className={`sidebar-lesson-item ${
+                        isActive ? "active" : ""
+                      } ${isCompleted ? "completed" : ""}`}
+                    >
+                      {isCompleted ? "✓ " : "○ "}
+                      {lesson.title}
+                    </a>
+                  );
+                })}
+              </div>
+            ))}
+          </aside>
+
           <div className="lesson-content">
             {activeLesson ? (
               <>
@@ -193,37 +224,6 @@ const LessonPlayer: React.FC = () => {
               <p>Selecione uma aula na barra lateral para começar.</p>
             )}
           </div>
-
-          <aside className={`lesson-sidebar ${isSidebarOpen ? "open" : ""}`}>
-            {course.modules.map((module) => (
-              <div key={module.id}>
-                <h4 className="sidebar-module-title">{module.title}</h4>
-                {module.lessons.map((lesson) => {
-                  const isCompleted = course.completedLessons.includes(
-                    lesson.id
-                  );
-                  const isActive = activeLesson?.id === lesson.id;
-                  return (
-                    <a
-                      key={lesson.id}
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setActiveLesson(lesson);
-                        setIsSidebarOpen(false);
-                      }}
-                      className={`sidebar-lesson-item ${
-                        isActive ? "active" : ""
-                      } ${isCompleted ? "completed" : ""}`}
-                    >
-                      {isCompleted ? "✓ " : "○ "}
-                      {lesson.title}
-                    </a>
-                  );
-                })}
-              </div>
-            ))}
-          </aside>
         </div>
       </div>
       <Footer />
