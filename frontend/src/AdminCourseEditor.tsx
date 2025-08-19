@@ -148,6 +148,8 @@ const AdminCourseEditor: React.FC = () => {
           &larr; Voltar para todas as trilhas
         </button>
 
+        <h2>Editor da Trilha: {course.title}</h2>
+
         <div className="admin-form mt-4">
           <h3>Adicionar Novo Módulo</h3>
           <div className="form-row">
@@ -163,8 +165,6 @@ const AdminCourseEditor: React.FC = () => {
             </button>
           </div>
         </div>
-
-        <h2>Editor da Trilha: {course.title}</h2>
 
         <div className="modules-list">
           {course.modules.map((module) => (

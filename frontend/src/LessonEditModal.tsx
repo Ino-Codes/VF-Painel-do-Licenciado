@@ -53,7 +53,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Editar Aula</h2>
+        <h2>Editar Aula: {lesson.title}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <input
