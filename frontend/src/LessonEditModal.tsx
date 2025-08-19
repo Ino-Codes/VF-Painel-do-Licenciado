@@ -66,6 +66,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
               required
             />
           </div>
+
           <div className="form-row">
             <label>Tipo de Conteúdo:</label>
             <select
@@ -78,8 +79,11 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
               <option value="text">Texto (Simples)</option>
             </select>
           </div>
+
           <div className="form-row">
             <label>Conteúdo (URL ou Texto):</label>
+          </div>
+          <div className="form-row">
             <textarea
               name="content_data"
               placeholder="https://www.youtube.com/embed/..."
@@ -89,6 +93,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
               rows={5}
             />
           </div>
+
           <div className="modal-actions">
             <button
               type="button"
