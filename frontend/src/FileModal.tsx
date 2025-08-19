@@ -23,7 +23,7 @@ const FileModal: React.FC<FileModalProps> = ({
   onClose,
   onSuccess,
   categories,
-  folders, // Prop corrigida
+  folders,
 }) => {
   const [originalname, setOriginalname] = useState("");
   const [category, setCategory] = useState("");
@@ -50,7 +50,6 @@ const FileModal: React.FC<FileModalProps> = ({
 
     try {
       if (fileToEdit) {
-        // Lógica de submit corrigida para incluir 'folder'
         await api.put(`/api/files/${fileToEdit.id}`, {
           originalname,
           category,

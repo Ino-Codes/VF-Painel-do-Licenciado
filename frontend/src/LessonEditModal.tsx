@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { Lesson } from "./types.ts";
 
 interface LessonEditModalProps {
-  lesson: Partial<Lesson>; // Usamos Partial para permitir um objeto vazio na criação
+  lesson: Partial<Lesson>;
   onClose: () => void;
   onSave: (
     lessonData: Omit<Lesson, "id" | "lesson_order" | "module_id">

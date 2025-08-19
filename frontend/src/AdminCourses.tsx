@@ -20,17 +20,14 @@ const AdminCourses: React.FC = () => {
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState<Course[]>([]);
-  // Removemos thumbnail_url do formulário principal
   const [form, setForm] = useState({ title: "", description: "" });
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
-  // Novo estado para o arquivo da thumbnail
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
 
-  // Proteção da rota no frontend
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
       toast.error("Acesso restrito a administradores.");
@@ -38,7 +35,6 @@ const AdminCourses: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  // Função para adicionar o header de autenticação
   const getAuthHeaders = useCallback(() => {
     if (!user) return {};
     return { headers: { "x-user-id": user.id } };

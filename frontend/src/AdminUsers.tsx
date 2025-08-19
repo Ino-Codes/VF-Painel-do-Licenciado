@@ -14,7 +14,6 @@ interface User {
   role: "admin" | "licenciado" | "gestor" | "executivo de contas";
 }
 
-// Componente para a funcionalidade de importação em massa
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
   onImportSuccess,
 }) => {
@@ -83,7 +82,6 @@ const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
   );
 };
 
-// Componente principal da página
 const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -193,7 +191,6 @@ const AdminUsers: React.FC = () => {
 
   const startEdit = (u: User) => {
     setEditingUser(u);
-    // Limpa o formulário de criação para não manter dados antigos
     setForm({ nome: "", email: "", password: "", role: "licenciado" });
   };
 

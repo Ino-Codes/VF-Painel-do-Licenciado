@@ -51,7 +51,6 @@ const AppRouter: React.FC = () => {
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/faq" element={<Faq />} />
-          {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<LessonPlayer />} />
@@ -70,7 +69,4 @@ const AppRouter: React.FC = () => {
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
-root.render(
-  // <React.StrictMode> foi removido daqui
-  <AppRouter />
-);
+root.render(<AppRouter />);

@@ -207,7 +207,6 @@ const Documentos: React.FC = () => {
                       <div key={file.id} className="file-item">
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
-                          {/* --- TRECHO CORRIGIDO --- */}
                           <a
                             href={`${baseURL}/api/files/download/${file.id}`}
                             target="_blank"

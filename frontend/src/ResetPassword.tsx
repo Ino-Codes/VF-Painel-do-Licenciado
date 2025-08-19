@@ -1,4 +1,3 @@
-// Crie o arquivo ResetPassword.tsx
 import React, { useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import api from "./api.ts";

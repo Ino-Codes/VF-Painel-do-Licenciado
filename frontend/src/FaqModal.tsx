@@ -1,4 +1,3 @@
-// Crie o arquivo FaqModal.tsx
 import React, { useState } from "react";
 import api from "./api.ts";
 import toast from "react-hot-toast";

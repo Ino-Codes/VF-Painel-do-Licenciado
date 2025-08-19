@@ -74,7 +74,6 @@ const AdminCourseEditor: React.FC = () => {
     if (!course) return;
     try {
       if (lessonToEdit && "id" in lessonToEdit && lessonToEdit.id) {
-        // Editando aula existente
         await api.put(
           `/api/admin/courses/lessons/${lessonToEdit.id}`,
           lessonData,
@@ -82,7 +81,6 @@ const AdminCourseEditor: React.FC = () => {
         );
         toast.success("Aula atualizada com sucesso!");
       } else {
-        // Criando nova aula
         const module = course.modules.find((m) => m.id === activeModuleId);
         if (!module) {
           toast.error("Módulo não encontrado para adicionar a aula.");
@@ -130,7 +128,7 @@ const AdminCourseEditor: React.FC = () => {
 
   const openAddLessonModal = (moduleId: number) => {
     setActiveModuleId(moduleId);
-    setLessonToEdit({}); // Abre o modal com um objeto vazio para 'criar'
+    setLessonToEdit({});
   };
 
   if (loading || !course) {
