@@ -33,11 +33,7 @@ const CoursesPage: React.FC = () => {
     const fetchCourses = async () => {
       if (!user) return;
       try {
-        // A URL da API está correta, não precisa mudar
-        const res = await api.get(
-          "/api/admin/courses/public",
-          getAuthHeaders()
-        );
+        const res = await api.get("/api/courses/public", getAuthHeaders());
         setCourses(res.data);
       } catch (err) {
         toast.error("Não foi possível carregar as trilhas.");
@@ -48,13 +44,11 @@ const CoursesPage: React.FC = () => {
     }
   }, [user, getAuthHeaders]);
 
-  if (loading || !user) {
+  if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
 
-  // CORREÇÃO: Função de navegação para a futura página do aluno
   const handleCourseClick = (courseId: number) => {
-    // Vamos navegar para a futura página do aluno, e não a de admin
     navigate(`/courses/${courseId}`);
   };
 
@@ -66,26 +60,29 @@ const CoursesPage: React.FC = () => {
           <h2>Trilhas de Conhecimento</h2>
         </div>
         <div className="courses-grid">
-          {courses.map((course) => (
-            // CORREÇÃO: onClick agora chama a função correta
-            <div
-              key={course.id}
-              className="course-card"
-              onClick={() => handleCourseClick(course.id)}
-            >
-              <img
-                src={
-                  course.thumbnail_url ||
-                  "https://via.placeholder.com/400x225.png?text=Trilha"
-                }
-                alt={course.title}
-              />
-              <div className="course-card-content">
-                <h3>{course.title}</h3>
-                <p>{course.description}</p>
+          {courses.length > 0 ? (
+            courses.map((course) => (
+              <div
+                key={course.id}
+                className="course-card"
+                onClick={() => handleCourseClick(course.id)}
+              >
+                <img
+                  src={
+                    course.thumbnail_url ||
+                    "https://via.placeholder.com/400x225.png?text=Trilha"
+                  }
+                  alt={course.title}
+                />
+                <div className="course-card-content">
+                  <h3>{course.title}</h3>
+                  <p>{course.description}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p>Nenhuma trilha de conhecimento disponível no momento.</p>
+          )}
         </div>
       </div>
       <Footer />
