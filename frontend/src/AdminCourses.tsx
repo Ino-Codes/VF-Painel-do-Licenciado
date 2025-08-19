@@ -20,12 +20,12 @@ const AdminCourses: React.FC = () => {
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState<Course[]>([]);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    thumbnail_url: "",
-  });
+  // Removemos thumbnail_url do formulário principal
+  const [form, setForm] = useState({ title: "", description: "" });
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+
+  // Novo estado para o arquivo da thumbnail
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
@@ -55,31 +55,31 @@ const AdminCourses: React.FC = () => {
   }, [user, getAuthHeaders]);
 
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    if (user) {
+      fetchCourses();
+    }
+  }, [user, fetchCourses]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (editingCourse) {
-        // Lógica de Edição
         const updatedCourse = { ...editingCourse, ...form };
         await api.put(
           `/api/admin/courses/${editingCourse.id}`,
           updatedCourse,
           getAuthHeaders()
         );
-        toast.success("Curso atualizado com sucesso!");
+        toast.success("Dados da trilha atualizados!");
       } else {
-        // Lógica de Criação
         await api.post("/api/admin/courses", form, getAuthHeaders());
-        toast.success("Curso criado com sucesso!");
+        toast.success("Trilha criada com sucesso!");
       }
-      setForm({ title: "", description: "", thumbnail_url: "" });
+      setForm({ title: "", description: "" });
       setEditingCourse(null);
       fetchCourses();
     } catch (err) {
-      toast.error("Ocorreu um erro ao salvar o curso.");
+      toast.error("Ocorreu um erro ao salvar a trilha.");
     }
   };
 
@@ -87,7 +87,6 @@ const AdminCourses: React.FC = () => {
     setCourseToDelete(id);
     setIsConfirmModalOpen(true);
   };
-
   const handleConfirmDelete = async () => {
     if (courseToDelete === null) return;
     try {
@@ -107,20 +106,39 @@ const AdminCourses: React.FC = () => {
 
   const startEdit = (course: Course) => {
     setEditingCourse(course);
-    setForm({
-      title: course.title,
-      description: course.description,
-      thumbnail_url: course.thumbnail_url,
-    });
+    setForm({ title: course.title, description: course.description });
+    setThumbnailFile(null);
   };
 
   const cancelEdit = () => {
     setEditingCourse(null);
-    setForm({ title: "", description: "", thumbnail_url: "" });
+    setForm({ title: "", description: "" });
+    setThumbnailFile(null);
   };
 
   const handleManageContent = (courseId: number) => {
     navigate(`/admin/courses/${courseId}`);
+  };
+
+  const handleThumbnailUpload = async () => {
+    if (!thumbnailFile || !editingCourse) {
+      toast.error("Selecione um arquivo de imagem para fazer o upload.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("thumbnail", thumbnailFile);
+    try {
+      await api.post(
+        `/api/admin/courses/${editingCourse.id}/thumbnail`,
+        formData,
+        getAuthHeaders()
+      );
+      toast.success("Imagem de capa atualizada com sucesso!");
+      setThumbnailFile(null);
+      fetchCourses();
+    } catch (err) {
+      toast.error("Erro ao fazer o upload da imagem.");
+    }
   };
 
   if (loading || !user || user.role !== "admin") {
@@ -154,18 +172,8 @@ const AdminCourses: React.FC = () => {
             />
           </div>
           <div className="form-row">
-            <input
-              className="form-input"
-              placeholder="URL da Imagem de Capa (Thumbnail)"
-              value={form.thumbnail_url}
-              onChange={(e) =>
-                setForm({ ...form, thumbnail_url: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-row">
             <button className="form-button" type="submit">
-              {editingCourse ? "Salvar Alterações" : "Criar Trilha"}
+              {editingCourse ? "Salvar Alterações de Texto" : "Criar Trilha"}
             </button>
             {editingCourse && (
               <button
@@ -179,13 +187,70 @@ const AdminCourses: React.FC = () => {
           </div>
         </form>
 
+        {editingCourse && (
+          <div
+            className="admin-form"
+            style={{
+              marginTop: "20px",
+              borderTop: "2px solid #f0f0f0",
+              paddingTop: "20px",
+            }}
+          >
+            <h3>Alterar Imagem de Capa</h3>
+            <div className="form-row">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  e.target.files && setThumbnailFile(e.target.files[0])
+                }
+              />
+              <button
+                className="form-button"
+                type="button"
+                onClick={handleThumbnailUpload}
+                disabled={!thumbnailFile}
+              >
+                Salvar Imagem
+              </button>
+            </div>
+            {editingCourse.thumbnail_url && (
+              <div>
+                <p>Imagem Atual:</p>
+                <img
+                  src={editingCourse.thumbnail_url}
+                  alt="Thumbnail atual"
+                  style={{ maxWidth: "200px", borderRadius: "8px" }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         <h2>Trilhas de Conhecimento Cadastradas:</h2>
         <ul className="user-list">
           {courses.map((course) => (
             <li key={course.id} className="user-list-item">
-              <div className="user-info">
-                <strong>{course.title}</strong>
-                <span>{course.description}</span>
+              <div
+                className="user-info"
+                style={{
+                  alignItems: "center",
+                  flexDirection: "row",
+                  gap: "15px",
+                }}
+              >
+                <img
+                  src={
+                    course.thumbnail_url ||
+                    "https://via.placeholder.com/100x60.png?text=Capa"
+                  }
+                  alt="Thumbnail"
+                  style={{ width: "100px", borderRadius: "4px" }}
+                />
+                <div>
+                  <strong>{course.title}</strong>
+                  <span>{course.description}</span>
+                </div>
               </div>
               <div className="user-actions">
                 <button
