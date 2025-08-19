@@ -29,7 +29,7 @@ const LessonPlayer: React.FC = () => {
     if (!user || !courseId) return;
     try {
       const res = await api.get(
-        `/api/courses/public/${courseId}`,
+        `/api/admin/courses/public/${courseId}`,
         getAuthHeaders()
       );
       setCourse(res.data);

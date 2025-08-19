@@ -33,7 +33,10 @@ const CoursesPage: React.FC = () => {
     const fetchCourses = async () => {
       if (!user) return;
       try {
-        const res = await api.get("/api/courses/public", getAuthHeaders());
+        const res = await api.get(
+          "/api/admin/courses/public",
+          getAuthHeaders()
+        );
         setCourses(res.data);
       } catch (err) {
         toast.error("Não foi possível carregar as trilhas.");
