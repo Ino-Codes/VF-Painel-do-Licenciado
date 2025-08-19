@@ -3,8 +3,6 @@ export interface Lesson {
   title: string;
   video_url?: string;
   text_content?: string;
-  module_id?: number;
-  lesson_order?: number;
 }
 
 export interface Module {
