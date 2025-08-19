@@ -548,7 +548,7 @@ body::before {
   padding-top: 56.25%;
   background-color: #000;
   border-radius: 8px;
-  max-width: 800px;
+  max-width: 720px;
   height: auto;
   margin: 0 auto;
 }
