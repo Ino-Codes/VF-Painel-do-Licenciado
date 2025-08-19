@@ -3,7 +3,7 @@ const router = express.Router();
 // Importa ambos os middlewares de autenticação
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 
-module.exports = function (pool) {
+module.exports = function (pool, cloudinary, upload) {
   // Inicializa os middlewares com a conexão do banco
   const checkAdmin = isAdmin(pool);
   const checkLoggedIn = isLoggedIn(pool);

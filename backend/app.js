@@ -65,7 +65,7 @@ app.use("/api/files", fileRoutes(pool, cloudinary, upload, path));
 app.use("/api/videos", videoRoutes(pool));
 app.use("/api/faq", faqRoutes(pool, cloudinary, upload));
 app.use("/api/admin/logs", logRoutes(pool));
-app.use("/api/admin/courses", courseRoutes(pool));
+app.use("/api/admin/courses", courseRoutes(pool, cloudinary, upload));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
