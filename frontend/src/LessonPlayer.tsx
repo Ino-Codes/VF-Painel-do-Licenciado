@@ -80,7 +80,7 @@ const LessonPlayer: React.FC = () => {
       return;
     try {
       await api.post(
-        `/api/courses/lessons/${activeLesson.id}/complete`,
+        `/api/admin/courses/lessons/${activeLesson.id}/complete`,
         {},
         getAuthHeaders()
       );
@@ -102,7 +102,7 @@ const LessonPlayer: React.FC = () => {
     if (!activeLesson || !course) return;
     try {
       await api.delete(
-        `/api/courses/lessons/${activeLesson.id}/progress`,
+        `/api/admin/courses/lessons/${activeLesson.id}/progress`,
         getAuthHeaders()
       );
       toast.success("Progresso removido!");

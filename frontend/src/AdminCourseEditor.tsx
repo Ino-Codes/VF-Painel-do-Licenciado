@@ -147,6 +147,23 @@ const AdminCourseEditor: React.FC = () => {
         >
           &larr; Voltar para todas as trilhas
         </button>
+
+        <div className="admin-form mt-4">
+          <h3>Adicionar Novo Módulo</h3>
+          <div className="form-row">
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Título do novo módulo"
+              value={newModuleTitle}
+              onChange={(e) => setNewModuleTitle(e.target.value)}
+            />
+            <button className="form-button" onClick={handleAddModule}>
+              Adicionar Módulo
+            </button>
+          </div>
+        </div>
+
         <h2>Editor da Trilha: {course.title}</h2>
 
         <div className="modules-list">
@@ -196,22 +213,6 @@ const AdminCourseEditor: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="admin-form mt-4">
-          <h3>Adicionar Novo Módulo</h3>
-          <div className="form-row">
-            <input
-              className="form-input"
-              type="text"
-              placeholder="Título do novo módulo"
-              value={newModuleTitle}
-              onChange={(e) => setNewModuleTitle(e.target.value)}
-            />
-            <button className="form-button" onClick={handleAddModule}>
-              Adicionar Módulo
-            </button>
-          </div>
         </div>
       </div>
       <Footer />
