@@ -319,6 +319,64 @@ module.exports = function (pool) {
     }
   });
 
+  // ROTA ADICIONADA: Upload da imagem de capa (thumbnail) para um curso
+  router.post(
+    "/:courseId/thumbnail",
+    checkAdmin,
+    upload.single("thumbnail"),
+    async (req, res) => {
+      const { courseId } = req.params;
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ error: "Nenhum arquivo de imagem enviado." });
+      }
+
+      try {
+        // Primeiro, busca a URL da thumbnail antiga para poder excluí-la
+        const oldCourseResult = await pool.query(
+          "SELECT thumbnail_url FROM courses WHERE id = $1",
+          [courseId]
+        );
+        const oldThumbnailUrl = oldCourseResult.rows[0]?.thumbnail_url;
+
+        // Se uma thumbnail antiga existir, exclui do Cloudinary
+        if (oldThumbnailUrl) {
+          const publicIdMatch = oldThumbnailUrl.match(/\/v\d+\/(.+)\.\w+$/);
+          if (publicIdMatch) {
+            const publicId = publicIdMatch[1];
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: "image",
+            });
+          }
+        }
+
+        // Faz o upload da nova imagem para o Cloudinary
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: "image" }, (error, result) => {
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+
+        const newThumbnailUrl = uploadResult.secure_url;
+
+        // Atualiza o curso no banco de dados com a nova URL
+        const result = await pool.query(
+          "UPDATE courses SET thumbnail_url = $1 WHERE id = $2 RETURNING *",
+          [newThumbnailUrl, courseId]
+        );
+
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro no upload da thumbnail:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
+      }
+    }
+  );
+
   // ROTA ADICIONADA: Reordenar aulas
   router.put(
     "/modules/:moduleId/lessons/order",
