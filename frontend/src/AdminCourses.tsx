@@ -249,6 +249,7 @@ const AdminCourses: React.FC = () => {
                 />
                 <div>
                   <strong>{course.title}</strong>
+                  <br></br>
                   <span>{course.description}</span>
                 </div>
               </div>
