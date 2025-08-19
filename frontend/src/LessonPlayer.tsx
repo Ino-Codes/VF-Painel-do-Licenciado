@@ -62,7 +62,7 @@ const LessonPlayer: React.FC = () => {
         setActiveLesson(res.data.modules[0].lessons[0]);
       }
     } catch (error) {
-      toast.error("Não foi possível carregar esta trilha.");
+      toast.error("Não foi possível carregar este curso.");
       navigate("/courses");
     }
   }, [courseId, user, getAuthHeaders, navigate]);

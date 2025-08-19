@@ -70,16 +70,16 @@ const AdminCourses: React.FC = () => {
           updatedCourse,
           getAuthHeaders()
         );
-        toast.success("Dados da trilha atualizados!");
+        toast.success("Dados do curso atualizados!");
       } else {
         await api.post("/api/admin/courses", form, getAuthHeaders());
-        toast.success("Trilha criada com sucesso!");
+        toast.success("Curso criado com sucesso!");
       }
       setForm({ title: "", description: "" });
       setEditingCourse(null);
       fetchCourses();
     } catch (err) {
-      toast.error("Ocorreu um erro ao salvar a trilha.");
+      toast.error("Ocorreu um erro ao salvar o curso.");
     }
   };
 
@@ -149,12 +149,12 @@ const AdminCourses: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <h2>{editingCourse ? "Editar Trilha" : "Adicionar Nova Trilha"}</h2>
+        <h2>{editingCourse ? "Editar Curso" : "Adicionar Novo Curso"}</h2>
         <form onSubmit={handleSubmit} className="admin-form">
           <div className="form-row">
             <input
               className="form-input"
-              placeholder="Título da Trilha"
+              placeholder="Título do Curso"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
@@ -173,7 +173,7 @@ const AdminCourses: React.FC = () => {
           </div>
           <div className="form-row">
             <button className="form-button" type="submit">
-              {editingCourse ? "Salvar Alterações de Texto" : "Criar Trilha"}
+              {editingCourse ? "Salvar Alterações de Texto" : "Criar Curso"}
             </button>
             {editingCourse && (
               <button
@@ -227,7 +227,7 @@ const AdminCourses: React.FC = () => {
           </div>
         )}
 
-        <h2>Trilhas de Conhecimento Cadastradas:</h2>
+        <h2>Cursos Cadastrados:</h2>
         <ul className="user-list">
           {courses.map((course) => (
             <li key={course.id} className="user-list-item">
@@ -283,7 +283,7 @@ const AdminCourses: React.FC = () => {
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Confirmar Exclusão"
-        message="Tem certeza que deseja excluir esta trilha? Todos os seus módulos e aulas também serão removidos."
+        message="Tem certeza que deseja excluir este curso? Todos os seus módulos e aulas também serão removidos."
       />
     </div>
   );

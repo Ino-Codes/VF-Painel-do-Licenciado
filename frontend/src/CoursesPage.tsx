@@ -39,7 +39,7 @@ const CoursesPage: React.FC = () => {
         );
         setCourses(res.data);
       } catch (err) {
-        toast.error("Não foi possível carregar as trilhas.");
+        toast.error("Não foi possível carregar os cursos.");
       }
     };
     if (user) {
@@ -60,7 +60,7 @@ const CoursesPage: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="document-header">
-          <h2>Trilhas de Conhecimento</h2>
+          <h2>Cursos</h2>
         </div>
         <div className="courses-grid">
           {courses.length > 0 ? (
@@ -73,7 +73,7 @@ const CoursesPage: React.FC = () => {
                 <img
                   src={
                     course.thumbnail_url ||
-                    "https://via.placeholder.com/400x225.png?text=Trilha"
+                    "https://via.placeholder.com/400x225.png?text=Curso"
                   }
                   alt={course.title}
                 />
@@ -84,7 +84,7 @@ const CoursesPage: React.FC = () => {
               </div>
             ))
           ) : (
-            <p>Nenhuma trilha de conhecimento disponível no momento.</p>
+            <p>Em breve novos cursos estarão disponíveis nessa página!</p>
           )}
         </div>
       </div>

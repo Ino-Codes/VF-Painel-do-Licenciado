@@ -41,7 +41,7 @@ const AdminCourseEditor: React.FC = () => {
       );
       setCourse(res.data);
     } catch (err) {
-      toast.error("Falha ao carregar detalhes da trilha.");
+      toast.error("Falha ao carregar detalhes do curso.");
       navigate("/admin/courses");
     }
   }, [user, courseId, getAuthHeaders, navigate]);
@@ -145,10 +145,10 @@ const AdminCourseEditor: React.FC = () => {
           onClick={() => navigate("/admin/courses")}
           className="form-button-cancel mb-4"
         >
-          &larr; Voltar para todas as trilhas
+          &larr; Voltar para todos os Cursos
         </button>
 
-        <h2>Editor da Trilha: {course.title}</h2>
+        <h2>Editor do Curso: {course.title}</h2>
 
         <div className="admin-form mt-4">
           <h3>Adicionar Novo Módulo</h3>
