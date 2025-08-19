@@ -128,8 +128,8 @@ const createTables = async () => {
       id SERIAL PRIMARY KEY,
       module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
       title TEXT NOT NULL,
-      video_url TEXT, -- Nova coluna para vídeo
-      text_content TEXT, -- Nova coluna para texto
+      video_url TEXT,
+      text_content TEXT,
       lesson_order INTEGER NOT NULL
     );`;
 

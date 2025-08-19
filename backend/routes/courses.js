@@ -1,17 +1,13 @@
 const express = require("express");
 const router = express.Router();
-// Importa ambos os middlewares de autenticação
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
-  // Inicializa os middlewares com a conexão do banco
   const checkAdmin = isAdmin(pool);
   const checkLoggedIn = isLoggedIn(pool);
 
   // --- ROTAS PÚBLICAS (PARA ALUNOS) ---
-  // Esta rota estática vem ANTES da rota dinâmica '/:id' para evitar conflitos.
 
-  // ROTA PARA LISTAR CURSOS ATIVOS PARA TODOS OS USUÁRIOS
   router.get("/public", checkLoggedIn, async (req, res) => {
     try {
       const result = await pool.query(
@@ -24,7 +20,50 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA PARA MARCAR UMA AULA COMO CONCLUÍDA
+  router.get("/public/:id", checkLoggedIn, async (req, res) => {
+    const { id: courseId } = req.params;
+    const { id: userId } = req.user;
+    try {
+      const courseResult = await pool.query(
+        "SELECT * FROM courses WHERE id = $1 AND is_active = TRUE",
+        [courseId]
+      );
+      if (courseResult.rowCount === 0) {
+        return res
+          .status(404)
+          .json({ error: "Curso não encontrado ou inativo." });
+      }
+      const course = courseResult.rows[0];
+
+      const modulesResult = await pool.query(
+        "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
+        [courseId]
+      );
+      const modules = modulesResult.rows;
+
+      for (const module of modules) {
+        const lessonsResult = await pool.query(
+          "SELECT id, module_id, title, video_url, text_content, lesson_order FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
+          [module.id]
+        );
+        module.lessons = lessonsResult.rows;
+      }
+      course.modules = modules;
+
+      const progressResult = await pool.query(
+        "SELECT lesson_id FROM progress WHERE user_id = $1",
+        [userId]
+      );
+      const completedLessons = progressResult.rows.map((row) => row.lesson_id);
+      course.completedLessons = completedLessons;
+
+      res.json(course);
+    } catch (err) {
+      console.error("Erro ao buscar detalhes do curso para o aluno:", err);
+      res.status(500).json({ error: "Erro ao buscar detalhes do curso." });
+    }
+  });
+
   router.post(
     "/lessons/:lessonId/complete",
     checkLoggedIn,
@@ -65,7 +104,6 @@ module.exports = function (pool, cloudinary, upload) {
 
   // --- ROTAS DE ADMINISTRAÇÃO ---
 
-  // ROTA PARA LISTAR TODOS OS CURSOS (admin)
   router.get("/", checkAdmin, async (req, res) => {
     try {
       const result = await pool.query(
@@ -78,7 +116,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA PARA BUSCAR UM ÚNICO CURSO COM SEUS MÓDULOS E AULAS (admin)
   router.get("/:id", checkAdmin, async (req, res) => {
     const { id } = req.params;
     try {
@@ -90,7 +127,6 @@ module.exports = function (pool, cloudinary, upload) {
         return res.status(404).json({ error: "Curso não encontrado." });
       }
       const course = courseResult.rows[0];
-
       const modulesResult = await pool.query(
         "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
         [id]
@@ -99,12 +135,11 @@ module.exports = function (pool, cloudinary, upload) {
 
       for (const module of modules) {
         const lessonsResult = await pool.query(
-          "SELECT * FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
+          "SELECT id, module_id, title, video_url, text_content, lesson_order FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
           [module.id]
         );
         module.lessons = lessonsResult.rows;
       }
-
       course.modules = modules;
       res.json(course);
     } catch (err) {
@@ -113,7 +148,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA PARA CRIAR UM NOVO CURSO (admin)
   router.post("/", checkAdmin, async (req, res) => {
     const { title, description, thumbnail_url } = req.body;
     if (!title) {
@@ -131,7 +165,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA PARA ATUALIZAR UM CURSO (admin)
   router.put("/:id", checkAdmin, async (req, res) => {
     const { id } = req.params;
     const { title, description, thumbnail_url, is_active } = req.body;
@@ -150,7 +183,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA PARA DELETAR UM CURSO (admin)
   router.delete("/:id", checkAdmin, async (req, res) => {
     const { id } = req.params;
     try {
@@ -167,9 +199,57 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // --- ROTAS PARA MÓDULOS ---
+  router.post(
+    "/:courseId/thumbnail",
+    checkAdmin,
+    upload.single("thumbnail"),
+    async (req, res) => {
+      const { courseId } = req.params;
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ error: "Nenhum arquivo de imagem enviado." });
+      }
+      try {
+        const oldCourseResult = await pool.query(
+          "SELECT thumbnail_url FROM courses WHERE id = $1",
+          [courseId]
+        );
+        const oldThumbnailUrl = oldCourseResult.rows[0]?.thumbnail_url;
 
-  // ROTA PARA CRIAR UM NOVO MÓDULO (admin)
+        if (oldThumbnailUrl) {
+          const publicIdMatch = oldThumbnailUrl.match(/\/v\d+\/(.+)\.\w+$/);
+          if (publicIdMatch) {
+            const publicId = publicIdMatch[1];
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: "image",
+            });
+          }
+        }
+
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: "image" }, (error, result) => {
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+
+        const newThumbnailUrl = uploadResult.secure_url;
+        const result = await pool.query(
+          "UPDATE courses SET thumbnail_url = $1 WHERE id = $2 RETURNING *",
+          [newThumbnailUrl, courseId]
+        );
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro no upload da thumbnail:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
+      }
+    }
+  );
+
+  // --- Módulos ---
   router.post("/:courseId/modules", checkAdmin, async (req, res) => {
     const { courseId } = req.params;
     const { title, module_order } = req.body;
@@ -185,7 +265,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA PARA DELETAR UM MÓDULO (admin)
   router.delete("/modules/:moduleId", checkAdmin, async (req, res) => {
     const { moduleId } = req.params;
     try {
@@ -198,7 +277,7 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   router.put("/:courseId/modules/order", checkAdmin, async (req, res) => {
-    const { orderedModuleIds } = req.body; // Espera um array de IDs na nova ordem
+    const { orderedModuleIds } = req.body;
     try {
       const client = await pool.connect();
       await client.query("BEGIN");
@@ -219,16 +298,14 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // --- ROTAS PARA AULAS ---
-
-  // ROTA PARA CRIAR UMA NOVA AULA (admin)
+  // --- Aulas ---
   router.post("/modules/:moduleId/lessons", checkAdmin, async (req, res) => {
     const { moduleId } = req.params;
-    const { title, content_type, content_data, lesson_order } = req.body;
+    const { title, video_url, text_content, lesson_order } = req.body;
     try {
       const result = await pool.query(
-        "INSERT INTO lessons (module_id, title, content_type, content_data, lesson_order) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        [moduleId, title, content_type, content_data, lesson_order]
+        "INSERT INTO lessons (module_id, title, video_url, text_content, lesson_order) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        [moduleId, title, video_url, text_content, lesson_order]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -237,14 +314,13 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA ADICIONADA: Editar uma aula
   router.put("/lessons/:lessonId", checkAdmin, async (req, res) => {
     const { lessonId } = req.params;
-    const { title, content_type, content_data } = req.body;
+    const { title, video_url, text_content } = req.body;
     try {
       const result = await pool.query(
-        "UPDATE lessons SET title = $1, content_type = $2, content_data = $3 WHERE id = $4 RETURNING *",
-        [title, content_type, content_data, lessonId]
+        "UPDATE lessons SET title = $1, video_url = $2, text_content = $3 WHERE id = $4 RETURNING *",
+        [title, video_url, text_content, lessonId]
       );
       if (result.rowCount === 0) {
         return res.status(404).json({ error: "Aula não encontrada." });
@@ -256,7 +332,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA PARA DELETAR UMA AULA (admin)
   router.delete("/lessons/:lessonId", checkAdmin, async (req, res) => {
     const { lessonId } = req.params;
     try {
@@ -268,121 +343,11 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA PARA BUSCAR DETALHES DE UM CURSO E PROGRESSO DO ALUNO
-  router.get("/public/:id", checkLoggedIn, async (req, res) => {
-    const { id: courseId } = req.params;
-    const { id: userId } = req.user;
-
-    try {
-      // Busca o curso principal
-      const courseResult = await pool.query(
-        "SELECT * FROM courses WHERE id = $1 AND is_active = TRUE",
-        [courseId]
-      );
-      if (courseResult.rowCount === 0) {
-        return res
-          .status(404)
-          .json({ error: "Curso não encontrado ou inativo." });
-      }
-      const course = courseResult.rows[0];
-
-      // Busca os módulos e aulas (como na rota de admin)
-      const modulesResult = await pool.query(
-        "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
-        [courseId]
-      );
-      const modules = modulesResult.rows;
-
-      for (const module of modules) {
-        const lessonsResult = await pool.query(
-          "SELECT * FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
-          [module.id]
-        );
-        module.lessons = lessonsResult.rows;
-      }
-      course.modules = modules;
-
-      // Busca o progresso do usuário para este curso
-      const progressResult = await pool.query(
-        "SELECT lesson_id FROM progress WHERE user_id = $1",
-        [userId]
-      );
-      const completedLessons = progressResult.rows.map((row) => row.lesson_id);
-
-      // Adiciona a informação de progresso ao objeto do curso
-      course.completedLessons = completedLessons;
-
-      res.json(course);
-    } catch (err) {
-      console.error("Erro ao buscar detalhes do curso para o aluno:", err);
-      res.status(500).json({ error: "Erro ao buscar detalhes do curso." });
-    }
-  });
-
-  // ROTA ADICIONADA: Upload da imagem de capa (thumbnail) para um curso
-  router.post(
-    "/:courseId/thumbnail",
-    checkAdmin,
-    upload.single("thumbnail"),
-    async (req, res) => {
-      const { courseId } = req.params;
-      if (!req.file) {
-        return res
-          .status(400)
-          .json({ error: "Nenhum arquivo de imagem enviado." });
-      }
-
-      try {
-        // Primeiro, busca a URL da thumbnail antiga para poder excluí-la
-        const oldCourseResult = await pool.query(
-          "SELECT thumbnail_url FROM courses WHERE id = $1",
-          [courseId]
-        );
-        const oldThumbnailUrl = oldCourseResult.rows[0]?.thumbnail_url;
-
-        // Se uma thumbnail antiga existir, exclui do Cloudinary
-        if (oldThumbnailUrl) {
-          const publicIdMatch = oldThumbnailUrl.match(/\/v\d+\/(.+)\.\w+$/);
-          if (publicIdMatch) {
-            const publicId = publicIdMatch[1];
-            await cloudinary.uploader.destroy(publicId, {
-              resource_type: "image",
-            });
-          }
-        }
-
-        // Faz o upload da nova imagem para o Cloudinary
-        const uploadResult = await new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ resource_type: "image" }, (error, result) => {
-              if (error) reject(error);
-              resolve(result);
-            })
-            .end(req.file.buffer);
-        });
-
-        const newThumbnailUrl = uploadResult.secure_url;
-
-        // Atualiza o curso no banco de dados com a nova URL
-        const result = await pool.query(
-          "UPDATE courses SET thumbnail_url = $1 WHERE id = $2 RETURNING *",
-          [newThumbnailUrl, courseId]
-        );
-
-        res.json(result.rows[0]);
-      } catch (err) {
-        console.error("Erro no upload da thumbnail:", err);
-        res.status(500).json({ error: "Erro no servidor durante o upload." });
-      }
-    }
-  );
-
-  // ROTA ADICIONADA: Reordenar aulas
   router.put(
     "/modules/:moduleId/lessons/order",
     checkAdmin,
     async (req, res) => {
-      const { orderedLessonIds } = req.body; // Espera um array de IDs na nova ordem
+      const { orderedLessonIds } = req.body;
       try {
         const client = await pool.connect();
         await client.query("BEGIN");
