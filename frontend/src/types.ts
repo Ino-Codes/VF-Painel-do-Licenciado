@@ -1,15 +1,16 @@
-// Este arquivo centraliza as definições de tipo para o Módulo de Estudos
-
 export interface Lesson {
   id: number;
   title: string;
-  content_type: "video" | "text";
-  content_data: string;
+  video_url?: string;
+  text_content?: string;
+  module_id?: number;
+  lesson_order?: number;
 }
 
 export interface Module {
   id: number;
   title: string;
+  module_order: number;
   lessons: Lesson[];
 }
 

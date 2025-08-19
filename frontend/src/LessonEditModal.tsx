@@ -3,9 +3,10 @@ import toast from "react-hot-toast";
 import { Lesson } from "./types.ts";
 
 interface LessonEditModalProps {
-  lesson: Lesson | null;
+  lesson: Partial<Lesson>;
   onClose: () => void;
-  onSave: (updatedLesson: Lesson) => Promise<void>;
+  onSave: (lessonData: Omit<Lesson, "id" | "lesson_order">) => Promise<void>;
+  moduleId?: number;
 }
 
 const LessonEditModal: React.FC<LessonEditModalProps> = ({
@@ -15,16 +16,16 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     title: "",
-    content_type: "video" as "video" | "text",
-    content_data: "",
+    video_url: "",
+    text_content: "",
   });
 
   useEffect(() => {
     if (lesson) {
       setFormData({
-        title: lesson.title,
-        content_type: lesson.content_type || "video",
-        content_data: lesson.content_data || "",
+        title: lesson.title || "",
+        video_url: lesson.video_url || "",
+        text_content: lesson.text_content || "",
       });
     }
   }, [lesson]);
@@ -32,9 +33,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
   if (!lesson) return null;
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -46,14 +45,13 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
       toast.error("O título da aula é obrigatório.");
       return;
     }
-    // Envia o objeto 'lesson' completo com os dados do formulário atualizados
     await onSave({ ...lesson, ...formData });
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Editar Aula: {lesson.title}</h2>
+        <h2>{lesson.id ? "Editar Aula" : "Adicionar Nova Aula"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <input
@@ -66,34 +64,28 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
               required
             />
           </div>
-
           <div className="form-row">
-            <label>Tipo de Conteúdo:</label>
-            <select
-              name="content_type"
-              value={formData.content_type}
-              onChange={handleChange}
-              className="form-select"
-            >
-              <option value="video">Vídeo (URL do YouTube)</option>
-              <option value="text">Texto (Simples)</option>
-            </select>
-          </div>
-
-          <div className="form-row">
-            <label>Conteúdo (URL ou Texto):</label>
-          </div>
-          <div className="form-row">
-            <textarea
-              name="content_data"
+            <label>URL do Vídeo (Opcional):</label>
+            <input
+              type="text"
+              name="video_url"
               placeholder="https://www.youtube.com/embed/..."
-              value={formData.content_data}
+              value={formData.video_url}
               onChange={handleChange}
               className="form-input"
-              rows={5}
             />
           </div>
-
+          <div className="form-row">
+            <label>Conteúdo em Texto (Opcional):</label>
+            <textarea
+              name="text_content"
+              placeholder="Escreva o conteúdo da aula aqui..."
+              value={formData.text_content}
+              onChange={handleChange}
+              className="form-input"
+              rows={8}
+            />
+          </div>
           <div className="modal-actions">
             <button
               type="button"
@@ -103,7 +95,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
               Cancelar
             </button>
             <button type="submit" className="form-button">
-              Salvar Alterações
+              Salvar
             </button>
           </div>
         </form>

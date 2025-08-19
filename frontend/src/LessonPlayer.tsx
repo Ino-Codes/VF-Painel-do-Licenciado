@@ -5,8 +5,9 @@ import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
-import { Course, Module, Lesson } from "./types"; // Importando do nosso arquivo central
+import { Course, Module, Lesson } from "./types";
 
+// Helper para converter URL do YouTube
 const getYoutubeEmbedUrl = (url: string): string => {
   if (!url) return "";
   let videoId = "";
@@ -16,19 +17,15 @@ const getYoutubeEmbedUrl = (url: string): string => {
       videoId = urlObj.pathname.slice(1);
     } else if (urlObj.hostname.includes("youtube.com")) {
       videoId = urlObj.searchParams.get("v") || "";
+    } else if (urlObj.hostname.includes("https://www.youtube.com/embed/$")) {
+      return url; // Já está no formato embed
     }
   } catch (e) {
-    // Se a URL for inválida (ex: apenas o ID), assume que o valor é o ID
-    if (!url.includes("http")) {
-      videoId = url;
-    }
+    if (!url.includes("http")) videoId = url;
   }
 
-  if (videoId) {
-    return `https://www.youtube.com/embed/${videoId}`;
-  }
-
-  return url; // Retorna a URL original se não conseguir processar
+  if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+  return url;
 };
 
 const LessonPlayer: React.FC = () => {
@@ -36,7 +33,6 @@ const LessonPlayer: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
-  // Extendemos a interface Course para incluir o progresso
   interface CourseWithProgress extends Course {
     completedLessons: number[];
   }
@@ -139,7 +135,7 @@ const LessonPlayer: React.FC = () => {
             className="form-button-cancel mb-4"
             style={{ textDecoration: "none" }}
           >
-            &larr; Voltar
+            ← Voltar
           </Link>
           <h2>{course.title}</h2>
         </div>
@@ -148,24 +144,28 @@ const LessonPlayer: React.FC = () => {
             {activeLesson ? (
               <>
                 <h3>{activeLesson.title}</h3>
-                {activeLesson.content_type === "video" &&
-                  activeLesson.content_data && (
-                    <div className="lesson-content-video">
-                      <iframe
-                        src={getYoutubeEmbedUrl(activeLesson.content_data)}
-                        title={activeLesson.title}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
-                    </div>
-                  )}
-                {activeLesson.content_type === "text" && (
+
+                {activeLesson.video_url && (
+                  <div className="lesson-content-video">
+                    <iframe
+                      src={getYoutubeEmbedUrl(activeLesson.video_url)}
+                      title={activeLesson.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                )}
+
+                {activeLesson.text_content && (
                   <div
                     className="lesson-content-text"
-                    style={{ whiteSpace: "pre-wrap" }}
+                    style={{
+                      whiteSpace: "pre-wrap",
+                      marginTop: activeLesson.video_url ? "25px" : "0",
+                    }}
                   >
-                    {activeLesson.content_data}
+                    {activeLesson.text_content}
                   </div>
                 )}
 
