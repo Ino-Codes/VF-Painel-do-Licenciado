@@ -28,19 +28,68 @@ const AdminCourseEditor: React.FC = () => {
   const [lessonToEdit, setLessonToEdit] = useState<Lesson | null>(null);
 
   const getAuthHeaders = useCallback(() => {
-    /* ... (código existente) ... */
+    if (!user) return {};
+    return { headers: { "x-user-id": user.id } };
   }, [user]);
+
   const fetchCourseDetails = useCallback(async () => {
-    /* ... (código existente) ... */
+    if (!user || !courseId) return;
+    try {
+      const res = await api.get(
+        `/api/admin/courses/${courseId}`,
+        getAuthHeaders()
+      );
+      setCourse(res.data);
+    } catch (err) {
+      toast.error("Falha ao carregar detalhes da trilha.");
+      navigate("/admin/courses");
+    }
   }, [user, courseId, getAuthHeaders, navigate]);
+
   useEffect(() => {
     if (user) fetchCourseDetails();
   }, [user, fetchCourseDetails]);
   const handleAddModule = async () => {
-    /* ... (código existente) ... */
+    if (!newModuleTitle.trim() || !course) return;
+    try {
+      const newOrder = course.modules.length + 1;
+      await api.post(
+        `/api/admin/courses/${course.id}/modules`,
+        {
+          title: newModuleTitle,
+          module_order: newOrder,
+        },
+        getAuthHeaders()
+      );
+      toast.success("Módulo adicionado!");
+      setNewModuleTitle("");
+      fetchCourseDetails();
+    } catch (err) {
+      toast.error("Erro ao adicionar módulo.");
+    }
   };
   const handleAddLesson = async (moduleId: number) => {
-    /* ... (código existente) ... */
+    const lessonTitle = newLessonTitles[moduleId];
+    const module = course?.modules.find((m) => m.id === moduleId);
+    if (!lessonTitle || !lessonTitle.trim() || !module) return;
+    try {
+      const newOrder = module.lessons.length + 1;
+      await api.post(
+        `/api/admin/courses/modules/${moduleId}/lessons`,
+        {
+          title: lessonTitle,
+          content_type: "video",
+          content_data: "",
+          lesson_order: newOrder,
+        },
+        getAuthHeaders()
+      );
+      toast.success("Aula adicionada!");
+      setNewLessonTitles({ ...newLessonTitles, [moduleId]: "" });
+      fetchCourseDetails();
+    } catch (err) {
+      toast.error("Erro ao adicionar aula.");
+    }
   };
 
   // --- NOVAS FUNÇÕES ---
