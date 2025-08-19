@@ -7,6 +7,30 @@ import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import { Course, Module, Lesson } from "./types"; // Importando do nosso arquivo central
 
+const getYoutubeEmbedUrl = (url: string): string => {
+  if (!url) return "";
+  let videoId = "";
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.hostname === "youtu.be") {
+      videoId = urlObj.pathname.slice(1);
+    } else if (urlObj.hostname.includes("youtube.com")) {
+      videoId = urlObj.searchParams.get("v") || "";
+    }
+  } catch (e) {
+    // Se a URL for inválida (ex: apenas o ID), assume que o valor é o ID
+    if (!url.includes("http")) {
+      videoId = url;
+    }
+  }
+
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+
+  return url; // Retorna a URL original se não conseguir processar
+};
+
 const LessonPlayer: React.FC = () => {
   const { user, loading } = useAuth();
   const { courseId } = useParams<{ courseId: string }>();
@@ -128,7 +152,7 @@ const LessonPlayer: React.FC = () => {
                   activeLesson.content_data && (
                     <div className="lesson-content-video">
                       <iframe
-                        src={activeLesson.content_data}
+                        src={getYoutubeEmbedUrl(activeLesson.content_data)}
                         title={activeLesson.title}
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
