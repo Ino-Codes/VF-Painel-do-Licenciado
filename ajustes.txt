@@ -1,3 +1,0 @@
-na tela de visualização da aula dentro da trilha, preciso adicionar botão para desmarcar a conclusão da aula (Marcar como Não Concluída)
-na tela de visualização da aula dentro da trilha, preciso que exista a possbilidade de visualizar um vídeo ou conteúdo escrito como parte da aula
-na tela de administração das aulas e trilhas, preciso que hajam botões para: excluir Módulo (e todo o conteúdo dentro), editar Aula, excluir Aula, e alterar a ordem dos Módulos e aulas
