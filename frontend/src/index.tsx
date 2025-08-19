@@ -55,6 +55,11 @@ const AppRouter: React.FC = () => {
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<LessonPlayer />} />
+          <Route path="/admin/courses" element={<AdminCourses />} />
+          <Route
+            path="/admin/courses/:courseId"
+            element={<AdminCourseEditor />}
+          />
           <Route path="/admin/users" element={<AdminUsers />} />
         </Routes>
       </Router>
