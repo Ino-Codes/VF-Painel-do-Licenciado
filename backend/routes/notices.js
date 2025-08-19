@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool) {
-  // GET /api/notices (Listar avisos)
   router.get("/", async (req, res) => {
     try {
       const result = await pool.query(
@@ -15,7 +14,6 @@ module.exports = function (pool) {
     }
   });
 
-  // POST /api/notices/admin (Criar aviso)
   router.post("/admin", async (req, res) => {
     const { message } = req.body;
     try {
@@ -27,7 +25,6 @@ module.exports = function (pool) {
     }
   });
 
-  // PUT /api/notices/admin/:id (Editar aviso)
   router.put("/admin/:id", async (req, res) => {
     const { id } = req.params;
     const { message } = req.body;
@@ -45,7 +42,6 @@ module.exports = function (pool) {
     }
   });
 
-  // DELETE /api/notices/admin/:id (Excluir aviso)
   router.delete("/admin/:id", async (req, res) => {
     const { id } = req.params;
     try {

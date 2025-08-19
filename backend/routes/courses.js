@@ -6,8 +6,6 @@ module.exports = function (pool, cloudinary, upload) {
   const checkAdmin = isAdmin(pool);
   const checkLoggedIn = isLoggedIn(pool);
 
-  // --- ROTAS PÚBLICAS (PARA ALUNOS) ---
-
   router.get("/public", checkLoggedIn, async (req, res) => {
     try {
       const result = await pool.query(

@@ -5,7 +5,6 @@ const { Readable } = require("stream");
 const router = express.Router();
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
-  // GET /api/users/admin (Listar todos os usuários)
   router.get("/admin", async (req, res) => {
     const { search, page = 1, limit = 10 } = req.query;
     try {
@@ -37,7 +36,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // POST /api/users/admin (Criar usuário)
   router.post("/admin", async (req, res) => {
     const { nome, email, password, role } = req.body;
     try {
@@ -60,7 +58,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // PUT /api/users/admin/:id (Editar usuário como admin)
   router.put("/admin/:id", async (req, res) => {
     const { id } = req.params;
     const { nome, role } = req.body;
@@ -85,7 +82,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // DELETE /api/users/admin/:id (Excluir usuário como admin)
   router.delete("/admin/:id", async (req, res) => {
     app.delete("/api/admin/users/:id", async (req, res) => {
       const { id } = req.params;
@@ -138,7 +134,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     });
   });
 
-  // POST /api/users/admin/bulk-upload (Upload em massa)
   router.post("/admin/bulk-upload", upload.single("file"), async (req, res) => {
     app.post(
       "/api/admin/users/bulk-upload",
@@ -211,7 +206,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   // --- Rotas de Perfil do Usuário Logado ---
 
-  // POST /api/users/:id/avatar (Upload de avatar)
   router.post("/:id/avatar", upload.single("avatar"), async (req, res) => {
     app.post(
       "/api/users/:id/avatar",
@@ -262,7 +256,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     );
   });
 
-  // PUT /api/users/:id/profile (Atualizar perfil)
   router.put("/:id/profile", async (req, res) => {
     app.put("/api/users/:id/profile", async (req, res) => {
       const { id } = req.params;
@@ -293,7 +286,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     });
   });
 
-  // PUT /api/users/:id/change-password (Mudar senha)
   router.put("/:id/change-password", async (req, res) => {
     app.put("/api/users/:id/change-password", async (req, res) => {
       const { id } = req.params;
@@ -331,7 +323,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     });
   });
 
-  // DELETE /api/users/:id/avatar (Remover avatar)
   router.delete("/:id/avatar", async (req, res) => {
     app.delete("/api/users/:id/avatar", async (req, res) => {
       const { id } = req.params;

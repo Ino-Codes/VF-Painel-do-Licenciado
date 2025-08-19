@@ -4,7 +4,6 @@ const crypto = require("crypto");
 const router = express.Router();
 
 module.exports = function (pool, sgMail, logActivity) {
-  // POST /api/auth/login
   router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -39,7 +38,6 @@ module.exports = function (pool, sgMail, logActivity) {
     }
   });
 
-  // POST /api/auth/solicitar-redefinicao
   router.post("/solicitar-redefinicao", async (req, res) => {
     const { email } = req.body;
     try {
@@ -87,7 +85,6 @@ module.exports = function (pool, sgMail, logActivity) {
     }
   });
 
-  // POST /api/auth/redefinir-senha
   router.post("/redefinir-senha", async (req, res) => {
     const { token, password } = req.body;
     if (!token || !password) {
@@ -107,12 +104,10 @@ module.exports = function (pool, sgMail, logActivity) {
       const user = userResult.rows[0];
 
       if (!user) {
-        return res
-          .status(400)
-          .json({
-            error:
-              "Token inválido ou expirado. Por favor, solicite a redefinição novamente.",
-          });
+        return res.status(400).json({
+          error:
+            "Token inválido ou expirado. Por favor, solicite a redefinição novamente.",
+        });
       }
 
       const newPasswordHash = await bcrypt.hash(password, 10);

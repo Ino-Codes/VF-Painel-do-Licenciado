@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool) {
-  // GET /api/admin/logs
   router.get("/", async (req, res) => {
     const { page = 1, limit = 20, search } = req.query;
     try {

@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool) {
-  // GET /api/videos
   router.get("/", async (req, res) => {
     const { role } = req.query;
     try {
@@ -20,7 +19,6 @@ module.exports = function (pool) {
     }
   });
 
-  // POST /api/videos
   router.post("/", async (req, res) => {
     const { title, description, youtube_url, visibility } = req.body;
     try {
@@ -35,7 +33,6 @@ module.exports = function (pool) {
     }
   });
 
-  // PUT /api/videos/:id
   router.put("/:id", async (req, res) => {
     const { id } = req.params;
     const { title, description, youtube_url, visibility } = req.body;
@@ -53,7 +50,6 @@ module.exports = function (pool) {
     }
   });
 
-  // DELETE /api/videos/:id
   router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     try {

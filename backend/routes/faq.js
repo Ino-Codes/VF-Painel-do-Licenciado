@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool, cloudinary, upload) {
-  // GET /api/faq
   router.get("/", async (req, res) => {
     const { category, search, page = 1, limit = 15 } = req.query;
     try {
@@ -45,7 +44,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // GET /api/faq/categories
   router.get("/categories", async (req, res) => {
     try {
       const result = await pool.query(
@@ -58,7 +56,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // POST /api/faq/admin
   router.post("/admin", upload.single("document"), async (req, res) => {
     const { category, question, answer } = req.body;
     let document_url = null;
@@ -92,7 +89,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // DELETE /api/faq/admin/:id
   router.delete("/admin/:id", async (req, res) => {
     const { id } = req.params;
     try {
