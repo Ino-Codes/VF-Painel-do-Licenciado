@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Lesson } from "./AdminCourseEditor.tsx"; // Reutilizaremos a interface
+import { Lesson } from "./types.ts";
 
 interface LessonEditModalProps {
   lesson: Lesson | null;

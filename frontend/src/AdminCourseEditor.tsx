@@ -7,24 +7,7 @@ import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import LessonEditModal from "./LessonEditModal.tsx"; // Importa o novo modal
-
-// Interfaces (exportadas para serem usadas pelo Modal)
-export interface Lesson {
-  id: number;
-  title: string;
-  content_type: "video" | "text";
-  content_data: string;
-}
-export interface Module {
-  id: number;
-  title: string;
-  lessons: Lesson[];
-}
-export interface Course {
-  id: number;
-  title: string;
-  modules: Module[];
-}
+import { Course, Module, Lesson } from "./types.ts";
 
 const AdminCourseEditor: React.FC = () => {
   const { user, loading } = useAuth();
