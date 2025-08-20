@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const path = require("path");
 
 module.exports = function (pool, cloudinary, upload) {
   router.get("/", async (req, res) => {
@@ -53,6 +54,55 @@ module.exports = function (pool, cloudinary, upload) {
     } catch (err) {
       console.error("Erro ao buscar categorias do FAQ:", err);
       res.status(500).json({ error: "Erro ao buscar categorias." });
+    }
+  });
+
+  router.get("/download/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const fileResult = await pool.query(
+        "SELECT document_url, document_originalname FROM faq WHERE id = $1",
+        [id]
+      );
+
+      if (fileResult.rowCount === 0 || !fileResult.rows[0].document_url) {
+        return res.status(404).send("Anexo não encontrado.");
+      }
+
+      const { document_url: fileUrl, document_originalname: originalname } =
+        fileResult.rows[0];
+
+      const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
+      const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
+      const publicId = publicIdMatch
+        ? decodeURIComponent(publicIdMatch[1])
+        : null;
+
+      if (!publicId) {
+        return res
+          .status(500)
+          .send("Não foi possível analisar a URL do anexo.");
+      }
+
+      const fileExtension = path.extname(fileUrl).toLowerCase();
+
+      const options = {
+        resource_type: resourceType,
+        sign_url: true,
+        expires_at: Math.floor(Date.now() / 1000) + 300, // Link válido por 5 minutos
+      };
+
+      if (fileExtension === ".pdf") {
+        options.fetch_format = "pdf";
+      } else {
+        options.flags = [`attachment:${originalname}`];
+      }
+
+      const signedUrl = cloudinary.url(publicId, options);
+      res.redirect(signedUrl);
+    } catch (err) {
+      console.error("Erro ao gerar link de download do anexo:", err);
+      res.status(500).send("Erro interno ao processar o download.");
     }
   });
 
