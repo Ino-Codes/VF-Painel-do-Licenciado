@@ -27,7 +27,6 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
     if (documentFile) {
       formData.append("document", documentFile);
     }
-    ////aaaa
 
     try {
       await api.post("/api/faq/admin", formData, {
