@@ -28,7 +28,6 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
       formData.append("document", documentFile);
     }
 
-    // Corrigida a URL aqui
     try {
       await api.post("/api/faq/admin", formData, {
         headers: { "Content-Type": "multipart/form-data" },
