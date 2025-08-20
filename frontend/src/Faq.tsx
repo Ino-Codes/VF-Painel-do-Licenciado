@@ -82,7 +82,7 @@ const Faq: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     try {
-      await api.delete(`/api/admin/faq/${itemToDelete}`);
+      await api.delete(`/api/faq/admin/${itemToDelete}`);
       toast.success("Item excluído com sucesso!");
       fetchFaqs();
       fetchCategories();
