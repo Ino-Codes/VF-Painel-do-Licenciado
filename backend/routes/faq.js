@@ -57,6 +57,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
+  // --- ROTA DE DOWNLOAD CORRIGIDA ---
   router.get("/download/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -86,16 +87,21 @@ module.exports = function (pool, cloudinary, upload) {
 
       const fileExtension = path.extname(fileUrl).toLowerCase();
 
+      // Objeto base de opções
       const options = {
         resource_type: resourceType,
         sign_url: true,
         expires_at: Math.floor(Date.now() / 1000) + 300, // Link válido por 5 minutos
       };
 
+      // Lógica condicional corrigida
       if (fileExtension === ".pdf") {
+        // Para PDFs: força a exibição no navegador (inline)
+        options.flags = ["inline"];
         options.fetch_format = "pdf";
       } else {
-        options.flags = [`attachment:${originalname}`];
+        // Para todos os outros arquivos: força o download com o nome original
+        options.attachment = originalname;
       }
 
       const signedUrl = cloudinary.url(publicId, options);
@@ -153,24 +159,13 @@ module.exports = function (pool, cloudinary, upload) {
       const docUrl = faqResult.rows[0].document_url;
       if (docUrl) {
         const resourceType = docUrl.includes("/image/") ? "image" : "raw";
-        const publicIdMatch = docUrl.match(/\/v\d+\/(.+)\.\w+$/);
+        const publicIdMatch = docUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
         const publicId = publicIdMatch ? publicIdMatch[1] : null;
 
         if (publicId) {
-          const destructionResult = await cloudinary.uploader.destroy(
-            publicId,
-            {
-              resource_type: resourceType,
-            }
-          );
-          console.log(
-            `Tentativa de exclusão de anexo de FAQ no Cloudinary. Resultado:`,
-            destructionResult.result
-          );
-        } else {
-          console.warn(
-            `Não foi possível extrair o public_id da URL do anexo de FAQ: ${docUrl}`
-          );
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: resourceType,
+          });
         }
       }
 
