@@ -29,7 +29,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
     }
 
     try {
-      await api.post("/api/admin/faq", formData, {
+      await api.post("/api/faq/admin", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       toast.success("FAQ adicionado com sucesso!");
