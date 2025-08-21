@@ -75,14 +75,10 @@ module.exports = function (pool, cloudinary, upload) {
 
       const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
 
-      // Lógica de extração de public_id robusta
-      const uploadIndex = fileUrl.indexOf("/upload/");
-      const urlPart = fileUrl.substring(uploadIndex + "/upload/".length);
-      const publicIdWithVersion = urlPart.substring(urlPart.indexOf("/") + 1);
-      const publicId = publicIdWithVersion.substring(
-        0,
-        publicIdWithVersion.lastIndexOf(".")
-      );
+      const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
+      const publicId = publicIdMatch
+        ? decodeURIComponent(publicIdMatch[1])
+        : null;
 
       if (!publicId) {
         return res
@@ -159,15 +155,8 @@ module.exports = function (pool, cloudinary, upload) {
       const docUrl = faqResult.rows[0].document_url;
       if (docUrl) {
         const resourceType = docUrl.includes("/image/") ? "image" : "raw";
-        const urlSegments = docUrl.split("/");
-        const uploadIndex = urlSegments.indexOf("upload");
-        const publicIdWithExtension = urlSegments
-          .slice(uploadIndex + 2)
-          .join("/");
-        const publicId = publicIdWithExtension.substring(
-          0,
-          publicIdWithExtension.lastIndexOf(".")
-        );
+        const publicIdMatch = docUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
+        const publicId = publicIdMatch ? publicIdMatch[1] : null;
 
         if (publicId) {
           await cloudinary.uploader.destroy(publicId, {

@@ -171,17 +171,14 @@ const Faq: React.FC = () => {
                 <div className="faq-answer">
                   <p>{faq.answer}</p>
                   {faq.document_url && (
-                    <span className="faq-document-label">
-                      Confira o anexo: &nbsp;
-                      <a
-                        href={`${baseURL}/api/faq/download/${faq.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="faq-document-link"
-                      >
-                        {faq.document_originalname}
-                      </a>
-                    </span>
+                    <a
+                      href={`${baseURL}/api/faq/download/${faq.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="faq-document-link"
+                    >
+                      Baixar Documento: {faq.document_originalname}
+                    </a>
                   )}
                   {user.role === "admin" && (
                     <div className="faq-actions">
