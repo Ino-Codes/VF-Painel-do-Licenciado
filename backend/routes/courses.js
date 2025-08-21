@@ -1,11 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
+const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
+const fetch = require("node-fetch");
 
 module.exports = function (pool, cloudinary, upload) {
   const checkAdmin = isAdmin(pool);
   const checkLoggedIn = isLoggedIn(pool);
 
+  // --- ROTAS PÚBLICAS ---
   router.get("/public", checkLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
     try {
@@ -100,6 +103,74 @@ module.exports = function (pool, cloudinary, upload) {
     }
   );
 
+  router.get("/:courseId/certificate", checkLoggedIn, async (req, res) => {
+    const { courseId } = req.params;
+    const { id: userId, nome: userName } = req.user;
+
+    try {
+      const progressQuery = `SELECT COUNT(l.id)::int AS total, COUNT(p.id)::int AS completed FROM courses c JOIN modules m ON m.course_id = c.id JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 WHERE c.id = $2 GROUP BY c.id`;
+      const progressResult = await pool.query(progressQuery, [
+        userId,
+        courseId,
+      ]);
+
+      if (
+        progressResult.rowCount === 0 ||
+        progressResult.rows[0].completed < progressResult.rows[0].total
+      ) {
+        return res.status(403).send("Curso ainda não concluído.");
+      }
+
+      const courseResult = await pool.query(
+        "SELECT title, certificate_template_url FROM courses WHERE id = $1",
+        [courseId]
+      );
+      const course = courseResult.rows[0];
+
+      if (!course.certificate_template_url) {
+        return res
+          .status(404)
+          .send("Modelo de certificado não encontrado para este curso.");
+      }
+
+      const templateBytes = await fetch(course.certificate_template_url).then(
+        (res) => res.arrayBuffer()
+      );
+      const pdfDoc = await PDFDocument.create();
+      const templateImage = await pdfDoc.embedPng(templateBytes);
+
+      const page = pdfDoc.addPage([templateImage.width, templateImage.height]);
+      page.drawImage(templateImage, {
+        x: 0,
+        y: 0,
+        width: templateImage.width,
+        height: templateImage.height,
+      });
+
+      const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+      page.drawText(userName, {
+        x: page.getWidth() / 2 - font.widthOfTextAtSize(userName, 30) / 2,
+        y: page.getHeight() / 2,
+        font,
+        size: 30,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+
+      const pdfBytes = await pdfDoc.save();
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="certificado-${course.title}.pdf"`
+      );
+      res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+      console.error("Erro ao gerar certificado:", err);
+      res.status(500).send("Erro ao gerar certificado.");
+    }
+  });
+
   router.delete(
     "/lessons/:lessonId/progress",
     checkLoggedIn,
@@ -181,6 +252,41 @@ module.exports = function (pool, cloudinary, upload) {
       res.status(500).json({ error: "Erro ao criar curso." });
     }
   });
+
+  router.post(
+    "/:courseId/certificate-template",
+    checkAdmin,
+    upload.single("template"),
+    async (req, res) => {
+      const { courseId } = req.params;
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ error: "Nenhum arquivo de imagem enviado." });
+      }
+      try {
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: "image" }, (error, result) => {
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+
+        const newTemplateUrl = uploadResult.secure_url;
+        await pool.query(
+          "UPDATE courses SET certificate_template_url = $1 WHERE id = $2",
+          [newTemplateUrl, courseId]
+        );
+
+        res.json({ success: true, templateUrl: newTemplateUrl });
+      } catch (err) {
+        console.error("Erro no upload do modelo:", err);
+        res.status(500).json({ error: "Erro no servidor." });
+      }
+    }
+  );
 
   router.put("/:id", checkAdmin, async (req, res) => {
     const { id } = req.params;

@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@vercel/speed-insights": "^1.2.0",
+    "pdf-lib": "^1.17.1",
     "react-beautiful-dnd": "^13.1.1"
   },
   "devDependencies": {
