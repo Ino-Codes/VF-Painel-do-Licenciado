@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
+// CORREÇÃO: Importação do node-fetch para compatibilidade com CommonJS
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require("path");
@@ -297,7 +298,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // ROTA DE UPLOAD DA THUMBNAIL (MODELO SEGURO)
   router.post(
     "/:courseId/thumbnail",
     checkAdmin,
