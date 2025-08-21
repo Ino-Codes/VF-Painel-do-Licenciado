@@ -57,7 +57,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // --- ROTA DE DOWNLOAD CORRIGIDA ---
+  // --- ROTA DE DOWNLOAD ATUALIZADA E CORRIGIDA ---
   router.get("/download/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -74,10 +74,17 @@ module.exports = function (pool, cloudinary, upload) {
         fileResult.rows[0];
 
       const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
-      const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
-      const publicId = publicIdMatch
-        ? decodeURIComponent(publicIdMatch[1])
-        : null;
+
+      // Lógica de extração de public_id robusta (igual a de files.js)
+      const urlSegments = fileUrl.split("/");
+      const uploadIndex = urlSegments.indexOf("upload");
+      const publicIdWithExtension = urlSegments
+        .slice(uploadIndex + 2)
+        .join("/");
+      const publicId = publicIdWithExtension.substring(
+        0,
+        publicIdWithExtension.lastIndexOf(".")
+      );
 
       if (!publicId) {
         return res
@@ -93,6 +100,7 @@ module.exports = function (pool, cloudinary, upload) {
         expires_at: Math.floor(Date.now() / 1000) + 300,
       };
 
+      // Lógica condicional idêntica a de files.js
       if (fileExtension === ".pdf") {
         options.fetch_format = "pdf";
       } else {
@@ -154,8 +162,15 @@ module.exports = function (pool, cloudinary, upload) {
       const docUrl = faqResult.rows[0].document_url;
       if (docUrl) {
         const resourceType = docUrl.includes("/image/") ? "image" : "raw";
-        const publicIdMatch = docUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
-        const publicId = publicIdMatch ? publicIdMatch[1] : null;
+        const urlSegments = docUrl.split("/");
+        const uploadIndex = urlSegments.indexOf("upload");
+        const publicIdWithExtension = urlSegments
+          .slice(uploadIndex + 2)
+          .join("/");
+        const publicId = publicIdWithExtension.substring(
+          0,
+          publicIdWithExtension.lastIndexOf(".")
+        );
 
         if (publicId) {
           await cloudinary.uploader.destroy(publicId, {
