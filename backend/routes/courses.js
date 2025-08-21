@@ -343,10 +343,9 @@ module.exports = function (pool, cloudinary, upload) {
       if (!req.file) {
         return res
           .status(400)
-          .json({ error: "Nenhum arquivo de modelo enviado." });
+          .json({ error: "Nenhum arquivo de imagem enviado." });
       }
       try {
-        // Passo 1: Fazer o upload do novo modelo para o Cloudinary
         const uploadResult = await new Promise((resolve, reject) => {
           cloudinary.uploader
             .upload_stream({ resource_type: "image" }, (error, result) => {
@@ -356,17 +355,16 @@ module.exports = function (pool, cloudinary, upload) {
             .end(req.file.buffer);
         });
 
-        // Passo 2: Salvar a nova URL no banco de dados
         const newTemplateUrl = uploadResult.secure_url;
         await pool.query(
           "UPDATE courses SET certificate_template_url = $1 WHERE id = $2",
           [newTemplateUrl, courseId]
         );
 
-        res.json({ success: true, templateUrl: newTemplateUrl });
+        res.json({ success: true, thumbnailUrl: newTemplateUrl });
       } catch (err) {
-        console.error("Erro no upload do modelo de certificado:", err);
-        res.status(500).json({ error: "Erro no servidor." });
+        console.error("Erro no upload da thumbnail:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
       }
     }
   );
