@@ -6,20 +6,23 @@ const fetch = require("node-fetch");
 
 const getPublicIdFromUrl = (url) => {
   if (!url) return null;
-  const uploadIndex = url.indexOf("/upload/");
-  if (uploadIndex === -1) return null;
+  try {
+    const uploadIndex = url.indexOf("/upload/");
+    if (uploadIndex === -1) return null;
 
-  const urlPart = url.substring(uploadIndex + "/upload/".length);
-  // Remove a versão (ex: v12345/) se ela existir
-  const publicIdWithFolder = urlPart.includes("/v")
-    ? urlPart.substring(urlPart.indexOf("/") + 1)
-    : urlPart;
-  const publicId = publicIdWithFolder.substring(
-    0,
-    publicIdWithFolder.lastIndexOf(".")
-  );
-
-  return publicId;
+    const urlPart = url.substring(uploadIndex + "/upload/".length);
+    const publicIdWithFolder = urlPart.includes("/v")
+      ? urlPart.substring(urlPart.indexOf("/") + 1)
+      : urlPart;
+    const publicId = publicIdWithFolder.substring(
+      0,
+      publicIdWithFolder.lastIndexOf(".")
+    );
+    return publicId;
+  } catch (e) {
+    console.error("Falha ao extrair Public ID:", e);
+    return null;
+  }
 };
 
 module.exports = function (pool, cloudinary, upload) {
