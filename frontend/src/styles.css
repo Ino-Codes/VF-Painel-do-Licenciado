@@ -1306,9 +1306,9 @@ nav.main-menu {
 
 .faq-document-link {
   display: inline-block;
-  margin-top: 15px;
   color: #111217;
   text-decoration: none;
+  font-weight: 400;
 }
 
 .faq-document-link:hover {
@@ -1318,7 +1318,7 @@ nav.main-menu {
 .faq-document-label {
   color: #111217;
   font-weight: 500;
-  margin-right: 5px;
+  margin-top: 15px;
 }
 
 .faq-actions {
