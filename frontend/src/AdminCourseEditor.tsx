@@ -146,7 +146,7 @@ const AdminCourseEditor: React.FC = () => {
           ← Voltar
         </button>
 
-        <h2>Editor da Trilha: {course.title}</h2>
+        <h2>Editor do Curso: {course.title}</h2>
 
         <div className="admin-form mt-4">
           <h3>Adicionar Novo Módulo</h3>
