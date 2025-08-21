@@ -1313,12 +1313,12 @@ nav.main-menu {
 
 .faq-document-link:hover {
   text-decoration: underline;
-  color: #111217;
-  font-weight: 500;
-  margin-right: 5px;
 }
 
 .faq-document-label {
+  color: #111217;
+  font-weight: 500;
+  margin-right: 5px;
 }
 
 .faq-actions {
