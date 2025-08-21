@@ -75,7 +75,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
               required
             />
           </div>
-          <div className="form-row">
+          {/* <div className="form-row">
             <label>Anexo (Opcional):</label>
             <input
               type="file"
@@ -83,7 +83,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
                 e.target.files && setDocumentFile(e.target.files[0])
               }
             />
-          </div>
+          </div> */}
           <div className="modal-actions">
             <button
               type="button"
