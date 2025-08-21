@@ -70,4 +70,8 @@ const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 
-root.render(<AppRouter />);
+root.render(
+  <React.Fragment>
+    <AppRouter />
+  </React.Fragment>
+);
