@@ -61,12 +61,16 @@ const Faq: React.FC = () => {
 
   useEffect(() => {
     if (!loading && !user) navigate("/");
-    fetchCategories();
+    if (user) {
+      fetchCategories();
+    }
   }, [user, loading, navigate, fetchCategories]);
 
   useEffect(() => {
-    fetchFaqs();
-  }, [fetchFaqs]);
+    if (user) {
+      fetchFaqs();
+    }
+  }, [user, fetchFaqs]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -97,6 +101,8 @@ const Faq: React.FC = () => {
   const toggleAccordion = (id: number) => {
     setActiveAccordion(activeAccordion === id ? null : id);
   };
+
+  const baseURL = api.defaults.baseURL;
 
   if (loading) return <div className="tela-loading">Carregando...</div>;
   if (!user) return null;
@@ -165,8 +171,10 @@ const Faq: React.FC = () => {
                 <div className="faq-answer">
                   <p>{faq.answer}</p>
                   {faq.document_url && (
+                    // --- TRECHO CORRIGIDO ---
+                    // O link agora aponta para a rota de download do backend
                     <a
-                      href={faq.document_url}
+                      href={`${baseURL}/api/faq/download/${faq.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="faq-document-link"

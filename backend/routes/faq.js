@@ -87,21 +87,16 @@ module.exports = function (pool, cloudinary, upload) {
 
       const fileExtension = path.extname(fileUrl).toLowerCase();
 
-      // Objeto base de opções
       const options = {
         resource_type: resourceType,
         sign_url: true,
-        expires_at: Math.floor(Date.now() / 1000) + 300, // Link válido por 5 minutos
+        expires_at: Math.floor(Date.now() / 1000) + 300,
       };
 
-      // Lógica condicional corrigida
       if (fileExtension === ".pdf") {
-        // Para PDFs: força a exibição no navegador (inline)
-        options.flags = ["inline"];
         options.fetch_format = "pdf";
       } else {
-        // Para todos os outros arquivos: força o download com o nome original
-        options.attachment = originalname;
+        options.flags = [`attachment:${originalname}`];
       }
 
       const signedUrl = cloudinary.url(publicId, options);
