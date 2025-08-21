@@ -88,10 +88,17 @@ module.exports = function (pool, cloudinary, upload) {
       }
       course.modules = modules;
 
-      const progressResult = await pool.query(
-        "SELECT lesson_id FROM progress WHERE user_id = $1",
-        [userId]
-      );
+      const progressQuery = `
+        SELECT p.lesson_id
+        FROM progress p
+        JOIN lessons l ON p.lesson_id = l.id
+        JOIN modules m ON l.module_id = m.id
+        WHERE p.user_id = $1 AND m.course_id = $2
+      `;
+      const progressResult = await pool.query(progressQuery, [
+        userId,
+        courseId,
+      ]);
       const completedLessons = progressResult.rows.map((row) => row.lesson_id);
       course.completedLessons = completedLessons;
 
