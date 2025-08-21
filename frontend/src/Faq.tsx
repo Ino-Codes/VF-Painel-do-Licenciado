@@ -171,10 +171,8 @@ const Faq: React.FC = () => {
                 <div className="faq-answer">
                   <p>{faq.answer}</p>
                   {faq.document_url && (
-                    // --- TRECHO CORRIGIDO ---
-                    // O link agora aponta para a rota de download do backend
                     <span className="faq-document-label">
-                      Confira o anexo:
+                      Confira o anexo: &nbsp;
                       <a
                         href={`${baseURL}/api/faq/download/${faq.id}`}
                         target="_blank"
