@@ -7,10 +7,29 @@ module.exports = function (pool, cloudinary, upload) {
   const checkLoggedIn = isLoggedIn(pool);
 
   router.get("/public", checkLoggedIn, async (req, res) => {
+    const { id: userId } = req.user;
     try {
-      const result = await pool.query(
-        "SELECT * FROM courses WHERE is_active = TRUE ORDER BY title ASC"
-      );
+      const query = `
+      SELECT
+        c.*,
+        COUNT(DISTINCT l.id)::int AS total_lessons,
+        COUNT(DISTINCT p.id)::int AS completed_lessons
+      FROM
+        courses c
+      LEFT JOIN
+        modules m ON m.course_id = c.id
+      LEFT JOIN
+        lessons l ON l.module_id = m.id
+      LEFT JOIN
+        progress p ON p.lesson_id = l.id AND p.user_id = $1
+      WHERE
+        c.is_active = TRUE
+      GROUP BY
+        c.id
+      ORDER BY
+        c.title ASC;
+    `;
+      const result = await pool.query(query, [userId]);
       res.json(result.rows);
     } catch (err) {
       console.error("Erro ao buscar cursos públicos:", err);
