@@ -441,6 +441,34 @@ body::before {
   margin-bottom: 0;
 }
 
+/* Certificado */
+
+.certificate-banner {
+  background-color: #e7f5e8;
+  border: 1px solid #04a146;
+  border-left: 5px solid #04a146;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.certificate-banner p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.1em;
+  color: #155724;
+}
+
+.certificate-banner .form-button {
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
 /* Editor de Curso */
 
 .modules-list {

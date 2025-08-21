@@ -120,6 +120,14 @@ const LessonPlayer: React.FC = () => {
     return <div className="tela-loading">Carregando sala de aula...</div>;
   }
 
+  const totalLessons = course.modules.reduce(
+    (acc, mod) => acc + mod.lessons.length,
+    0
+  );
+  const isCourseCompleted =
+    totalLessons > 0 && course.completedLessons.length >= totalLessons;
+  const baseURL = api.defaults.baseURL;
+
   const isLessonCompleted = activeLesson
     ? course.completedLessons.includes(activeLesson.id)
     : false;
@@ -138,6 +146,20 @@ const LessonPlayer: React.FC = () => {
           </Link>
           <h2>{course.title}</h2>
         </div>
+
+        {isCourseCompleted && (
+          <div className="certificate-banner">
+            <p>Parabéns, você concluiu esta trilha!</p>
+            <a
+              href={`${baseURL}/api/admin/courses/${course.id}/certificate`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="form-button"
+            >
+              Gerar Certificado
+            </a>
+          </div>
+        )}
 
         <div className="lesson-player-layout">
           <div className="lesson-content">

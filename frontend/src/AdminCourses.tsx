@@ -13,6 +13,7 @@ interface Course {
   description: string;
   thumbnail_url: string;
   is_active: boolean;
+  certificate_template_url?: string;
 }
 
 const AdminCourses: React.FC = () => {
@@ -24,16 +25,11 @@ const AdminCourses: React.FC = () => {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [certificateTemplateFile, setCertificateTemplateFile] =
+    useState<File | null>(null);
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
-      toast.error("Acesso restrito a administradores.");
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
 
   const getAuthHeaders = useCallback(() => {
     if (!user) return {};
@@ -79,41 +75,18 @@ const AdminCourses: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = (id: number) => {
-    setCourseToDelete(id);
-    setIsConfirmModalOpen(true);
-  };
-  const handleConfirmDelete = async () => {
-    if (courseToDelete === null) return;
-    try {
-      await api.delete(
-        `/api/admin/courses/${courseToDelete}`,
-        getAuthHeaders()
-      );
-      toast.success("Curso excluído com sucesso!");
-      fetchCourses();
-    } catch (err) {
-      toast.error("Erro ao excluir o curso.");
-    } finally {
-      setIsConfirmModalOpen(false);
-      setCourseToDelete(null);
-    }
-  };
-
   const startEdit = (course: Course) => {
     setEditingCourse(course);
     setForm({ title: course.title, description: course.description });
     setThumbnailFile(null);
+    setCertificateTemplateFile(null);
   };
 
   const cancelEdit = () => {
     setEditingCourse(null);
     setForm({ title: "", description: "" });
     setThumbnailFile(null);
-  };
-
-  const handleManageContent = (courseId: number) => {
-    navigate(`/admin/courses/${courseId}`);
+    setCertificateTemplateFile(null);
   };
 
   const handleThumbnailUpload = async () => {
@@ -134,6 +107,50 @@ const AdminCourses: React.FC = () => {
       fetchCourses();
     } catch (err) {
       toast.error("Erro ao fazer o upload da imagem.");
+    }
+  };
+
+  const handleTemplateUpload = async () => {
+    if (!certificateTemplateFile || !editingCourse) {
+      toast.error("Selecione um arquivo de imagem para o modelo.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("template", certificateTemplateFile);
+    try {
+      await api.post(
+        `/api/admin/courses/${editingCourse.id}/certificate-template`,
+        formData,
+        getAuthHeaders()
+      );
+      toast.success("Modelo de certificado atualizado!");
+      setCertificateTemplateFile(null);
+      fetchCourses();
+    } catch (err) {
+      toast.error("Erro ao fazer upload do modelo.");
+    }
+  };
+
+  const handleManageContent = (courseId: number) =>
+    navigate(`/admin/courses/${courseId}`);
+  const handleDeleteClick = (id: number) => {
+    setCourseToDelete(id);
+    setIsConfirmModalOpen(true);
+  };
+  const handleConfirmDelete = async () => {
+    if (courseToDelete === null) return;
+    try {
+      await api.delete(
+        `/api/admin/courses/${courseToDelete}`,
+        getAuthHeaders()
+      );
+      toast.success("Curso excluído com sucesso!");
+      fetchCourses();
+    } catch (err) {
+      toast.error("Erro ao excluir o curso.");
+    } finally {
+      setIsConfirmModalOpen(false);
+      setCourseToDelete(null);
     }
   };
 
@@ -184,43 +201,84 @@ const AdminCourses: React.FC = () => {
         </form>
 
         {editingCourse && (
-          <div
-            className="admin-form"
-            style={{
-              marginTop: "20px",
-              borderTop: "2px solid #f0f0f0",
-              paddingTop: "20px",
-            }}
-          >
-            <h3>Alterar Imagem de Capa</h3>
-            <div className="form-row">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) =>
-                  e.target.files && setThumbnailFile(e.target.files[0])
-                }
-              />
-              <button
-                className="form-button"
-                type="button"
-                onClick={handleThumbnailUpload}
-                disabled={!thumbnailFile}
-              >
-                Salvar Imagem
-              </button>
-            </div>
-            {editingCourse.thumbnail_url && (
-              <div>
-                <p>Imagem Atual:</p>
-                <img
-                  src={editingCourse.thumbnail_url}
-                  alt="Thumbnail atual"
-                  style={{ maxWidth: "200px", borderRadius: "8px" }}
+          <>
+            <div
+              className="admin-form"
+              style={{
+                marginTop: "20px",
+                borderTop: "2px solid #f0f0f0",
+                paddingTop: "20px",
+              }}
+            >
+              <h3>Alterar Imagem de Capa</h3>
+              <div className="form-row">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    e.target.files && setThumbnailFile(e.target.files[0])
+                  }
                 />
+                <button
+                  className="form-button"
+                  type="button"
+                  onClick={handleThumbnailUpload}
+                  disabled={!thumbnailFile}
+                >
+                  Salvar Imagem
+                </button>
               </div>
-            )}
-          </div>
+              {editingCourse.thumbnail_url && (
+                <div>
+                  <p>Imagem Atual:</p>
+                  <img
+                    src={editingCourse.thumbnail_url}
+                    alt="Thumbnail atual"
+                    style={{ maxWidth: "200px", borderRadius: "8px" }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div
+              className="admin-form"
+              style={{
+                marginTop: "20px",
+                borderTop: "2px solid #f0f0f0",
+                paddingTop: "20px",
+              }}
+            >
+              <h3>Modelo do Certificado (PNG)</h3>
+              <div className="form-row">
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg"
+                  onChange={(e) =>
+                    e.target.files &&
+                    setCertificateTemplateFile(e.target.files[0])
+                  }
+                />
+                <button
+                  className="form-button"
+                  type="button"
+                  onClick={handleTemplateUpload}
+                  disabled={!certificateTemplateFile}
+                >
+                  Salvar Modelo
+                </button>
+              </div>
+              {editingCourse.certificate_template_url && (
+                <div>
+                  <p>Modelo Atual:</p>
+                  <img
+                    src={editingCourse.certificate_template_url}
+                    alt="Modelo do certificado"
+                    style={{ maxWidth: "200px", border: "1px solid #ccc" }}
+                  />
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         <h2>Cursos Cadastrados:</h2>
@@ -245,7 +303,7 @@ const AdminCourses: React.FC = () => {
                 />
                 <div>
                   <strong>{course.title}</strong>
-                  <br></br>
+                  <br />
                   <span>{course.description}</span>
                 </div>
               </div>
