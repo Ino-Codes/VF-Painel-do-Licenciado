@@ -57,7 +57,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // --- ROTA DE DOWNLOAD ATUALIZADA E CORRIGIDA ---
+  // --- ROTA DE DOWNLOAD CORRIGIDA ---
   router.get("/download/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -74,7 +74,6 @@ module.exports = function (pool, cloudinary, upload) {
         fileResult.rows[0];
 
       const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
-
       const publicIdMatch = fileUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
       const publicId = publicIdMatch
         ? decodeURIComponent(publicIdMatch[1])
@@ -95,9 +94,9 @@ module.exports = function (pool, cloudinary, upload) {
       };
 
       if (fileExtension === ".pdf") {
-        options.fetch_format = "pdf";
+        options.flags = ["inline"];
       } else {
-        options.flags = [`attachment:${originalname}`];
+        options.attachment = originalname;
       }
 
       const signedUrl = cloudinary.url(publicId, options);
