@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
-// CORREÇÃO: Importação do node-fetch para compatibilidade
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require("path");
@@ -34,30 +33,29 @@ module.exports = function (pool, cloudinary, upload) {
   const checkLoggedIn = isLoggedIn(pool);
 
   // --- ROTAS PÚBLICAS (PARA ALUNOS) ---
-
   router.get("/public", checkLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
     try {
       const query = `
-        SELECT
-          c.*,
-          COUNT(DISTINCT l.id)::int AS total_lessons,
-          COUNT(DISTINCT p.id)::int AS completed_lessons
-        FROM
-          courses c
-        LEFT JOIN
-          modules m ON m.course_id = c.id
-        LEFT JOIN
-          lessons l ON l.module_id = m.id
-        LEFT JOIN
-          progress p ON p.lesson_id = l.id AND p.user_id = $1
-        WHERE
-          c.is_active = TRUE
-        GROUP BY
-          c.id
-        ORDER BY
-          c.title ASC;
-      `;
+      SELECT
+        c.*,
+        COUNT(DISTINCT l.id)::int AS total_lessons,
+        COUNT(DISTINCT p.id)::int AS completed_lessons
+      FROM
+        courses c
+      LEFT JOIN
+        modules m ON m.course_id = c.id
+      LEFT JOIN
+        lessons l ON l.module_id = m.id
+      LEFT JOIN
+        progress p ON p.lesson_id = l.id AND p.user_id = $1
+      WHERE
+        c.is_active = TRUE
+      GROUP BY
+        c.id
+      ORDER BY
+        c.title ASC;
+    `;
       const result = await pool.query(query, [userId]);
       res.json(result.rows);
     } catch (err) {
@@ -149,7 +147,8 @@ module.exports = function (pool, cloudinary, upload) {
 
       if (
         progressResult.rowCount === 0 ||
-        progressResult.rows[0].completed < progressResult.rows[0].total
+        (progressResult.rows[0].total > 0 &&
+          progressResult.rows[0].completed < progressResult.rows[0].total)
       ) {
         return res.status(403).send("Curso ainda não concluído.");
       }
