@@ -11,6 +11,8 @@ interface Course {
   title: string;
   description: string;
   thumbnail_url: string;
+  total_lessons: number;
+  completed_lessons: number;
 }
 
 const CoursesPage: React.FC = () => {
@@ -39,7 +41,7 @@ const CoursesPage: React.FC = () => {
         );
         setCourses(res.data);
       } catch (err) {
-        toast.error("Não foi possível carregar os cursos.");
+        toast.error("Não foi possível carregar as trilhas.");
       }
     };
     if (user) {
@@ -60,31 +62,42 @@ const CoursesPage: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="document-header">
-          <h2>Cursos</h2>
+          <h2>Trilhas de Conhecimento</h2>
         </div>
         <div className="courses-grid">
           {courses.length > 0 ? (
-            courses.map((course) => (
-              <div
-                key={course.id}
-                className="course-card"
-                onClick={() => handleCourseClick(course.id)}
-              >
-                <img
-                  src={
-                    course.thumbnail_url ||
-                    "https://via.placeholder.com/400x225.png?text=Curso"
-                  }
-                  alt={course.title}
-                />
-                <div className="course-card-content">
-                  <h3>{course.title}</h3>
-                  <p>{course.description}</p>
+            courses.map((course) => {
+              const isCourseCompleted =
+                course.total_lessons > 0 &&
+                course.completed_lessons >= course.total_lessons;
+
+              return (
+                <div
+                  key={course.id}
+                  className="course-card"
+                  onClick={() => handleCourseClick(course.id)}
+                >
+                  <div className="course-card-thumbnail">
+                    <img
+                      src={
+                        course.thumbnail_url ||
+                        "https://via.placeholder.com/400x225.png?text=Trilha"
+                      }
+                      alt={course.title}
+                    />
+                    {isCourseCompleted && (
+                      <div className="completion-badge">✓</div>
+                    )}
+                  </div>
+                  <div className="course-card-content">
+                    <h3>{course.title}</h3>
+                    <p>{course.description}</p>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <p>Em breve novos cursos estarão disponíveis nessa página!</p>
+            <p>Nenhuma trilha de conhecimento disponível no momento.</p>
           )}
         </div>
       </div>
