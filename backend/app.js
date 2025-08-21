@@ -106,15 +106,15 @@ const createTables = async () => {
     );`;
 
   const coursesTable = `
-  CREATE TABLE IF NOT EXISTS courses (
-    id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    description TEXT,
-    thumbnail_url TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    certificate_template_url TEXT, -- NOVA COLUNA ADICIONADA
-    created_at TIMESTAMPTZ DEFAULT NOW()
-  );`;
+    CREATE TABLE IF NOT EXISTS courses (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      thumbnail_url TEXT,
+      is_active BOOLEAN DEFAULT TRUE,
+      certificate_template_url TEXT, -- GARANTA QUE ESTA LINHA EXISTA
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
 
   const modulesTable = `
     CREATE TABLE IF NOT EXISTS modules (
