@@ -4,6 +4,24 @@ const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 const fetch = require("node-fetch");
 
+const getPublicIdFromUrl = (url) => {
+  if (!url) return null;
+  const uploadIndex = url.indexOf("/upload/");
+  if (uploadIndex === -1) return null;
+
+  const urlPart = url.substring(uploadIndex + "/upload/".length);
+  // Remove a versão (ex: v12345/) se ela existir
+  const publicIdWithFolder = urlPart.includes("/v")
+    ? urlPart.substring(urlPart.indexOf("/") + 1)
+    : urlPart;
+  const publicId = publicIdWithFolder.substring(
+    0,
+    publicIdWithFolder.lastIndexOf(".")
+  );
+
+  return publicId;
+};
+
 module.exports = function (pool, cloudinary, upload) {
   const checkAdmin = isAdmin(pool);
   const checkLoggedIn = isLoggedIn(pool);
@@ -427,14 +445,14 @@ module.exports = function (pool, cloudinary, upload) {
         const oldThumbnailUrl = oldCourseResult.rows[0]?.thumbnail_url;
 
         if (oldThumbnailUrl) {
-          const publicIdMatch = oldThumbnailUrl.match(/\/v\d+\/(.+)\.\w+$/);
-          if (publicIdMatch) {
-            const publicId = publicIdMatch[1];
+          const publicId = getPublicIdFromUrl(oldThumbnailUrl);
+          if (publicId) {
             await cloudinary.uploader.destroy(publicId, {
               resource_type: "image",
             });
           }
         }
+
         const uploadResult = await new Promise((resolve, reject) => {
           cloudinary.uploader
             .upload_stream({ resource_type: "image" }, (error, result) => {
@@ -443,6 +461,7 @@ module.exports = function (pool, cloudinary, upload) {
             })
             .end(req.file.buffer);
         });
+
         const newThumbnailUrl = uploadResult.secure_url;
         const result = await pool.query(
           "UPDATE courses SET thumbnail_url = $1 WHERE id = $2 RETURNING *",
@@ -456,7 +475,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   );
 
-  // --- ROTA DE UPLOAD DO MODELO DE CERTIFICADO (CORRIGIDA) ---
+  // ROTA DE UPLOAD DO MODELO DE CERTIFICADO (LÓGICA DE EXCLUSÃO ATUALIZADA)
   router.post(
     "/:courseId/certificate-template",
     checkAdmin,
@@ -469,7 +488,6 @@ module.exports = function (pool, cloudinary, upload) {
           .json({ error: "Nenhum arquivo de modelo enviado." });
       }
       try {
-        // Lógica para apagar o modelo antigo, igual à da thumbnail
         const oldCourseResult = await pool.query(
           "SELECT certificate_template_url FROM courses WHERE id = $1",
           [courseId]
@@ -478,16 +496,14 @@ module.exports = function (pool, cloudinary, upload) {
           oldCourseResult.rows[0]?.certificate_template_url;
 
         if (oldTemplateUrl) {
-          const publicIdMatch = oldTemplateUrl.match(/\/v\d+\/(.+)\.\w+$/);
-          if (publicIdMatch) {
-            const publicId = publicIdMatch[1];
+          const publicId = getPublicIdFromUrl(oldTemplateUrl);
+          if (publicId) {
             await cloudinary.uploader.destroy(publicId, {
               resource_type: "image",
             });
           }
         }
 
-        // Faz o upload do novo modelo
         const uploadResult = await new Promise((resolve, reject) => {
           cloudinary.uploader
             .upload_stream({ resource_type: "image" }, (error, result) => {
@@ -498,7 +514,6 @@ module.exports = function (pool, cloudinary, upload) {
         });
 
         const newTemplateUrl = uploadResult.secure_url;
-        // Atualiza o curso no banco com a nova URL
         await pool.query(
           "UPDATE courses SET certificate_template_url = $1 WHERE id = $2",
           [newTemplateUrl, courseId]
