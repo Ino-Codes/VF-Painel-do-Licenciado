@@ -70,7 +70,4 @@ const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 
-// --- CORREÇÃO APLICADA AQUI ---
-// O <React.StrictMode> foi removido para garantir a compatibilidade
-// com a biblioteca de drag-and-drop.
 root.render(<AppRouter />);
