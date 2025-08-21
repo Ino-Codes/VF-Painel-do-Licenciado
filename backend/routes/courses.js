@@ -6,28 +6,6 @@ const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require("path");
 
-// Função de ajuda para extrair o public_id de forma robusta
-const getPublicIdFromUrl = (url) => {
-  if (!url) return null;
-  try {
-    const uploadIndex = url.indexOf("/upload/");
-    if (uploadIndex === -1) return null;
-
-    const urlPart = url.substring(uploadIndex + "/upload/".length);
-    const publicIdWithFolder = urlPart.includes("/v")
-      ? urlPart.substring(urlPart.indexOf("/") + 1)
-      : urlPart;
-    const publicId = publicIdWithFolder.substring(
-      0,
-      publicIdWithFolder.lastIndexOf(".")
-    );
-    return publicId;
-  } catch (e) {
-    console.error("Falha ao extrair Public ID:", e);
-    return null;
-  }
-};
-
 module.exports = function (pool, cloudinary, upload) {
   const checkAdmin = isAdmin(pool);
   const checkLoggedIn = isLoggedIn(pool);
@@ -37,25 +15,25 @@ module.exports = function (pool, cloudinary, upload) {
     const { id: userId } = req.user;
     try {
       const query = `
-      SELECT
-        c.*,
-        COUNT(DISTINCT l.id)::int AS total_lessons,
-        COUNT(DISTINCT p.id)::int AS completed_lessons
-      FROM
-        courses c
-      LEFT JOIN
-        modules m ON m.course_id = c.id
-      LEFT JOIN
-        lessons l ON l.module_id = m.id
-      LEFT JOIN
-        progress p ON p.lesson_id = l.id AND p.user_id = $1
-      WHERE
-        c.is_active = TRUE
-      GROUP BY
-        c.id
-      ORDER BY
-        c.title ASC;
-    `;
+        SELECT
+          c.*,
+          COUNT(DISTINCT l.id)::int AS total_lessons,
+          COUNT(DISTINCT p.id)::int AS completed_lessons
+        FROM
+          courses c
+        LEFT JOIN
+          modules m ON m.course_id = c.id
+        LEFT JOIN
+          lessons l ON l.module_id = m.id
+        LEFT JOIN
+          progress p ON p.lesson_id = l.id AND p.user_id = $1
+        WHERE
+          c.is_active = TRUE
+        GROUP BY
+          c.id
+        ORDER BY
+          c.title ASC;
+      `;
       const result = await pool.query(query, [userId]);
       res.json(result.rows);
     } catch (err) {
@@ -319,6 +297,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
+  // ROTA DE UPLOAD DA THUMBNAIL (MODELO SEGURO)
   router.post(
     "/:courseId/thumbnail",
     checkAdmin,
@@ -331,21 +310,6 @@ module.exports = function (pool, cloudinary, upload) {
           .json({ error: "Nenhum arquivo de imagem enviado." });
       }
       try {
-        const oldCourseResult = await pool.query(
-          "SELECT thumbnail_url FROM courses WHERE id = $1",
-          [courseId]
-        );
-        const oldThumbnailUrl = oldCourseResult.rows[0]?.thumbnail_url;
-
-        if (oldThumbnailUrl) {
-          const publicId = getPublicIdFromUrl(oldThumbnailUrl);
-          if (publicId) {
-            await cloudinary.uploader.destroy(publicId, {
-              resource_type: "image",
-            });
-          }
-        }
-
         const uploadResult = await new Promise((resolve, reject) => {
           cloudinary.uploader
             .upload_stream({ resource_type: "image" }, (error, result) => {
@@ -356,11 +320,12 @@ module.exports = function (pool, cloudinary, upload) {
         });
 
         const newThumbnailUrl = uploadResult.secure_url;
-        const result = await pool.query(
-          "UPDATE courses SET thumbnail_url = $1 WHERE id = $2 RETURNING *",
+        await pool.query(
+          "UPDATE courses SET thumbnail_url = $1 WHERE id = $2",
           [newThumbnailUrl, courseId]
         );
-        res.json(result.rows[0]);
+
+        res.json({ success: true, thumbnailUrl: newThumbnailUrl });
       } catch (err) {
         console.error("Erro no upload da thumbnail:", err);
         res.status(500).json({ error: "Erro no servidor durante o upload." });
@@ -368,6 +333,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   );
 
+  // ROTA DE UPLOAD DO MODELO DE CERTIFICADO (REESCRITA E SIMPLIFICADA)
   router.post(
     "/:courseId/certificate-template",
     checkAdmin,
@@ -380,22 +346,7 @@ module.exports = function (pool, cloudinary, upload) {
           .json({ error: "Nenhum arquivo de modelo enviado." });
       }
       try {
-        const oldCourseResult = await pool.query(
-          "SELECT certificate_template_url FROM courses WHERE id = $1",
-          [courseId]
-        );
-        const oldTemplateUrl =
-          oldCourseResult.rows[0]?.certificate_template_url;
-
-        if (oldTemplateUrl) {
-          const publicId = getPublicIdFromUrl(oldTemplateUrl);
-          if (publicId) {
-            await cloudinary.uploader.destroy(publicId, {
-              resource_type: "image",
-            });
-          }
-        }
-
+        // Passo 1: Fazer o upload do novo modelo para o Cloudinary
         const uploadResult = await new Promise((resolve, reject) => {
           cloudinary.uploader
             .upload_stream({ resource_type: "image" }, (error, result) => {
@@ -405,6 +356,7 @@ module.exports = function (pool, cloudinary, upload) {
             .end(req.file.buffer);
         });
 
+        // Passo 2: Salvar a nova URL no banco de dados
         const newTemplateUrl = uploadResult.secure_url;
         await pool.query(
           "UPDATE courses SET certificate_template_url = $1 WHERE id = $2",
