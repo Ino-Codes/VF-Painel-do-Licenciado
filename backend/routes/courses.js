@@ -253,41 +253,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.post(
-    "/:courseId/certificate-template",
-    checkAdmin,
-    upload.single("template"),
-    async (req, res) => {
-      const { courseId } = req.params;
-      if (!req.file) {
-        return res
-          .status(400)
-          .json({ error: "Nenhum arquivo de imagem enviado." });
-      }
-      try {
-        const uploadResult = await new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ resource_type: "image" }, (error, result) => {
-              if (error) reject(error);
-              resolve(result);
-            })
-            .end(req.file.buffer);
-        });
-
-        const newTemplateUrl = uploadResult.secure_url;
-        await pool.query(
-          "UPDATE courses SET certificate_template_url = $1 WHERE id = $2",
-          [newTemplateUrl, courseId]
-        );
-
-        res.json({ success: true, templateUrl: newTemplateUrl });
-      } catch (err) {
-        console.error("Erro no upload do modelo:", err);
-        res.status(500).json({ error: "Erro no servidor." });
-      }
-    }
-  );
-
   router.put("/:id", checkAdmin, async (req, res) => {
     const { id } = req.params;
     const { title, description, thumbnail_url, is_active } = req.body;
@@ -321,56 +286,6 @@ module.exports = function (pool, cloudinary, upload) {
       res.status(500).json({ error: "Erro ao deletar curso." });
     }
   });
-
-  router.post(
-    "/:courseId/thumbnail",
-    checkAdmin,
-    upload.single("thumbnail"),
-    async (req, res) => {
-      const { courseId } = req.params;
-      if (!req.file) {
-        return res
-          .status(400)
-          .json({ error: "Nenhum arquivo de imagem enviado." });
-      }
-      try {
-        const oldCourseResult = await pool.query(
-          "SELECT thumbnail_url FROM courses WHERE id = $1",
-          [courseId]
-        );
-        const oldThumbnailUrl = oldCourseResult.rows[0]?.thumbnail_url;
-
-        if (oldThumbnailUrl) {
-          const publicIdMatch = oldThumbnailUrl.match(/\/v\d+\/(.+)\.\w+$/);
-          if (publicIdMatch) {
-            const publicId = publicIdMatch[1];
-            await cloudinary.uploader.destroy(publicId, {
-              resource_type: "image",
-            });
-          }
-        }
-
-        const uploadResult = await new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ resource_type: "image" }, (error, result) => {
-              if (error) reject(error);
-              resolve(result);
-            })
-            .end(req.file.buffer);
-        });
-
-        const newThumbnailUrl = uploadResult.secure_url;
-        const result = await pool.query(
-          "UPDATE courses SET thumbnail_url = $1 WHERE id = $2 RETURNING *",
-          [newThumbnailUrl, courseId]
-        );
-        res.json(result.rows[0]);
-      } catch (err) {
-        console.error("Erro no upload da thumbnail:", err);
-        res.status(500).json({ error: "Erro no servidor durante o upload." });
-      }
-    }
-  );
 
   // --- Módulos ---
   router.post("/:courseId/modules", checkAdmin, async (req, res) => {
@@ -488,6 +403,111 @@ module.exports = function (pool, cloudinary, upload) {
       } catch (err) {
         console.error("Erro ao reordenar aulas:", err);
         res.status(500).json({ error: "Erro ao reordenar aulas." });
+      }
+    }
+  );
+
+  // ROTA PARA UPLOAD DA THUMBNAIL
+  router.post(
+    "/:courseId/thumbnail",
+    checkAdmin,
+    upload.single("thumbnail"),
+    async (req, res) => {
+      const { courseId } = req.params;
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ error: "Nenhum arquivo de imagem enviado." });
+      }
+      try {
+        const oldCourseResult = await pool.query(
+          "SELECT thumbnail_url FROM courses WHERE id = $1",
+          [courseId]
+        );
+        const oldThumbnailUrl = oldCourseResult.rows[0]?.thumbnail_url;
+
+        if (oldThumbnailUrl) {
+          const publicIdMatch = oldThumbnailUrl.match(/\/v\d+\/(.+)\.\w+$/);
+          if (publicIdMatch) {
+            const publicId = publicIdMatch[1];
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: "image",
+            });
+          }
+        }
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: "image" }, (error, result) => {
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+        const newThumbnailUrl = uploadResult.secure_url;
+        const result = await pool.query(
+          "UPDATE courses SET thumbnail_url = $1 WHERE id = $2 RETURNING *",
+          [newThumbnailUrl, courseId]
+        );
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro no upload da thumbnail:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
+      }
+    }
+  );
+
+  // --- ROTA DE UPLOAD DO MODELO DE CERTIFICADO (CORRIGIDA) ---
+  router.post(
+    "/:courseId/certificate-template",
+    checkAdmin,
+    upload.single("template"),
+    async (req, res) => {
+      const { courseId } = req.params;
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ error: "Nenhum arquivo de modelo enviado." });
+      }
+      try {
+        // Lógica para apagar o modelo antigo, igual à da thumbnail
+        const oldCourseResult = await pool.query(
+          "SELECT certificate_template_url FROM courses WHERE id = $1",
+          [courseId]
+        );
+        const oldTemplateUrl =
+          oldCourseResult.rows[0]?.certificate_template_url;
+
+        if (oldTemplateUrl) {
+          const publicIdMatch = oldTemplateUrl.match(/\/v\d+\/(.+)\.\w+$/);
+          if (publicIdMatch) {
+            const publicId = publicIdMatch[1];
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: "image",
+            });
+          }
+        }
+
+        // Faz o upload do novo modelo
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: "image" }, (error, result) => {
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+
+        const newTemplateUrl = uploadResult.secure_url;
+        // Atualiza o curso no banco com a nova URL
+        await pool.query(
+          "UPDATE courses SET certificate_template_url = $1 WHERE id = $2",
+          [newTemplateUrl, courseId]
+        );
+
+        res.json({ success: true, templateUrl: newTemplateUrl });
+      } catch (err) {
+        console.error("Erro no upload do modelo de certificado:", err);
+        res.status(500).json({ error: "Erro no servidor." });
       }
     }
   );
