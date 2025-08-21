@@ -5,6 +5,7 @@ const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 // CORREÇÃO: Importação do node-fetch para compatibilidade
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const path = require("path");
 
 // Função de ajuda para extrair o public_id de forma robusta
 const getPublicIdFromUrl = (url) => {
@@ -33,29 +34,30 @@ module.exports = function (pool, cloudinary, upload) {
   const checkLoggedIn = isLoggedIn(pool);
 
   // --- ROTAS PÚBLICAS (PARA ALUNOS) ---
+
   router.get("/public", checkLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
     try {
       const query = `
-      SELECT
-        c.*,
-        COUNT(DISTINCT l.id)::int AS total_lessons,
-        COUNT(DISTINCT p.id)::int AS completed_lessons
-      FROM
-        courses c
-      LEFT JOIN
-        modules m ON m.course_id = c.id
-      LEFT JOIN
-        lessons l ON l.module_id = m.id
-      LEFT JOIN
-        progress p ON p.lesson_id = l.id AND p.user_id = $1
-      WHERE
-        c.is_active = TRUE
-      GROUP BY
-        c.id
-      ORDER BY
-        c.title ASC;
-    `;
+        SELECT
+          c.*,
+          COUNT(DISTINCT l.id)::int AS total_lessons,
+          COUNT(DISTINCT p.id)::int AS completed_lessons
+        FROM
+          courses c
+        LEFT JOIN
+          modules m ON m.course_id = c.id
+        LEFT JOIN
+          lessons l ON l.module_id = m.id
+        LEFT JOIN
+          progress p ON p.lesson_id = l.id AND p.user_id = $1
+        WHERE
+          c.is_active = TRUE
+        GROUP BY
+          c.id
+        ORDER BY
+          c.title ASC;
+      `;
       const result = await pool.query(query, [userId]);
       res.json(result.rows);
     } catch (err) {
@@ -139,7 +141,7 @@ module.exports = function (pool, cloudinary, upload) {
     const { id: userId, nome: userName } = req.user;
 
     try {
-      const progressQuery = `SELECT COUNT(l.id)::int AS total, COUNT(p.id)::int AS completed FROM courses c JOIN modules m ON m.course_id = c.id JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 WHERE c.id = $2 GROUP BY c.id`;
+      const progressQuery = `SELECT COUNT(DISTINCT l.id)::int AS total, COUNT(DISTINCT p.id)::int AS completed FROM courses c JOIN modules m ON m.course_id = c.id JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 WHERE c.id = $2 GROUP BY c.id`;
       const progressResult = await pool.query(progressQuery, [
         userId,
         courseId,
