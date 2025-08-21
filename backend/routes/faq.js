@@ -75,15 +75,13 @@ module.exports = function (pool, cloudinary, upload) {
 
       const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
 
-      // Lógica de extração de public_id robusta (igual a de files.js)
-      const urlSegments = fileUrl.split("/");
-      const uploadIndex = urlSegments.indexOf("upload");
-      const publicIdWithExtension = urlSegments
-        .slice(uploadIndex + 2)
-        .join("/");
-      const publicId = publicIdWithExtension.substring(
+      // Lógica de extração de public_id robusta
+      const uploadIndex = fileUrl.indexOf("/upload/");
+      const urlPart = fileUrl.substring(uploadIndex + "/upload/".length);
+      const publicIdWithVersion = urlPart.substring(urlPart.indexOf("/") + 1);
+      const publicId = publicIdWithVersion.substring(
         0,
-        publicIdWithExtension.lastIndexOf(".")
+        publicIdWithVersion.lastIndexOf(".")
       );
 
       if (!publicId) {
@@ -100,7 +98,6 @@ module.exports = function (pool, cloudinary, upload) {
         expires_at: Math.floor(Date.now() / 1000) + 300,
       };
 
-      // Lógica condicional idêntica a de files.js
       if (fileExtension === ".pdf") {
         options.fetch_format = "pdf";
       } else {
