@@ -329,12 +329,12 @@ module.exports = function (pool, cloudinary, upload) {
           }
           .certificate-content {
             text-align: center;
-            color: #333;
+            color: #0D0D0D;
           }
           h1 {
             font-family: 'Playfair Display', serif;
             font-size: 52px;
-            color: #1a237e;
+            color: #2D2C2B;
             margin-bottom: 40px;
           }
           .student-name {
@@ -342,11 +342,11 @@ module.exports = function (pool, cloudinary, upload) {
             font-weight: 700;
             font-size: 40px;
             color: #daa520;
-            margin: 60px 0;
+            margin: 30px 0;
           }
           p {
             font-size: 18px;
-            line-height: 1.6;
+            line-height: 1.2;
             margin: 20px 0;
           }
           .footer {
@@ -361,7 +361,7 @@ module.exports = function (pool, cloudinary, upload) {
           <div class="certificate-content">
             <h1>Certificado de Conclusão</h1>
             <p>Este certificado é concedido a</p>
-            <div class="student-name">${userName}</div>
+            <div class="student-name">${user.nome}</div>
             <p>pela conclusão bem-sucedida da Trilha de Conhecimento</p>
             <h2>"${course.title}"</h2>
             <div class="footer">
