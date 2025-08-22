@@ -1,0 +1,45 @@
+import React from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Lesson } from "./types.ts";
+
+interface SortableLessonItemProps {
+  lesson: Lesson;
+  onEdit: (lesson: Lesson) => void;
+  onDelete: (id: number) => void;
+}
+
+export const SortableLessonItem: React.FC<SortableLessonItemProps> = ({
+  lesson,
+  onEdit,
+  onDelete,
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: lesson.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    cursor: "grab", // Feedback visual de que é arrastável
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="lesson-item"
+    >
+      <span>{lesson.title}</span>
+      <div className="lesson-actions">
+        <button type="button" onClick={() => onEdit(lesson)}>
+          Editar
+        </button>
+        <button type="button" onClick={() => onDelete(lesson.id)}>
+          Excluir
+        </button>
+      </div>
+    </li>
+  );
+};

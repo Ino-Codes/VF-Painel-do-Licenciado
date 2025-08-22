@@ -486,6 +486,16 @@ body::before {
 
 /* Editor de Curso */
 
+.module-header[style*="cursor: grab"],
+.lesson-item[style*="cursor: grab"] {
+  cursor: grab;
+}
+
+.module-header[style*="cursor: grabbing"],
+.lesson-item[style*="cursor: grabbing"] {
+  cursor: grabbing;
+}
+
 .modules-list {
   display: flex;
   flex-direction: column;

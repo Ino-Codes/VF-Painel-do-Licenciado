@@ -8,6 +8,21 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import LessonEditModal from "./LessonEditModal.tsx";
 import { Course, Module, Lesson } from "./types.ts";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableModuleItem } from "./SortableModuleItem.tsx";
 
 const AdminCourseEditor: React.FC = () => {
   const { user, loading } = useAuth();
@@ -16,6 +31,68 @@ const AdminCourseEditor: React.FC = () => {
 
   const [course, setCourse] = useState<Course | null>(null);
   const [newModuleTitle, setNewModuleTitle] = useState("");
+
+  const [modules, setModules] = useState<Module[]>([]);
+
+  // Atualiza o estado local 'modules' quando o 'course' for carregado da API
+  useEffect(() => {
+    if (course) {
+      setModules(course.modules);
+    }
+  }, [course]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleModuleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      // Atualiza a ordem no estado local (feedback visual imediato)
+      setModules((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+
+      // Prepara para enviar para a API depois de um pequeno atraso
+      // para garantir que o estado seja atualizado.
+      setTimeout(() => {
+        setModules((currentModules) => {
+          const orderedModuleIds = currentModules.map((m) => m.id);
+          api
+            .put(
+              `/api/admin/courses/${courseId}/modules/order`,
+              { orderedModuleIds },
+              getAuthHeaders()
+            )
+            .then(() => toast.success("Ordem dos módulos salva!"))
+            .catch(() => toast.error("Erro ao salvar a ordem dos módulos."));
+          return currentModules;
+        });
+      }, 100);
+    }
+  };
+
+  const handleLessonOrderChange = async (
+    moduleId: number,
+    orderedLessonIds: number[]
+  ) => {
+    try {
+      await api.put(
+        `/api/admin/courses/modules/${moduleId}/lessons/order`,
+        { orderedLessonIds },
+        getAuthHeaders()
+      );
+      toast.success("Ordem das aulas salva!");
+    } catch (err) {
+      toast.error("Erro ao salvar a ordem das aulas.");
+      fetchCourseDetails(); // Recarrega para reverter a mudança visual em caso de erro
+    }
+  };
 
   const [itemToDelete, setItemToDelete] = useState<{
     type: "module" | "lesson";
@@ -169,44 +246,29 @@ const AdminCourseEditor: React.FC = () => {
         </div>
 
         <div className="modules-list">
-          {course.modules.map((module) => (
-            <div key={module.id} className="module-item">
-              <div className="module-header">
-                <h3>Módulo: {module.title}</h3>
-                <button
-                  onClick={() => handleDeleteClick("module", module.id)}
-                  className="delete-button"
-                >
-                  Excluir Módulo
-                </button>
-              </div>
-              <ul className="lesson-list">
-                {module.lessons.map((lesson) => (
-                  <li key={lesson.id} className="lesson-item">
-                    <span>{lesson.title}</span>
-                    <div className="lesson-actions">
-                      <button onClick={() => setLessonToEdit(lesson)}>
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick("lesson", lesson.id)}
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div className="form-row" style={{ marginTop: "15px" }}>
-                <button
-                  className="form-button"
-                  onClick={() => openAddLessonModal(module.id)}
-                >
-                  + Adicionar Aula
-                </button>
-              </div>
-            </div>
-          ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleModuleDragEnd}
+          >
+            <SortableContext
+              items={modules.map((m) => m.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {modules.map((module) => (
+                <SortableModuleItem
+                  key={module.id}
+                  module={module}
+                  setModules={setModules}
+                  onDeleteModule={(id) => handleDeleteClick("module", id)}
+                  onAddLesson={openAddLessonModal}
+                  onEditLesson={setLessonToEdit}
+                  onDeleteLesson={(id) => handleDeleteClick("lesson", id)}
+                  onLessonOrderChange={handleLessonOrderChange}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
       <Footer />
