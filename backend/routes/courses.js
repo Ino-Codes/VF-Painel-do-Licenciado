@@ -267,9 +267,18 @@ module.exports = function (pool, cloudinary, upload) {
   // SUBSTITUA A SUA ROTA DE CERTIFICADO ANTIGA POR ESTA
   router.get("/:courseId/certificate", checkLoggedIn, async (req, res) => {
     const { courseId } = req.params;
-    const { id: userId, nome: userName } = req.user;
+    const { id: userId } = req.user;
 
     try {
+      const userResult = await pool.query(
+        "SELECT nome FROM users WHERE id = $1",
+        [userId]
+      );
+      if (userResult.rowCount === 0) {
+        return res.status(404).send("Utilizador não encontrado.");
+      }
+      const userName = userResult.rows[0].nome;
+
       // 1. A mesma verificação de progresso que você já tinha
       const progressQuery = `SELECT COUNT(DISTINCT l.id)::int AS total, COUNT(DISTINCT p.id)::int AS completed FROM courses c JOIN modules m ON m.course_id = c.id JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 WHERE c.id = $2 GROUP BY c.id`;
       const progressResult = await pool.query(progressQuery, [

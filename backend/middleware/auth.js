@@ -7,10 +7,9 @@ const isLoggedIn = (pool) => async (req, res, next) => {
   }
 
   try {
-    const userResult = await pool.query(
-      "SELECT id, role FROM users WHERE id = $1",
-      [userId]
-    );
+    const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [
+      userId,
+    ]);
     if (userResult.rowCount === 0) {
       return res.status(401).json({ error: "Usuário não encontrado." });
     }
