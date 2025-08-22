@@ -31,10 +31,8 @@ const AdminCourseEditor: React.FC = () => {
 
   const [course, setCourse] = useState<Course | null>(null);
   const [newModuleTitle, setNewModuleTitle] = useState("");
-
   const [modules, setModules] = useState<Module[]>([]);
 
-  // Atualiza o estado local 'modules' quando o 'course' for carregado da API
   useEffect(() => {
     if (course) {
       setModules(course.modules);
@@ -51,29 +49,25 @@ const AdminCourseEditor: React.FC = () => {
   const handleModuleDragEnd = (event) => {
     const { active, over } = event;
     if (active.id !== over.id) {
-      // Atualiza a ordem no estado local (feedback visual imediato)
+      let reorderedModules;
       setModules((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        reorderedModules = arrayMove(items, oldIndex, newIndex);
+        return reorderedModules;
       });
 
-      // Prepara para enviar para a API depois de um pequeno atraso
-      // para garantir que o estado seja atualizado.
-      setTimeout(() => {
-        setModules((currentModules) => {
-          const orderedModuleIds = currentModules.map((m) => m.id);
-          api
-            .put(
-              `/api/admin/courses/${courseId}/modules/order`,
-              { orderedModuleIds },
-              getAuthHeaders()
-            )
-            .then(() => toast.success("Ordem dos módulos salva!"))
-            .catch(() => toast.error("Erro ao salvar a ordem dos módulos."));
-          return currentModules;
-        });
-      }, 100);
+      if (reorderedModules) {
+        const orderedModuleIds = reorderedModules.map((m) => m.id);
+        api
+          .put(
+            `/api/admin/courses/${courseId}/modules/order`,
+            { orderedModuleIds },
+            getAuthHeaders()
+          )
+          .then(() => toast.success("Ordem dos módulos salva!"))
+          .catch(() => toast.error("Erro ao salvar a ordem dos módulos."));
+      }
     }
   };
 
@@ -90,7 +84,7 @@ const AdminCourseEditor: React.FC = () => {
       toast.success("Ordem das aulas salva!");
     } catch (err) {
       toast.error("Erro ao salvar a ordem das aulas.");
-      fetchCourseDetails(); // Recarrega para reverter a mudança visual em caso de erro
+      fetchCourseDetails();
     }
   };
 
@@ -131,7 +125,7 @@ const AdminCourseEditor: React.FC = () => {
   const handleAddModule = async () => {
     if (!newModuleTitle.trim() || !course) return;
     try {
-      const newOrder = course.modules.length + 1;
+      const newOrder = (course.modules.length || 0) + 1;
       await api.post(
         `/api/admin/courses/${course.id}/modules`,
         { title: newModuleTitle, module_order: newOrder },
@@ -158,12 +152,12 @@ const AdminCourseEditor: React.FC = () => {
         );
         toast.success("Aula atualizada com sucesso!");
       } else {
-        const module = course.modules.find((m) => m.id === activeModuleId);
+        const module = modules.find((m) => m.id === activeModuleId);
         if (!module) {
           toast.error("Módulo não encontrado para adicionar a aula.");
           return;
         }
-        const newOrder = module.lessons.length + 1;
+        const newOrder = (module.lessons.length || 0) + 1;
         const newLessonData = { ...lessonData, lesson_order: newOrder };
         await api.post(
           `/api/admin/courses/modules/${module.id}/lessons`,
@@ -270,6 +264,11 @@ const AdminCourseEditor: React.FC = () => {
             </SortableContext>
           </DndContext>
         </div>
+
+        {/* O BLOCO DE CÓDIGO ANTIGO QUE ESTAVA AQUI FOI REMOVIDO.
+            Ele estava a renderizar a lista de módulos uma segunda vez,
+            causando a duplicação na tela.
+        */}
       </div>
       <Footer />
 
