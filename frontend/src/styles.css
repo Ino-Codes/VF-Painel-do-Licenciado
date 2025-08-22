@@ -496,6 +496,37 @@ body::before {
   cursor: grabbing;
 }
 
+/* --- Estilos para a Alça de Arrasto (Drag Handle) --- */
+.drag-handle {
+  display: inline-block;
+  cursor: grab;
+  padding: 0 10px;
+  color: #999;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Ajusta o espaçamento do item da aula para acomodar a alça */
+.lesson-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Ajusta o espaçamento do cabeçalho do módulo */
+.module-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.module-header h3 {
+  flex-grow: 1; /* Faz o título ocupar o espaço restante */
+}
+
 .modules-list {
   display: flex;
   flex-direction: column;

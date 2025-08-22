@@ -3,7 +3,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Module, Lesson } from "./types.ts";
 import { SortableLessonItem } from "./SortableLessonItem.tsx";
-// Precisamos importar o DndContext e outros hooks aqui também para a lista interna de aulas
 import {
   DndContext,
   closestCenter,
@@ -26,7 +25,7 @@ interface SortableModuleItemProps {
   onEditLesson: (lesson: Lesson) => void;
   onDeleteLesson: (id: number) => void;
   onLessonOrderChange: (moduleId: number, orderedLessonIds: number[]) => void;
-  setModules: React.Dispatch<React.SetStateAction<Module[]>>; // Para atualizar o estado local
+  setModules: React.Dispatch<React.SetStateAction<Module[]>>;
 }
 
 export const SortableModuleItem: React.FC<SortableModuleItemProps> = ({
@@ -38,16 +37,19 @@ export const SortableModuleItem: React.FC<SortableModuleItemProps> = ({
   onLessonOrderChange,
   setModules,
 }) => {
-  // Configuração do dnd-kit para a lista de Módulos (externa)
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: module.id });
+  const {
+    attributes,
+    listeners, // O 'ouvinte' dos eventos de arrastar do módulo
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: module.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  // Configuração do dnd-kit para a lista de Aulas (interna)
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -59,40 +61,31 @@ export const SortableModuleItem: React.FC<SortableModuleItemProps> = ({
     const { active, over } = event;
 
     if (active.id !== over.id) {
-      // Atualiza o estado local para feedback visual imediato
       setModules((prevModules) => {
         const newModules = [...prevModules];
         const moduleIndex = newModules.findIndex((m) => m.id === module.id);
         const lessons = newModules[moduleIndex].lessons;
         const oldIndex = lessons.findIndex((l) => l.id === active.id);
         const newIndex = lessons.findIndex((l) => l.id === over.id);
-        newModules[moduleIndex].lessons = arrayMove(
-          lessons,
-          oldIndex,
-          newIndex
-        );
+        const reorderedLessons = arrayMove(lessons, oldIndex, newIndex);
+        newModules[moduleIndex].lessons = reorderedLessons;
+
+        // Envia a nova ordem para a API imediatamente após a atualização visual
+        const orderedLessonIds = reorderedLessons.map((l) => l.id);
+        onLessonOrderChange(module.id, orderedLessonIds);
+
         return newModules;
       });
-
-      // Envia a nova ordem para a API
-      const reorderedLessons = arrayMove(
-        module.lessons,
-        module.lessons.findIndex((l) => l.id === active.id),
-        module.lessons.findIndex((l) => l.id === over.id)
-      );
-      const orderedLessonIds = reorderedLessons.map((l) => l.id);
-      onLessonOrderChange(module.id, orderedLessonIds);
     }
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="module-item">
-      <div
-        className="module-header"
-        {...attributes}
-        {...listeners}
-        style={{ cursor: "grab" }}
-      >
+    <div ref={setNodeRef} style={style} {...attributes} className="module-item">
+      <div className="module-header">
+        {/* A "Alça de Arrasto" (Drag Handle) para o módulo */}
+        <span className="drag-handle" {...listeners}>
+          ⠿
+        </span>
         <h3>Módulo: {module.title}</h3>
         <button
           onClick={() => onDeleteModule(module.id)}

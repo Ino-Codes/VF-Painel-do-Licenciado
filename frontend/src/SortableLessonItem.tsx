@@ -14,25 +14,32 @@ export const SortableLessonItem: React.FC<SortableLessonItemProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: lesson.id });
+  const {
+    attributes,
+    listeners, // O 'ouvinte' dos eventos de arrastar
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: lesson.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    cursor: "grab", // Feedback visual de que é arrastável
   };
 
   return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="lesson-item"
-    >
+    // O ref, style e attributes continuam no elemento principal
+    <li ref={setNodeRef} style={style} {...attributes} className="lesson-item">
+      {/* A "Alça de Arrasto" (Drag Handle) */}
+      {/* APENAS este elemento terá os 'listeners' */}
+      <span className="drag-handle" {...listeners}>
+        ⠿
+      </span>
+
       <span>{lesson.title}</span>
+
       <div className="lesson-actions">
+        {/* Estes botões agora funcionarão no primeiro clique */}
         <button type="button" onClick={() => onEdit(lesson)}>
           Editar
         </button>
