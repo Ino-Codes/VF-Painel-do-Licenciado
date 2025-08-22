@@ -221,9 +221,10 @@ const LessonPlayer: React.FC = () => {
                       whiteSpace: "pre-wrap",
                       marginTop: activeLesson.video_url ? "25px" : "0",
                     }}
-                  >
-                    {activeLesson.text_content}
-                  </div>
+                    dangerouslySetInnerHTML={{
+                      __html: activeLesson.text_content,
+                    }}
+                  />
                 )}
                 {isLessonCompleted ? (
                   <button
