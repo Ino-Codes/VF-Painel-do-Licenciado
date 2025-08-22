@@ -9,20 +9,25 @@ import { Course, Module, Lesson } from "./types.ts";
 
 const getYoutubeEmbedUrl = (url: string): string => {
   if (!url) return "";
+
   let videoId = "";
   try {
     const urlObj = new URL(url);
-    if (urlObj.hostname === "youtu.be") {
-      videoId = urlObj.pathname.slice(1);
-    } else if (urlObj.hostname.includes("youtube.com")) {
+    if (urlObj.hostname.includes("youtube.com")) {
       videoId = urlObj.searchParams.get("v") || "";
-    } else if (urlObj.hostname.includes("https://www.youtube.com/embed/$")) {
-      return url;
+    } else if (urlObj.hostname.includes("youtu.be")) {
+      videoId = urlObj.pathname.slice(1);
     }
   } catch (e) {
-    if (!url.includes("http")) videoId = url;
+    if (!url.includes("http")) {
+      videoId = url;
+    }
   }
-  if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+
   return url;
 };
 
