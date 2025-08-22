@@ -334,43 +334,45 @@ module.exports = function (pool, cloudinary, upload) {
     }
   );
 
-  // ROTA DE UPLOAD DO MODELO DE CERTIFICADO (REESCRITA E SIMPLIFICADA)
   // SUBSTITUA A SUA ROTA DE CERTIFICADO ANTIGA POR ESTA
-  router.get("/:courseId/certificate", checkLoggedIn, async (req, res) => {
-    const { courseId } = req.params;
-    const { id: userId, nome: userName } = req.user;
+  router.get(
+    "api/admin/courses/:courseId/certificate",
+    checkLoggedIn,
+    async (req, res) => {
+      const { courseId } = req.params;
+      const { id: userId, nome: userName } = req.user;
 
-    try {
-      // 1. A mesma verificação de progresso que você já tinha
-      const progressQuery = `SELECT COUNT(DISTINCT l.id)::int AS total, COUNT(DISTINCT p.id)::int AS completed FROM courses c JOIN modules m ON m.course_id = c.id JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 WHERE c.id = $2 GROUP BY c.id`;
-      const progressResult = await pool.query(progressQuery, [
-        userId,
-        courseId,
-      ]);
+      try {
+        // 1. A mesma verificação de progresso que você já tinha
+        const progressQuery = `SELECT COUNT(DISTINCT l.id)::int AS total, COUNT(DISTINCT p.id)::int AS completed FROM courses c JOIN modules m ON m.course_id = c.id JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 WHERE c.id = $2 GROUP BY c.id`;
+        const progressResult = await pool.query(progressQuery, [
+          userId,
+          courseId,
+        ]);
 
-      if (
-        progressResult.rowCount === 0 ||
-        (progressResult.rows[0].total > 0 &&
-          progressResult.rows[0].completed < progressResult.rows[0].total)
-      ) {
-        return res.status(403).send("Curso ainda não concluído.");
-      }
+        if (
+          progressResult.rowCount === 0 ||
+          (progressResult.rows[0].total > 0 &&
+            progressResult.rows[0].completed < progressResult.rows[0].total)
+        ) {
+          return res.status(403).send("Curso ainda não concluído.");
+        }
 
-      // 2. Obter o nome do curso e a data atual
-      const courseResult = await pool.query(
-        "SELECT title FROM courses WHERE id = $1",
-        [courseId]
-      );
-      const course = courseResult.rows[0];
-      const completionDate = new Date().toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
+        // 2. Obter o nome do curso e a data atual
+        const courseResult = await pool.query(
+          "SELECT title FROM courses WHERE id = $1",
+          [courseId]
+        );
+        const course = courseResult.rows[0];
+        const completionDate = new Date().toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
 
-      // 3. O TEMPLATE HTML + CSS DO CERTIFICADO
-      // Todo o design está aqui dentro. Pode personalizar à vontade!
-      const htmlContent = `
+        // 3. O TEMPLATE HTML + CSS DO CERTIFICADO
+        // Todo o design está aqui dentro. Pode personalizar à vontade!
+        const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -444,35 +446,36 @@ module.exports = function (pool, cloudinary, upload) {
       </html>
     `;
 
-      // 4. Gerar o PDF com o Puppeteer
-      const browser = await puppeteer.launch({ headless: "new" });
-      const page = await browser.newPage();
+        // 4. Gerar o PDF com o Puppeteer
+        const browser = await puppeteer.launch({ headless: "new" });
+        const page = await browser.newPage();
 
-      // Define o conteúdo da página como o nosso HTML
-      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+        // Define o conteúdo da página como o nosso HTML
+        await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
-      // Gera o PDF a partir da página renderizada
-      const pdfBytes = await page.pdf({
-        format: "A4",
-        landscape: true, // Formato paisagem
-        printBackground: true, // MUITO IMPORTANTE para imprimir a imagem de fundo
-      });
+        // Gera o PDF a partir da página renderizada
+        const pdfBytes = await page.pdf({
+          format: "A4",
+          landscape: true, // Formato paisagem
+          printBackground: true, // MUITO IMPORTANTE para imprimir a imagem de fundo
+        });
 
-      // Fecha o navegador para libertar recursos
-      await browser.close();
+        // Fecha o navegador para libertar recursos
+        await browser.close();
 
-      // 5. Envia o PDF para o utilizador
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="certificado-${course.title}.pdf"`
-      );
-      res.send(Buffer.from(pdfBytes));
-    } catch (err) {
-      console.error("Erro ao gerar certificado:", err);
-      res.status(500).send("Erro ao gerar certificado.");
+        // 5. Envia o PDF para o utilizador
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="certificado-${course.title}.pdf"`
+        );
+        res.send(Buffer.from(pdfBytes));
+      } catch (err) {
+        console.error("Erro ao gerar certificado:", err);
+        res.status(500).send("Erro ao gerar certificado.");
+      }
     }
-  });
+  );
 
   // --- Módulos ---
   router.post("/:courseId/modules", checkAdmin, async (req, res) => {
