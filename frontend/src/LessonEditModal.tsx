@@ -1,6 +1,48 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import toast from "react-hot-toast";
 import { Lesson } from "./types.ts";
+
+// Um pequeno componente para a barra de ferramentas
+const MenuBar = ({ editor }) => {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <div className="tiptap-menu-bar">
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={editor.isActive("bold") ? "is-active" : ""}
+      >
+        Negrito
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={editor.isActive("italic") ? "is-active" : ""}
+      >
+        Itálico
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={editor.isActive("bulletList") ? "is-active" : ""}
+      >
+        Lista Pontuada
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={editor.isActive("orderedList") ? "is-active" : ""}
+      >
+        Lista Numerada
+      </button>
+    </div>
+  );
+};
 
 interface LessonEditModalProps {
   lesson: Partial<Lesson>;
@@ -15,38 +57,36 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
   onClose,
   onSave,
 }) => {
-  const [formData, setFormData] = useState({
-    title: "",
-    video_url: "",
-    text_content: "",
+  const editor = useEditor({
+    extensions: [
+      StarterKit, // Inclui as funcionalidades básicas (negrito, itálico, listas, etc.)
+    ],
+    content: lesson?.text_content || "", // Conteúdo inicial
+    editorProps: {
+      attributes: {
+        class: "tiptap-editor",
+      },
+    },
   });
 
-  useEffect(() => {
-    if (lesson) {
-      setFormData({
-        title: lesson.title || "",
-        video_url: lesson.video_url || "",
-        text_content: lesson.text_content || "",
-      });
-    }
-  }, [lesson]);
-
-  if (!lesson) return null;
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const [title, setTitle] = React.useState(lesson?.title || "");
+  const [videoUrl, setVideoUrl] = React.useState(lesson?.video_url || "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) {
+    if (!title.trim()) {
       toast.error("O título da aula é obrigatório.");
       return;
     }
-    await onSave(formData);
+
+    // Pega o conteúdo do editor em formato HTML
+    const htmlContent = editor.getHTML();
+
+    await onSave({
+      title: title,
+      video_url: videoUrl,
+      text_content: htmlContent,
+    });
   };
 
   return (
@@ -57,10 +97,9 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
           <div className="form-row">
             <input
               type="text"
-              name="title"
               placeholder="Título da Aula"
-              value={formData.title}
-              onChange={handleChange}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="form-input"
               required
             />
@@ -69,23 +108,18 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
             <label>URL do Vídeo (Opcional):</label>
             <input
               type="text"
-              name="video_url"
-              placeholder="https://www.youtube.com/watch?v=..."
-              value={formData.video_url}
-              onChange={handleChange}
+              placeholder="https://www.youtube.com/..."
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
               className="form-input"
             />
           </div>
           <div className="form-row">
             <label>Conteúdo em Texto (Opcional):</label>
-            <textarea
-              name="text_content"
-              placeholder="Escreva o conteúdo da aula aqui..."
-              value={formData.text_content}
-              onChange={handleChange}
-              className="form-input"
-              rows={8}
-            />
+            <div className="tiptap-container">
+              <MenuBar editor={editor} />
+              <EditorContent editor={editor} />
+            </div>
           </div>
           <div className="modal-actions">
             <button

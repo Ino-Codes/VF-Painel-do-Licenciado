@@ -679,6 +679,49 @@ body::before {
   margin-top: 1.5rem;
 }
 
+/* --- Editor Tiptap --- */
+
+.tiptap-container {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.tiptap-menu-bar {
+  display: flex;
+  gap: 5px;
+  padding: 8px;
+  background-color: #f1f1f1;
+  border-bottom: 1px solid #ccc;
+}
+
+.tiptap-menu-bar button {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.tiptap-menu-bar button.is-active {
+  background-color: #363950;
+  color: white;
+}
+
+.tiptap-editor {
+  padding: 15px;
+  min-height: 150px;
+  background-color: white;
+}
+
+.tiptap-editor:focus {
+  outline: none;
+}
+
+.tiptap-editor p {
+  margin: 0;
+}
+
 /* Logs de Atividade */
 .logs-table-container {
   overflow-x: auto;
