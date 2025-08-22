@@ -83,7 +83,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   router.delete("/admin/:id", async (req, res) => {
-    app.delete("/api/admin/users/:id", async (req, res) => {
+    router.delete("/api/admin/users/:id", async (req, res) => {
       const { id } = req.params;
       const client = await pool.connect();
 
@@ -135,7 +135,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   router.post("/admin/bulk-upload", upload.single("file"), async (req, res) => {
-    app.post(
+    router.post(
       "/api/admin/users/bulk-upload",
       upload.single("file"),
       async (req, res) => {
@@ -207,7 +207,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   // --- Rotas de Perfil do Usuário Logado ---
 
   router.post("/:id/avatar", upload.single("avatar"), async (req, res) => {
-    app.post(
+    router.post(
       "/api/users/:id/avatar",
       upload.single("avatar"),
       async (req, res) => {
@@ -257,7 +257,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   router.put("/:id/profile", async (req, res) => {
-    app.put("/api/users/:id/profile", async (req, res) => {
+    router.put("/api/users/:id/profile", async (req, res) => {
       const { id } = req.params;
       const { nome } = req.body;
       try {
@@ -287,7 +287,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   router.put("/:id/change-password", async (req, res) => {
-    app.put("/api/users/:id/change-password", async (req, res) => {
+    router.put("/api/users/:id/change-password", async (req, res) => {
       const { id } = req.params;
       const { currentPassword, newPassword } = req.body;
       try {
@@ -324,7 +324,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   router.delete("/:id/avatar", async (req, res) => {
-    app.delete("/api/users/:id/avatar", async (req, res) => {
+    router.delete("/api/users/:id/avatar", async (req, res) => {
       const { id } = req.params;
       try {
         const userResult = await pool.query(
