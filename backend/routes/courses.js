@@ -371,8 +371,7 @@ module.exports = function (pool, cloudinary, upload) {
             <h1>Certificado de Conclusão</h1>
             <p>Este certificado é concedido a</p>
             <div class="student-name">${userName}</div>
-            <p>pela conclusão bem-sucedida da Trilha de Conhecimento</p>
-            <h2>${course.title}</h2>
+            <p>pela conclusão bem-sucedida da Trilha de Conhecimento <strong>${course.title}</strong></p>
             <div class="footer">
               <p>Concluído em ${completionDate}</p>
             </div>
