@@ -121,6 +121,43 @@ const LessonPlayer: React.FC = () => {
     }
   };
 
+  const handleGenerateCertificate = async () => {
+    if (!course) return;
+
+    toast.loading("A gerar o seu certificado..."); // Feedback para o utilizador
+
+    try {
+      // 1. Fazer o pedido com axios, esperando um 'blob' (ficheiro) como resposta
+      const response = await api.get(
+        `/api/admin/courses/${course.id}/certificate`,
+        {
+          ...getAuthHeaders(), // Garante que a autenticação é enviada
+          responseType: "blob", // MUITO IMPORTANTE: diz ao axios para tratar a resposta como um ficheiro
+        }
+      );
+
+      toast.dismiss(); // Remove a mensagem de "loading"
+
+      // 2. Criar um URL temporário para o ficheiro recebido
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      // 3. Criar um link temporário, clicar nele para iniciar o download e depois removê-lo
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `certificado-${course.title}.pdf`); // Nome do ficheiro
+      document.body.appendChild(link);
+      link.click();
+
+      // Limpar
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Não foi possível gerar o certificado. Tente novamente.");
+      console.error("Erro ao gerar certificado:", err);
+    }
+  };
+
   if (loading || !course) {
     return <div className="tela-loading">Carregando sala de aula...</div>;
   }
@@ -155,14 +192,9 @@ const LessonPlayer: React.FC = () => {
         {isCourseCompleted && (
           <div className="certificate-banner">
             <p>Parabéns, você concluiu esta trilha!</p>
-            <a
-              href={`${baseURL}/api/admin/courses/${course.id}/certificate`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="form-button"
-            >
+            <button onClick={handleGenerateCertificate} className="form-button">
               Gerar Certificado
-            </a>
+            </button>
           </div>
         )}
 
