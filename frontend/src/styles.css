@@ -1,10 +1,25 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 
-/* Paleta de cores
+/*
+Paleta de cores sistema:
 menu hover: #363950
 menu active: #4b4f6c
 verde: #04a146
-vermelho: #c82333 */
+vermelho: #c82333 
+
+Paleta de cores VF fundo claro:
+cinza claro: #2D2C2B
+cinza escuro: #0D0D0D
+dourado claro: #E7D26E
+dourado escuro: #866225
+
+Paleta de cores VF fundo escuro:
+branco: #FFFFFF
+cinza: #DBDBDB
+dourado claro: #E7D26E
+dourado escuro: #866225
+
+*/
 
 * {
   box-sizing: border-box;

@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
-// CORREÇÃO: Importação do node-fetch para compatibilidade com CommonJS
+const puppeteer = require("puppeteer");
+
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require("path");
@@ -334,40 +335,144 @@ module.exports = function (pool, cloudinary, upload) {
   );
 
   // ROTA DE UPLOAD DO MODELO DE CERTIFICADO (REESCRITA E SIMPLIFICADA)
-  router.post(
-    "/:courseId/certificate-template",
-    checkAdmin,
-    upload.single("template"),
-    async (req, res) => {
-      const { courseId } = req.params;
-      if (!req.file) {
-        return res
-          .status(400)
-          .json({ error: "Nenhum arquivo de imagem enviado." });
-      }
-      try {
-        const uploadResult = await new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ resource_type: "image" }, (error, result) => {
-              if (error) reject(error);
-              resolve(result);
-            })
-            .end(req.file.buffer);
-        });
+  // SUBSTITUA A SUA ROTA DE CERTIFICADO ANTIGA POR ESTA
+  router.get("/:courseId/certificate", checkLoggedIn, async (req, res) => {
+    const { courseId } = req.params;
+    const { id: userId, nome: userName } = req.user;
 
-        const newTemplateUrl = uploadResult.secure_url;
-        await pool.query(
-          "UPDATE courses SET certificate_template_url = $1 WHERE id = $2",
-          [newTemplateUrl, courseId]
-        );
+    try {
+      // 1. A mesma verificação de progresso que você já tinha
+      const progressQuery = `SELECT COUNT(DISTINCT l.id)::int AS total, COUNT(DISTINCT p.id)::int AS completed FROM courses c JOIN modules m ON m.course_id = c.id JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 WHERE c.id = $2 GROUP BY c.id`;
+      const progressResult = await pool.query(progressQuery, [
+        userId,
+        courseId,
+      ]);
 
-        res.json({ success: true, thumbnailUrl: newTemplateUrl });
-      } catch (err) {
-        console.error("Erro no upload da thumbnail:", err);
-        res.status(500).json({ error: "Erro no servidor durante o upload." });
+      if (
+        progressResult.rowCount === 0 ||
+        (progressResult.rows[0].total > 0 &&
+          progressResult.rows[0].completed < progressResult.rows[0].total)
+      ) {
+        return res.status(403).send("Curso ainda não concluído.");
       }
+
+      // 2. Obter o nome do curso e a data atual
+      const courseResult = await pool.query(
+        "SELECT title FROM courses WHERE id = $1",
+        [courseId]
+      );
+      const course = courseResult.rows[0];
+      const completionDate = new Date().toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+
+      // 3. O TEMPLATE HTML + CSS DO CERTIFICADO
+      // Todo o design está aqui dentro. Pode personalizar à vontade!
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Certificado de Conclusão</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&display=swap');
+          
+          body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+          }
+          .certificate-wrapper {
+            width: 1123px; /* Largura para A4 paisagem a 96dpi */
+            height: 794px; /* Altura para A4 paisagem a 96dpi */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            box-sizing: border-box;
+            background-color: #f7f7f7;
+            /* IMAGEM DE FUNDO - Troque pela URL da sua imagem base */
+            background-image: url('https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png');
+            background-size: cover;
+            background-position: center;
+          }
+          .certificate-content {
+            text-align: center;
+            color: #333;
+          }
+          h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 52px;
+            color: #1a237e;
+            margin-bottom: 40px;
+          }
+          .student-name {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 40px;
+            color: #daa520;
+            margin: 60px 0;
+          }
+          p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin: 20px 0;
+          }
+          .footer {
+            margin-top: 80px;
+            font-size: 14px;
+            color: #555;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="certificate-wrapper">
+          <div class="certificate-content">
+            <h1>Certificado de Conclusão</h1>
+            <p>Este certificado é concedido a</p>
+            <div class="student-name">${userName}</div>
+            <p>pela conclusão bem-sucedida da Trilha de Conhecimento</p>
+            <h2>"${course.title}"</h2>
+            <div class="footer">
+              <p>Concluído em ${completionDate}</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+      // 4. Gerar o PDF com o Puppeteer
+      const browser = await puppeteer.launch({ headless: "new" });
+      const page = await browser.newPage();
+
+      // Define o conteúdo da página como o nosso HTML
+      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
+      // Gera o PDF a partir da página renderizada
+      const pdfBytes = await page.pdf({
+        format: "A4",
+        landscape: true, // Formato paisagem
+        printBackground: true, // MUITO IMPORTANTE para imprimir a imagem de fundo
+      });
+
+      // Fecha o navegador para libertar recursos
+      await browser.close();
+
+      // 5. Envia o PDF para o utilizador
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="certificado-${course.title}.pdf"`
+      );
+      res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+      console.error("Erro ao gerar certificado:", err);
+      res.status(500).send("Erro ao gerar certificado.");
     }
-  );
+  });
 
   // --- Módulos ---
   router.post("/:courseId/modules", checkAdmin, async (req, res) => {
