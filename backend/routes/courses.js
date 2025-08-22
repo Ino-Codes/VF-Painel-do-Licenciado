@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
-const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 const puppeteer = require("puppeteer");
 
 const fetch = (...args) =>
