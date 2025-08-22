@@ -342,14 +342,14 @@ module.exports = function (pool, cloudinary, upload) {
           }
           h1 {
             font-family: 'Playfair Display', serif;
-            font-size: 52px;
+            font-size: 48px;
             color: #2D2C2B;
             margin-bottom: 40px;
           }
           .student-name {
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
-            font-size: 40px;
+            font-size: 38px;
             color: #daa520;
             margin: 30px 0;
           }
@@ -361,7 +361,7 @@ module.exports = function (pool, cloudinary, upload) {
           .footer {
             margin-top: 80px;
             font-size: 14px;
-            color: #555;
+            color: #2d2d2d;
           }
         </style>
       </head>
