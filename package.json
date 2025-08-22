@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "@vercel/speed-insights": "^1.2.0",
-    "pdf-lib": "^1.17.1",
     "puppeteer": "^24.17.0",
     "react-beautiful-dnd": "^13.1.1"
   },
