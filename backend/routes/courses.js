@@ -331,7 +331,6 @@ module.exports = function (pool, cloudinary, upload) {
             padding: 40px;
             box-sizing: border-box;
             background-color: #f7f7f7;
-            /* IMAGEM DE FUNDO - Troque pela URL da sua imagem base */
             background-image: url('https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png');
             background-size: cover;
             background-position: center;
