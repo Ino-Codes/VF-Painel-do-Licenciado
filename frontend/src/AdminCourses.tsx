@@ -239,45 +239,6 @@ const AdminCourses: React.FC = () => {
                 </div>
               )}
             </div>
-
-            <div
-              className="admin-form"
-              style={{
-                marginTop: "20px",
-                borderTop: "2px solid #f0f0f0",
-                paddingTop: "20px",
-              }}
-            >
-              <h3>Modelo do Certificado (PNG)</h3>
-              <div className="form-row">
-                <input
-                  type="file"
-                  accept="image/png, image/jpeg"
-                  onChange={(e) =>
-                    e.target.files &&
-                    setCertificateTemplateFile(e.target.files[0])
-                  }
-                />
-                <button
-                  className="form-button"
-                  type="button"
-                  onClick={handleTemplateUpload}
-                  disabled={!certificateTemplateFile}
-                >
-                  Salvar Modelo
-                </button>
-              </div>
-              {editingCourse.certificate_template_url && (
-                <div>
-                  <p>Modelo Atual:</p>
-                  <img
-                    src={editingCourse.certificate_template_url}
-                    alt="Modelo do certificado"
-                    style={{ maxWidth: "200px", border: "1px solid #ccc" }}
-                  />
-                </div>
-              )}
-            </div>
           </>
         )}
 
