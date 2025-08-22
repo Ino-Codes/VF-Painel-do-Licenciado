@@ -375,7 +375,10 @@ module.exports = function (pool, cloudinary, upload) {
     `;
 
       // 4. Gerar o PDF com o Puppeteer
-      const browser = await puppeteer.launch({ headless: "new" });
+      const browser = await puppeteer.launch({
+        headless: "new",
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
       const page = await browser.newPage();
 
       // Define o conteúdo da página como o nosso HTML
