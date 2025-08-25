@@ -7,6 +7,8 @@ import FaqModal from "./FaqModal.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import { useNavigate } from "react-router-dom";
+import EmptyState from "./EmptyState.tsx";
+import EmptyFaqImage from "./assets/images/empty_faq.svg";
 
 interface FaqData {
   id: number;
@@ -156,44 +158,61 @@ const Faq: React.FC = () => {
         </div>
 
         <div className="faq-list">
-          {faqs.map((faq) => (
-            <div key={faq.id} className="faq-item">
-              <button
-                className="faq-question"
-                onClick={() => toggleAccordion(faq.id)}
-              >
-                <span>{faq.question}</span>
-                <span className="faq-toggle">
-                  {activeAccordion === faq.id ? "-" : "+"}
-                </span>
-              </button>
-              {activeAccordion === faq.id && (
-                <div className="faq-answer">
-                  <p>{faq.answer}</p>
-                  {faq.document_url && (
-                    <a
-                      href={`${baseURL}/api/faq/download/${faq.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="faq-document-link"
-                    >
-                      Baixar Documento: {faq.document_originalname}
-                    </a>
-                  )}
-                  {user.role === "admin" && (
-                    <div className="faq-actions">
-                      <button
-                        className="list-button delete"
-                        onClick={() => handleDeleteClick(faq.id)}
+          {!loading && faqs.length > 0 ? (
+            faqs.map((faq) => (
+              <div key={faq.id} className="faq-item">
+                <button
+                  className="faq-question"
+                  onClick={() => toggleAccordion(faq.id)}
+                >
+                  <span>{faq.question}</span>
+                  <span className="faq-toggle">
+                    {activeAccordion === faq.id ? "-" : "+"}
+                  </span>
+                </button>
+                {activeAccordion === faq.id && (
+                  <div className="faq-answer">
+                    <p>{faq.answer}</p>
+                    {faq.document_url && (
+                      <a
+                        href={`${baseURL}/api/faq/download/${faq.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="faq-document-link"
                       >
-                        Excluir
-                      </button>
-                    </div>
-                  )}
-                </div>
+                        Baixar Documento: {faq.document_originalname}
+                      </a>
+                    )}
+                    {user.role === "admin" && (
+                      <div className="faq-actions">
+                        <button
+                          className="list-button delete"
+                          onClick={() => handleDeleteClick(faq.id)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <EmptyState
+              image={EmptyFaqImage}
+              title="Nenhuma Pergunta Encontrada"
+              message="Não encontrámos perguntas que correspondam à sua busca. Se for um administrador, pode adicionar uma nova pergunta."
+            >
+              {user.role === "admin" && (
+                <button
+                  className="form-button"
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  + Adicionar Pergunta
+                </button>
               )}
-            </div>
-          ))}
+            </EmptyState>
+          )}
         </div>
 
         {totalPages > 1 && (

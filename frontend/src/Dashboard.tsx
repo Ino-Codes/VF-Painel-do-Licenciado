@@ -222,7 +222,7 @@ const Dashboard: React.FC = () => {
           <h3>Relatórios</h3>
           <EmptyState
             image={EmptyDashsImage}
-            title="Gráficos e relatórios serão exibidos aqui futuramente."
+            title="Estamos desenvolvendo gráficos e relatórios que serão exibidos aqui futuramente."
           ></EmptyState>
         </div>
       </div>
