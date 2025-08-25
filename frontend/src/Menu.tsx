@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.tsx";
 
@@ -8,7 +8,31 @@ const Menu: React.FC = () => {
     "https://res.cloudinary.com/dsgbgrll5/image/upload/v1753972686/imagem-do-usuario-com-fundo-preto_1_y0ulj0.png";
   const logo =
     "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // --- LÓGICA DO DROPDOWN DE ADMIN ---
+  const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Efeito para fechar o dropdown se o utilizador clicar fora dele
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setAdminDropdownOpen(false);
+      }
+    };
+    // Adiciona o 'ouvinte' de eventos
+    document.addEventListener("mousedown", handleClickOutside);
+    // Limpa o 'ouvinte' quando o componente é desmontado
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
+  // --- FIM DA LÓGICA DO DROPDOWN ---
 
   return (
     <nav className="main-menu">
@@ -26,78 +50,84 @@ const Menu: React.FC = () => {
 
         <NavLink
           to="/dashboard"
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
+          className="menu-item"
           onClick={() => setIsMenuOpen(false)}
         >
           Dashboard
         </NavLink>
-
         <NavLink
           to="/documentos"
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
+          className="menu-item"
           onClick={() => setIsMenuOpen(false)}
         >
           Documentos
         </NavLink>
-
         <NavLink
           to="/videos"
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
+          className="menu-item"
+          onClick={() => setIsMenuOpen(false)}
         >
           Vídeos
         </NavLink>
-
         <NavLink
           to="/courses"
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
+          className="menu-item"
+          onClick={() => setIsMenuOpen(false)}
         >
           Cursos
         </NavLink>
-
         <NavLink
           to="/faq"
-          className={({ isActive }) =>
-            isActive ? "menu-item active" : "menu-item"
-          }
+          className="menu-item"
+          onClick={() => setIsMenuOpen(false)}
         >
           FAQ
         </NavLink>
 
+        {/* --- NOVO MENU DROPDOWN DE ADMINISTRAÇÃO --- */}
         {user && user.role === "admin" && (
-          <>
-            <NavLink
-              to="/admin/users"
-              className={({ isActive }) =>
-                isActive ? "menu-item active" : "menu-item"
-              }
+          <div className="dropdown-menu" ref={dropdownRef}>
+            <button
+              className="menu-item dropdown-trigger"
+              onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
             >
-              🔒 Usuários
-            </NavLink>
-            <NavLink
-              to="/admin/courses"
-              className={({ isActive }) =>
-                isActive ? "menu-item active" : "menu-item"
-              }
-            >
-              🔒 Cursos
-            </NavLink>
-            <NavLink
-              to="/admin/logs"
-              className={({ isActive }) =>
-                isActive ? "menu-item active" : "menu-item"
-              }
-            >
-              🔒 Logs
-            </NavLink>
-          </>
+              🔒 Administração
+            </button>
+            {isAdminDropdownOpen && (
+              <div className="dropdown-content">
+                <NavLink
+                  to="/admin/users"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Usuários
+                </NavLink>
+                <NavLink
+                  to="/admin/courses"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Cursos
+                </NavLink>
+                <NavLink
+                  to="/admin/logs"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Logs
+                </NavLink>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
