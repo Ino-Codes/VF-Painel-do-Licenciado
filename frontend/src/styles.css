@@ -334,7 +334,6 @@ body::before {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200px;
   padding: 20px;
   text-align: center;
   color: #6c757d;
