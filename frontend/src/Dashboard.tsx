@@ -130,10 +130,9 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
 
+        <h3>Mural de Avisos</h3>
         <div className="dashboard-grid">
           <div className="notice-board">
-            <h3>Mural de Avisos</h3>
-
             {user.role === "admin" && (
               <div className="notice-form">
                 <textarea
@@ -215,6 +214,16 @@ const Dashboard: React.FC = () => {
                 title="Não há avisos no momento."
               ></EmptyState>
             )}
+          </div>
+        </div>
+
+        <div className="placeholder-column">
+          <h3>Relatórios</h3>
+          <div className="placeholder-content">
+            <EmptyState
+              image={EmptyDashsImage}
+              title="Gráficos e relatórios serão exibidos aqui futuramente."
+            ></EmptyState>
           </div>
         </div>
       </div>
