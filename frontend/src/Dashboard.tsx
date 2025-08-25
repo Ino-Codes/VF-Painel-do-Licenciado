@@ -223,7 +223,10 @@ const Dashboard: React.FC = () => {
           <div className="placeholder-column">
             <h3>Relatórios</h3>
             <div className="placeholder-content">
-              <span>Gráficos e relatórios serão exibidos aqui em breve.</span>
+              <EmptyState
+                image={EmptyDashsImage}
+                title="Gráficos e relatórios serão exibidos aqui futuramente."
+              ></EmptyState>
             </div>
           </div>
         </div>
