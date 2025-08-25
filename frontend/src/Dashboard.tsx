@@ -120,7 +120,7 @@ const Dashboard: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <div className="dashboard-elements">
+        <div className="dashboard-header">
           <h2>Bem-vindo, {user.nome}!</h2>
           <p>
             Este é o seu novo Painel da Valor Fiscal!
@@ -146,9 +146,7 @@ const Dashboard: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
 
-        <div className="dashboard-elements">
           <div className="notice-list">
             {notices.length > 0 ? (
               notices.map((notice) => (

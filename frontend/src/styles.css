@@ -249,8 +249,19 @@ body::before {
 }
 
 /* Dashboard */
+.dashboard-header h2 {
+  margin: 0;
+}
+
+.dashboard-header p {
+  margin: 5px 0 0;
+  color: #6c757d;
+}
+
 .dashboard-elements {
+  margin-top: 25px;
   margin-bottom: 25px;
+  border-top: 1px solid #e9ecef;
 }
 
 .dashboard-elements h2 {
