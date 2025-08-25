@@ -200,18 +200,9 @@ const Faq: React.FC = () => {
           ) : (
             <EmptyState
               image={EmptyFaqImage}
-              title="Nenhuma Pergunta Encontrada"
+              title="Estamos Adicionando Perguntas ao FAQ"
               message="Não encontrámos perguntas que correspondam à sua busca. Se for um administrador, pode adicionar uma nova pergunta."
-            >
-              {user.role === "admin" && (
-                <button
-                  className="form-button"
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  + Adicionar Pergunta
-                </button>
-              )}
-            </EmptyState>
+            ></EmptyState>
           )}
         </div>
 
