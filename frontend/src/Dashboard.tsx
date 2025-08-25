@@ -131,90 +131,90 @@ const Dashboard: React.FC = () => {
         </div>
 
         <h3>Mural de Avisos</h3>
-        <div className="dashboard-grid">
-          <div className="notice-board">
-            {user.role === "admin" && (
-              <div className="notice-form">
-                <textarea
-                  placeholder="Digite seu novo aviso aqui..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                />
-                <button className="form-button" onClick={handlePostNotice}>
-                  Postar Aviso
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="notice-list">
-            {notices.length > 0 ? (
-              notices.map((notice) => (
-                <div key={notice.id} className="notice-card">
-                  {editingNoticeId === notice.id ? (
-                    <div className="notice-edit-form">
-                      <textarea
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                      />
-                      <div className="notice-actions">
-                        <button
-                          className="list-button"
-                          onClick={() => setEditingNoticeId(null)}
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          className="list-button edit"
-                          onClick={() => handleUpdateNotice(notice.id)}
-                        >
-                          Salvar
-                        </button>
-                      </div>
+
+        <div className="notice-board">
+          {user.role === "admin" && (
+            <div className="notice-form">
+              <textarea
+                placeholder="Digite seu novo aviso aqui..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+              />
+              <button className="form-button" onClick={handlePostNotice}>
+                Postar Aviso
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="notice-list">
+          {notices.length > 0 ? (
+            notices.map((notice) => (
+              <div key={notice.id} className="notice-card">
+                {editingNoticeId === notice.id ? (
+                  <div className="notice-edit-form">
+                    <textarea
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                    />
+                    <div className="notice-actions">
+                      <button
+                        className="list-button"
+                        onClick={() => setEditingNoticeId(null)}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        className="list-button edit"
+                        onClick={() => handleUpdateNotice(notice.id)}
+                      >
+                        Salvar
+                      </button>
                     </div>
-                  ) : (
-                    <>
-                      <p>{notice.message}</p>
-                      <div className="notice-footer">
-                        <small>
-                          {new Date(notice.created_at).toLocaleDateString(
-                            "pt-BR",
-                            {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                        </small>
-                        {user.role === "admin" && (
-                          <div className="notice-actions">
-                            <button
-                              className="list-button edit"
-                              onClick={() => handleEditNotice(notice)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              className="list-button delete"
-                              onClick={() => handleDeleteNoticeClick(notice.id)}
-                            >
-                              Excluir
-                            </button>
-                          </div>
+                  </div>
+                ) : (
+                  <>
+                    <p>{notice.message}</p>
+                    <div className="notice-footer">
+                      <small>
+                        {new Date(notice.created_at).toLocaleDateString(
+                          "pt-BR",
+                          {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
                         )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))
-            ) : (
-              <EmptyState
-                image={EmptyAvisosImage}
-                title="Não há avisos no momento."
-              ></EmptyState>
-            )}
-          </div>
+                      </small>
+                      {user.role === "admin" && (
+                        <div className="notice-actions">
+                          <button
+                            className="list-button edit"
+                            onClick={() => handleEditNotice(notice)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            className="list-button delete"
+                            onClick={() => handleDeleteNoticeClick(notice.id)}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            ))
+          ) : (
+            <EmptyState
+              image={EmptyAvisosImage}
+              title="Não há avisos no momento."
+            ></EmptyState>
+          )}
         </div>
 
         <div className="placeholder-column">
