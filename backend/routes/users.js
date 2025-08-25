@@ -83,55 +83,49 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   router.delete("/admin/:id", async (req, res) => {
-    router.delete("/api/admin/users/:id", async (req, res) => {
-      const { id } = req.params;
-      const client = await pool.connect();
+    const { id } = req.params;
+    const client = await pool.connect();
 
-      try {
-        await client.query("BEGIN");
+    try {
+      await client.query("BEGIN");
 
-        const userResult = await client.query(
-          "SELECT email FROM users WHERE id = $1",
-          [id]
-        );
-        if (userResult.rowCount === 0) {
-          await client.query("ROLLBACK");
-          client.release();
-          return res.status(404).json({ error: "Usuário não encontrado." });
-        }
-        const userEmail = userResult.rows[0].email;
-
-        await client.query(
-          "UPDATE activity_logs SET user_id = NULL WHERE user_id = $1",
-          [id]
-        );
-
-        await client.query("DELETE FROM users WHERE id = $1", [id]);
-
-        const logSql =
-          "INSERT INTO activity_logs (user_id, user_email, action, details, ip_address) VALUES ($1, $2, $3, $4, $5)";
-        const logValues = [
-          null,
-          userEmail,
-          "DELETE_USER",
-          `Usuário ${userEmail} (ID: ${id}) foi excluído.`,
-          req.ipAddress,
-        ];
-        await client.query(logSql, logValues);
-
-        await client.query("COMMIT");
-
-        res.json({ success: true, message: "Usuário excluído com sucesso." });
-      } catch (err) {
+      const userResult = await client.query(
+        "SELECT email FROM users WHERE id = $1",
+        [id]
+      );
+      if (userResult.rowCount === 0) {
         await client.query("ROLLBACK");
-        console.error("Erro ao excluir usuário:", err);
-        res
-          .status(500)
-          .json({ error: "Erro no servidor ao tentar excluir usuário." });
-      } finally {
-        client.release();
+        return res.status(404).json({ error: "Usuário não encontrado." });
       }
-    });
+      const userEmail = userResult.rows[0].email;
+
+      await client.query(
+        "UPDATE activity_logs SET user_id = NULL WHERE user_id = $1",
+        [id]
+      );
+
+      await client.query("DELETE FROM users WHERE id = $1", [id]);
+
+      logActivity(
+        null,
+        userEmail,
+        "DELETE_USER",
+        `Usuário ${userEmail} (ID: ${id}) foi excluído.`,
+        req.ipAddress
+      );
+
+      await client.query("COMMIT");
+
+      res.json({ success: true, message: "Usuário excluído com sucesso." });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error("Erro ao excluir usuário:", err);
+      res
+        .status(500)
+        .json({ error: "Erro no servidor ao tentar excluir usuário." });
+    } finally {
+      client.release();
+    }
   });
 
   router.post("/admin/bulk-upload", upload.single("file"), async (req, res) => {
