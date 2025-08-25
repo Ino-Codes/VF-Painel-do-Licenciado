@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@vercel/speed-insights": "^1.2.0",
+    "jsdom": "^26.1.0",
     "puppeteer": "^24.17.0",
     "react-beautiful-dnd": "^13.1.1"
   },
