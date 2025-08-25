@@ -6,6 +6,7 @@ import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import { Course, Module, Lesson } from "./types.ts";
+import LoadingSpinner from "./LoadingSpinner.tsx";
 
 const getYoutubeEmbedUrl = (url: string): string => {
   if (!url) return "";
@@ -159,7 +160,7 @@ const LessonPlayer: React.FC = () => {
   };
 
   if (loading || !course) {
-    return <div className="tela-loading">Carregando sala de aula...</div>;
+    return <LoadingSpinner />;
   }
 
   const totalLessons = course.modules.reduce(
