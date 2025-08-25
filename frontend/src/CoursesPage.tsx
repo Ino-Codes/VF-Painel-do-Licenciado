@@ -6,6 +6,8 @@ import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner.tsx";
+import EmptyState from "./EmptyState.tsx";
+import EmptyAvisosImage from "./assets/images/empty_cursos.svg";
 
 interface Course {
   id: number;
@@ -98,7 +100,10 @@ const CoursesPage: React.FC = () => {
               );
             })
           ) : (
-            <p>Nenhuma trilha de conhecimento disponível no momento.</p>
+            <EmptyState
+              image={EmptyAvisosImage}
+              title="Nenhum curso disponível no momento. Retorne em breve."
+            ></EmptyState>
           )}
         </div>
       </div>
