@@ -67,43 +67,46 @@ const CoursesPage: React.FC = () => {
         <div className="document-header">
           <h2>Trilhas de Conhecimento</h2>
         </div>
-        <div className="courses-grid">
+        <div className="courses">
           {courses.length > 0 ? (
             courses.map((course) => {
               const isCourseCompleted =
                 course.total_lessons > 0 &&
                 course.completed_lessons >= course.total_lessons;
-
               return (
-                <div
-                  key={course.id}
-                  className="course-card"
-                  onClick={() => handleCourseClick(course.id)}
-                >
-                  <div className="course-card-thumbnail">
-                    <img
-                      src={
-                        course.thumbnail_url ||
-                        "https://via.placeholder.com/400x225.png?text=Trilha"
-                      }
-                      alt={course.title}
-                    />
-                    {isCourseCompleted && (
-                      <div className="completion-badge">✓</div>
-                    )}
-                  </div>
-                  <div className="course-card-content">
-                    <h3>{course.title}</h3>
-                    <p>{course.description}</p>
+                <div className="courses-grid">
+                  <div
+                    key={course.id}
+                    className="course-card"
+                    onClick={() => handleCourseClick(course.id)}
+                  >
+                    <div className="course-card-thumbnail">
+                      <img
+                        src={
+                          course.thumbnail_url ||
+                          "https://via.placeholder.com/400x225.png?text=Trilha"
+                        }
+                        alt={course.title}
+                      />
+                      {isCourseCompleted && (
+                        <div className="completion-badge">✓</div>
+                      )}
+                    </div>
+                    <div className="course-card-content">
+                      <h3>{course.title}</h3>
+                      <p>{course.description}</p>
+                    </div>
                   </div>
                 </div>
               );
             })
           ) : (
-            <EmptyState
-              image={EmptyAvisosImage}
-              title="Nenhum curso disponível no momento. Retorne em breve."
-            ></EmptyState>
+            <div className="empty-state">
+              <EmptyState
+                image={EmptyAvisosImage}
+                title="Nenhum curso disponível no momento. Retorne em breve."
+              ></EmptyState>
+            </div>
           )}
         </div>
       </div>
