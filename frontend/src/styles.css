@@ -249,23 +249,17 @@ body::before {
 }
 
 /* Dashboard */
-.dashboard-header {
+.dashboard-elements {
   margin-bottom: 25px;
 }
 
-.dashboard-header h2 {
+.dashboard-elements h2 {
   margin: 0;
 }
 
-.dashboard-header p {
+.dashboard-elements p {
   margin: 5px 0 0;
   color: #6c757d;
-}
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
 }
 
 .notice-board h3 {
