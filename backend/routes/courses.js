@@ -2,9 +2,11 @@ const express = require("express");
 const router = express.Router();
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 const puppeteer = require("puppeteer");
+const { JSDOM } = require("jsdom");
+const createDOMPurify = require("dompurify");
+const window = new JSDOM("").window;
+const DOMPurify = createDOMPurify(window);
 
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require("path");
 
 module.exports = function (pool, cloudinary, upload) {
@@ -264,7 +266,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   );
 
-  // SUBSTITUA A SUA ROTA DE CERTIFICADO ANTIGA POR ESTA
   router.get("/:courseId/certificate", checkLoggedIn, async (req, res) => {
     const { courseId } = req.params;
     const { id: userId } = req.user;
@@ -279,7 +280,6 @@ module.exports = function (pool, cloudinary, upload) {
       }
       const userName = userResult.rows[0].nome;
 
-      // 1. A mesma verificação de progresso que você já tinha
       const progressQuery = `SELECT COUNT(DISTINCT l.id)::int AS total, COUNT(DISTINCT p.id)::int AS completed FROM courses c JOIN modules m ON m.course_id = c.id JOIN lessons l ON l.module_id = m.id LEFT JOIN progress p ON p.lesson_id = l.id AND p.user_id = $1 WHERE c.id = $2 GROUP BY c.id`;
       const progressResult = await pool.query(progressQuery, [
         userId,
@@ -294,9 +294,8 @@ module.exports = function (pool, cloudinary, upload) {
         return res.status(403).send("Curso ainda não concluído.");
       }
 
-      // 2. Obter o nome do curso e a data atual
       const courseResult = await pool.query(
-        "SELECT title FROM courses WHERE id = $1",
+        "SELECT title, certificate_template_url FROM courses WHERE id = $1",
         [courseId]
       );
       const course = courseResult.rows[0];
@@ -306,8 +305,7 @@ module.exports = function (pool, cloudinary, upload) {
         year: "numeric",
       });
 
-      // 3. O TEMPLATE HTML + CSS DO CERTIFICADO
-      // Todo o design está aqui dentro. Pode personalizar à vontade!
+      // TEMPLATE HTML + CSS DO CERTIFICADO
       const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -331,7 +329,10 @@ module.exports = function (pool, cloudinary, upload) {
             padding: 40px;
             box-sizing: border-box;
             background-color: #f7f7f7;
-            background-image: url('https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png');
+            background-image: url('${
+              course.certificate_template_url ||
+              "https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png"
+            }');
             background-size: cover;
             background-position: center;
           }
@@ -370,7 +371,9 @@ module.exports = function (pool, cloudinary, upload) {
             <h1>Certificado de Conclusão</h1>
             <p>Este certificado é concedido a</p>
             <div class="student-name">${userName}</div>
-            <p>pela conclusão bem-sucedida da Trilha de Conhecimento <strong>${course.title}</strong></p>
+            <p>pela conclusão bem-sucedida da Trilha de Conhecimento <strong>${
+              course.title
+            }</strong></p>
             <div class="footer">
               <p>Concluído em ${completionDate}</p>
             </div>
@@ -380,27 +383,27 @@ module.exports = function (pool, cloudinary, upload) {
       </html>
     `;
 
-      // 4. Gerar o PDF com o Puppeteer
+      // Gera o PDF com o Puppeteer
       const browser = await puppeteer.launch({
         headless: "new",
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
       const page = await browser.newPage();
 
-      // Define o conteúdo da página como o nosso HTML
+      // Define o conteúdo da página como o HTML
       await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
       // Gera o PDF a partir da página renderizada
       const pdfBytes = await page.pdf({
         format: "A4",
-        landscape: true, // Formato paisagem
-        printBackground: true, // MUITO IMPORTANTE para imprimir a imagem de fundo
+        landscape: true,
+        printBackground: true,
       });
 
-      // Fecha o navegador para libertar recursos
+      // Fecha o navegador para liberar recursos
       await browser.close();
 
-      // 5. Envia o PDF para o utilizador
+      // Envia o PDF para o utilizador
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
@@ -466,6 +469,9 @@ module.exports = function (pool, cloudinary, upload) {
   router.post("/modules/:moduleId/lessons", checkAdmin, async (req, res) => {
     const { moduleId } = req.params;
     const { title, video_url, text_content, lesson_order } = req.body;
+
+    const clean_text_content = DOMPurify.sanitize(text_content);
+
     try {
       const result = await pool.query(
         "INSERT INTO lessons (module_id, title, video_url, text_content, lesson_order) VALUES ($1, $2, $3, $4, $5) RETURNING *",
@@ -481,6 +487,9 @@ module.exports = function (pool, cloudinary, upload) {
   router.put("/lessons/:lessonId", checkAdmin, async (req, res) => {
     const { lessonId } = req.params;
     const { title, video_url, text_content } = req.body;
+
+    const clean_text_content = DOMPurify.sanitize(text_content);
+
     try {
       const result = await pool.query(
         "UPDATE lessons SET title = $1, video_url = $2, text_content = $3 WHERE id = $4 RETURNING *",
