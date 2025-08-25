@@ -125,7 +125,7 @@ const LessonPlayer: React.FC = () => {
   const handleGenerateCertificate = async () => {
     if (!course) return;
 
-    toast.loading(<LoadingSpinner />); // Feedback para o utilizador
+    toast.loading("Estamos gerando o seu certificado..."); // Feedback para o utilizador
 
     try {
       // 1. Fazer o pedido com axios, esperando um 'blob' (ficheiro) como resposta

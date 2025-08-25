@@ -6,6 +6,10 @@ import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
+// ... outras importações
+import EmptyState from "./EmptyState.tsx";
+import EmptyAvisosImage from "./assets/images/empty_avisos.svg";
+import EmptyDashsImage from "./assets/images/empty_dashs.svg";
 
 interface Notice {
   id: number;
@@ -208,7 +212,10 @@ const Dashboard: React.FC = () => {
                   </div>
                 ))
               ) : (
-                <p>Nenhum aviso no momento.</p>
+                <EmptyState
+                  image={EmptyAvisosImage}
+                  title="Não há avisos no momento."
+                ></EmptyState>
               )}
             </div>
           </div>

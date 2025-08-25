@@ -213,6 +213,41 @@ body::before {
   overflow-x: hidden;
 }
 
+/* --- Estilos para Telas Vazias (Empty State) --- */
+
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  margin-top: 30px;
+}
+
+.empty-state-image {
+  max-width: 250px;
+  height: auto;
+  margin-bottom: 25px;
+}
+
+.empty-state-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.empty-state-message {
+  color: #6c757d;
+  font-size: 16px;
+  max-width: 400px;
+  margin-bottom: 20px;
+}
+
+.empty-state-action {
+  margin-top: 15px;
+}
+
 /* Dashboard */
 .dashboard-header {
   margin-bottom: 25px;
