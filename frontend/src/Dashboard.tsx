@@ -146,88 +146,75 @@ const Dashboard: React.FC = () => {
                 </button>
               </div>
             )}
-
-            <div className="notice-list">
-              {notices.length > 0 ? (
-                notices.map((notice) => (
-                  <div key={notice.id} className="notice-card">
-                    {editingNoticeId === notice.id ? (
-                      <div className="notice-edit-form">
-                        <textarea
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
-                        />
-                        <div className="notice-actions">
-                          <button
-                            className="list-button"
-                            onClick={() => setEditingNoticeId(null)}
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            className="list-button edit"
-                            onClick={() => handleUpdateNotice(notice.id)}
-                          >
-                            Salvar
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <p>{notice.message}</p>
-                        <div className="notice-footer">
-                          <small>
-                            {new Date(notice.created_at).toLocaleDateString(
-                              "pt-BR",
-                              {
-                                day: "2-digit",
-                                month: "long",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </small>
-                          {user.role === "admin" && (
-                            <div className="notice-actions">
-                              <button
-                                className="list-button edit"
-                                onClick={() => handleEditNotice(notice)}
-                              >
-                                Editar
-                              </button>
-                              <button
-                                className="list-button delete"
-                                onClick={() =>
-                                  handleDeleteNoticeClick(notice.id)
-                                }
-                              >
-                                Excluir
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <EmptyState
-                  image={EmptyAvisosImage}
-                  title="Não há avisos no momento."
-                ></EmptyState>
-              )}
-            </div>
           </div>
-
-          <div className="placeholder-column">
-            <h3>Relatórios</h3>
-            <div className="placeholder-content">
+          <div className="notice-list">
+            {notices.length > 0 ? (
+              notices.map((notice) => (
+                <div key={notice.id} className="notice-card">
+                  {editingNoticeId === notice.id ? (
+                    <div className="notice-edit-form">
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                      />
+                      <div className="notice-actions">
+                        <button
+                          className="list-button"
+                          onClick={() => setEditingNoticeId(null)}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          className="list-button edit"
+                          onClick={() => handleUpdateNotice(notice.id)}
+                        >
+                          Salvar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p>{notice.message}</p>
+                      <div className="notice-footer">
+                        <small>
+                          {new Date(notice.created_at).toLocaleDateString(
+                            "pt-BR",
+                            {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </small>
+                        {user.role === "admin" && (
+                          <div className="notice-actions">
+                            <button
+                              className="list-button edit"
+                              onClick={() => handleEditNotice(notice)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              className="list-button delete"
+                              onClick={() => handleDeleteNoticeClick(notice.id)}
+                            >
+                              Excluir
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))
+            ) : (
               <EmptyState
-                image={EmptyDashsImage}
-                title="Gráficos e relatórios serão exibidos aqui futuramente."
+                image={EmptyAvisosImage}
+                title="Não há avisos no momento."
               ></EmptyState>
-            </div>
+            )}
           </div>
         </div>
       </div>
