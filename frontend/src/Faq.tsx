@@ -200,8 +200,8 @@ const Faq: React.FC = () => {
           ) : (
             <EmptyState
               image={EmptyFaqImage}
-              title="Estamos Adicionando Perguntas ao FAQ"
-              message="Não encontrámos perguntas que correspondam à sua busca. Se for um administrador, pode adicionar uma nova pergunta."
+              title="Nenhuma Pergunta Encontrada"
+              message="Estamos incluindo perguntas e respostas ao FAQ. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
             ></EmptyState>
           )}
         </div>
