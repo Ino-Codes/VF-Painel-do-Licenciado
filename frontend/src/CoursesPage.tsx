@@ -5,6 +5,7 @@ import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
+import LoadingSpinner from "./LoadingSpinner.tsx";
 
 interface Course {
   id: number;
@@ -50,7 +51,7 @@ const CoursesPage: React.FC = () => {
   }, [user, getAuthHeaders]);
 
   if (loading) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   const handleCourseClick = (courseId: number) => {
