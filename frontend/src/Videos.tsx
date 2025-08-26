@@ -142,7 +142,7 @@ const Videos: React.FC = () => {
             className={`tab-item ${!selectedCategory ? "active" : ""}`}
             onClick={() => setSelectedCategory(null)}
           >
-            Todas
+            Todos
           </button>
           {categories.map((cat) => (
             <button
