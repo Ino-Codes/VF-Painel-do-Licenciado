@@ -4,7 +4,7 @@ interface EmptyStateProps {
   image: string;
   title: string;
   message: string;
-  children?: React.ReactNode; // Para adicionar botões de ação
+  children?: React.ReactNode;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({

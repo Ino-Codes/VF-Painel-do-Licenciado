@@ -4,7 +4,6 @@ import StarterKit from "@tiptap/starter-kit";
 import toast from "react-hot-toast";
 import { Lesson } from "./types.ts";
 
-// Um pequeno componente para a barra de ferramentas
 const MenuBar = ({ editor }) => {
   if (!editor) {
     return null;
@@ -58,10 +57,8 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
   onSave,
 }) => {
   const editor = useEditor({
-    extensions: [
-      StarterKit, // Inclui as funcionalidades básicas (negrito, itálico, listas, etc.)
-    ],
-    content: lesson?.text_content || "", // Conteúdo inicial
+    extensions: [StarterKit],
+    content: lesson?.text_content || "",
     editorProps: {
       attributes: {
         class: "tiptap-editor",
@@ -79,7 +76,6 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
       return;
     }
 
-    // Pega o conteúdo do editor em formato HTML
     const htmlContent = editor.getHTML();
 
     await onSave({

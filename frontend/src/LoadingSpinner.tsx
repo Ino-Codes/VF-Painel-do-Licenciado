@@ -1,11 +1,10 @@
 import React from "react";
 import Lottie from "lottie-react";
-// Importe o arquivo JSON da sua animação
 import loadingAnimation from "./animations/loading.json";
 
 const LoadingSpinner: React.FC = () => {
   const style = {
-    height: 200, // Defina o tamanho que desejar
+    height: 200,
     width: 200,
   };
 

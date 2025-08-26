@@ -11,11 +11,9 @@ const Menu: React.FC = () => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // --- LÓGICA DO DROPDOWN DE ADMIN ---
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Efeito para fechar o dropdown se o utilizador clicar fora dele
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -25,14 +23,11 @@ const Menu: React.FC = () => {
         setAdminDropdownOpen(false);
       }
     };
-    // Adiciona o 'ouvinte' de eventos
     document.addEventListener("mousedown", handleClickOutside);
-    // Limpa o 'ouvinte' quando o componente é desmontado
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownRef]);
-  // --- FIM DA LÓGICA DO DROPDOWN ---
 
   return (
     <nav className="main-menu">
@@ -84,7 +79,6 @@ const Menu: React.FC = () => {
           FAQ
         </NavLink>
 
-        {/* --- NOVO MENU DROPDOWN DE ADMINISTRAÇÃO --- */}
         {user && user.role === "admin" && (
           <div className="dropdown-menu" ref={dropdownRef}>
             <button

@@ -264,11 +264,6 @@ const AdminCourseEditor: React.FC = () => {
             </SortableContext>
           </DndContext>
         </div>
-
-        {/* O BLOCO DE CÓDIGO ANTIGO QUE ESTAVA AQUI FOI REMOVIDO.
-            Ele estava a renderizar a lista de módulos uma segunda vez,
-            causando a duplicação na tela.
-        */}
       </div>
       <Footer />
 

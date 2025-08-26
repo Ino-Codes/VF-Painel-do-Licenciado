@@ -6,7 +6,6 @@ const router = express.Router();
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
   // --- Rotas de Admin (Listar, Criar, Editar) ---
-  // Estas rotas já estavam corretas.
   router.get("/admin", async (req, res) => {
     const { search, page = 1, limit = 10 } = req.query;
     try {
@@ -84,7 +83,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // Rota de Exclusão - Esta já estava corrigida.
   router.delete("/admin/:id", async (req, res) => {
     const { id } = req.params;
     const client = await pool.connect();
@@ -123,8 +121,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       client.release();
     }
   });
-
-  // --- CORREÇÃO APLICADA A PARTIR DAQUI ---
 
   router.post("/admin/bulk-upload", upload.single("file"), async (req, res) => {
     if (!req.file) {

@@ -125,31 +125,27 @@ const LessonPlayer: React.FC = () => {
   const handleGenerateCertificate = async () => {
     if (!course) return;
 
-    toast.loading("Estamos gerando o seu certificado..."); // Feedback para o utilizador
+    toast.loading("Estamos gerando o seu certificado..."); // Feedback para o usuário
 
     try {
-      // 1. Fazer o pedido com axios, esperando um 'blob' (ficheiro) como resposta
       const response = await api.get(
         `/api/admin/courses/${course.id}/certificate`,
         {
-          ...getAuthHeaders(), // Garante que a autenticação é enviada
-          responseType: "blob", // MUITO IMPORTANTE: diz ao axios para tratar a resposta como um ficheiro
+          ...getAuthHeaders(),
+          responseType: "blob",
         }
       );
 
-      toast.dismiss(); // Remove a mensagem de "loading"
+      toast.dismiss();
 
-      // 2. Criar um URL temporário para o ficheiro recebido
       const url = window.URL.createObjectURL(new Blob([response.data]));
 
-      // 3. Criar um link temporário, clicar nele para iniciar o download e depois removê-lo
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `certificado-${course.title}.pdf`); // Nome do ficheiro
+      link.setAttribute("download", `certificado-${course.title}.pdf`);
       document.body.appendChild(link);
       link.click();
 
-      // Limpar
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {

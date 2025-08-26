@@ -37,13 +37,8 @@ export const SortableModuleItem: React.FC<SortableModuleItemProps> = ({
   onLessonOrderChange,
   setModules,
 }) => {
-  const {
-    attributes,
-    listeners, // O 'ouvinte' dos eventos de arrastar do módulo
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: module.id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: module.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -70,7 +65,6 @@ export const SortableModuleItem: React.FC<SortableModuleItemProps> = ({
         const reorderedLessons = arrayMove(lessons, oldIndex, newIndex);
         newModules[moduleIndex].lessons = reorderedLessons;
 
-        // Envia a nova ordem para a API imediatamente após a atualização visual
         const orderedLessonIds = reorderedLessons.map((l) => l.id);
         onLessonOrderChange(module.id, orderedLessonIds);
 
@@ -82,7 +76,6 @@ export const SortableModuleItem: React.FC<SortableModuleItemProps> = ({
   return (
     <div ref={setNodeRef} style={style} {...attributes} className="module-item">
       <div className="module-header">
-        {/* A "Alça de Arrasto" (Drag Handle) para o módulo */}
         <span className="drag-handle" {...listeners}>
           ⠿
         </span>
