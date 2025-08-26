@@ -465,7 +465,6 @@ body::before {
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  text-decoration: none;
 }
 
 .course-card:hover {
@@ -483,16 +482,15 @@ body::before {
 .course-card-content {
   padding: 20px;
   flex-grow: 1;
+  text-decoration: none;
 }
 
 .course-card-content h3 {
   margin-top: 0;
   font-size: 1.2em;
-  color: green;
 }
 
 .course-card-content p {
-  color: #dc1877;
   font-size: 0.9em;
   margin-bottom: 0;
 }
