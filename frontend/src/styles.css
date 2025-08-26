@@ -465,6 +465,7 @@ body::before {
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
 }
 
 .course-card:hover {
@@ -487,14 +488,13 @@ body::before {
 .course-card-content h3 {
   margin-top: 0;
   font-size: 1.2em;
-  text-decoration: none;
+  color: green;
 }
 
 .course-card-content p {
-  color: #6c757d;
+  color: #dc1877;
   font-size: 0.9em;
   margin-bottom: 0;
-  text-decoration: none;
 }
 
 /* Certificado */
