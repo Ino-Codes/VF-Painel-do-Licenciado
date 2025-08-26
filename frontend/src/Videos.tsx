@@ -194,7 +194,7 @@ const Videos: React.FC = () => {
             <EmptyState
               image={VideoEmptyImage}
               title="Nenhum Vídeo Encontrado"
-              message="Ainda não há vídeos nesta categoria."
+              message="Estamos incluindo vídeos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
             ></EmptyState>
           )}
         </div>
