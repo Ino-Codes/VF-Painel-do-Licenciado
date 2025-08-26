@@ -652,37 +652,6 @@ body::before {
   align-items: center;
 }
 
-/* Estilos para os separadores (tabs) */
-.tabs {
-  display: flex;
-  border-bottom: 2px solid #e0e0e0;
-  margin-bottom: 20px;
-}
-
-.tab-item {
-  background: none;
-  border: none;
-  padding: 12px 20px;
-  cursor: pointer;
-  font-size: 17px;
-  font-weight: 500;
-  color: #555;
-  transition: all 0.3s ease;
-  border-bottom: 3px solid transparent; /* Para o efeito de "ativa" */
-  margin-right: 15px; /* Espaçamento entre os separadores */
-}
-
-.tab-item:hover {
-  color: #222;
-  border-bottom: 3px solid #ccc;
-}
-
-.tab-item.active {
-  color: #daa520; /* Cor dourada da sua marca */
-  border-bottom: 3px solid #daa520;
-  font-weight: 600;
-}
-
 .certificates-section h3 {
   font-size: 24px;
   color: #333;
@@ -742,11 +711,6 @@ body::before {
 
 .certificate-link:hover {
   background-color: #c0901b; /* Um dourado ligeiramente mais escuro ao passar o mouse */
-}
-
-/* Opcional: Adicione um estilo para o EmptyState específico de certificados, se quiser */
-.certificates-section .empty-state-container {
-  margin-top: 50px;
 }
 
 /* --- Estilos Adicionais para o Editor de Trilha --- */
