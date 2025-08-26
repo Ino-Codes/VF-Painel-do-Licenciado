@@ -111,15 +111,15 @@ const createTables = async () => {
     );`;
 
   const coursesTable = `
-    CREATE TABLE IF NOT EXISTS courses (
-      id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT,
-      thumbnail_url TEXT,
-      is_active BOOLEAN DEFAULT TRUE,
-      certificate_template_url TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );`;
+  CREATE TABLE IF NOT EXISTS courses (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    thumbnail_url TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    certificate_template_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );`;
 
   const modulesTable = `
     CREATE TABLE IF NOT EXISTS modules (
@@ -158,13 +158,15 @@ const createTables = async () => {
     );`;
 
   const certificatesTable = `
-    CREATE TABLE IF NOT EXISTS certificates (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-      completion_date TIMESTAMPTZ DEFAULT NOW(),
-      unique_code TEXT NOT NULL UNIQUE
-    );`;
+  CREATE TABLE IF NOT EXISTS certificates (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    issue_date TIMESTAMPTZ DEFAULT NOW(), 
+    expiration_date TIMESTAMPTZ, 
+    certificate_url TEXT, 
+    unique_code TEXT NOT NULL UNIQUE
+  );`;
 
   try {
     await pool.query(userTable);
