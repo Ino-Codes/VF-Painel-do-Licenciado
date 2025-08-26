@@ -182,7 +182,7 @@ const createTables = async () => {
     await pool.query(progressTable);
     await pool.query(certificatesTable);
 
-    console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
+    console.log("Tabelas criadas com sucesso no PostgreSQL.");
   } catch (err) {
     console.error("Erro ao criar tabelas:", err);
   }
