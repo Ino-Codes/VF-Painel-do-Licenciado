@@ -466,6 +466,7 @@ body::before {
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  color: #0a0a0a;
 }
 
 .course-card:hover {
