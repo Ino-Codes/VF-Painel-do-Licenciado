@@ -480,7 +480,7 @@ module.exports = function (pool, cloudinary, upload) {
     try {
       const result = await pool.query(
         "INSERT INTO lessons (module_id, title, video_url, text_content, lesson_order) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        [moduleId, title, video_url, text_content, lesson_order]
+        [moduleId, title, video_url, clean_text_content, lesson_order]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -498,7 +498,7 @@ module.exports = function (pool, cloudinary, upload) {
     try {
       const result = await pool.query(
         "UPDATE lessons SET title = $1, video_url = $2, text_content = $3 WHERE id = $4 RETURNING *",
-        [title, video_url, text_content, lessonId]
+        [title, video_url, clean_text_content, lessonId]
       );
       if (result.rowCount === 0) {
         return res.status(404).json({ error: "Aula não encontrada." });
