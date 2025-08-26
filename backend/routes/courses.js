@@ -334,10 +334,7 @@ module.exports = function (pool, cloudinary, upload) {
             padding: 40px;
             box-sizing: border-box;
             background-color: #f7f7f7;
-            background-image: url('${
-              course.certificate_template_url ||
-              "https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png"
-            }');
+            background-image: url("https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png");
             background-size: cover;
             background-position: center;
           }
@@ -376,9 +373,7 @@ module.exports = function (pool, cloudinary, upload) {
             <h1>Certificado de Conclusão</h1>
             <p>Este certificado é concedido a</p>
             <div class="student-name">${userName}</div>
-            <p>pela conclusão bem-sucedida da Trilha de Conhecimento <strong>${
-              course.title
-            }</strong></p>
+            <p>pela conclusão bem-sucedida da Trilha de Conhecimento <strong>${course.title}</strong></p>
             <div class="footer">
               <p>Concluído em ${completionDate}</p>
             </div>
