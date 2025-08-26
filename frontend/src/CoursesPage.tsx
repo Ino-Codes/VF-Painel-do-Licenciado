@@ -184,7 +184,7 @@ const CoursesPage: React.FC = () => {
                   <div className="empty-state">
                     <EmptyState
                       image={EmptyCertificadoImage}
-                      title="Os seus certificados obtidos serão exibidos aqui."
+                      title="Os seus certificados serão exibidos aqui."
                     ></EmptyState>
                   </div>
                 )}
