@@ -86,7 +86,16 @@ const createTables = async () => {
       visibility TEXT DEFAULT 'public', 
       uploaded_at TIMESTAMPTZ DEFAULT NOW()
     );`;
-  const videoTable = `DROP TABLE IF EXISTS videos;`;
+  const videoTable = `
+    CREATE TABLE IF NOT EXISTS videos (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      youtube_url TEXT NOT NULL UNIQUE,
+      visibility TEXT DEFAULT 'public',
+      category TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
   const logsTable = `
     CREATE TABLE IF NOT EXISTS activity_logs (
       id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -106,7 +115,7 @@ const createTables = async () => {
       description TEXT,
       thumbnail_url TEXT,
       is_active BOOLEAN DEFAULT TRUE,
-      certificate_template_url TEXT, -- GARANTA QUE ESTA LINHA EXISTA
+      certificate_template_url TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
 
