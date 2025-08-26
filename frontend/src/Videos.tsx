@@ -29,7 +29,7 @@ const getYoutubeEmbedUrl = (url: string): string => {
     }
     return `https://www.youtube.com/embed/${videoId}`;
   } catch (error) {
-    return "";
+    return url;
   }
 };
 
@@ -52,7 +52,9 @@ const Videos: React.FC = () => {
   const fetchCategories = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get("/api/videos/categories");
+      const res = await api.get("/api/videos/categories", {
+        params: { role: user.role },
+      });
       setCategories(res.data);
     } catch (err) {
       toast.error("Erro ao buscar categorias de vídeo.");
@@ -156,7 +158,7 @@ const Videos: React.FC = () => {
         </div>
 
         <div className="video-list">
-          {videos.length > 0 ? (
+          {!loading && videos.length > 0 ? (
             videos.map((video) => (
               <div key={video.id} className="video-card">
                 <div className="video-embed">

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool) {
-  // Rota de busca dos vídeos
+  // Rota de busca dos videos
   router.get("/", async (req, res) => {
     const { role, category } = req.query;
     try {
@@ -31,10 +31,18 @@ module.exports = function (pool) {
 
   // Rota de busca das categorias
   router.get("/categories", async (req, res) => {
+    const { role } = req.query;
     try {
-      const result = await pool.query(
-        "SELECT DISTINCT category FROM videos WHERE category IS NOT NULL AND category != '' ORDER BY category ASC"
-      );
+      let sql =
+        "SELECT DISTINCT category FROM videos WHERE category IS NOT NULL AND category != ''";
+
+      if (role === "licenciado") {
+        sql += " AND visibility = 'public'";
+      }
+
+      sql += " ORDER BY category ASC";
+
+      const result = await pool.query(sql);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
       console.error("Erro ao buscar categorias de vídeos:", err);
