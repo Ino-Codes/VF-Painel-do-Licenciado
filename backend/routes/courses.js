@@ -299,6 +299,11 @@ module.exports = function (pool, cloudinary, upload) {
         [courseId]
       );
       const course = courseResult.rows[0];
+
+      if (!course) {
+        return res.status(404).send("Curso não encontrado.");
+      }
+
       const completionDate = new Date().toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "long",
