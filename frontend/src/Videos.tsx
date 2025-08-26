@@ -155,40 +155,38 @@ const Videos: React.FC = () => {
           ))}
         </div>
 
-        <div>
+        <div className="video-list">
           {videos.length > 0 ? (
             videos.map((video) => (
-              <div className="video-list">
-                <div key={video.id} className="video-card">
-                  <div className="video-embed">
-                    <iframe
-                      src={getYoutubeEmbedUrl(video.youtube_url)}
-                      title={video.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                  </div>
-                  <div className="video-info">
-                    <h3>{video.title}</h3>
-                    <p>{video.description}</p>
-                    {user.role === "admin" && (
-                      <div className="video-actions">
-                        <button
-                          className="list-button edit"
-                          onClick={() => openModalForEdit(video)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          className="list-button delete"
-                          onClick={() => handleDeleteClick(video.id)}
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    )}
-                  </div>
+              <div key={video.id} className="video-card">
+                <div className="video-embed">
+                  <iframe
+                    src={getYoutubeEmbedUrl(video.youtube_url)}
+                    title={video.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+                <div className="video-info">
+                  <h3>{video.title}</h3>
+                  <p>{video.description}</p>
+                  {user.role === "admin" && (
+                    <div className="video-actions">
+                      <button
+                        className="list-button edit"
+                        onClick={() => openModalForEdit(video)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="list-button delete"
+                        onClick={() => handleDeleteClick(video.id)}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
