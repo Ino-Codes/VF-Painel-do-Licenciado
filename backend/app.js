@@ -86,13 +86,7 @@ const createTables = async () => {
       visibility TEXT DEFAULT 'public', 
       uploaded_at TIMESTAMPTZ DEFAULT NOW()
     );`;
-  const videoTable = `
-    CREATE TABLE IF NOT EXISTS videos (
-      id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT,
-      youtube_url TEXT NOT NULL UNIQUE,
-      visibility TEXT DEFAULT 'public', 
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );`;
+  const videoTable = `DROP TABLE IF EXISTS videos;`;
   const logsTable = `
     CREATE TABLE IF NOT EXISTS activity_logs (
       id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
