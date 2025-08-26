@@ -7,23 +7,28 @@ interface VideoData {
   title: string;
   description: string;
   youtube_url: string;
+  visibility: "public" | "internal";
+  category: string;
 }
 
 interface VideoModalProps {
   videoToEdit: VideoData | null;
   onClose: () => void;
   onSuccess: () => void;
+  categories: string[];
 }
 
 const VideoModal: React.FC<VideoModalProps> = ({
   videoToEdit,
   onClose,
   onSuccess,
+  categories,
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [youtube_url, setYoutubeUrl] = useState("");
   const [visibility, setVisibility] = useState<"public" | "internal">("public");
+  const [category, setCategory] = useState("");
 
   useEffect(() => {
     if (videoToEdit) {
@@ -31,14 +36,20 @@ const VideoModal: React.FC<VideoModalProps> = ({
       setDescription(videoToEdit.description);
       setYoutubeUrl(videoToEdit.youtube_url);
       setVisibility(videoToEdit.visibility || "public");
+      setCategory(videoToEdit.category || "");
     }
   }, [videoToEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const videoData = { title, description, youtube_url, visibility };
+    if (!title.trim() || !youtube_url.trim() || !category.trim()) {
+      toast.error("Título, Link do YouTube e Categoria são obrigatórios.");
+      return;
+    }
+
+    const videoData = { title, description, youtube_url, visibility, category };
     try {
-      if (videoToEdit) {
+      if (videoToEdit && videoToEdit.id) {
         await api.put(`/api/videos/${videoToEdit.id}`, videoData);
         toast.success("Vídeo atualizado com sucesso!");
       } else {
@@ -66,6 +77,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
               required
             />
           </div>
+
           <div className="form-row">
             <input
               type="text"
@@ -76,6 +88,24 @@ const VideoModal: React.FC<VideoModalProps> = ({
               required
             />
           </div>
+
+          <div className="form-row">
+            <input
+              type="text"
+              list="category-suggestions"
+              placeholder="Categoria"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="form-input"
+              required
+            />
+            <datalist id="category-suggestions">
+              {categories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
+            </datalist>
+          </div>
+
           <div className="form-row">
             <textarea
               placeholder="Descrição do vídeo..."
