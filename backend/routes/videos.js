@@ -2,16 +2,26 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool) {
+  // Rota de busca dos vídeos
   router.get("/", async (req, res) => {
-    const { role } = req.query;
+    const { role, category } = req.query;
     try {
-      let sql = "SELECT * FROM videos";
-      if (role === "licenciado") {
-        sql += " WHERE visibility = 'public'";
-      }
-      sql += " ORDER BY created_at DESC";
+      let params = [];
+      let whereClauses = [];
 
-      const result = await pool.query(sql);
+      if (role === "licenciado") {
+        whereClauses.push("visibility = 'public'");
+      }
+      if (category) {
+        params.push(category);
+        whereClauses.push(`category = $${params.length}`);
+      }
+
+      const whereString =
+        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+      const sql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC`;
+
+      const result = await pool.query(sql, params);
       res.json(result.rows);
     } catch (err) {
       console.error("Erro ao buscar vídeos:", err);
@@ -19,12 +29,26 @@ module.exports = function (pool) {
     }
   });
 
-  router.post("/", async (req, res) => {
-    const { title, description, youtube_url, visibility } = req.body;
+  // Rota de busca das categorias
+  router.get("/categories", async (req, res) => {
     try {
       const result = await pool.query(
-        "INSERT INTO videos (title, description, youtube_url, visibility) VALUES ($1, $2, $3, $4) RETURNING *",
-        [title, description, youtube_url, visibility]
+        "SELECT DISTINCT category FROM videos WHERE category IS NOT NULL AND category != '' ORDER BY category ASC"
+      );
+      res.json(result.rows.map((row) => row.category));
+    } catch (err) {
+      console.error("Erro ao buscar categorias de vídeos:", err);
+      res.status(500).json({ error: "Erro ao buscar categorias." });
+    }
+  });
+
+  // Rota de adição
+  router.post("/", async (req, res) => {
+    const { title, description, youtube_url, visibility, category } = req.body;
+    try {
+      const result = await pool.query(
+        "INSERT INTO videos (title, description, youtube_url, visibility, category) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        [title, description, youtube_url, visibility, category]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -33,13 +57,14 @@ module.exports = function (pool) {
     }
   });
 
+  // Rota de edição
   router.put("/:id", async (req, res) => {
     const { id } = req.params;
-    const { title, description, youtube_url, visibility } = req.body;
+    const { title, description, youtube_url, visibility, category } = req.body;
     try {
       const result = await pool.query(
-        "UPDATE videos SET title = $1, description = $2, youtube_url = $3, visibility = $4 WHERE id = $5 RETURNING *",
-        [title, description, youtube_url, visibility, id]
+        "UPDATE videos SET title = $1, description = $2, youtube_url = $3, visibility = $4, category = $5 WHERE id = $6 RETURNING *",
+        [title, description, youtube_url, visibility, category, id]
       );
       if (result.rowCount === 0)
         return res.status(404).json({ error: "Vídeo não encontrado." });
@@ -50,6 +75,7 @@ module.exports = function (pool) {
     }
   });
 
+  // Rota de exclusão
   router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     try {
