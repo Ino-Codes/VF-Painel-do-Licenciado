@@ -11,7 +11,7 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  role: "admin" | "licenciado" | "gestor" | "executivo de contas";
+  role: "admin" | "licenciado" | "comercial" | "colaborador";
 }
 
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
@@ -91,11 +91,7 @@ const AdminUsers: React.FC = () => {
     nome: "",
     email: "",
     password: "",
-    role: "licenciado" as
-      | "admin"
-      | "licenciado"
-      | "gestor"
-      | "executivo de contas",
+    role: "licenciado" as "admin" | "licenciado" | "comercial" | "colaborador",
   });
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -256,8 +252,8 @@ const AdminUsers: React.FC = () => {
                 const newRole = e.target.value as
                   | "admin"
                   | "licenciado"
-                  | "gestor"
-                  | "executivo de contas";
+                  | "comercial"
+                  | "colaborador";
                 if (editingUser)
                   setEditingUser({ ...editingUser, role: newRole });
                 else setForm({ ...form, role: newRole });
@@ -265,8 +261,8 @@ const AdminUsers: React.FC = () => {
             >
               <option value="licenciado">Licenciado</option>
               <option value="admin">Admin</option>
-              <option value="gestor">Gestor</option>
-              <option value="executivo de contas">Executivo de Contas</option>
+              <option value="comercial">Comercial</option>
+              <option value="colaborador">Colaborador</option>
             </select>
           </div>
 
