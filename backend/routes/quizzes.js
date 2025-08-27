@@ -1,6 +1,7 @@
 // backend/routes/quizzes.js
 const express = require("express");
 const router = express.Router();
+const { isAdmin } = require("../middleware/auth.js");
 
 // Função para baralhar um array (Fisher-Yates shuffle)
 function shuffleArray(array) {
@@ -12,6 +13,8 @@ function shuffleArray(array) {
 }
 
 module.exports = function (pool) {
+  // Rotas de aluno
+
   // Rota para um aluno buscar o quiz de um curso
   router.get("/course/:courseId", async (req, res) => {
     const { courseId } = req.params;
@@ -112,6 +115,106 @@ module.exports = function (pool) {
     } catch (err) {
       console.error("Erro ao submeter quiz:", err);
       res.status(500).json({ error: "Erro no servidor" });
+    }
+  });
+
+  // --- ROTAS DE ADMINISTRAÇÃO ---
+
+  // QUIZ
+  router.post("/course/:courseId", checkAdmin, async (req, res) => {
+    const { courseId } = req.params;
+    const { title, passing_score } = req.body;
+    try {
+      const result = await pool.query(
+        "INSERT INTO quizzes (course_id, title, passing_score) VALUES ($1, $2, $3) RETURNING *",
+        [courseId, title, passing_score]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao criar quiz." });
+    }
+  });
+
+  // PERGUNTAS
+  router.post("/:quizId/questions", checkAdmin, async (req, res) => {
+    const { quizId } = req.params;
+    const { question_text } = req.body;
+    try {
+      const result = await pool.query(
+        "INSERT INTO questions (quiz_id, question_text) VALUES ($1, $2) RETURNING *",
+        [quizId, question_text]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao criar pergunta." });
+    }
+  });
+
+  router.delete("/questions/:questionId", checkAdmin, async (req, res) => {
+    const { questionId } = req.params;
+    try {
+      await pool.query("DELETE FROM questions WHERE id = $1", [questionId]);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao apagar pergunta." });
+    }
+  });
+
+  // OPÇÕES
+  router.post(
+    "/questions/:questionId/options",
+    checkAdmin,
+    async (req, res) => {
+      const { questionId } = req.params;
+      const { option_text } = req.body;
+      try {
+        const result = await pool.query(
+          "INSERT INTO options (question_id, option_text, is_correct) VALUES ($1, $2, FALSE) RETURNING *",
+          [questionId, option_text]
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao criar opção." });
+      }
+    }
+  );
+
+  router.put("/options/:optionId/correct", checkAdmin, async (req, res) => {
+    const { optionId } = req.params;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const optionResult = await client.query(
+        "SELECT question_id FROM options WHERE id = $1",
+        [optionId]
+      );
+      const { question_id } = optionResult.rows[0];
+      // Define todas as outras opções como incorretas
+      await client.query(
+        "UPDATE options SET is_correct = FALSE WHERE question_id = $1",
+        [question_id]
+      );
+      // Define a opção selecionada como correta
+      await client.query("UPDATE options SET is_correct = TRUE WHERE id = $1", [
+        optionId,
+      ]);
+      await client.query("COMMIT");
+      res.status(200).json({ success: true });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      res.status(500).json({ error: "Erro ao marcar opção como correta." });
+    } finally {
+      client.release();
+    }
+  });
+
+  router.delete("/options/:optionId", checkAdmin, async (req, res) => {
+    const { optionId } = req.params;
+    try {
+      await pool.query("DELETE FROM options WHERE id = $1", [optionId]);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao apagar opção." });
     }
   });
 

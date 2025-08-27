@@ -181,12 +181,13 @@ module.exports = function (pool, cloudinary, upload) {
         return res.status(404).json({ error: "Curso não encontrado." });
       }
       const course = courseResult.rows[0];
+
+      // Busca Módulos e Aulas
       const modulesResult = await pool.query(
         "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
         [id]
       );
       const modules = modulesResult.rows;
-
       for (const module of modules) {
         const lessonsResult = await pool.query(
           "SELECT id, module_id, title, video_url, text_content, lesson_order FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
@@ -195,6 +196,34 @@ module.exports = function (pool, cloudinary, upload) {
         module.lessons = lessonsResult.rows;
       }
       course.modules = modules;
+
+      // --- NOVA LÓGICA PARA BUSCAR O QUIZ COMPLETO PARA O ADMIN ---
+      const quizResult = await pool.query(
+        "SELECT * FROM quizzes WHERE course_id = $1",
+        [id]
+      );
+      if (quizResult.rowCount > 0) {
+        const quiz = quizResult.rows[0];
+        const questionsResult = await pool.query(
+          "SELECT * FROM questions WHERE quiz_id = $1 ORDER BY id ASC",
+          [quiz.id]
+        );
+        const questions = questionsResult.rows;
+
+        for (const question of questions) {
+          const optionsResult = await pool.query(
+            "SELECT * FROM options WHERE question_id = $1 ORDER BY id ASC",
+            [question.id]
+          );
+          question.options = optionsResult.rows;
+        }
+        quiz.questions = questions;
+        course.quiz = quiz;
+      } else {
+        course.quiz = null;
+      }
+      // --- FIM DA NOVA LÓGICA ---
+
       res.json(course);
     } catch (err) {
       console.error("Erro ao buscar detalhes do curso:", err);
