@@ -169,7 +169,9 @@ const createTables = async () => {
     issue_date TIMESTAMPTZ DEFAULT NOW(), 
     expiration_date TIMESTAMPTZ, 
     certificate_url TEXT, 
-    unique_code TEXT NOT NULL UNIQUE
+    unique_code TEXT NOT NULL UNIQUE,
+    -- ADICIONE ESTA LINHA PARA A REGRA DE UNICIDADE
+    UNIQUE(user_id, course_id) 
   );`;
 
   try {
