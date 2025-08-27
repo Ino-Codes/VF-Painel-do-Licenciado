@@ -110,16 +110,7 @@ const createTables = async () => {
       document_url TEXT, document_originalname TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
 
-  const coursesTable = `
-  CREATE TABLE IF NOT EXISTS courses (
-    id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    description TEXT,
-    thumbnail_url TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    certificate_template_url TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-  );`;
+  const coursesTable = `DROP TABLE IF EXISTS courses`;
 
   const modulesTable = `
     CREATE TABLE IF NOT EXISTS modules (
@@ -157,16 +148,7 @@ const createTables = async () => {
       UNIQUE(user_id, lesson_id)
     );`;
 
-  const certificatesTable = `
-  CREATE TABLE IF NOT EXISTS certificates (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-    issue_date TIMESTAMPTZ DEFAULT NOW(), 
-    expiration_date TIMESTAMPTZ, 
-    certificate_url TEXT, 
-    unique_code TEXT NOT NULL UNIQUE
-  );`;
+  const certificatesTable = `DROP TABLE IF EXISTS certificates`;
 
   try {
     await pool.query(userTable);
@@ -182,7 +164,7 @@ const createTables = async () => {
     await pool.query(progressTable);
     await pool.query(certificatesTable);
 
-    console.log("Tabelas criadas com sucesso no PostgreSQL.");
+    console.log("Tabelas criadas e removidas com sucesso no PostgreSQL.");
   } catch (err) {
     console.error("Erro ao criar tabelas:", err);
   }
