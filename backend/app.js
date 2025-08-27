@@ -114,26 +114,11 @@ const createTables = async () => {
 
   const modulesTable = `DROP TABLE IF EXISTS modules`;
 
-  const lessonsTable = `
-    CREATE TABLE IF NOT EXISTS lessons (
-      id SERIAL PRIMARY KEY,
-      module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
-      title TEXT NOT NULL,
-      video_url TEXT,
-      text_content TEXT,
-      lesson_order INTEGER NOT NULL
-    );`;
+  const lessonsTable = `DROP TABLE IF EXISTS lessons`;
 
   const userCoursesTable = `DROP TABLE IF EXISTS user_courses`;
 
-  const progressTable = `
-    CREATE TABLE IF NOT EXISTS progress (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
-      completed_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(user_id, lesson_id)
-    );`;
+  const progressTable = `DROP TABLE IF EXISTS progress`;
 
   const certificatesTable = `DROP TABLE IF EXISTS certificates`;
 
