@@ -5,8 +5,17 @@ import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
-import { Course, Module, Lesson } from "./types.ts";
+import { Module, Lesson } from "./types.ts";
 import LoadingSpinner from "./LoadingSpinner.tsx";
+
+interface CourseWithDetails {
+  id: number;
+  title: string;
+  modules: Module[];
+  completedLessons: number[];
+  quiz_id: number | null;
+  has_passed_quiz: boolean;
+}
 
 const getYoutubeEmbedUrl = (url: string): string => {
   if (!url) return "";
@@ -37,13 +46,8 @@ const LessonPlayer: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
-  interface CourseWithProgress extends Course {
-    completedLessons: number[];
-  }
-
-  const [course, setCourse] = useState<CourseWithProgress | null>(null);
+  const [course, setCourse] = useState<CourseWithDetails | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const getAuthHeaders = useCallback(() => {
@@ -165,11 +169,30 @@ const LessonPlayer: React.FC = () => {
   );
   const isCourseCompleted =
     totalLessons > 0 && course.completedLessons.length >= totalLessons;
-  const baseURL = api.defaults.baseURL;
 
-  const isLessonCompleted = activeLesson
-    ? course.completedLessons.includes(activeLesson.id)
-    : false;
+  const renderCompletionButton = () => {
+    if (!isCourseCompleted) return null;
+
+    // Se o curso tem um quiz e o utilizador ainda não passou
+    if (course.quiz_id && !course.has_passed_quiz) {
+      return (
+        <Link
+          to={`/courses/${courseId}/quiz`}
+          className="form-button"
+          style={{ textDecoration: "none" }}
+        >
+          Fazer Teste Final
+        </Link>
+      );
+    }
+
+    // Se o curso não tem quiz OU se o utilizador já passou no quiz
+    return (
+      <button onClick={handleGenerateCertificate} className="form-button">
+        Gerar Certificado
+      </button>
+    );
+  };
 
   return (
     <div className="p-2">
@@ -188,10 +211,8 @@ const LessonPlayer: React.FC = () => {
 
         {isCourseCompleted && (
           <div className="certificate-banner">
-            <p>Parabéns, você concluiu esta trilha!</p>
-            <button onClick={handleGenerateCertificate} className="form-button">
-              Gerar Certificado
-            </button>
+            <p>Parabéns, você concluiu este curso!</p>
+            {renderCompletionButton()}
           </div>
         )}
 
