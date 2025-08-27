@@ -38,6 +38,8 @@ const CoursesPage: React.FC = () => {
   );
   const [isLoadingContent, setIsLoadingContent] = useState(true);
 
+  const baseURL = api.defaults.baseURL;
+
   const fetchCourses = useCallback(async () => {
     if (!user) return;
     setIsLoadingContent(true);
@@ -186,6 +188,7 @@ const CoursesPage: React.FC = () => {
                     <EmptyState
                       image={EmptyCertificadoImage}
                       title="Os seus certificados serão exibidos aqui."
+                      message="Você ainda não concluiu nenhum curso para obter um certificado. Complete uma trilha e ele aparecerá aqui!"
                     ></EmptyState>
                   </div>
                 )}
