@@ -496,6 +496,11 @@ body::before {
   margin-bottom: 0;
 }
 
+.course-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
 /* Certificado */
 
 .certificate-banner {

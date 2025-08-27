@@ -63,8 +63,11 @@ const LessonPlayer: React.FC = () => {
         getAuthHeaders()
       );
       setCourse(res.data);
+      // Define a primeira aula como ativa, se existir
       if (res.data.modules?.[0]?.lessons?.[0]) {
         setActiveLesson(res.data.modules[0].lessons[0]);
+      } else {
+        setActiveLesson(null); // Garante que nenhuma aula fica ativa se não houver aulas
       }
     } catch (error) {
       toast.error("Não foi possível carregar este curso.");
@@ -163,12 +166,15 @@ const LessonPlayer: React.FC = () => {
     return <LoadingSpinner />;
   }
 
-  const totalLessons = course.modules.reduce(
-    (acc, mod) => acc + mod.lessons.length,
-    0
-  );
+  const totalLessons =
+    course.modules?.reduce((acc, mod) => acc + (mod.lessons?.length || 0), 0) ||
+    0;
   const isCourseCompleted =
     totalLessons > 0 && course.completedLessons.length >= totalLessons;
+
+  const isLessonCompleted = activeLesson
+    ? course.completedLessons.includes(activeLesson.id)
+    : false;
 
   const renderCompletionButton = () => {
     if (!isCourseCompleted) return null;
@@ -273,10 +279,10 @@ const LessonPlayer: React.FC = () => {
           </button>
 
           <aside className={`lesson-sidebar ${isSidebarOpen ? "open" : ""}`}>
-            {course.modules.map((module) => (
+            {course.modules?.map((module) => (
               <div key={module.id}>
                 <h4 className="sidebar-module-title">{module.title}</h4>
-                {module.lessons.map((lesson) => {
+                {module.lessons?.map((lesson) => {
                   const isCompleted = course.completedLessons.includes(
                     lesson.id
                   );
