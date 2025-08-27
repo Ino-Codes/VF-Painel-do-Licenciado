@@ -7,7 +7,7 @@ const cloudinary = require("cloudinary").v2;
 const sgMail = require("@sendgrid/mail");
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 10000;
 
 // --- CONFIGURAÇÕES ---
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
