@@ -690,6 +690,44 @@ body::before {
   border: 2px solid #c82333;
 }
 
+/* --- Estilos para o Editor de Quiz --- */
+.section-divider {
+  margin: 40px 0;
+  border: 1px solid #f0f0f0;
+}
+.quiz-editor-section h2 {
+  margin-bottom: 20px;
+}
+.question-editor-item {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.option-list {
+  list-style: none;
+  padding: 0;
+}
+.option-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #fff;
+  border-radius: 3px;
+  margin-bottom: 5px;
+}
+.option-list li.correct-option {
+  border-left: 4px solid #04a146;
+  font-weight: bold;
+}
+
 /* --- Estilos para a Página de Cursos (separadores e certificados) --- */
 
 .courses-page {

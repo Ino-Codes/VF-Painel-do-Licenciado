@@ -202,6 +202,37 @@ const AdminCourseEditor: React.FC = () => {
     setLessonToEdit({});
   };
 
+  // --- NOVOS ESTADOS PARA GERIR O QUIZ ---
+  const [newQuestionText, setNewQuestionText] = useState("");
+  const [newOptionText, setNewOptionText] = useState<{ [key: number]: string }>(
+    {}
+  );
+
+  // --- NOVAS FUNÇÕES HANDLER PARA O QUIZ ---
+  const handleCreateQuiz = async () => {
+    // Lógica para chamar a API POST /api/quizzes/course/:courseId
+  };
+
+  const handleAddQuestion = async () => {
+    // Lógica para chamar a API POST /api/quizzes/:quizId/questions
+  };
+
+  const handleDeleteQuestion = async (questionId: number) => {
+    // Lógica para chamar a API DELETE /api/quizzes/questions/:questionId
+  };
+
+  const handleAddOption = async (questionId: number) => {
+    // Lógica para chamar a API POST /api/quizzes/questions/:questionId/options
+  };
+
+  const handleSetCorrectOption = async (optionId: number) => {
+    // Lógica para chamar a API PUT /api/quizzes/options/:optionId/correct
+  };
+
+  const handleDeleteOption = async (optionId: number) => {
+    // Lógica para chamar a API DELETE /api/quizzes/options/:optionId
+  };
+
   if (loading || !course) {
     return <div className="tela-loading">Carregando...</div>;
   }
@@ -263,6 +294,79 @@ const AdminCourseEditor: React.FC = () => {
               ))}
             </SortableContext>
           </DndContext>
+        </div>
+
+        <hr className="section-divider" />
+
+        {/* --- NOVA SECÇÃO DE GESTÃO DE QUIZ --- */}
+        <div className="quiz-editor-section">
+          <h2>Quiz do Curso</h2>
+          {!course.quiz ? (
+            <div className="admin-form">
+              <p>Este curso ainda não tem um quiz.</p>
+              <button className="form-button" onClick={handleCreateQuiz}>
+                Criar Quiz
+              </button>
+            </div>
+          ) : (
+            <div>
+              {/* Listar Perguntas e Opções */}
+              {course.quiz.questions.map((question) => (
+                <div key={question.id} className="question-editor-item">
+                  <div className="question-header">
+                    <strong>{question.question_text}</strong>
+                    <button onClick={() => handleDeleteQuestion(question.id)}>
+                      Excluir Pergunta
+                    </button>
+                  </div>
+                  <ul className="option-list">
+                    {question.options.map((option) => (
+                      <li
+                        key={option.id}
+                        className={option.is_correct ? "correct-option" : ""}
+                      >
+                        {option.option_text}
+                        <div>
+                          <button
+                            onClick={() => handleSetCorrectOption(option.id)}
+                          >
+                            Marcar como Correta
+                          </button>
+                          <button onClick={() => handleDeleteOption(option.id)}>
+                            Excluir
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  {/* Formulário para adicionar nova opção */}
+                  <div className="add-option-form">
+                    <input
+                      placeholder="Nova opção de resposta"
+                      onChange={(e) =>
+                        setNewOptionText({
+                          ...newOptionText,
+                          [question.id]: e.target.value,
+                        })
+                      }
+                    />
+                    <button onClick={() => handleAddOption(question.id)}>
+                      Adicionar Opção
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {/* Formulário para adicionar nova pergunta */}
+              <div className="add-question-form">
+                <input
+                  placeholder="Texto da nova pergunta"
+                  value={newQuestionText}
+                  onChange={(e) => setNewQuestionText(e.target.value)}
+                />
+                <button onClick={handleAddQuestion}>Adicionar Pergunta</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <Footer />
