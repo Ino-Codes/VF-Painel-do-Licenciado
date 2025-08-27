@@ -9,6 +9,7 @@ import EmptyState from "./EmptyState.tsx";
 import EmptyCursosImage from "./assets/images/empty_cursos.svg";
 import EmptyCertificadoImage from "./assets/images/empty_certificado.svg";
 import toast from "react-hot-toast";
+import CourseCard from "./CourseCard.tsx";
 
 // Interface para os dados do curso
 interface CourseData {
@@ -159,31 +160,7 @@ const CoursesPage: React.FC = () => {
               <div className="courses-grid">
                 {courses.length > 0 ? (
                   courses.map((course) => (
-                    <Link
-                      to={`/courses/${course.id}`}
-                      key={course.id}
-                      className="course-card-link"
-                    >
-                      <div className="course-card">
-                        <div className="course-card-thumbnail">
-                          <img
-                            src={
-                              course.thumbnail_url ||
-                              "https://via.placeholder.com/400x240.png?text=Curso"
-                            }
-                            alt={course.title}
-                          />
-                          {course.completed_lessons >= course.total_lessons &&
-                            course.total_lessons > 0 && (
-                              <div className="completion-badge">✓</div>
-                            )}
-                        </div>
-                        <div className="course-card-content">
-                          <h3>{course.title}</h3>
-                          <p>{course.description}</p>
-                        </div>
-                      </div>
-                    </Link>
+                    <CourseCard key={course.id} course={course} />
                   ))
                 ) : (
                   <EmptyState
