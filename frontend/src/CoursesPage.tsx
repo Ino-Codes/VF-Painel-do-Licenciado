@@ -77,7 +77,7 @@ const CoursesPage: React.FC = () => {
     courseId: number,
     courseTitle: string
   ) => {
-    toast.loading("A preparar o seu certificado...");
+    toast.loading("Preparando o seu certificado...");
     try {
       const response = await api.get(
         `/api/admin/courses/${courseId}/certificate`,
