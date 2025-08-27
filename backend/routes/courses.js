@@ -6,6 +6,7 @@ const { JSDOM } = require("jsdom");
 const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
+const crypto = require("crypto");
 
 const path = require("path");
 
@@ -271,6 +272,7 @@ module.exports = function (pool, cloudinary, upload) {
     const { id: userId } = req.user;
 
     try {
+      // 1. Validações (já estavam corretas)
       const userResult = await pool.query(
         "SELECT nome FROM users WHERE id = $1",
         [userId]
@@ -304,106 +306,76 @@ module.exports = function (pool, cloudinary, upload) {
         return res.status(404).send("Curso não encontrado.");
       }
 
+      // 2. Geração do PDF com Puppeteer (já estava correta)
       const completionDate = new Date().toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "long",
         year: "numeric",
       });
 
-      // TEMPLATE HTML + CSS DO CERTIFICADO
       const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Certificado de Conclusão</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&display=swap');
-          
-          body {
-            font-family: 'Montserrat', sans-serif;
-            margin: 0;
-            padding: 0;
-          }
-          .certificate-wrapper {
-            width: 1123px; /* Largura para A4 paisagem a 96dpi */
-            height: 794px; /* Altura para A4 paisagem a 96dpi */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            box-sizing: border-box;
-            background-color: #f7f7f7;
-            background-image: url("https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png");
-            background-size: cover;
-            background-position: center;
-          }
-          .certificate-content {
-            text-align: center;
-            color: #0D0D0D;
-          }
-          h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 48px;
-            color: #2D2C2B;
-            margin-bottom: 40px;
-          }
-          .student-name {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 38px;
-            color: #daa520;
-            margin: 30px 0;
-          }
-          p {
-            font-size: 18px;
-            line-height: 1.2;
-            margin: 20px 0;
-          }
-          .footer {
-            margin-top: 80px;
-            font-size: 14px;
-            color: #2d2d2d;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="certificate-wrapper">
-          <div class="certificate-content">
-            <h1>Certificado de Conclusão</h1>
-            <p>Este certificado é concedido a</p>
-            <div class="student-name">${userName}</div>
-            <p>pela conclusão bem-sucedida da Trilha de Conhecimento <strong>${course.title}</strong></p>
-            <div class="footer">
-              <p>Concluído em ${completionDate}</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Certificado de Conclusão</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&display=swap');
+            body { font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; }
+            .certificate-wrapper { width: 1123px; height: 794px; display: flex; justify-content: center; align-items: center; padding: 40px; box-sizing: border-box; background-color: #f7f7f7; background-image: url("${
+              course.certificate_template_url ||
+              "https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png"
+            }"); background-size: cover; background-position: center; }
+            .certificate-content { text-align: center; color: #0D0D0D; }
+            h1 { font-family: 'Playfair Display', serif; font-size: 48px; color: #2D2C2B; margin-bottom: 40px; }
+            .student-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 38px; color: #daa520; margin: 30px 0; }
+            p { font-size: 18px; line-height: 1.2; margin: 20px 0; }
+            .footer { margin-top: 80px; font-size: 14px; color: #2d2d2d; }
+          </style>
+        </head>
+        <body>
+          <div class="certificate-wrapper">
+            <div class="certificate-content">
+              <h1>Certificado de Conclusão</h1>
+              <p>Este certificado é concedido a</p>
+              <div class="student-name">${userName}</div>
+              <p>pela conclusão bem-sucedida da Trilha de Conhecimento <strong>${
+                course.title
+              }</strong></p>
+              <div class="footer">
+                <p>Concluído em ${completionDate}</p>
+              </div>
             </div>
           </div>
-        </div>
-      </body>
-      </html>
-    `;
+        </body>
+        </html>
+      `;
 
-      // Gera o PDF com o Puppeteer
       const browser = await puppeteer.launch({
         headless: "new",
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
       const page = await browser.newPage();
-
-      // Define o conteúdo da página como o HTML
       await page.setContent(htmlContent, { waitUntil: "networkidle0" });
-
-      // Gera o PDF a partir da página renderizada
       const pdfBytes = await page.pdf({
         format: "A4",
         landscape: true,
         printBackground: true,
       });
-
-      // Fecha o navegador para liberar recursos
       await browser.close();
 
-      // Envia o PDF para o utilizador
+      // --- PASSO 3: ADICIONAR O REGISTO NA TABELA 'certificates' ---
+      const uniqueCode = crypto.randomBytes(16).toString("hex");
+
+      const insertCertificateQuery = `
+        INSERT INTO certificates (user_id, course_id, unique_code, issue_date)
+        VALUES ($1, $2, $3, NOW())
+        ON CONFLICT (user_id, course_id) 
+        DO UPDATE SET issue_date = NOW();
+      `;
+      await pool.query(insertCertificateQuery, [userId, courseId, uniqueCode]);
+
+      // 4. Enviar o PDF para o utilizador
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
