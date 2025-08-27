@@ -50,10 +50,25 @@ module.exports = function (pool, cloudinary, upload) {
     const { id: courseId } = req.params;
     const { id: userId } = req.user;
     try {
-      const courseResult = await pool.query(
-        "SELECT * FROM courses WHERE id = $1 AND is_active = TRUE",
-        [courseId]
-      );
+      // Query principal para buscar detalhes do curso, módulos e aulas
+      const courseQuery = `
+            SELECT c.*,
+                (SELECT json_agg(m_agg) FROM (
+                    SELECT m.*,
+                        (SELECT json_agg(l_agg) FROM (
+                            SELECT l.* FROM lessons l
+                            WHERE l.module_id = m.id
+                            ORDER BY l.lesson_order ASC
+                        ) AS l_agg) AS lessons
+                    FROM modules m
+                    WHERE m.course_id = c.id
+                    ORDER BY m.module_order ASC
+                ) AS m_agg) AS modules
+            FROM courses c
+            WHERE c.id = $1 AND c.is_active = TRUE
+        `;
+      const courseResult = await pool.query(courseQuery, [courseId]);
+
       if (courseResult.rowCount === 0) {
         return res
           .status(404)
@@ -61,34 +76,40 @@ module.exports = function (pool, cloudinary, upload) {
       }
       const course = courseResult.rows[0];
 
-      const modulesResult = await pool.query(
-        "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
-        [courseId]
-      );
-      const modules = modulesResult.rows;
-
-      for (const module of modules) {
-        const lessonsResult = await pool.query(
-          "SELECT id, module_id, title, video_url, text_content, lesson_order FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
-          [module.id]
-        );
-        module.lessons = lessonsResult.rows;
-      }
-      course.modules = modules;
-
+      // Query para buscar o progresso do aluno
       const progressQuery = `
-        SELECT p.lesson_id
-        FROM progress p
-        JOIN lessons l ON p.lesson_id = l.id
-        JOIN modules m ON l.module_id = m.id
-        WHERE p.user_id = $1 AND m.course_id = $2
-      `;
+            SELECT p.lesson_id FROM progress p
+            JOIN lessons l ON p.lesson_id = l.id
+            JOIN modules m ON l.module_id = m.id
+            WHERE p.user_id = $1 AND m.course_id = $2
+        `;
       const progressResult = await pool.query(progressQuery, [
         userId,
         courseId,
       ]);
-      const completedLessons = progressResult.rows.map((row) => row.lesson_id);
-      course.completedLessons = completedLessons;
+      course.completedLessons = progressResult.rows.map((row) => row.lesson_id);
+
+      // --- NOVA LÓGICA ADICIONADA ---
+      // Query para buscar informações do quiz e se o utilizador já passou
+      const quizQuery = `
+            SELECT 
+                q.id AS quiz_id,
+                EXISTS (
+                    SELECT 1 FROM quiz_attempts qa 
+                    WHERE qa.quiz_id = q.id AND qa.user_id = $1 AND qa.passed = TRUE
+                ) AS has_passed_quiz
+            FROM quizzes q
+            WHERE q.course_id = $2
+        `;
+      const quizResult = await pool.query(quizQuery, [userId, courseId]);
+      if (quizResult.rowCount > 0) {
+        course.quiz_id = quizResult.rows[0].quiz_id;
+        course.has_passed_quiz = quizResult.rows[0].has_passed_quiz;
+      } else {
+        course.quiz_id = null;
+        course.has_passed_quiz = false;
+      }
+      // --- FIM DA NOVA LÓGICA ---
 
       res.json(course);
     } catch (err) {
