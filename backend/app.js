@@ -70,6 +70,16 @@ app.use("/api/admin/courses", courseRoutes(pool, cloudinary, upload));
 app.use("/api/certificates", certificatesRoutes(pool));
 app.use("/api/quizzes", quizzesRoutes(pool));
 
+// --- SERVIR OS FICHEIROS ESTÁTICOS DO FRONTEND ---
+// Esta linha diz ao Express para servir a sua aplicação React construída
+app.use(express.static(path.join(__dirname, "frontend/build")));
+
+// Esta rota "catch-all" é crucial para o React Router funcionar corretamente.
+// Ela envia o index.html para qualquer pedido que não corresponda a uma rota da API.
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend/build", "index.html"));
+});
+
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
   const userTable = `
