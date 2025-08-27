@@ -34,8 +34,8 @@ const CoursesPage: React.FC = () => {
 
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [certificates, setCertificates] = useState<CertificateData[]>([]);
-  const [activeTab, setActiveTab] = useState<"trilhas" | "certificados">(
-    "trilhas"
+  const [activeTab, setActiveTab] = useState<"cursos" | "certificados">(
+    "cursos"
   );
   const [isLoadingContent, setIsLoadingContent] = useState(true);
 
@@ -111,7 +111,7 @@ const CoursesPage: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      if (activeTab === "trilhas") {
+      if (activeTab === "cursos") {
         fetchCourses();
       } else {
         fetchCertificates();
@@ -136,8 +136,8 @@ const CoursesPage: React.FC = () => {
 
         <div className="tabs">
           <button
-            className={`tab-item ${activeTab === "trilhas" ? "active" : ""}`}
-            onClick={() => setActiveTab("trilhas")}
+            className={`tab-item ${activeTab === "cursos" ? "active" : ""}`}
+            onClick={() => setActiveTab("cursos")}
           >
             Trilhas de Conhecimento
           </button>
@@ -155,7 +155,7 @@ const CoursesPage: React.FC = () => {
           <LoadingSpinner />
         ) : (
           <>
-            {activeTab === "trilhas" && (
+            {activeTab === "cursos" && (
               <div className="courses-grid">
                 {courses.length > 0 ? (
                   courses.map((course) => (
@@ -188,8 +188,8 @@ const CoursesPage: React.FC = () => {
                 ) : (
                   <EmptyState
                     image={EmptyCursosImage}
-                    title="Nenhuma Trilha Disponível"
-                    message="Ainda não há trilhas de conhecimento disponíveis. Volte em breve!"
+                    title="Nenhuma curso disponível"
+                    message="Ainda não há cursos de conhecimento disponíveis. Volte em breve!"
                   />
                 )}
               </div>
@@ -224,7 +224,7 @@ const CoursesPage: React.FC = () => {
                   <EmptyState
                     image={EmptyCertificadoImage}
                     title="Os seus certificados serão exibidos aqui."
-                    message="Você ainda não concluiu nenhum curso para obter um certificado. Complete uma trilha e ele aparecerá aqui!"
+                    message="Você ainda não concluiu nenhum curso para obter um certificado. Complete um curso e ele aparecerá aqui!"
                   />
                 )}
               </div>
