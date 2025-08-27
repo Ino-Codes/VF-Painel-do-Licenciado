@@ -209,28 +209,105 @@ const AdminCourseEditor: React.FC = () => {
   );
 
   // --- NOVAS FUNÇÕES HANDLER PARA O QUIZ ---
+
   const handleCreateQuiz = async () => {
-    // Lógica para chamar a API POST /api/quizzes/course/:courseId
+    if (!courseId) return;
+    // Um título e nota padrão para o novo quiz
+    const quizData = {
+      title: `Teste Final - ${course?.title}`,
+      passing_score: 70,
+    };
+    try {
+      toast.loading("A criar o quiz...");
+      await api.post(
+        `/api/quizzes/course/${courseId}`,
+        quizData,
+        getAuthHeaders()
+      );
+      toast.dismiss();
+      toast.success("Quiz criado com sucesso! Agora adicione as perguntas.");
+      fetchCourseDetails(); // Recarrega os dados para mostrar o novo editor de quiz
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Não foi possível criar o quiz.");
+      console.error("Erro ao criar quiz:", err);
+    }
   };
 
   const handleAddQuestion = async () => {
-    // Lógica para chamar a API POST /api/quizzes/:quizId/questions
+    if (!course?.quiz || !newQuestionText.trim()) {
+      toast.error("Por favor, digite o texto da pergunta.");
+      return;
+    }
+    try {
+      await api.post(
+        `/api/quizzes/${course.quiz.id}/questions`,
+        { question_text: newQuestionText },
+        getAuthHeaders()
+      );
+      toast.success("Pergunta adicionada!");
+      setNewQuestionText(""); // Limpa o campo
+      fetchCourseDetails(); // Recarrega os dados para mostrar a nova pergunta
+    } catch (err) {
+      toast.error("Erro ao adicionar pergunta.");
+    }
   };
 
   const handleDeleteQuestion = async (questionId: number) => {
-    // Lógica para chamar a API DELETE /api/quizzes/questions/:questionId
+    try {
+      await api.delete(
+        `/api/quizzes/questions/${questionId}`,
+        getAuthHeaders()
+      );
+      toast.success("Pergunta excluída com sucesso!");
+      fetchCourseDetails(); // Recarrega
+    } catch (err) {
+      toast.error("Erro ao excluir pergunta.");
+    }
   };
 
   const handleAddOption = async (questionId: number) => {
-    // Lógica para chamar a API POST /api/quizzes/questions/:questionId/options
+    const optionText = newOptionText[questionId];
+    if (!optionText || !optionText.trim()) {
+      toast.error("Por favor, digite o texto da opção.");
+      return;
+    }
+    try {
+      await api.post(
+        `/api/quizzes/questions/${questionId}/options`,
+        { option_text: optionText },
+        getAuthHeaders()
+      );
+      toast.success("Opção adicionada!");
+      setNewOptionText({ ...newOptionText, [questionId]: "" }); // Limpa o campo específico
+      fetchCourseDetails(); // Recarrega
+    } catch (err) {
+      toast.error("Erro ao adicionar opção.");
+    }
   };
 
   const handleSetCorrectOption = async (optionId: number) => {
-    // Lógica para chamar a API PUT /api/quizzes/options/:optionId/correct
+    try {
+      await api.put(
+        `/api/quizzes/options/${optionId}/correct`,
+        {},
+        getAuthHeaders()
+      );
+      toast.success("Opção marcada como correta!");
+      fetchCourseDetails(); // Recarrega para mostrar o feedback visual
+    } catch (err) {
+      toast.error("Erro ao definir a resposta correta.");
+    }
   };
 
   const handleDeleteOption = async (optionId: number) => {
-    // Lógica para chamar a API DELETE /api/quizzes/options/:optionId
+    try {
+      await api.delete(`/api/quizzes/options/${optionId}`, getAuthHeaders());
+      toast.success("Opção excluída!");
+      fetchCourseDetails(); // Recarrega
+    } catch (err) {
+      toast.error("Erro ao excluir opção.");
+    }
   };
 
   if (loading || !course) {
