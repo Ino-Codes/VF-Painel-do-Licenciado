@@ -1,7 +1,7 @@
 // backend/routes/quizzes.js
 const express = require("express");
 const router = express.Router();
-const { isAdmin } = require("../middleware/auth.js");
+const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 
 // Função para baralhar um array (Fisher-Yates shuffle)
 function shuffleArray(array) {
@@ -14,6 +14,7 @@ function shuffleArray(array) {
 
 module.exports = function (pool) {
   const checkAdmin = isAdmin(pool);
+  const checkLoggedIn = isLoggedIn(pool);
 
   // Rotas de aluno
 
