@@ -56,6 +56,7 @@ const faqRoutes = require("./routes/faq.js");
 const logRoutes = require("./routes/logs.js");
 const courseRoutes = require("./routes/courses.js");
 const certificatesRoutes = require("./routes/certificates.js");
+const quizzesRoutes = require("./routes/quizzes.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
@@ -67,6 +68,7 @@ app.use("/api/faq", faqRoutes(pool, cloudinary, upload));
 app.use("/api/admin/logs", logRoutes(pool));
 app.use("/api/admin/courses", courseRoutes(pool, cloudinary, upload));
 app.use("/api/certificates", certificatesRoutes(pool));
+app.use("/api/quizzes", quizzesRoutes(pool));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
@@ -174,6 +176,41 @@ const createTables = async () => {
     UNIQUE(user_id, course_id) 
   );`;
 
+  const quizzesTable = `
+    CREATE TABLE IF NOT EXISTS quizzes (
+      id SERIAL PRIMARY KEY,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      passing_score INTEGER NOT NULL DEFAULT 70,
+      UNIQUE(course_id)
+    );`;
+
+  const questionsTable = `
+    CREATE TABLE IF NOT EXISTS questions (
+      id SERIAL PRIMARY KEY,
+      quiz_id INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+      question_text TEXT NOT NULL,
+      question_order INTEGER
+    );`;
+
+  const optionsTable = `
+    CREATE TABLE IF NOT EXISTS options (
+      id SERIAL PRIMARY KEY,
+      question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+      option_text TEXT NOT NULL,
+      is_correct BOOLEAN NOT NULL DEFAULT FALSE
+    );`;
+
+  const quizAttemptsTable = `
+    CREATE TABLE IF NOT EXISTS quiz_attempts (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      quiz_id INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+      score INTEGER NOT NULL,
+      passed BOOLEAN NOT NULL,
+      attempted_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -187,6 +224,10 @@ const createTables = async () => {
     await pool.query(userCoursesTable);
     await pool.query(progressTable);
     await pool.query(certificatesTable);
+    await pool.query(quizzesTable);
+    await pool.query(questionsTable);
+    await pool.query(optionsTable);
+    await pool.query(quizAttemptsTable);
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
