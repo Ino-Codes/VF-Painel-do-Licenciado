@@ -8,6 +8,7 @@ import LoadingSpinner from "./LoadingSpinner.tsx";
 import EmptyState from "./EmptyState.tsx";
 import EmptyCursosImage from "./assets/images/empty_cursos.svg";
 import EmptyCertificadoImage from "./assets/images/empty_certificado.svg";
+import toast from "react-hot-toast";
 
 // Interface para os dados do curso
 interface CourseData {
@@ -71,6 +72,36 @@ const CoursesPage: React.FC = () => {
       setIsLoadingContent(false);
     }
   }, [user]);
+
+  const handleViewCertificate = async (
+    courseId: number,
+    courseTitle: string
+  ) => {
+    toast.loading("A preparar o seu certificado...");
+    try {
+      const response = await api.get(
+        `/api/admin/courses/${courseId}/certificate`,
+        {
+          ...getAuthHeaders(),
+          responseType: "blob", // Importante para receber um ficheiro
+        }
+      );
+      toast.dismiss();
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `certificado-${courseTitle}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Não foi possível gerar o certificado. Tente novamente.");
+      console.error("Erro ao gerar certificado:", err);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -174,18 +205,19 @@ const CoursesPage: React.FC = () => {
                         Emitido em:{" "}
                         {new Date(cert.issue_date).toLocaleDateString("pt-BR")}
                       </p>
-                      {/* --- CORREÇÃO APLICADA AQUI --- */}
-                      {/* Trocado <Link> por <a> para apontar diretamente para a API */}
-                      <a
-                        href={`${baseURL}/api/admin/courses/${cert.course_id}/certificate`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
                         className="form-button"
                         id="form-button-certificate"
-                        style={{ textDecoration: "none", marginTop: "auto" }}
+                        style={{ marginTop: "auto" }}
+                        onClick={() =>
+                          handleViewCertificate(
+                            cert.course_id,
+                            cert.course_title
+                          )
+                        }
                       >
                         Visualizar Certificado
-                      </a>
+                      </button>
                     </div>
                   ))
                 ) : (
