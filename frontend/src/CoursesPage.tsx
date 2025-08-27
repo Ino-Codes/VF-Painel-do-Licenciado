@@ -174,6 +174,7 @@ const CoursesPage: React.FC = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="form-button"
+                        id="form-button-certificate"
                         style={{ textDecoration: "none", marginTop: "15px" }}
                       >
                         Visualizar Certificado

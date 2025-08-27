@@ -1143,6 +1143,11 @@ nav.main-menu {
   opacity: 0.85;
 }
 
+#form-button-certificate {
+  max-width: 250px;
+  margin: 0 auto;
+}
+
 /* Lista de usuários cadastrados */
 .user-list {
   list-style: none;
