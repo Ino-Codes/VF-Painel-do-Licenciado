@@ -112,13 +112,7 @@ const createTables = async () => {
 
   const coursesTable = `DROP TABLE IF EXISTS courses`;
 
-  const modulesTable = `
-    CREATE TABLE IF NOT EXISTS modules (
-      id SERIAL PRIMARY KEY,
-      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-      title TEXT NOT NULL,
-      module_order INTEGER NOT NULL
-    );`;
+  const modulesTable = `DROP TABLE IF EXISTS modules`;
 
   const lessonsTable = `
     CREATE TABLE IF NOT EXISTS lessons (
@@ -130,14 +124,7 @@ const createTables = async () => {
       lesson_order INTEGER NOT NULL
     );`;
 
-  const userCoursesTable = `
-    CREATE TABLE IF NOT EXISTS user_courses (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-      enrolled_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE(user_id, course_id)
-    );`;
+  const userCoursesTable = `DROP TABLE IF EXISTS user_courses`;
 
   const progressTable = `
     CREATE TABLE IF NOT EXISTS progress (
