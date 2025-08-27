@@ -58,19 +58,17 @@ module.exports = function (pool) {
   });
 
   // Rota para submeter as respostas do quiz
-  router.post("/:quizId/submit", async (req, res) => {
+  router.post("/:quizId/submit", checkLoggedIn, async (req, res) => {
     const { quizId } = req.params;
-    const { userId, answers } = req.body; // answers = { 'questionId': 'optionId', ... }
+    const { userId, answers } = req.body;
 
     try {
-      // Busca o quiz e a nota mínima para passar
       const quizInfo = await pool.query(
         "SELECT passing_score FROM quizzes WHERE id = $1",
         [quizId]
       );
       const passingScore = quizInfo.rows[0].passing_score;
 
-      // Busca todas as opções corretas para as perguntas deste quiz
       const correctOptionsQuery = `
         SELECT q.id AS question_id, o.id AS correct_option_id
         FROM questions q
@@ -83,26 +81,32 @@ module.exports = function (pool) {
 
       const correctAnswersMap = new Map();
       correctOptionsResult.rows.forEach((row) => {
+        // Guardamos os IDs como strings para garantir a consistência na comparação
         correctAnswersMap.set(
           row.question_id.toString(),
           row.correct_option_id.toString()
         );
       });
 
-      // Compara as respostas do utilizador com as respostas corretas
       let score = 0;
       const questionIds = Object.keys(answers);
+
+      // CORREÇÃO: Comparamos string com string
       for (const questionId of questionIds) {
-        if (answers[questionId] === correctAnswersMap.get(questionId)) {
+        // A resposta do utilizador (answers[questionId]) já é uma string (ou convertemos para ter a certeza)
+        // A resposta correta (correctAnswersMap.get(questionId)) também é uma string
+        if (
+          answers[questionId].toString() === correctAnswersMap.get(questionId)
+        ) {
           score++;
         }
       }
 
       const totalQuestions = correctAnswersMap.size;
-      const finalScore = Math.round((score / totalQuestions) * 100);
+      const finalScore =
+        totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
       const passed = finalScore >= passingScore;
 
-      // Guarda a tentativa na base de dados
       await pool.query(
         "INSERT INTO quiz_attempts (user_id, quiz_id, score, passed) VALUES ($1, $2, $3, $4)",
         [userId, quizId, finalScore, passed]
