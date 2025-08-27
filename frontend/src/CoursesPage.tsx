@@ -188,8 +188,8 @@ const CoursesPage: React.FC = () => {
                 ) : (
                   <EmptyState
                     image={EmptyCursosImage}
-                    title="Nenhuma curso disponível"
-                    message="Ainda não há cursos de conhecimento disponíveis. Volte em breve!"
+                    title="Nenhum curso disponível"
+                    message="Ainda não há cursos disponíveis. Volte em breve!"
                   />
                 )}
               </div>
