@@ -3,7 +3,7 @@ import { useAuth } from "./context/AuthContext.tsx";
 import api from "./api.ts";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Link ainda é usado para os cursos
 import LoadingSpinner from "./LoadingSpinner.tsx";
 import EmptyState from "./EmptyState.tsx";
 import EmptyCursosImage from "./assets/images/empty_cursos.svg";
@@ -38,22 +38,26 @@ const CoursesPage: React.FC = () => {
   );
   const [isLoadingContent, setIsLoadingContent] = useState(true);
 
+  // Pega o URL base da API para construir os links de download
   const baseURL = api.defaults.baseURL;
+
+  const getAuthHeaders = useCallback(() => {
+    if (!user) return {};
+    return { headers: { "x-user-id": user.id } };
+  }, [user]);
 
   const fetchCourses = useCallback(async () => {
     if (!user) return;
     setIsLoadingContent(true);
     try {
-      const res = await api.get("/api/admin/courses/public", {
-        headers: { "x-user-id": user.id },
-      });
+      const res = await api.get("/api/admin/courses/public", getAuthHeaders());
       setCourses(res.data);
     } catch (err) {
-      toast.error("Erro ao buscar cursos:", err);
+      console.error("Erro ao buscar cursos:", err);
     } finally {
       setIsLoadingContent(false);
     }
-  }, [user]);
+  }, [user, getAuthHeaders]);
 
   const fetchCertificates = useCallback(async () => {
     if (!user) return;
@@ -62,7 +66,7 @@ const CoursesPage: React.FC = () => {
       const res = await api.get(`/api/certificates/user/${user.id}`);
       setCertificates(res.data);
     } catch (err) {
-      toast.error("Erro ao buscar certificados:", err);
+      console.error("Erro ao buscar certificados:", err);
     } finally {
       setIsLoadingContent(false);
     }
@@ -88,7 +92,7 @@ const CoursesPage: React.FC = () => {
     return <LoadingSpinner />;
   }
   if (!user) {
-    return null; // ou um redirecionamento
+    return null;
   }
 
   return (
@@ -151,12 +155,11 @@ const CoursesPage: React.FC = () => {
                     </Link>
                   ))
                 ) : (
-                  <div className="empty-state">
-                    <EmptyState
-                      image={EmptyCursosImage}
-                      title="Nenhum curso disponível no momento. Retorne em breve."
-                    ></EmptyState>
-                  </div>
+                  <EmptyState
+                    image={EmptyCursosImage}
+                    title="Nenhuma Trilha Disponível"
+                    message="Ainda não há trilhas de conhecimento disponíveis para si. Volte em breve!"
+                  />
                 )}
               </div>
             )}
@@ -171,26 +174,26 @@ const CoursesPage: React.FC = () => {
                         Emitido em:{" "}
                         {new Date(cert.issue_date).toLocaleDateString("pt-BR")}
                       </p>
-                      <Link
-                        to={`/courses/${cert.course_id}/certificate`} // Link direto para a geração do certificado
+                      {/* --- CORREÇÃO APLICADA AQUI --- */}
+                      {/* Trocado <Link> por <a> para apontar diretamente para a API */}
+                      <a
+                        href={`${baseURL}/api/admin/courses/${cert.course_id}/certificate`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="form-button"
                         id="form-button-certificate"
-                        style={{ textDecoration: "none", marginTop: "15px" }}
+                        style={{ textDecoration: "none", marginTop: "auto" }}
                       >
                         Visualizar Certificado
-                      </Link>
+                      </a>
                     </div>
                   ))
                 ) : (
-                  <div className="empty-state">
-                    <EmptyState
-                      image={EmptyCertificadoImage}
-                      title="Os seus certificados serão exibidos aqui."
-                      message="Você ainda não concluiu nenhum curso para obter um certificado. Complete uma trilha e ele aparecerá aqui!"
-                    ></EmptyState>
-                  </div>
+                  <EmptyState
+                    image={EmptyCertificadoImage}
+                    title="Os seus certificados serão exibidos aqui."
+                    message="Você ainda não concluiu nenhum curso para obter um certificado. Complete uma trilha e ele aparecerá aqui!"
+                  />
                 )}
               </div>
             )}
