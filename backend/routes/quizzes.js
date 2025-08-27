@@ -13,6 +13,8 @@ function shuffleArray(array) {
 }
 
 module.exports = function (pool) {
+  const checkAdmin = isAdmin(pool);
+
   // Rotas de aluno
 
   // Rota para um aluno buscar o quiz de um curso
