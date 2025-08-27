@@ -2,11 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
-const bcrypt = require("bcryptjs");
 const { Pool } = require("pg");
 const cloudinary = require("cloudinary").v2;
 const sgMail = require("@sendgrid/mail");
-const crypto = require("crypto");
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -32,6 +30,7 @@ const upload = multer({ storage: storage });
 app.use(cors());
 app.use(express.json());
 app.use((req, res, next) => {
+  // Captura o endereço de IP real do utilizador, mesmo por trás de um proxy como o do Render
   req.ipAddress =
     req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   next();
@@ -77,10 +76,12 @@ const createTables = async () => {
       role TEXT NOT NULL, nome TEXT, avatar_url TEXT,
       reset_token TEXT, reset_token_expires TIMESTAMPTZ
     );`;
+
   const noticeTable = `
     CREATE TABLE IF NOT EXISTS notices (
       id SERIAL PRIMARY KEY, message TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
+
   const fileTable = `
     CREATE TABLE IF NOT EXISTS files (
       id SERIAL PRIMARY KEY, filename TEXT, originalname TEXT, category TEXT,
@@ -88,39 +89,88 @@ const createTables = async () => {
       visibility TEXT DEFAULT 'public', 
       uploaded_at TIMESTAMPTZ DEFAULT NOW()
     );`;
+
   const videoTable = `
     CREATE TABLE IF NOT EXISTS videos (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
       description TEXT,
-      youtube_url TEXT NOT NULL UNIQUE,
+      youtube_url TEXT NOT NULL,
       visibility TEXT DEFAULT 'public',
       category TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
+
   const logsTable = `
     CREATE TABLE IF NOT EXISTS activity_logs (
       id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
       user_email TEXT, action TEXT NOT NULL, details TEXT, ip_address TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
+
   const faqTable = `
     CREATE TABLE IF NOT EXISTS faq (
       id SERIAL PRIMARY KEY, category TEXT NOT NULL, question TEXT NOT NULL, answer TEXT NOT NULL,
       document_url TEXT, document_originalname TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     );`;
 
-  const coursesTable = `DROP TABLE IF EXISTS courses`;
+  const coursesTable = `
+  CREATE TABLE IF NOT EXISTS courses (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    thumbnail_url TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    certificate_template_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );`;
 
-  const modulesTable = `DROP TABLE IF EXISTS modules`;
+  const modulesTable = `
+    CREATE TABLE IF NOT EXISTS modules (
+      id SERIAL PRIMARY KEY,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      module_order INTEGER NOT NULL
+    );`;
 
-  const lessonsTable = `DROP TABLE IF EXISTS lessons`;
+  const lessonsTable = `
+    CREATE TABLE IF NOT EXISTS lessons (
+      id SERIAL PRIMARY KEY,
+      module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      video_url TEXT,
+      text_content TEXT,
+      lesson_order INTEGER NOT NULL
+    );`;
 
-  const userCoursesTable = `DROP TABLE IF EXISTS user_courses`;
+  const userCoursesTable = `
+    CREATE TABLE IF NOT EXISTS user_courses (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, course_id)
+    );`;
 
-  const progressTable = `DROP TABLE IF EXISTS progress`;
+  const progressTable = `
+    CREATE TABLE IF NOT EXISTS progress (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+      completed_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, lesson_id)
+    );`;
 
-  const certificatesTable = `DROP TABLE IF EXISTS certificates`;
+  const certificatesTable = `
+  CREATE TABLE IF NOT EXISTS certificates (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    issue_date TIMESTAMPTZ DEFAULT NOW(), 
+    expiration_date TIMESTAMPTZ, 
+    certificate_url TEXT, 
+    unique_code TEXT NOT NULL UNIQUE
+  );`;
 
   try {
     await pool.query(userTable);
@@ -136,13 +186,13 @@ const createTables = async () => {
     await pool.query(progressTable);
     await pool.query(certificatesTable);
 
-    console.log("Tabelas criadas e removidas com sucesso no PostgreSQL.");
+    console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
     console.error("Erro ao criar tabelas:", err);
   }
 };
 
 app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+  console.log(`Servidor rodando na porta ${port}`);
   createTables();
 });
