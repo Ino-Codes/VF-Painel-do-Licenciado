@@ -52,7 +52,6 @@ module.exports = function (pool, cloudinary, upload) {
     try {
       const courseQuery = `
             SELECT c.*,
-                -- AQUI ESTÁ A CORREÇÃO: COALESCE garante que se não houver módulos, retornamos '[]' (um array vazio)
                 COALESCE(
                     (SELECT json_agg(m_agg) FROM (
                         SELECT m.*,
@@ -92,7 +91,16 @@ module.exports = function (pool, cloudinary, upload) {
       ]);
       course.completedLessons = progressResult.rows.map((row) => row.lesson_id);
 
-      const quizQuery = `...`; // A sua query de quiz continua igual
+      const quizQuery = `
+            SELECT 
+                q.id AS quiz_id,
+                EXISTS (
+                    SELECT 1 FROM quiz_attempts qa 
+                    WHERE qa.quiz_id = q.id AND qa.user_id = $1 AND qa.passed = TRUE
+                ) AS has_passed_quiz
+            FROM quizzes q
+            WHERE q.course_id = $2
+        `;
       const quizResult = await pool.query(quizQuery, [userId, courseId]);
       if (quizResult.rowCount > 0) {
         course.quiz_id = quizResult.rows[0].quiz_id;
