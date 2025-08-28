@@ -386,7 +386,7 @@ const AdminCourseEditor: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div>
+            <div className="form-row">
               {/* Listar Perguntas e Opções */}
               {course.quiz.questions.map((question) => (
                 <div key={question.id} className="question-editor-item">
