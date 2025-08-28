@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool) {
-  // Rota de busca dos videos
+  // --- ROTA DE BUSCA DOS VÍDEOS ATUALIZADA COM PAGINAÇÃO ---
   router.get("/", async (req, res) => {
-    const { role, category } = req.query;
+    // Adicionamos page e limit, com valores padrão
+    const { role, category, page = 1, limit = 4 } = req.query;
     try {
+      const offset = (parseInt(page) - 1) * parseInt(limit);
       let params = [];
       let whereClauses = [];
 
@@ -16,13 +18,30 @@ module.exports = function (pool) {
         params.push(category);
         whereClauses.push(`category = $${params.length}`);
       }
-
       const whereString =
         whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-      const sql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC`;
 
-      const result = await pool.query(sql, params);
-      res.json(result.rows);
+      // Precisamos de duas queries: uma para contar o total e outra para buscar a página atual
+      const countSql = `SELECT COUNT(*) FROM videos ${whereString}`;
+
+      const pagedParams = [...params, limit, offset];
+      const videosSql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC LIMIT $${
+        params.length + 1
+      } OFFSET $${params.length + 2}`;
+
+      // Executamos ambas em paralelo para mais eficiência
+      const [countResult, videosResult] = await Promise.all([
+        pool.query(countSql, params),
+        pool.query(videosSql, pagedParams),
+      ]);
+
+      const totalCount = parseInt(countResult.rows[0].count, 10);
+
+      // Enviamos a resposta num objeto, com os vídeos e o total de páginas
+      res.json({
+        videos: videosResult.rows,
+        totalPages: Math.ceil(totalCount / limit),
+      });
     } catch (err) {
       console.error("Erro ao buscar vídeos:", err);
       res.status(500).json({ error: "Erro ao buscar vídeos" });
