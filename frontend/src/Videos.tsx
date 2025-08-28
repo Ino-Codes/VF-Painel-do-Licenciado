@@ -61,19 +61,33 @@ const Videos: React.FC = () => {
     }
   }, [user]);
 
-  const fetchVideos = useCallback(async () => {
-    if (!user) return;
-    try {
-      const params: any = { role: user.role };
-      if (selectedCategory) {
-        params.category = selectedCategory;
+  const fetchVideos = useCallback(
+    async (page: number) => {
+      if (!user) return;
+
+      // Se for uma nova página, ativamos o loading do botão
+      if (page > 1) setIsLoadingMore(true);
+
+      try {
+        const params: any = { role: user.role, page, limit: 4 }; // limit: 4 como pedido
+        if (selectedCategory) {
+          params.category = selectedCategory;
+        }
+        const res = await api.get("/api/videos", { params });
+
+        // Se for a primeira página, substitui a lista. Se não, junta os novos vídeos à lista existente.
+        setVideos((prev) =>
+          page === 1 ? res.data.videos : [...prev, ...res.data.videos]
+        );
+        setTotalPages(res.data.totalPages);
+      } catch (err) {
+        toast.error("Erro ao buscar vídeos.");
+      } finally {
+        setIsLoadingMore(false);
       }
-      const res = await api.get("/api/videos", { params });
-      setVideos(res.data);
-    } catch (err) {
-      toast.error("Erro ao buscar vídeos.");
-    }
-  }, [user, selectedCategory]);
+    },
+    [user, selectedCategory]
+  );
 
   useEffect(() => {
     if (user) {
@@ -81,11 +95,21 @@ const Videos: React.FC = () => {
     }
   }, [user, fetchCategories]);
 
+  // Efeito que busca os vídeos quando a página ou a categoria mudam
   useEffect(() => {
     if (user) {
-      fetchVideos();
+      // Quando a categoria muda, queremos limpar a lista antiga e voltar à página 1
+      if (currentPage === 1) {
+        setVideos([]); // Limpa a lista para evitar mostrar vídeos da categoria antiga
+      }
+      fetchVideos(currentPage);
     }
-  }, [user, fetchVideos]);
+  }, [user, fetchVideos, currentPage, selectedCategory]);
+
+  // Efeito para resetar a página quando a categoria é alterada
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
 
   const handleDeleteClick = (videoId: number) => {
     setVideoToDelete(videoId);
@@ -198,6 +222,18 @@ const Videos: React.FC = () => {
               title="Nenhum Vídeo Encontrado"
               message="Estamos incluindo vídeos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
             ></EmptyState>
+          )}
+        </div>
+
+        <div className="load-more-container">
+          {currentPage < totalPages && (
+            <button
+              className="form-button"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? "Carregando..." : "Carregar mais..."}
+            </button>
           )}
         </div>
       </div>
