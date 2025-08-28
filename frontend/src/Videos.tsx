@@ -19,18 +19,30 @@ interface VideoData {
   category: string;
 }
 
+// --- FUNÇÃO getYoutubeEmbedUrl CORRIGIDA E ROBUSTA ---
 const getYoutubeEmbedUrl = (url: string): string => {
   if (!url) return "";
-  try {
-    const urlObj = new URL(url);
-    let videoId = urlObj.searchParams.get("v");
-    if (!videoId) {
-      videoId = urlObj.pathname.split("/").pop() || "";
-    }
-    return `https://www.youtube.com/embed/${videoId}`;
-  } catch (error) {
-    return url;
+
+  let videoId = null;
+
+  // Tenta extrair o ID de diferentes formatos de URL do YouTube
+  const youtubeRegex =
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?#]+)/;
+  const match = url.match(youtubeRegex);
+
+  if (match && match[1]) {
+    videoId = match[1];
+  } else if (!url.includes("http")) {
+    // Se não for um URL, assume que a string é o próprio ID
+    videoId = url;
   }
+
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+
+  // Se não conseguir extrair, retorna uma string vazia para evitar erros
+  return "";
 };
 
 const Videos: React.FC = () => {
@@ -40,6 +52,11 @@ const Videos: React.FC = () => {
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Partial<VideoData> | null>(
@@ -65,17 +82,16 @@ const Videos: React.FC = () => {
     async (page: number) => {
       if (!user) return;
 
-      // Se for uma nova página, ativamos o loading do botão
+      if (page === 1) setIsInitialLoading(true);
       if (page > 1) setIsLoadingMore(true);
 
       try {
-        const params: any = { role: user.role, page, limit: 4 }; // limit: 4 como pedido
+        const params: any = { role: user.role, page, limit: 4 };
         if (selectedCategory) {
           params.category = selectedCategory;
         }
         const res = await api.get("/api/videos", { params });
 
-        // Se for a primeira página, substitui a lista. Se não, junta os novos vídeos à lista existente.
         setVideos((prev) =>
           page === 1 ? res.data.videos : [...prev, ...res.data.videos]
         );
@@ -83,6 +99,7 @@ const Videos: React.FC = () => {
       } catch (err) {
         toast.error("Erro ao buscar vídeos.");
       } finally {
+        setIsInitialLoading(false);
         setIsLoadingMore(false);
       }
     },
@@ -95,21 +112,24 @@ const Videos: React.FC = () => {
     }
   }, [user, fetchCategories]);
 
-  // Efeito que busca os vídeos quando a página ou a categoria mudam
   useEffect(() => {
     if (user) {
-      // Quando a categoria muda, queremos limpar a lista antiga e voltar à página 1
       if (currentPage === 1) {
-        setVideos([]); // Limpa a lista para evitar mostrar vídeos da categoria antiga
+        setVideos([]);
       }
       fetchVideos(currentPage);
     }
   }, [user, fetchVideos, currentPage, selectedCategory]);
 
-  // Efeito para resetar a página quando a categoria é alterada
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategory]);
+
+  const handleLoadMore = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
 
   const handleDeleteClick = (videoId: number) => {
     setVideoToDelete(videoId);
@@ -121,7 +141,9 @@ const Videos: React.FC = () => {
     try {
       await api.delete(`/api/videos/${videoToDelete}`);
       toast.success("Vídeo excluído com sucesso!");
-      fetchVideos();
+      // Força o reset para recarregar do zero
+      setCurrentPage(1);
+      if (currentPage === 1) fetchVideos(1);
       fetchCategories();
     } catch (err) {
       toast.error("Erro ao excluir o vídeo.");
@@ -143,7 +165,9 @@ const Videos: React.FC = () => {
 
   const handleSuccess = () => {
     setIsModalOpen(false);
-    fetchVideos();
+    // Força o reset para recarregar do zero
+    setCurrentPage(1);
+    if (currentPage === 1) fetchVideos(1);
     fetchCategories();
   };
 
@@ -181,61 +205,67 @@ const Videos: React.FC = () => {
           ))}
         </div>
 
-        <div className="video-list">
-          {!loading && videos.length > 0 ? (
-            videos.map((video) => (
-              <div key={video.id} className="video-card">
-                <div className="video-embed">
-                  <iframe
-                    src={getYoutubeEmbedUrl(video.youtube_url)}
-                    title={video.title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
-                </div>
-                <div className="video-info">
-                  <h3>{video.title}</h3>
-                  <p>{video.description}</p>
-                  {user.role === "admin" && (
-                    <div className="video-actions">
-                      <button
-                        className="list-button"
-                        onClick={() => openModalForEdit(video)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDeleteClick(video.id)}
-                      >
-                        Excluir
-                      </button>
+        {isInitialLoading ? (
+          <div className="tela-loading">Carregando vídeos...</div>
+        ) : (
+          <>
+            <div className="video-list">
+              {videos.length > 0 ? (
+                videos.map((video) => (
+                  <div key={video.id} className="video-card">
+                    <div className="video-embed">
+                      <iframe
+                        src={getYoutubeEmbedUrl(video.youtube_url)}
+                        title={video.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
                     </div>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <EmptyState
-              image={VideoEmptyImage}
-              title="Nenhum Vídeo Encontrado"
-              message="Estamos incluindo vídeos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
-            ></EmptyState>
-          )}
-        </div>
+                    <div className="video-info">
+                      <h3>{video.title}</h3>
+                      <p>{video.description}</p>
+                      {user.role === "admin" && (
+                        <div className="video-actions">
+                          <button
+                            className="list-button"
+                            onClick={() => openModalForEdit(video)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            className="delete-button"
+                            onClick={() => handleDeleteClick(video.id)}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <EmptyState
+                  image={VideoEmptyImage}
+                  title="Nenhum Vídeo Encontrado"
+                  message="Estamos incluindo vídeos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
+                ></EmptyState>
+              )}
+            </div>
 
-        <div className="load-more-container">
-          {currentPage < totalPages && (
-            <button
-              className="form-button"
-              onClick={handleLoadMore}
-              disabled={isLoadingMore}
-            >
-              {isLoadingMore ? "Carregando..." : "Carregar mais..."}
-            </button>
-          )}
-        </div>
+            <div className="load-more-container">
+              {currentPage < totalPages && (
+                <button
+                  className="form-button"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                >
+                  {isLoadingMore ? "Carregando..." : "Carregar mais..."}
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
       {isModalOpen && (
         <VideoModal
