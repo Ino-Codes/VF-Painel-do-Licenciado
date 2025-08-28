@@ -1,6 +1,11 @@
 const express = require("express");
 const router = express.Router();
 
+const { JSDOM } = require("jsdom");
+const createDOMPurify = require("dompurify");
+const window = new JSDOM("").window;
+const DOMPurify = createDOMPurify(window);
+
 module.exports = function (pool) {
   router.get("/", async (req, res) => {
     try {
@@ -17,7 +22,11 @@ module.exports = function (pool) {
   router.post("/admin", async (req, res) => {
     const { message } = req.body;
     try {
-      await pool.query("INSERT INTO notices (message) VALUES ($1)", [message]);
+      const clean_message = DOMPurify.sanitize(message);
+
+      await pool.query("INSERT INTO notices (message) VALUES ($1)", [
+        clean_message,
+      ]);
       res.status(201).json({ success: true });
     } catch (err) {
       console.error("Erro ao criar aviso:", err);
@@ -29,9 +38,11 @@ module.exports = function (pool) {
     const { id } = req.params;
     const { message } = req.body;
     try {
+      const clean_message = DOMPurify.sanitize(message);
+
       const result = await pool.query(
         "UPDATE notices SET message = $1 WHERE id = $2 RETURNING *",
-        [message, id]
+        [clean_message, id]
       );
       if (result.rowCount === 0)
         return res.status(404).json({ error: "Aviso não encontrado." });

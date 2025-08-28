@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
@@ -9,6 +9,9 @@ import ConfirmationModal from "./ConfirmationModal.tsx";
 import EmptyState from "./EmptyState.tsx";
 import EmptyAvisosImage from "./assets/images/empty_avisos.svg";
 import EmptyDashsImage from "./assets/images/empty_dashs.svg";
+
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 interface Notice {
   id: number;
@@ -29,13 +32,20 @@ const Dashboard: React.FC = () => {
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
+  const quillModules = {
+    toolbar: [
+      ["bold", "italic"],
+      [{ list: "ordered" }, { list: "bullet" }],
+    ],
+  };
+
   useEffect(() => {
     if (!loading && !user) {
       navigate("/");
     }
   }, [user, loading, navigate]);
 
-  const fetchNotices = async () => {
+  const fetchNotices = useCallback(async () => {
     try {
       const res = await api.get("/api/notices");
       setNotices(res.data);
@@ -43,16 +53,16 @@ const Dashboard: React.FC = () => {
       console.error("Erro ao buscar avisos:", err);
       toast.error("Não foi possível carregar os avisos.");
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (user) {
       fetchNotices();
     }
-  }, [user]);
+  }, [user, fetchNotices]);
 
   const handlePostNotice = async () => {
-    if (!newMessage.trim()) {
+    if (!newMessage.trim() || newMessage === "<p><br></p>") {
       toast.error("O aviso não pode estar em branco.");
       return;
     }
@@ -73,7 +83,6 @@ const Dashboard: React.FC = () => {
 
   const handleConfirmDeleteNotice = async () => {
     if (noticeToDelete === null) return;
-
     try {
       await api.delete(`/api/notices/admin/${noticeToDelete}`);
       toast.success("Aviso excluído com sucesso!");
@@ -92,7 +101,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleUpdateNotice = async (noticeId: number) => {
-    if (!editText.trim()) {
+    if (!editText.trim() || editText === "<p><br></p>") {
       toast.error("O aviso não pode estar em branco.");
       return;
     }
@@ -134,10 +143,12 @@ const Dashboard: React.FC = () => {
           <div className="notice-board">
             {user.role === "admin" && (
               <div className="notice-form">
-                <textarea
-                  placeholder="Digite seu novo aviso aqui..."
+                <ReactQuill
+                  theme="snow"
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={setNewMessage}
+                  modules={quillModules}
+                  placeholder="Digite seu novo aviso aqui..."
                 />
                 <button className="form-button" onClick={handlePostNotice}>
                   Postar Aviso
@@ -152,9 +163,11 @@ const Dashboard: React.FC = () => {
                 <div key={notice.id} className="notice-card">
                   {editingNoticeId === notice.id ? (
                     <div className="notice-edit-form">
-                      <textarea
+                      <ReactQuill
+                        theme="snow"
                         value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
+                        onChange={setEditText}
+                        modules={quillModules}
                       />
                       <div className="notice-actions">
                         <button
@@ -173,7 +186,10 @@ const Dashboard: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                      <p>{notice.message}</p>
+                      <div
+                        className="notice-message"
+                        dangerouslySetInnerHTML={{ __html: notice.message }}
+                      />
                       <div className="notice-footer">
                         <small>
                           {new Date(notice.created_at).toLocaleDateString(
