@@ -413,40 +413,10 @@ body::before {
   align-items: center;
 }
 
-.delete-button {
-  background-color: transparent;
-  color: #c82333;
-  border: 1px solid #c82333;
-  border-radius: 5px;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.delete-button:hover {
-  background-color: #c82333;
-  color: white;
-}
-
 .lesson-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.lesson-actions button {
-  background: none;
-  border: 1px solid #6c757d;
-  color: #6c757d;
-  border-radius: 3px;
-  padding: 3px 8px;
-  margin-left: 8px;
-  cursor: pointer;
-}
-
-.lesson-actions button:hover {
-  background-color: #6c757d;
-  color: white;
 }
 
 .courses-grid {
@@ -938,22 +908,6 @@ body::before {
   margin-bottom: 8px;
 }
 
-.lesson-actions button {
-  background: none;
-  border: 1px solid #6c757d;
-  color: #6c757d;
-  border-radius: 3px;
-  padding: 3px 8px;
-  margin-left: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.lesson-actions button:hover {
-  background-color: #6c757d;
-  color: white;
-}
-
 .lesson-content-video {
   position: relative;
   padding-top: 56.25%;
@@ -1047,6 +1001,11 @@ body::before {
   border-radius: 3px;
   padding: 5px 10px;
   cursor: pointer;
+}
+
+.tiptap-menu-bar button:hover {
+  background-color: #363950;
+  color: white;
 }
 
 .tiptap-menu-bar button.is-active {
