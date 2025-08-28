@@ -7,7 +7,7 @@ import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import LessonEditModal from "./LessonEditModal.tsx";
-import { Course, Module, Lesson } from "./types.ts";
+import { Course, Module, Lesson, Quiz, Question, Option } from "./types.ts"; // Supondo que as interfaces de Quiz estão em types.ts
 import {
   DndContext,
   closestCenter,
@@ -209,7 +209,6 @@ const AdminCourseEditor: React.FC = () => {
   );
 
   // --- NOVAS FUNÇÕES HANDLER PARA O QUIZ ---
-
   const handleCreateQuiz = async () => {
     if (!courseId) return;
     // Um título e nota padrão para o novo quiz
@@ -375,24 +374,29 @@ const AdminCourseEditor: React.FC = () => {
 
         <hr className="section-divider" />
 
-        {/* --- NOVA SECÇÃO DE GESTÃO DE QUIZ --- */}
+        {/* --- SECÇÃO DE GESTÃO DE QUIZ COM ESTRUTURA E CLASSES CORRIGIDAS --- */}
         <div className="quiz-editor-section">
           <h2>Quiz do Curso</h2>
           {!course.quiz ? (
             <div className="admin-form">
               <p>Este curso ainda não tem um quiz.</p>
-              <button className="form-button" onClick={handleCreateQuiz}>
-                Criar Quiz
-              </button>
+              <div className="form-row">
+                <button className="form-button" onClick={handleCreateQuiz}>
+                  Criar Quiz
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="form-row">
+            <div>
               {/* Listar Perguntas e Opções */}
               {course.quiz.questions.map((question) => (
                 <div key={question.id} className="question-editor-item">
                   <div className="question-header">
                     <strong>{question.question_text}</strong>
-                    <button onClick={() => handleDeleteQuestion(question.id)}>
+                    <button
+                      className="list-button delete"
+                      onClick={() => handleDeleteQuestion(question.id)}
+                    >
                       Excluir Pergunta
                     </button>
                   </div>
@@ -400,26 +404,38 @@ const AdminCourseEditor: React.FC = () => {
                     {question.options.map((option) => (
                       <li
                         key={option.id}
-                        className={option.is_correct ? "correct-option" : ""}
+                        className={`option-list-item ${
+                          option.is_correct ? "correct-option" : ""
+                        }`}
                       >
-                        {option.option_text}
-                        <div>
+                        <span>{option.option_text}</span>
+                        <div className="option-actions">
                           <button
+                            className="list-button"
                             onClick={() => handleSetCorrectOption(option.id)}
+                            disabled={option.is_correct}
                           >
-                            Marcar como Correta
+                            {option.is_correct
+                              ? "✓ Correta"
+                              : "Marcar como Correta"}
                           </button>
-                          <button onClick={() => handleDeleteOption(option.id)}>
+                          <button
+                            className="list-button delete"
+                            onClick={() => handleDeleteOption(option.id)}
+                          >
                             Excluir
                           </button>
                         </div>
                       </li>
                     ))}
                   </ul>
+
                   {/* Formulário para adicionar nova opção */}
-                  <div className="add-option-form">
+                  <div className="add-item-form">
                     <input
+                      className="form-input"
                       placeholder="Nova opção de resposta"
+                      value={newOptionText[question.id] || ""}
                       onChange={(e) =>
                         setNewOptionText({
                           ...newOptionText,
@@ -427,20 +443,27 @@ const AdminCourseEditor: React.FC = () => {
                         })
                       }
                     />
-                    <button onClick={() => handleAddOption(question.id)}>
+                    <button
+                      className="form-button"
+                      onClick={() => handleAddOption(question.id)}
+                    >
                       Adicionar Opção
                     </button>
                   </div>
                 </div>
               ))}
+
               {/* Formulário para adicionar nova pergunta */}
-              <div className="add-question-form">
+              <div className="admin-form add-item-form">
                 <input
+                  className="form-input"
                   placeholder="Texto da nova pergunta"
                   value={newQuestionText}
                   onChange={(e) => setNewQuestionText(e.target.value)}
                 />
-                <button onClick={handleAddQuestion}>Adicionar Pergunta</button>
+                <button className="form-button" onClick={handleAddQuestion}>
+                  Adicionar Pergunta
+                </button>
               </div>
             </div>
           )}
