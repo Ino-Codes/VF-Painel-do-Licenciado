@@ -417,8 +417,9 @@ const AdminCourseEditor: React.FC = () => {
                     ))}
                   </ul>
                   {/* Formulário para adicionar nova opção */}
-                  <div className="form-input">
+                  <div>
                     <input
+                      className="form-input"
                       placeholder="Nova opção de resposta"
                       onChange={(e) =>
                         setNewOptionText({
@@ -437,8 +438,9 @@ const AdminCourseEditor: React.FC = () => {
                 </div>
               ))}
               {/* Formulário para adicionar nova pergunta */}
-              <div className="form-input">
+              <div>
                 <input
+                  className="form-input"
                   placeholder="Texto da nova pergunta"
                   value={newQuestionText}
                   onChange={(e) => setNewQuestionText(e.target.value)}
