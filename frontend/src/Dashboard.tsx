@@ -10,10 +10,8 @@ import EmptyState from "./EmptyState.tsx";
 import EmptyAvisosImage from "./assets/images/empty_avisos.svg";
 import EmptyDashsImage from "./assets/images/empty_dashs.svg";
 
-// --- IMPORTAÇÕES PARA O TIPTAP ---
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-// --- FIM DAS IMPORTAÇÕES ---
 
 interface Notice {
   id: number;
@@ -21,7 +19,6 @@ interface Notice {
   created_at: string;
 }
 
-// --- COMPONENTE DA BARRA DE FERRAMENTAS DO TIPTAP ---
 const TiptapMenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
   if (!editor) {
     return null;
@@ -60,7 +57,6 @@ const TiptapMenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
     </div>
   );
 };
-// --- FIM DO COMPONENTE ---
 
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
@@ -71,7 +67,6 @@ const Dashboard: React.FC = () => {
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-  // --- HOOKS DO TIPTAP PARA OS EDITORES ---
   const newNoticeEditor = useEditor({
     extensions: [StarterKit],
     content: "",
@@ -91,7 +86,6 @@ const Dashboard: React.FC = () => {
       },
     },
   });
-  // --- FIM DOS HOOKS ---
 
   useEffect(() => {
     if (!loading && !user) {
@@ -154,7 +148,6 @@ const Dashboard: React.FC = () => {
 
   const handleEditNotice = (notice: Notice) => {
     setEditingNoticeId(notice.id);
-    // Define o conteúdo do editor de edição
     editNoticeEditor?.commands.setContent(notice.message);
   };
 
@@ -204,7 +197,6 @@ const Dashboard: React.FC = () => {
           <div className="notice-board">
             {user.role === "admin" && (
               <div className="notice-form">
-                {/* --- EDITOR TIPTAP PARA NOVO AVISO --- */}
                 <div className="tiptap-container">
                   <TiptapMenuBar editor={newNoticeEditor} />
                   <EditorContent editor={newNoticeEditor} />
@@ -222,7 +214,6 @@ const Dashboard: React.FC = () => {
                 <div key={notice.id} className="notice-card">
                   {editingNoticeId === notice.id ? (
                     <div className="notice-edit-form">
-                      {/* --- EDITOR TIPTAP PARA EDIÇÃO DE AVISO --- */}
                       <div className="tiptap-container">
                         <TiptapMenuBar editor={editNoticeEditor} />
                         <EditorContent editor={editNoticeEditor} />
