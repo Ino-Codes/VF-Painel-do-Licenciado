@@ -100,7 +100,7 @@ const QuizPlayer: React.FC = () => {
           <h2>Resultado do Teste</h2>
           {quizResult.passed ? (
             <div className="result-pass">
-              <h3>Parabéns, você foi aprovado!</h3>
+              <h3>Parabéns, você foi aprovado! 🎉</h3>
               <p>Sua nota: {quizResult.score}%</p>
               <p>
                 Você acertou {quizResult.correctAnswers} de{" "}
