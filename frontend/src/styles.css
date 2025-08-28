@@ -677,15 +677,94 @@ body::before {
   margin-right: 10px;
 }
 
-.add-question-form {
-  flex-grow: 1;
-  padding: 10px;
-  border: 1px solid #ccc;
+/* --- Estilos para o Editor de Quiz (Admin) --- */
+
+/* Divisor visual entre a gestão de módulos e a de quiz */
+.section-divider {
+  margin: 40px 0;
+  border: none;
+  border-top: 1px solid #e9ecef;
+}
+
+.quiz-editor-section h2 {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 10px;
+}
+
+.quiz-editor-section .admin-form {
+  background-color: transparent;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+/* Estilo para cada item de pergunta na lista de edição */
+.question-editor-item {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.question-header strong {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+/* Lista de opções de resposta */
+.option-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 15px;
+}
+
+.option-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 10px 15px;
+  border: 1px solid #dee2e6;
   border-radius: 5px;
-  font-size: 14px;
-  background-color: white;
-  min-width: 150px;
-  font-family: "Montserrat", sans-serif;
+  margin-bottom: 8px;
+}
+
+.option-list-item.correct-option {
+  border-left: 4px solid #04a146; /* Verde para resposta correta */
+  font-weight: bold;
+}
+
+.option-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Formulários para adicionar novas perguntas e opções */
+.add-item-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  border-top: 1px dashed #dee2e6;
+  padding-top: 15px;
+}
+
+.add-item-form input {
+  flex-grow: 1; /* Faz o input ocupar o espaço disponível */
+}
+
+/* Reutiliza o estilo dos botões de lista existentes */
+.option-actions .list-button {
+  padding: 5px 12px;
+  font-size: 13px;
 }
 
 /* Estilos para Resultados do Quiz */
@@ -874,10 +953,6 @@ body::before {
 .lesson-actions button:hover {
   background-color: #6c757d;
   color: white;
-}
-
-.lesson-content {
-  /* Área principal para o vídeo ou texto */
 }
 
 .lesson-content-video {

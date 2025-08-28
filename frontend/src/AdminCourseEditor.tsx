@@ -376,10 +376,10 @@ const AdminCourseEditor: React.FC = () => {
         <hr className="section-divider" />
 
         {/* --- NOVA SECÇÃO DE GESTÃO DE QUIZ --- */}
-        <div className="admin-form mt-4">
-          <h3>Quiz do Curso</h3>
+        <div className="quiz-editor-section">
+          <h2>Quiz do Curso</h2>
           {!course.quiz ? (
-            <div className="form-row">
+            <div className="admin-form">
               <p>Este curso ainda não tem um quiz.</p>
               <button className="form-button" onClick={handleCreateQuiz}>
                 Criar Quiz
@@ -417,9 +417,8 @@ const AdminCourseEditor: React.FC = () => {
                     ))}
                   </ul>
                   {/* Formulário para adicionar nova opção */}
-                  <div>
+                  <div className="add-option-form">
                     <input
-                      className="form-input"
                       placeholder="Nova opção de resposta"
                       onChange={(e) =>
                         setNewOptionText({
@@ -428,26 +427,20 @@ const AdminCourseEditor: React.FC = () => {
                         })
                       }
                     />
-                    <button
-                      className="form-button"
-                      onClick={() => handleAddOption(question.id)}
-                    >
+                    <button onClick={() => handleAddOption(question.id)}>
                       Adicionar Opção
                     </button>
                   </div>
                 </div>
               ))}
               {/* Formulário para adicionar nova pergunta */}
-              <div>
+              <div className="add-question-form">
                 <input
-                  className="form-input"
                   placeholder="Texto da nova pergunta"
                   value={newQuestionText}
                   onChange={(e) => setNewQuestionText(e.target.value)}
                 />
-                <button className="form-button" onClick={handleAddQuestion}>
-                  Adicionar Pergunta
-                </button>
+                <button onClick={handleAddQuestion}>Adicionar Pergunta</button>
               </div>
             </div>
           )}
