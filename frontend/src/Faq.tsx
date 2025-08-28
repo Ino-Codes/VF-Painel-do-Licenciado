@@ -186,7 +186,7 @@ const Faq: React.FC = () => {
                     {user.role === "admin" && (
                       <div className="faq-actions">
                         <button
-                          className="list-button delete"
+                          className="delete-button"
                           onClick={() => handleDeleteClick(faq.id)}
                         >
                           Excluir

@@ -176,13 +176,13 @@ const Videos: React.FC = () => {
                   {user.role === "admin" && (
                     <div className="video-actions">
                       <button
-                        className="list-button edit"
+                        className="list-button"
                         onClick={() => openModalForEdit(video)}
                       >
                         Editar
                       </button>
                       <button
-                        className="list-button delete"
+                        className="delete-button"
                         onClick={() => handleDeleteClick(video.id)}
                       >
                         Excluir

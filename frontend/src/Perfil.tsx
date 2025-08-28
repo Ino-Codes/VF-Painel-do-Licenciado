@@ -149,7 +149,7 @@ const Perfil: React.FC = () => {
             {user.avatar_url && !selectedFile && (
               <button
                 onClick={handleRemoveAvatarClick}
-                className="form-button-cancel"
+                className="delete-button"
               >
                 Remover Foto
               </button>

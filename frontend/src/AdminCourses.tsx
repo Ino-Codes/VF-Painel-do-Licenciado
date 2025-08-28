@@ -276,13 +276,13 @@ const AdminCourses: React.FC = () => {
                   Gerenciar
                 </button>
                 <button
-                  className="list-button edit"
+                  className="list-button"
                   onClick={() => startEdit(course)}
                 >
                   Editar
                 </button>
                 <button
-                  className="list-button delete"
+                  className="delete-button"
                   onClick={() => handleDeleteClick(course.id)}
                 >
                   Excluir

@@ -309,14 +309,11 @@ const AdminUsers: React.FC = () => {
                 </span>
               </div>
               <div className="user-actions">
-                <button
-                  className="list-button edit"
-                  onClick={() => startEdit(u)}
-                >
+                <button className="list-button" onClick={() => startEdit(u)}>
                   Editar
                 </button>
                 <button
-                  className="list-button delete"
+                  className="delete-button"
                   onClick={() => handleDeleteClick(u.id)}
                   disabled={user.id === u.id}
                 >

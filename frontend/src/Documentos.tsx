@@ -220,13 +220,13 @@ const Documentos: React.FC = () => {
                           {user?.role === "admin" && (
                             <>
                               <button
-                                className="list-button edit"
+                                className="list-button"
                                 onClick={() => openModalForEdit(file)}
                               >
                                 Editar
                               </button>
                               <button
-                                className="list-button delete"
+                                className="delete-button"
                                 onClick={() => handleDeleteClick(file.id)}
                               >
                                 Excluir

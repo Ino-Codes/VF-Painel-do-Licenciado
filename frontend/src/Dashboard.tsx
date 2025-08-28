@@ -191,13 +191,13 @@ const Dashboard: React.FC = () => {
                         {user.role === "admin" && (
                           <div className="notice-actions">
                             <button
-                              className="list-button edit"
+                              className="list-button"
                               onClick={() => handleEditNotice(notice)}
                             >
                               Editar
                             </button>
                             <button
-                              className="list-button delete"
+                              className="delete-button"
                               onClick={() => handleDeleteNoticeClick(notice.id)}
                             >
                               Excluir
