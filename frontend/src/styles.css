@@ -1374,19 +1374,20 @@ nav.main-menu {
 }
 
 .list-button {
-  border: none;
-  padding: 8px 15px;
+  background-color: initial;
+  border: 1px solid #3b3e4f;
   border-radius: 5px;
+  color: #3b3e4f;
   cursor: pointer;
-  font-weight: 500;
-  font-size: 13px;
-  color: white;
-  transition: opacity 0.2s;
-  background-color: #3b3e4f;
+  font-weight: 700;
+  padding: 5px 10px;
+  transition: all 0.2s;
 }
 
 .list-button:hover {
   opacity: 0.85;
+  background-color: #3b3e4f;
+  color: white;
 }
 
 .list-button.download {

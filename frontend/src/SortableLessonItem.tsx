@@ -31,10 +31,18 @@ export const SortableLessonItem: React.FC<SortableLessonItemProps> = ({
       <span>{lesson.title}</span>
 
       <div className="lesson-actions">
-        <button type="button" onClick={() => onEdit(lesson)}>
+        <button
+          className="list-button"
+          type="button"
+          onClick={() => onEdit(lesson)}
+        >
           Editar
         </button>
-        <button type="button" onClick={() => onDelete(lesson.id)}>
+        <button
+          className="delete-button"
+          type="button"
+          onClick={() => onDelete(lesson.id)}
+        >
           Excluir
         </button>
       </div>

@@ -394,7 +394,7 @@ const AdminCourseEditor: React.FC = () => {
                   <div className="question-header">
                     <strong>{question.question_text}</strong>
                     <button
-                      className="list-button delete"
+                      className="delete-button"
                       onClick={() => handleDeleteQuestion(question.id)}
                     >
                       Excluir Pergunta
@@ -420,7 +420,7 @@ const AdminCourseEditor: React.FC = () => {
                               : "Marcar como Correta"}
                           </button>
                           <button
-                            className="list-button delete"
+                            className="delete-button"
                             onClick={() => handleDeleteOption(option.id)}
                           >
                             Excluir
