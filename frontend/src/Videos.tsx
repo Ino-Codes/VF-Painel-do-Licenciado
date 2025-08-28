@@ -256,7 +256,7 @@ const Videos: React.FC = () => {
             <div className="load-more-container">
               {currentPage < totalPages && (
                 <button
-                  className="form-button"
+                  className="list-button"
                   onClick={handleLoadMore}
                   disabled={isLoadingMore}
                 >
