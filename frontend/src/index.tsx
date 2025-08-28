@@ -18,6 +18,7 @@ import AdminCourseEditor from "./AdminCourseEditor.tsx";
 import CoursesPage from "./CoursesPage.tsx";
 import LessonPlayer from "./LessonPlayer.tsx";
 import QuizPlayer from "./QuizPlayer.tsx";
+import NotFoundPage from "./NotFoundPage.tsx";
 
 import "./styles.css";
 
@@ -52,16 +53,19 @@ const AppRouter: React.FC = () => {
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/faq" element={<Faq />} />
-          <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<LessonPlayer />} />
           <Route path="/courses/:courseId/quiz" element={<QuizPlayer />} />
+          {/* Rotas de Admin */}
+          <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
           <Route
             path="/admin/courses/:courseId"
             element={<AdminCourseEditor />}
           />
           <Route path="/admin/users" element={<AdminUsers />} />
+          {/* Rota 404 */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
     </AuthProvider>
