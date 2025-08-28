@@ -28,10 +28,5 @@ module.exports = function (pool) {
     }
   });
 
-  // Futuras rotas para admins (se necessário: emitir/gerenciar certificados)
-  // router.post("/", ...);
-  // router.put("/:id", ...);
-  // router.delete("/:id", ...);
-
   return router;
 };

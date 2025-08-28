@@ -6,7 +6,6 @@ import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
-// ... outras importações
 import EmptyState from "./EmptyState.tsx";
 import EmptyAvisosImage from "./assets/images/empty_avisos.svg";
 import EmptyDashsImage from "./assets/images/empty_dashs.svg";

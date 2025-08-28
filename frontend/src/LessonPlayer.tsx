@@ -63,11 +63,10 @@ const LessonPlayer: React.FC = () => {
         getAuthHeaders()
       );
       setCourse(res.data);
-      // Define a primeira aula como ativa, se existir
       if (res.data.modules?.[0]?.lessons?.[0]) {
         setActiveLesson(res.data.modules[0].lessons[0]);
       } else {
-        setActiveLesson(null); // Garante que nenhuma aula fica ativa se não houver aulas
+        setActiveLesson(null);
       }
     } catch (error) {
       toast.error("Não foi possível carregar este curso.");
@@ -132,7 +131,7 @@ const LessonPlayer: React.FC = () => {
   const handleGenerateCertificate = async () => {
     if (!course) return;
 
-    toast.loading("Estamos gerando o seu certificado..."); // Feedback para o usuário
+    toast.loading("Estamos gerando o seu certificado...");
 
     try {
       const response = await api.get(
@@ -179,7 +178,6 @@ const LessonPlayer: React.FC = () => {
   const renderCompletionButton = () => {
     if (!isCourseCompleted) return null;
 
-    // Se o curso tem um quiz e o utilizador ainda não passou
     if (course.quiz_id && !course.has_passed_quiz) {
       return (
         <Link
@@ -192,7 +190,6 @@ const LessonPlayer: React.FC = () => {
       );
     }
 
-    // Se o curso não tem quiz OU se o utilizador já passou no quiz
     return (
       <button onClick={handleGenerateCertificate} className="form-button">
         Gerar Certificado

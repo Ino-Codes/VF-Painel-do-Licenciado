@@ -82,7 +82,7 @@ const QuizPlayer: React.FC = () => {
           answers: selectedAnswers,
         },
         getAuthHeaders()
-      ); // <-- ADICIONE OS CABEÇALHOS AQUI
+      );
 
       setQuizResult(res.data);
     } catch (error) {

@@ -19,13 +19,11 @@ interface VideoData {
   category: string;
 }
 
-// --- FUNÇÃO getYoutubeEmbedUrl CORRIGIDA E ROBUSTA ---
 const getYoutubeEmbedUrl = (url: string): string => {
   if (!url) return "";
 
   let videoId = null;
 
-  // Tenta extrair o ID de diferentes formatos de URL do YouTube
   const youtubeRegex =
     /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?#]+)/;
   const match = url.match(youtubeRegex);
@@ -33,7 +31,6 @@ const getYoutubeEmbedUrl = (url: string): string => {
   if (match && match[1]) {
     videoId = match[1];
   } else if (!url.includes("http")) {
-    // Se não for um URL, assume que a string é o próprio ID
     videoId = url;
   }
 
@@ -41,7 +38,6 @@ const getYoutubeEmbedUrl = (url: string): string => {
     return `https://www.youtube.com/embed/${videoId}`;
   }
 
-  // Se não conseguir extrair, retorna uma string vazia para evitar erros
   return "";
 };
 
@@ -141,7 +137,6 @@ const Videos: React.FC = () => {
     try {
       await api.delete(`/api/videos/${videoToDelete}`);
       toast.success("Vídeo excluído com sucesso!");
-      // Força o reset para recarregar do zero
       setCurrentPage(1);
       if (currentPage === 1) fetchVideos(1);
       fetchCategories();
@@ -165,7 +160,6 @@ const Videos: React.FC = () => {
 
   const handleSuccess = () => {
     setIsModalOpen(false);
-    // Força o reset para recarregar do zero
     setCurrentPage(1);
     if (currentPage === 1) fetchVideos(1);
     fetchCategories();

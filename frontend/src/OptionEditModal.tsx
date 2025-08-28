@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Option } from "./types.ts"; // Certifique-se de que a interface Option está no seu types.ts
+import { Option } from "./types.ts";
 
 interface OptionEditModalProps {
-  // Passamos a opção parcial. Se não tiver 'id', é uma criação.
   option: Partial<Option>;
   onClose: () => void;
-  // A função onSave receberá o texto da opção
   onSave: (optionText: string) => Promise<void>;
 }
 
@@ -18,7 +16,6 @@ const OptionEditModal: React.FC<OptionEditModalProps> = ({
   const [optionText, setOptionText] = useState("");
 
   useEffect(() => {
-    // Preenche o campo se estivermos a editar uma opção existente
     if (option && option.option_text) {
       setOptionText(option.option_text);
     }

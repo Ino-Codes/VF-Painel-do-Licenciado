@@ -321,7 +321,6 @@ module.exports = function (pool, cloudinary, upload) {
     const { id: userId } = req.user;
 
     try {
-      // 1. Validações (já estavam corretas)
       const userResult = await pool.query(
         "SELECT nome FROM users WHERE id = $1",
         [userId]
@@ -355,7 +354,6 @@ module.exports = function (pool, cloudinary, upload) {
         return res.status(404).send("Curso não encontrado.");
       }
 
-      // 2. Geração do PDF com Puppeteer (já estava correta)
       const completionDate = new Date().toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "long",
@@ -413,7 +411,6 @@ module.exports = function (pool, cloudinary, upload) {
       });
       await browser.close();
 
-      // --- PASSO 3: ADICIONAR O REGISTO NA TABELA 'certificates' ---
       const uniqueCode = crypto.randomBytes(16).toString("hex");
 
       const insertCertificateQuery = `
@@ -424,7 +421,6 @@ module.exports = function (pool, cloudinary, upload) {
       `;
       await pool.query(insertCertificateQuery, [userId, courseId, uniqueCode]);
 
-      // 4. Enviar o PDF para o utilizador
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",

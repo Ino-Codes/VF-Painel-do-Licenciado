@@ -1,9 +1,7 @@
-// backend/routes/quizzes.js
 const express = require("express");
 const router = express.Router();
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 
-// Função para baralhar um array (Fisher-Yates shuffle)
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -17,12 +15,9 @@ module.exports = function (pool) {
   const checkLoggedIn = isLoggedIn(pool);
 
   // Rotas de aluno
-
-  // Rota para um aluno buscar o quiz de um curso
   router.get("/course/:courseId", async (req, res) => {
     const { courseId } = req.params;
     try {
-      // Busca o quiz e as suas perguntas
       const quizResult = await pool.query(
         "SELECT id, title FROM quizzes WHERE course_id = $1",
         [courseId]
@@ -40,14 +35,11 @@ module.exports = function (pool) {
       );
       const questions = questionsResult.rows;
 
-      // Para cada pergunta, busca as suas opções e baralha-as
       for (const question of questions) {
         const optionsResult = await pool.query(
-          // IMPORTANTE: NUNCA enviamos a coluna 'is_correct' para o frontend
           "SELECT id, option_text FROM options WHERE question_id = $1",
           [question.id]
         );
-        // Randomiza a ordem das opções de resposta aqui no backend
         question.options = shuffleArray(optionsResult.rows);
       }
       quiz.questions = questions;
@@ -82,7 +74,6 @@ module.exports = function (pool) {
 
       const correctAnswersMap = new Map();
       correctOptionsResult.rows.forEach((row) => {
-        // Guardamos os IDs como strings para garantir a consistência na comparação
         correctAnswersMap.set(
           row.question_id.toString(),
           row.correct_option_id.toString()
@@ -94,8 +85,6 @@ module.exports = function (pool) {
 
       // CORREÇÃO: Comparamos string com string
       for (const questionId of questionIds) {
-        // A resposta do utilizador (answers[questionId]) já é uma string (ou convertemos para ter a certeza)
-        // A resposta correta (correctAnswersMap.get(questionId)) também é uma string
         if (
           answers[questionId].toString() === correctAnswersMap.get(questionId)
         ) {
@@ -196,12 +185,10 @@ module.exports = function (pool) {
         [optionId]
       );
       const { question_id } = optionResult.rows[0];
-      // Define todas as outras opções como incorretas
       await client.query(
         "UPDATE options SET is_correct = FALSE WHERE question_id = $1",
         [question_id]
       );
-      // Define a opção selecionada como correta
       await client.query("UPDATE options SET is_correct = TRUE WHERE id = $1", [
         optionId,
       ]);

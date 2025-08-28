@@ -3,7 +3,7 @@ import { useAuth } from "./context/AuthContext.tsx";
 import api from "./api.ts";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
-import { useNavigate, Link } from "react-router-dom"; // Link ainda é usado para os cursos
+import { useNavigate, Link } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 import EmptyState from "./EmptyState.tsx";
 import EmptyCursosImage from "./assets/images/empty_cursos.svg";
@@ -40,7 +40,6 @@ const CoursesPage: React.FC = () => {
   );
   const [isLoadingContent, setIsLoadingContent] = useState(true);
 
-  // Pega o URL base da API para construir os links de download
   const baseURL = api.defaults.baseURL;
 
   const getAuthHeaders = useCallback(() => {
@@ -84,7 +83,7 @@ const CoursesPage: React.FC = () => {
         `/api/admin/courses/${courseId}/certificate`,
         {
           ...getAuthHeaders(),
-          responseType: "blob", // Importante para receber um ficheiro
+          responseType: "blob",
         }
       );
       toast.dismiss();

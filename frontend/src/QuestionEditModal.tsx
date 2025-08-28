@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Question } from "./types.ts"; // Certifique-se de que a interface Question está no seu types.ts
+import { Question } from "./types.ts";
 
 interface QuestionEditModalProps {
-  // Passamos a pergunta parcial. Se não tiver 'id', é uma criação.
   question: Partial<Question>;
   onClose: () => void;
-  // A função onSave receberá o texto da pergunta
   onSave: (questionText: string) => Promise<void>;
 }
 
@@ -18,7 +16,6 @@ const QuestionEditModal: React.FC<QuestionEditModalProps> = ({
   const [questionText, setQuestionText] = useState("");
 
   useEffect(() => {
-    // Preenche o campo se estivermos a editar uma pergunta existente
     if (question && question.question_text) {
       setQuestionText(question.question_text);
     }
