@@ -257,7 +257,7 @@ const AdminCourses: React.FC = () => {
                 <img
                   src={
                     course.thumbnail_url ||
-                    "https://via.placeholder.com/100x60.png?text=Capa"
+                    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1755094868/ev4gvx4bqvz5x34ngrc8.jpg"
                   }
                   alt="Thumbnail"
                   style={{ width: "100px", borderRadius: "4px" }}

@@ -27,7 +27,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           <img
             src={
               course.thumbnail_url ||
-              "https://via.placeholder.com/400x225.png?text=Trilha"
+              "https://res.cloudinary.com/dsgbgrll5/image/upload/v1755094868/ev4gvx4bqvz5x34ngrc8.jpg"
             }
             alt={course.title}
           />
