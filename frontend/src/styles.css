@@ -676,6 +676,18 @@ body::before {
 .quiz-option-label input {
   margin-right: 10px;
 }
+
+.add-question-form {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  background-color: white;
+  min-width: 150px;
+  font-family: "Montserrat", sans-serif;
+}
+
 /* Estilos para Resultados do Quiz */
 .quiz-results {
   text-align: center;

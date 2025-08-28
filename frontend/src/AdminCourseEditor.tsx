@@ -376,10 +376,10 @@ const AdminCourseEditor: React.FC = () => {
         <hr className="section-divider" />
 
         {/* --- NOVA SECÇÃO DE GESTÃO DE QUIZ --- */}
-        <div className="quiz-editor-section">
-          <h2>Quiz do Curso</h2>
+        <div className="admin-form mt-4">
+          <h3>Quiz do Curso</h3>
           {!course.quiz ? (
-            <div className="admin-form">
+            <div className="form-row">
               <p>Este curso ainda não tem um quiz.</p>
               <button className="form-button" onClick={handleCreateQuiz}>
                 Criar Quiz
@@ -417,7 +417,7 @@ const AdminCourseEditor: React.FC = () => {
                     ))}
                   </ul>
                   {/* Formulário para adicionar nova opção */}
-                  <div className="add-option-form">
+                  <div className="form-input">
                     <input
                       placeholder="Nova opção de resposta"
                       onChange={(e) =>
@@ -427,20 +427,25 @@ const AdminCourseEditor: React.FC = () => {
                         })
                       }
                     />
-                    <button onClick={() => handleAddOption(question.id)}>
+                    <button
+                      className="form-button"
+                      onClick={() => handleAddOption(question.id)}
+                    >
                       Adicionar Opção
                     </button>
                   </div>
                 </div>
               ))}
               {/* Formulário para adicionar nova pergunta */}
-              <div className="add-question-form">
+              <div className="form-input">
                 <input
                   placeholder="Texto da nova pergunta"
                   value={newQuestionText}
                   onChange={(e) => setNewQuestionText(e.target.value)}
                 />
-                <button onClick={handleAddQuestion}>Adicionar Pergunta</button>
+                <button className="form-button" onClick={handleAddQuestion}>
+                  Adicionar Pergunta
+                </button>
               </div>
             </div>
           )}
