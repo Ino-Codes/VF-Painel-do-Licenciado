@@ -3,9 +3,9 @@
 /*
 Paleta de cores sistema:
 menu hover: #363950
-menu active: #4b4f6c
-verde: #04a146
-vermelho: #c82333 
+menu active: #4B4D6C
+verde: #04A146
+vermelho: #C82333 
 
 Paleta de cores VF fundo claro:
 cinza claro: #2D2C2B
@@ -18,7 +18,6 @@ branco: #FFFFFF
 cinza: #DBDBDB
 dourado claro: #E7D26E
 dourado escuro: #866225
-
 */
 
 * {
@@ -539,7 +538,7 @@ body::before {
   gap: 5px;
 }
 .module-header h3 {
-  flex-grow: 1; /* Faz o título ocupar o espaço restante */
+  flex-grow: 1;
 }
 
 .modules-list {
@@ -709,7 +708,7 @@ body::before {
 }
 
 .option-list-item.correct-option {
-  border-left: 4px solid #04a146; /* Verde para resposta correta */
+  border-left: 4px solid #04a146;
   font-weight: bold;
 }
 
@@ -727,7 +726,7 @@ body::before {
 }
 
 .add-item-form input {
-  flex-grow: 1; /* Faz o input ocupar o espaço disponível */
+  flex-grow: 1;
 }
 
 /* Reutiliza o estilo dos botões de lista existentes */
@@ -861,7 +860,7 @@ body::before {
   display: inline-block;
   margin-top: 15px;
   padding: 10px 18px;
-  background-color: #daa520; /* Dourado da sua marca */
+  background-color: #daa520;
   color: white;
   text-decoration: none;
   border-radius: 5px;
@@ -870,7 +869,7 @@ body::before {
 }
 
 .certificate-link:hover {
-  background-color: #c0901b; /* Um dourado ligeiramente mais escuro ao passar o mouse */
+  background-color: #c0901b;
 }
 
 /* --- Estilos Adicionais para o Editor de Trilha --- */
@@ -1109,7 +1108,7 @@ body::before {
 }
 
 .dropdown-menu {
-  position: relative; /* Container precisa ser relativo */
+  position: relative;
   display: inline-block;
 }
 
@@ -1125,11 +1124,11 @@ body::before {
 .dropdown-content {
   display: flex;
   flex-direction: column;
-  position: absolute; /* Posiciona o menu dropdown */
+  position: absolute;
   background-color: #363950;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 100; /* Garante que fique por cima de outros elementos */
+  z-index: 100;
   border-radius: 5px;
   margin-top: 5px;
 }
@@ -1889,23 +1888,19 @@ nav.main-menu {
 
   /* Aula */
   .lesson-player-layout {
-    /* Muda o layout de 2 colunas para 1 coluna */
     grid-template-columns: 1fr;
   }
 
   .lesson-sidebar {
-    /* Esconde a sidebar por padrão em telas pequenas */
     display: none;
     margin-top: 20px;
   }
 
   .lesson-sidebar.open {
-    /* Mostra a sidebar quando ela tem a classe 'open' */
     display: block;
   }
 
   .sidebar-toggle-button {
-    /* Mostra o botão em telas pequenas */
     display: block;
     width: 100%;
     padding: 12px;
