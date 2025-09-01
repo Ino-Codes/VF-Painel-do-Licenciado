@@ -164,7 +164,7 @@ const CoursesPage: React.FC = () => {
                 ) : (
                   <EmptyState
                     image={EmptyCursosImage}
-                    title="Nenhum curso disponível"
+                    title="Nenhum Curso Disponível"
                     message="Ainda não há cursos disponíveis. Volte em breve!"
                   />
                 )}
@@ -199,7 +199,7 @@ const CoursesPage: React.FC = () => {
                 ) : (
                   <EmptyState
                     image={EmptyCertificadoImage}
-                    title="Os seus certificados serão exibidos aqui."
+                    title="Nenhum Certificado Disponível"
                     message="Você ainda não concluiu nenhum curso para obter um certificado. Complete um curso e ele aparecerá aqui!"
                   />
                 )}
