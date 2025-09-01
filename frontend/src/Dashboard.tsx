@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const powerBiReportUrl = "#";
+  const powerBiReportUrl = "404-not-found";
 
   const [notices, setNotices] = useState<Notice[]>([]);
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
