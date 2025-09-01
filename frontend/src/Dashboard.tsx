@@ -62,6 +62,9 @@ const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  const powerBiReportUrl =
+    "https://app.powerbi.com/view?r=eyJrIjoiNjIyZjRkYTUtZWJiNy00MDg2LTkxMzMtNmNkYjhkN2I0NTQ0IiwidCI6IjBkZWFjZjRhLWZlOGItNDZhMy1iYWM1LTMxODY1YmEzY2Q1NCJ9";
+
   const [notices, setNotices] = useState<Notice[]>([]);
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
@@ -284,11 +287,23 @@ const Dashboard: React.FC = () => {
 
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
-          <EmptyState
-            image={EmptyDashsImage}
-            title="Não Há Gráficos Disponíveis no Momento"
-            message="Gráficos e relatórios serão exibidos aqui futuramente"
-          ></EmptyState>
+
+          {user.role !== "licenciado" ? (
+            <div className="powerbi-container">
+              <iframe
+                title="Relatório Valor Fiscal"
+                src={powerBiReportUrl}
+                frameBorder="0"
+                allowFullScreen={true}
+              ></iframe>
+            </div>
+          ) : (
+            <EmptyState
+              image={EmptyDashsImage}
+              title="Relatórios Indisponíveis"
+              message="Estamos desenvolvendo relatórios e gráficos que serão exibidos aqui futuramente"
+            />
+          )}
         </div>
       </div>
       <Footer />
