@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const powerBiReportUrl = "404-not-found";
+  // const powerBiReportUrl = "URL DO DASH NO POWERBI";
 
   const [notices, setNotices] = useState<Notice[]>([]);
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
@@ -288,15 +288,19 @@ const Dashboard: React.FC = () => {
           <h3>Relatórios</h3>
 
           {user.role !== "licenciado" ? (
-            <div className="powerbi-container">
-              <iframe
-                title="Relatório Valor Fiscal"
-                src={powerBiReportUrl}
-                frameBorder="0"
-                allowFullScreen={true}
-              ></iframe>
-            </div>
+            <p>
+              O dash será exibido aqui para usuários com permissão superior à
+              'Licenciado'
+            </p>
           ) : (
+            // <div className="powerbi-container">
+            //   <iframe
+            //     title="Relatório Valor Fiscal"
+            //     src={powerBiReportUrl}
+            //     frameBorder="0"
+            //     allowFullScreen={true}
+            //   ></iframe>
+            // </div>
             <EmptyState
               image={EmptyDashsImage}
               title="Relatórios Indisponíveis"
