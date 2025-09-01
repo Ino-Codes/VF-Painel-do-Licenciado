@@ -62,8 +62,7 @@ const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const powerBiReportUrl =
-    "https://app.powerbi.com/view?r=eyJrIjoiNjIyZjRkYTUtZWJiNy00MDg2LTkxMzMtNmNkYjhkN2I0NTQ0IiwidCI6IjBkZWFjZjRhLWZlOGItNDZhMy1iYWM1LTMxODY1YmEzY2Q1NCJ9";
+  const powerBiReportUrl = "#";
 
   const [notices, setNotices] = useState<Notice[]>([]);
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
