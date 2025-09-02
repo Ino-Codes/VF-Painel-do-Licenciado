@@ -69,14 +69,20 @@ const CalendarPage: React.FC = () => {
       }
     },
     [user, getAuthHeaders]
-  ); // Adicionado getAuthHeaders às dependências
+  ); // Removido 'currentDate' da dependência para estabilizar
 
   useEffect(() => {
-    if (!loading && !user) navigate("/");
+    if (!loading && !user) {
+      navigate("/");
+    }
+  }, [user, loading, navigate]);
+
+  // useEffect ATUALIZADO para buscar os eventos
+  useEffect(() => {
     if (user) {
       fetchEvents(currentDate);
     }
-  }, [user, loading, navigate, fetchEvents, currentDate]);
+  }, [user, currentDate, fetchEvents]); // Controlamos o recarregamento apenas quando a data muda
 
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
