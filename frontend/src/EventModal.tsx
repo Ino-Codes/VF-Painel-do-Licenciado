@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react"; // Importe o useCallback
+import React, { useState, useCallback } from "react";
 import { useAuth } from "./context/AuthContext.tsx"; // Importe o useAuth
 import api from "./api.ts";
 import toast from "react-hot-toast";
@@ -14,7 +14,6 @@ const EventModal: React.FC<EventModalProps> = ({ onClose, onSuccess }) => {
   const [details, setDetails] = useState("");
   const [eventDate, setEventDate] = useState("");
 
-  // Crie a função para obter os cabeçalhos de autenticação
   const getAuthHeaders = useCallback(() => {
     if (!user) return {};
     return { headers: { "x-user-id": user.id } };
@@ -28,7 +27,6 @@ const EventModal: React.FC<EventModalProps> = ({ onClose, onSuccess }) => {
     }
 
     try {
-      // Adicione os cabeçalhos de autenticação ao seu pedido POST
       await api.post(
         "/api/events",
         {
@@ -37,7 +35,7 @@ const EventModal: React.FC<EventModalProps> = ({ onClose, onSuccess }) => {
           event_date: eventDate,
         },
         getAuthHeaders()
-      ); // <-- CORREÇÃO APLICADA AQUI
+      ); // <-- CORREÇÃO: Autenticação adicionada
 
       toast.success("Evento adicionado com sucesso!");
       onSuccess();

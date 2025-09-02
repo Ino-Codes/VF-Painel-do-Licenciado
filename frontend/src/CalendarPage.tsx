@@ -42,7 +42,6 @@ const CalendarPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
-  // --- FUNÇÃO ADICIONADA PARA OBTER CABEÇALHOS DE AUTENTICAÇÃO ---
   const getAuthHeaders = useCallback(() => {
     if (!user) return {};
     return { headers: { "x-user-id": user.id } };
@@ -56,10 +55,9 @@ const CalendarPage: React.FC = () => {
         const month = date.getMonth() + 1;
         const year = date.getFullYear();
 
-        // --- CORREÇÃO: ADICIONADO getAuthHeaders() AO PEDIDO DA API ---
         const res = await api.get("/api/events", {
           params: { month, year },
-          ...getAuthHeaders(), // Envia a autenticação
+          ...getAuthHeaders(),
         });
         setEvents(formatEventsForCalendar(res.data));
       } catch (err) {
@@ -69,7 +67,7 @@ const CalendarPage: React.FC = () => {
       }
     },
     [user, getAuthHeaders]
-  ); // Removido 'currentDate' da dependência para estabilizar
+  );
 
   useEffect(() => {
     if (!loading && !user) {
@@ -77,12 +75,12 @@ const CalendarPage: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  // useEffect ATUALIZADO para buscar os eventos
   useEffect(() => {
     if (user) {
       fetchEvents(currentDate);
     }
-  }, [user, currentDate, fetchEvents]); // Controlamos o recarregamento apenas quando a data muda
+    // O array de dependências foi simplificado para evitar re-fetches desnecessários
+  }, [user, currentDate]);
 
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
