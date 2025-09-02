@@ -399,6 +399,54 @@ body::before {
   border: none;
 }
 
+/* --- Estilos para o Calendário de Eventos --- */
+
+.calendar-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+}
+
+/* Personaliza a barra de ferramentas do calendário */
+.rbc-toolbar {
+  margin-bottom: 20px;
+}
+
+.rbc-toolbar button {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  color: #333;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.rbc-toolbar button:hover,
+.rbc-toolbar button:focus {
+  background-color: #e0e0e0;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: #daa520; /* Cor dourada da sua marca */
+  color: white;
+  border-color: #daa520;
+}
+
+.rbc-toolbar .rbc-toolbar-label {
+  font-size: 1.5em;
+  font-weight: 600;
+}
+
+/* Estiliza os eventos dentro do calendário */
+.rbc-event {
+  background-color: #daa520; /* Cor dourada da sua marca */
+  border-color: #c0901b;
+  padding: 5px;
+}
+
 /* Cursos */
 
 .course-card-thumbnail {
