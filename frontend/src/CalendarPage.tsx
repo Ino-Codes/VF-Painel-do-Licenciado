@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
-import "moment/locale/pt-br"; // Importa a localização para português
+import "moment/locale/pt-br";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 import api from "./api.ts";
@@ -13,7 +13,6 @@ import toast from "react-hot-toast";
 import EventModal from "./EventModal.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 
-// Configura o moment para usar o idioma português
 moment.locale("pt-br");
 const localizer = momentLocalizer(moment);
 
@@ -24,14 +23,13 @@ interface EventData {
   event_date: string;
 }
 
-// Converte os nossos eventos para o formato que o react-big-calendar espera
 const formatEventsForCalendar = (events: EventData[]) => {
   return events.map((event) => ({
     id: event.id,
     title: event.title,
     start: new Date(event.event_date),
-    end: new Date(event.event_date), // Para eventos de dia inteiro ou pontuais, start e end são iguais
-    resource: event.details, // Usamos o campo 'resource' para guardar os detalhes
+    end: new Date(event.event_date),
+    resource: event.details,
   }));
 };
 
@@ -44,15 +42,25 @@ const CalendarPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
+  // --- FUNÇÃO ADICIONADA PARA OBTER CABEÇALHOS DE AUTENTICAÇÃO ---
+  const getAuthHeaders = useCallback(() => {
+    if (!user) return {};
+    return { headers: { "x-user-id": user.id } };
+  }, [user]);
+
   const fetchEvents = useCallback(
     async (date: Date) => {
       if (!user) return;
       setIsLoadingEvents(true);
       try {
-        const month = date.getMonth() + 1; // getMonth() é 0-11, a API espera 1-12
+        const month = date.getMonth() + 1;
         const year = date.getFullYear();
 
-        const res = await api.get("/api/events", { params: { month, year } });
+        // --- CORREÇÃO: ADICIONADO getAuthHeaders() AO PEDIDO DA API ---
+        const res = await api.get("/api/events", {
+          params: { month, year },
+          ...getAuthHeaders(), // Envia a autenticação
+        });
         setEvents(formatEventsForCalendar(res.data));
       } catch (err) {
         toast.error("Não foi possível carregar os eventos.");
@@ -60,8 +68,8 @@ const CalendarPage: React.FC = () => {
         setIsLoadingEvents(false);
       }
     },
-    [user]
-  );
+    [user, getAuthHeaders]
+  ); // Adicionado getAuthHeaders às dependências
 
   useEffect(() => {
     if (!loading && !user) navigate("/");
@@ -126,7 +134,7 @@ const CalendarPage: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           onSuccess={() => {
             setIsModalOpen(false);
-            fetchEvents(currentDate); // Recarrega os eventos do mês atual
+            fetchEvents(currentDate);
           }}
         />
       )}

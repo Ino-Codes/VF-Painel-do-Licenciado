@@ -123,7 +123,7 @@ const Menu: React.FC = () => {
                 </NavLink>
 
                 <NavLink
-                  to="/calendario"
+                  to="/admin/calendario"
                   className="menu-item"
                   onClick={() => {
                     setIsMenuOpen(false);
