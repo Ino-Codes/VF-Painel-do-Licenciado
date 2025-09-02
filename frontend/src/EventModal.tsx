@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react"; // Importe o useCallback
+import { useAuth } from "./context/AuthContext.tsx"; // Importe o useAuth
 import api from "./api.ts";
 import toast from "react-hot-toast";
 
@@ -8,9 +9,16 @@ interface EventModalProps {
 }
 
 const EventModal: React.FC<EventModalProps> = ({ onClose, onSuccess }) => {
+  const { user } = useAuth(); // Obtenha o utilizador do contexto
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
   const [eventDate, setEventDate] = useState("");
+
+  // Crie a função para obter os cabeçalhos de autenticação
+  const getAuthHeaders = useCallback(() => {
+    if (!user) return {};
+    return { headers: { "x-user-id": user.id } };
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,11 +28,17 @@ const EventModal: React.FC<EventModalProps> = ({ onClose, onSuccess }) => {
     }
 
     try {
-      await api.post("/api/events", {
-        title,
-        details,
-        event_date: eventDate,
-      });
+      // Adicione os cabeçalhos de autenticação ao seu pedido POST
+      await api.post(
+        "/api/events",
+        {
+          title,
+          details,
+          event_date: eventDate,
+        },
+        getAuthHeaders()
+      ); // <-- CORREÇÃO APLICADA AQUI
+
       toast.success("Evento adicionado com sucesso!");
       onSuccess();
     } catch (err) {
@@ -50,7 +64,7 @@ const EventModal: React.FC<EventModalProps> = ({ onClose, onSuccess }) => {
           </div>
           <div className="form-row">
             <input
-              type="datetime-local" // Campo para data e hora
+              type="datetime-local"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
               className="form-input"
