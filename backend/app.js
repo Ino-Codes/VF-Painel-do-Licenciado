@@ -57,6 +57,7 @@ const logRoutes = require("./routes/logs.js");
 const courseRoutes = require("./routes/courses.js");
 const certificatesRoutes = require("./routes/certificates.js");
 const quizzesRoutes = require("./routes/quizzes.js");
+const eventsRoutes = require("./routes/events.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
@@ -69,6 +70,7 @@ app.use("/api/admin/logs", logRoutes(pool));
 app.use("/api/admin/courses", courseRoutes(pool, cloudinary, upload));
 app.use("/api/certificates", certificatesRoutes(pool));
 app.use("/api/quizzes", quizzesRoutes(pool));
+app.use("/api/events", eventsRoutes(pool));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
