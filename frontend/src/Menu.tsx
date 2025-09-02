@@ -99,6 +99,7 @@ const Menu: React.FC = () => {
                 >
                   Usuários
                 </NavLink>
+
                 <NavLink
                   to="/admin/courses"
                   className="menu-item"
@@ -109,6 +110,7 @@ const Menu: React.FC = () => {
                 >
                   Cursos
                 </NavLink>
+
                 <NavLink
                   to="/admin/logs"
                   className="menu-item"
@@ -119,6 +121,7 @@ const Menu: React.FC = () => {
                 >
                   Logs
                 </NavLink>
+
                 <NavLink
                   to="/calendario"
                   className="menu-item"
