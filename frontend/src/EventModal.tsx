@@ -35,7 +35,7 @@ const EventModal: React.FC<EventModalProps> = ({ onClose, onSuccess }) => {
           event_date: eventDate,
         },
         getAuthHeaders()
-      ); // <-- CORREÇÃO: Autenticação adicionada
+      ); // <-- Autenticação adicionada
 
       toast.success("Evento adicionado com sucesso!");
       onSuccess();

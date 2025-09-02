@@ -47,40 +47,34 @@ const CalendarPage: React.FC = () => {
     return { headers: { "x-user-id": user.id } };
   }, [user]);
 
-  const fetchEvents = useCallback(
-    async (date: Date) => {
-      if (!user) return;
-      setIsLoadingEvents(true);
-      try {
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-
-        const res = await api.get("/api/events", {
-          params: { month, year },
-          ...getAuthHeaders(),
-        });
-        setEvents(formatEventsForCalendar(res.data));
-      } catch (err) {
-        toast.error("Não foi possível carregar os eventos.");
-      } finally {
-        setIsLoadingEvents(false);
-      }
-    },
-    [user, getAuthHeaders]
-  );
-
+  // A LÓGICA DE BUSCA FOI MOVIDA PARA DENTRO DO useEffect PARA MAIOR ESTABILIDADE
   useEffect(() => {
     if (!loading && !user) {
       navigate("/");
+      return;
     }
-  }, [user, loading, navigate]);
 
-  useEffect(() => {
     if (user) {
-      fetchEvents(currentDate);
+      setIsLoadingEvents(true);
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+
+      api
+        .get("/api/events", {
+          params: { month, year },
+          ...getAuthHeaders(),
+        })
+        .then((res) => {
+          setEvents(formatEventsForCalendar(res.data));
+        })
+        .catch(() => {
+          toast.error("Não foi possível carregar os eventos.");
+        })
+        .finally(() => {
+          setIsLoadingEvents(false);
+        });
     }
-    // O array de dependências foi simplificado para evitar re-fetches desnecessários
-  }, [user, currentDate]);
+  }, [user, loading, navigate, currentDate, getAuthHeaders]); // O array de dependências está correto
 
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
@@ -138,7 +132,8 @@ const CalendarPage: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           onSuccess={() => {
             setIsModalOpen(false);
-            fetchEvents(currentDate);
+            // Para forçar o recarregamento, podemos recriar o objeto de data
+            setCurrentDate(new Date(currentDate));
           }}
         />
       )}
