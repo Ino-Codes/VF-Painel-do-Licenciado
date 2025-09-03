@@ -1,5 +1,3 @@
-// frontend/src/EventModal.tsx
-
 import React, { useState, useEffect } from "react";
 import api from "./api.ts";
 import toast from "react-hot-toast";
@@ -12,7 +10,6 @@ interface EventModalProps {
   selectedDate: string | null;
 }
 
-// Função auxiliar para formatar um objeto Date para o input datetime-local
 const formatDateTimeForInput = (date: Date): string => {
   if (!date) return "";
   const year = date.getFullYear();
@@ -22,6 +19,9 @@ const formatDateTimeForInput = (date: Date): string => {
   const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
+
+// Paleta de cores pré-definida
+const colorPalette = ["#e1cb81", "#81e18c", "#b8b8b8", "#81a7e1", "#e18181"];
 
 const EventModal: React.FC<EventModalProps> = ({
   isOpen,
@@ -35,36 +35,32 @@ const EventModal: React.FC<EventModalProps> = ({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
+  const [color, setColor] = useState(colorPalette[0]); // NOVO ESTADO para a cor
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (eventToEdit) {
       setTitle(eventToEdit.title || "");
       setDescription(eventToEdit.description || "");
-      // Para editar, a data já vem completa (ISO string), então new Date() funciona corretamente.
       setStartDate(formatDateTimeForInput(new Date(eventToEdit.start_date)));
       setEndDate(formatDateTimeForInput(new Date(eventToEdit.end_date)));
       setCategory(eventToEdit.category || "");
+      setColor(eventToEdit.color || colorPalette[0]); // Popula o estado com a cor do evento
     } else if (selectedDate) {
-      // --- ESTA É A CORREÇÃO PARA O BUG ---
-      // Quando clicamos num dia no modo "mês", selectedDate vem como "YYYY-MM-DD".
-      // new Date("YYYY-MM-DD") interpreta como UTC.
-      // Ao adicionar "T09:00:00", forçamos o JavaScript a interpretar a string no fuso horário LOCAL.
-      // Isso garante que "2025-09-03" seja entendido como 9 da manhã do dia 3, e não 9 da noite do dia 2.
       const localDate = new Date(`${selectedDate}T09:00:00`);
-
       setTitle("");
       setDescription("");
       setStartDate(formatDateTimeForInput(localDate));
-      setEndDate(formatDateTimeForInput(localDate)); // Define a mesma data/hora de início como padrão
+      setEndDate(formatDateTimeForInput(localDate));
       setCategory("");
+      setColor(colorPalette[0]); // Define a cor padrão
     }
   }, [eventToEdit, selectedDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !startDate || !endDate || !category.trim()) {
-      toast.error("Título, Datas, Horários e Categoria são obrigatórios.");
+      toast.error("Todos os campos, exceto descrição, são obrigatórios.");
       return;
     }
     const eventData = {
@@ -73,6 +69,7 @@ const EventModal: React.FC<EventModalProps> = ({
       start_date: new Date(startDate).toISOString(),
       end_date: new Date(endDate).toISOString(),
       category,
+      color, // Envia a cor para a API
     };
 
     try {
@@ -120,6 +117,7 @@ const EventModal: React.FC<EventModalProps> = ({
               required
             />
           </div>
+
           <div className="form-row">
             <input
               type="text"
@@ -136,6 +134,7 @@ const EventModal: React.FC<EventModalProps> = ({
               <option value="Happy Hour" />
             </datalist>
           </div>
+
           <div className="form-row">
             <div style={{ flex: 1 }}>
               <label>Início</label>
@@ -158,6 +157,7 @@ const EventModal: React.FC<EventModalProps> = ({
               />
             </div>
           </div>
+
           <div className="form-row">
             <textarea
               placeholder="Descrição (opcional)..."
@@ -167,6 +167,21 @@ const EventModal: React.FC<EventModalProps> = ({
               rows={4}
             />
           </div>
+
+          <div className="form-row">
+            <label>Cor do Evento</label>
+            <div className="color-palette">
+              {colorPalette.map((c) => (
+                <div
+                  key={c}
+                  className={`color-swatch ${color === c ? "selected" : ""}`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => setColor(c)}
+                />
+              ))}
+            </div>
+          </div>
+
           <div>
             <div className="modal-actions">
               {eventToEdit && (
