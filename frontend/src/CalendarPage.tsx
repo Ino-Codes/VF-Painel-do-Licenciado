@@ -42,45 +42,39 @@ const CalendarPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
-  // Removido o useCallback de getAuthHeaders pois ele será usado dentro de outro useCallback
-  const getAuthHeaders = () => {
-    if (!user) return {};
-    return { headers: { "x-user-id": user.id } };
-  };
-
-  const fetchEvents = useCallback(
-    async (date: Date) => {
-      // A verificação do 'user' agora está dentro do useEffect que chama esta função
-      setIsLoadingEvents(true);
-      try {
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-
-        const res = await api.get("/api/events", {
-          params: { month, year },
-          ...getAuthHeaders(),
-        });
-        setEvents(formatEventsForCalendar(res.data));
-      } catch (err) {
-        toast.error("Não foi possível carregar os eventos.");
-      } finally {
-        setIsLoadingEvents(false);
-      }
-    },
-    [user]
-  ); // A dependência agora é apenas 'user'
-
+  // Unimos os dois useEffects num só para um fluxo mais limpo
   useEffect(() => {
+    // 1. Lida com o caso de utilizador não logado
     if (!loading && !user) {
       navigate("/");
+      return; // Sai do efeito mais cedo
     }
-  }, [user, loading, navigate]);
 
-  useEffect(() => {
+    // 2. Se o utilizador estiver logado, busca os eventos
     if (user) {
-      fetchEvents(currentDate);
+      setIsLoadingEvents(true);
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+
+      // O getAuthHeaders é chamado diretamente aqui
+      const authHeaders = { headers: { "x-user-id": user.id } };
+
+      api
+        .get("/api/events", {
+          params: { month, year },
+          ...authHeaders,
+        })
+        .then((res) => {
+          setEvents(formatEventsForCalendar(res.data));
+        })
+        .catch(() => {
+          toast.error("Não foi possível carregar os eventos.");
+        })
+        .finally(() => {
+          setIsLoadingEvents(false);
+        });
     }
-  }, [user, currentDate, fetchEvents]);
+  }, [user, loading, navigate, currentDate]); // O array de dependências fica mais simples e estável
 
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
@@ -138,7 +132,9 @@ const CalendarPage: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           onSuccess={() => {
             setIsModalOpen(false);
-            fetchEvents(currentDate);
+            // Para forçar o recarregamento, podemos recriar o objeto de data,
+            // o que aciona o useEffect novamente.
+            setCurrentDate(new Date(currentDate));
           }}
         />
       )}
