@@ -51,29 +51,29 @@ const CalendarPage: React.FC = () => {
     }
 
     // 2. Apenas continua se o utilizador estiver definido
-    if (user) {
-      setIsLoadingEvents(true);
+    // if (user) {
+    //   setIsLoadingEvents(true);
 
-      const month = currentDate.getMonth() + 1;
-      const year = currentDate.getFullYear();
+    //   const month = currentDate.getMonth() + 1;
+    //   const year = currentDate.getFullYear();
 
-      const authHeaders = { headers: { "x-user-id": user.id } };
+    //   const authHeaders = { headers: { "x-user-id": user.id } };
 
-      api
-        .get("/api/events", {
-          params: { month, year },
-          ...authHeaders,
-        })
-        .then((res) => {
-          setEvents(formatEventsForCalendar(res.data));
-        })
-        .catch(() => {
-          toast.error("Não foi possível carregar os eventos.");
-        })
-        .finally(() => {
-          setIsLoadingEvents(false);
-        });
-    }
+    //   api
+    //     .get("/api/events", {
+    //       params: { month, year },
+    //       ...authHeaders,
+    //     })
+    //     .then((res) => {
+    //       setEvents(formatEventsForCalendar(res.data));
+    //     })
+    //     .catch(() => {
+    //       toast.error("Não foi possível carregar os eventos.");
+    //     })
+    //     .finally(() => {
+    //       setIsLoadingEvents(false);
+    //     });
+    // }
   }, [user, authLoading, navigate, currentDate]); // O array de dependências é simples e estável
 
   const handleNavigate = (newDate: Date) => {
