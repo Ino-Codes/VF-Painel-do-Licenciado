@@ -47,15 +47,21 @@ const CalendarPage: React.FC = () => {
   const [viewState, setViewState] = useState<"loading" | "loaded" | "error">(
     "loading"
   );
+
+  // O estado para a data do calendário é a única "fonte da verdade" para a busca de dados
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Este useEffect agora é o único responsável por buscar os dados.
-  // A lógica de busca está DENTRO dele, quebrando o ciclo de dependências.
+  const getAuthHeaders = useCallback(() => {
+    if (!user) return {};
+    return { headers: { "x-user-id": user.id } };
+  }, [user]);
+
+  // Este useEffect agora é o único responsável por buscar os dados
   useEffect(() => {
     // 1. Lida com a autenticação
     if (!authLoading && !user) {
       navigate("/");
-      return;
+      return; // Sai do efeito para evitar mais execuções
     }
 
     // 2. Apenas busca dados se tivermos um utilizador
@@ -64,12 +70,11 @@ const CalendarPage: React.FC = () => {
 
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
-      const authHeaders = { headers: { "x-user-id": user.id } };
 
       api
         .get("/api/events", {
           params: { month, year },
-          ...authHeaders,
+          ...getAuthHeaders(),
         })
         .then((res) => {
           setEvents(formatEventsForCalendar(res.data));
@@ -77,12 +82,13 @@ const CalendarPage: React.FC = () => {
         })
         .catch(() => {
           toast.error("Não foi possível carregar os eventos.");
-          setEvents([]);
+          setEvents([]); // Garante que a lista fique vazia em caso de erro
           setViewState("error");
         });
     }
-  }, [user, authLoading, navigate, currentDate]); // O array de dependências agora é 100% estável
+  }, [user, authLoading, navigate, currentDate, getAuthHeaders]);
 
+  // A função de navegação apenas atualiza a data, o que aciona o useEffect
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
   };
