@@ -167,7 +167,7 @@ const EventModal: React.FC<EventModalProps> = ({
             className="modal-actions"
             style={{ justifyContent: "space-between" }}
           >
-            <div>
+            <div className="modal-actions">
               {eventToEdit && (
                 <button
                   type="button"
