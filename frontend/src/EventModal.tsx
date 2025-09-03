@@ -124,10 +124,8 @@ const EventModal: React.FC<EventModalProps> = ({
             />
             <datalist id="category-suggestions">
               <option value="Aniversário" />
-              <option value="Comemoração" />
               <option value="Feriado" />
               <option value="Happy Hour" />
-              <option value="Reunião" />
             </datalist>
           </div>
           <div className="form-row">
