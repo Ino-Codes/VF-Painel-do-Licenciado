@@ -44,13 +44,13 @@ const AdminCalendar: React.FC = () => {
           event.category === "Aniversário"
             ? "#81e18c"
             : event.category === "Feriado"
-            ? "#e1818a"
+            ? "#a8a8a8"
             : "#ddb141",
         borderColor:
           event.category === "Aniversário"
             ? "#48bd79"
             : event.category === "Feriado"
-            ? "#c55560"
+            ? "#696969"
             : "#daa520",
       }));
       setEvents(formattedEvents);
