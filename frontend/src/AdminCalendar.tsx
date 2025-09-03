@@ -6,10 +6,10 @@ import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
+import timeGridPlugin from "@fullcalendar/timegrid"; // PLUGIN ADICIONADO
 import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
-import EventModal from "./EventModal.tsx"; // Criaremos este arquivo a seguir
+import EventModal from "./EventModal.tsx";
 import { useAuth } from "./context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
 
@@ -75,8 +75,8 @@ const AdminCalendar: React.FC = () => {
     const eventData = {
       id: arg.event.id,
       title: arg.event.title,
-      start_date: arg.event.startStr,
-      end_date: arg.event.endStr,
+      start_date: arg.event.start, // Usar arg.event.start que já é um objeto Date
+      end_date: arg.event.end, // Usar arg.event.end que já é um objeto Date
       description: arg.event.extendedProps.description,
       category: arg.event.extendedProps.category,
     };
@@ -109,16 +109,19 @@ const AdminCalendar: React.FC = () => {
         </div>
         <div className="calendar-container" style={{ marginTop: "20px" }}>
           <FullCalendar
+            // PLUGINS ATUALIZADOS
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             weekends={true}
             events={events}
             locale="pt-br"
+            // HEADER ATUALIZADO para incluir as novas visualizações
             headerToolbar={{
               left: "prev,next today",
               center: "title",
               right: "dayGridMonth,timeGridWeek,timeGridDay",
             }}
+            // TEXTOS DOS BOTÕES ATUALIZADOS
             buttonText={{
               today: "Hoje",
               month: "Mês",
@@ -127,7 +130,14 @@ const AdminCalendar: React.FC = () => {
             }}
             dateClick={handleDateClick}
             eventClick={handleEventClick}
-            editable={false} // Drag-and-drop pode ser ativado depois
+            editable={false}
+            nowIndicator={true} // Mostra um indicador da hora atual
+            eventTimeFormat={{
+              // Formata a hora do evento
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            }}
           />
         </div>
       </div>

@@ -12,6 +12,16 @@ interface EventModalProps {
   selectedDate: string | null;
 }
 
+// Função auxiliar para formatar a data para o input datetime-local
+const formatDateTimeForInput = (dateString: string | Date): string => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  // Ajusta para o fuso horário local antes de formatar
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  // Formata para 'YYYY-MM-DDTHH:mm'
+  return date.toISOString().slice(0, 16);
+};
+
 const EventModal: React.FC<EventModalProps> = ({
   isOpen,
   onClose,
@@ -30,14 +40,15 @@ const EventModal: React.FC<EventModalProps> = ({
     if (eventToEdit) {
       setTitle(eventToEdit.title || "");
       setDescription(eventToEdit.description || "");
-      setStartDate(eventToEdit.start_date.substring(0, 10)); // Formato YYYY-MM-DD
-      setEndDate(eventToEdit.end_date.substring(0, 10)); // Formato YYYY-MM-DD
+      setStartDate(formatDateTimeForInput(eventToEdit.start_date));
+      setEndDate(formatDateTimeForInput(eventToEdit.end_date));
       setCategory(eventToEdit.category || "");
     } else if (selectedDate) {
+      // Limpa os campos e define a data clicada como padrão
       setTitle("");
       setDescription("");
-      setStartDate(selectedDate);
-      setEndDate(selectedDate);
+      setStartDate(formatDateTimeForInput(new Date(selectedDate)));
+      setEndDate(formatDateTimeForInput(new Date(selectedDate)));
       setCategory("");
     }
   }, [eventToEdit, selectedDate]);
@@ -45,7 +56,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !startDate || !endDate || !category.trim()) {
-      toast.error("Título, Datas e Categoria são obrigatórios.");
+      toast.error("Título, Datas, Horários e Categoria são obrigatórios.");
       return;
     }
     const eventData = {
@@ -122,8 +133,9 @@ const EventModal: React.FC<EventModalProps> = ({
           <div className="form-row">
             <div style={{ flex: 1 }}>
               <label>Início</label>
+              {/* CAMPO ATUALIZADO */}
               <input
-                type="date"
+                type="datetime-local"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="form-input"
@@ -132,8 +144,9 @@ const EventModal: React.FC<EventModalProps> = ({
             </div>
             <div style={{ flex: 1 }}>
               <label>Fim</label>
+              {/* CAMPO ATUALIZADO */}
               <input
-                type="date"
+                type="datetime-local"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 className="form-input"
