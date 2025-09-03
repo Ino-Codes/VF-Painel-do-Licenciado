@@ -1,20 +1,20 @@
-import React, 'useState', useEffect, useCallback } from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'moment/locale/pt-br';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { Calendar, momentLocalizer } from "react-big-calendar";
+import moment from "moment";
+import "moment/locale/pt-br";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
-import api from './api.ts';
-import { useAuth } from './context/AuthContext.tsx';
-import Menu from './Menu.tsx';
-import Footer from './Footer.tsx';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import EventModal from './EventModal.tsx';
-import LoadingSpinner from './LoadingSpinner.tsx';
+import api from "./api.ts";
+import { useAuth } from "./context/AuthContext.tsx";
+import Menu from "./Menu.tsx";
+import Footer from "./Footer.tsx";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import EventModal from "./EventModal.tsx";
+import LoadingSpinner from "./LoadingSpinner.tsx";
 
 // Configura o moment para usar o idioma português
-moment.locale('pt-br');
+moment.locale("pt-br");
 const localizer = momentLocalizer(moment);
 
 interface EventData {
@@ -26,7 +26,7 @@ interface EventData {
 
 // Converte os nossos eventos para o formato que o react-big-calendar espera
 const formatEventsForCalendar = (events: EventData[]) => {
-  return events.map(event => ({
+  return events.map((event) => ({
     id: event.id,
     title: event.title,
     start: new Date(event.event_date),
@@ -55,14 +55,15 @@ const CalendarPage: React.FC = () => {
     // 2. Apenas continua se o utilizador estiver definido
     if (user) {
       setIsLoadingEvents(true);
-      
+
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
-      
+
       // A autenticação é adicionada diretamente aqui
       const authHeaders = { headers: { "x-user-id": user.id } };
 
-      api.get("/api/events", {
+      api
+        .get("/api/events", {
           params: { month, year },
           ...authHeaders,
         })
@@ -83,17 +84,17 @@ const CalendarPage: React.FC = () => {
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
   };
-  
+
   const handleSuccess = () => {
-      setIsModalOpen(false);
-      // Força o recarregamento dos eventos para o mês atual
-      setCurrentDate(new Date(currentDate));
-  }
+    setIsModalOpen(false);
+    // Força o recarregamento dos eventos para o mês atual
+    setCurrentDate(new Date(currentDate));
+  };
 
   if (authLoading) {
     return <LoadingSpinner />;
   }
-  
+
   return (
     <div className="p-2">
       <Menu />
