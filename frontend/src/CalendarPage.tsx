@@ -34,7 +34,7 @@ const formatEventsForCalendar = (events: EventData[]) => {
 };
 
 const CalendarPage: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [events, setEvents] = useState([]);
@@ -42,21 +42,21 @@ const CalendarPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
-  // Unimos os dois useEffects num só para um fluxo mais limpo
+  // Unimos toda a lógica de busca e autenticação num único e robusto useEffect
   useEffect(() => {
     // 1. Lida com o caso de utilizador não logado
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate("/");
-      return; // Sai do efeito mais cedo
+      return; // Sai do efeito para evitar mais execuções
     }
 
-    // 2. Se o utilizador estiver logado, busca os eventos
+    // 2. Apenas continua se o utilizador estiver definido
     if (user) {
       setIsLoadingEvents(true);
+
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
 
-      // O getAuthHeaders é chamado diretamente aqui
       const authHeaders = { headers: { "x-user-id": user.id } };
 
       api
@@ -74,14 +74,22 @@ const CalendarPage: React.FC = () => {
           setIsLoadingEvents(false);
         });
     }
-  }, [user, loading, navigate, currentDate]); // O array de dependências fica mais simples e estável
+  }, [user, authLoading, navigate, currentDate]); // O array de dependências é simples e estável
 
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
   };
 
-  if (loading) return <LoadingSpinner />;
-  if (!user) return null;
+  const handleSuccess = () => {
+    setIsModalOpen(false);
+    // Força o recarregamento dos eventos para o mês atual após adicionar um novo
+    // Criamos uma nova instância da data para garantir que o useEffect seja acionado
+    setCurrentDate(new Date(currentDate));
+  };
+
+  if (authLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="p-2">
@@ -89,7 +97,7 @@ const CalendarPage: React.FC = () => {
       <div className="content-area">
         <div className="document-header">
           <h2>Calendário de Eventos</h2>
-          {user.role === "admin" && (
+          {user?.role === "admin" && (
             <button
               className="form-button"
               onClick={() => setIsModalOpen(true)}
@@ -130,12 +138,7 @@ const CalendarPage: React.FC = () => {
       {isModalOpen && (
         <EventModal
           onClose={() => setIsModalOpen(false)}
-          onSuccess={() => {
-            setIsModalOpen(false);
-            // Para forçar o recarregamento, podemos recriar o objeto de data,
-            // o que aciona o useEffect novamente.
-            setCurrentDate(new Date(currentDate));
-          }}
+          onSuccess={handleSuccess}
         />
       )}
       <Footer />
