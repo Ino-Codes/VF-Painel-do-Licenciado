@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction"; // Para futuras interações
-import ptBrLocale from "@fullcalendar/core/locales/pt-br"; // Importa a localização em português
+import interactionPlugin from "@fullcalendar/interaction";
+import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
@@ -13,35 +13,27 @@ import toast from "react-hot-toast";
 import EventModal from "./EventModal.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 
-// Interface para os dados que vêm da API
+// Interfaces e função de formatação (sem alterações)
 interface ApiEvent {
   id: number;
   title: string;
   details: string;
   event_date: string;
 }
-
-// O FullCalendar usa um formato de evento ligeiramente diferente
 interface CalendarEvent {
   id: string;
   title: string;
-  start: string; // FullCalendar lida bem com strings de data ISO
+  start: string;
   allDay: true;
-  extendedProps: {
-    details: string;
-  };
+  extendedProps: { details: string };
 }
-
-// Função para formatar os dados da API
 const formatEventsForCalendar = (events: ApiEvent[]): CalendarEvent[] => {
   return events.map((event) => ({
     id: event.id.toString(),
     title: event.title,
     start: event.event_date,
     allDay: true,
-    extendedProps: {
-      details: event.details,
-    },
+    extendedProps: { details: event.details },
   }));
 };
 
@@ -51,50 +43,56 @@ const CalendarPage: React.FC = () => {
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
-
-  // Usamos uma referência para evitar problemas de estado em callbacks do calendário
+  const [isLoading, setIsLoading] = useState(true);
   const calendarRef = useRef<FullCalendar>(null);
 
-  const fetchEvents = useCallback(async () => {
-    if (!user) return;
+  // Função para buscar eventos, agora mais genérica
+  const fetchEvents = useCallback(
+    async (date: Date) => {
+      if (!user) return;
+      setIsLoading(true);
+      try {
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        const authHeaders = { headers: { "x-user-id": user.id } };
 
-    // Pega a data atual do calendário para buscar os eventos corretos
-    const calendarApi = calendarRef.current?.getApi();
-    const currentDate = calendarApi ? calendarApi.getDate() : new Date();
+        const res = await api.get("/api/events", {
+          params: { month, year },
+          ...authHeaders,
+        });
+        setEvents(formatEventsForCalendar(res.data));
+      } catch (err) {
+        toast.error("Não foi possível carregar os eventos.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user]
+  );
 
-    setIsLoadingEvents(true);
-    try {
-      const month = currentDate.getMonth() + 1;
-      const year = currentDate.getFullYear();
-      const authHeaders = { headers: { "x-user-id": user.id } };
-
-      const res = await api.get("/api/events", {
-        params: { month, year },
-        ...authHeaders,
-      });
-      setEvents(formatEventsForCalendar(res.data));
-    } catch (err) {
-      toast.error("Não foi possível carregar os eventos.");
-    } finally {
-      setIsLoadingEvents(false);
-    }
-  }, [user]);
-
+  // useEffect para a busca inicial de dados
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/");
+      return;
     }
-  }, [user, authLoading, navigate]);
+    if (user) {
+      fetchEvents(new Date()); // Busca os eventos para o mês atual na primeira carga
+    }
+  }, [user, authLoading, navigate, fetchEvents]);
 
-  const handleDatesSet = () => {
-    // Esta função é chamada sempre que o mês muda
-    fetchEvents();
+  // Handler para quando o utilizador navega no calendário
+  const handleDatesSet = (dateInfo: { start: Date }) => {
+    // A API do FullCalendar nos dá a nova data, usamos ela para buscar os eventos
+    fetchEvents(dateInfo.start);
   };
 
   const handleSuccess = () => {
     setIsModalOpen(false);
-    fetchEvents(); // Recarrega os eventos
+    // Para recarregar, podemos chamar fetchEvents com a data atual do calendário
+    const calendarApi = calendarRef.current?.getApi();
+    const currentDate = calendarApi ? calendarApi.getDate() : new Date();
+    fetchEvents(currentDate);
   };
 
   if (authLoading) {
@@ -118,21 +116,25 @@ const CalendarPage: React.FC = () => {
         </div>
 
         <div className="calendar-container">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            locale={ptBrLocale} // Aplica o idioma português
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "", // Deixamos a direita vazia para um visual mais limpo
-            }}
-            events={events}
-            height="auto" // Ajusta a altura ao container
-            loading={isLoadingEvents} // Mostra um indicador de carregamento
-            datesSet={handleDatesSet} // Função chamada ao mudar de mês/vista
-          />
+          {/* Usamos o estado isLoading para mostrar o spinner */}
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : (
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              locale={ptBrLocale}
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "",
+              }}
+              events={events}
+              height="auto"
+              datesSet={handleDatesSet}
+            />
+          )}
         </div>
       </div>
       {isModalOpen && (
