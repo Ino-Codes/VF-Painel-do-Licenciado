@@ -53,32 +53,32 @@ const CalendarPage: React.FC = () => {
     }
 
     // 2. Apenas continua se o utilizador estiver definido
-    if (user) {
-      setIsLoadingEvents(true);
+    // if (user) {
+    //   setIsLoadingEvents(true);
 
-      const month = currentDate.getMonth() + 1;
-      const year = currentDate.getFullYear();
+    //   const month = currentDate.getMonth() + 1;
+    //   const year = currentDate.getFullYear();
 
-      // A autenticação é adicionada diretamente aqui
-      const authHeaders = { headers: { "x-user-id": user.id } };
+    //   // A autenticação é adicionada diretamente aqui
+    //   const authHeaders = { headers: { "x-user-id": user.id } };
 
-      api
-        .get("/api/events", {
-          params: { month, year },
-          ...authHeaders,
-        })
-        .then((res) => {
-          // Se a API responder com sucesso (mesmo com um array vazio), formatamos
-          setEvents(formatEventsForCalendar(res.data));
-        })
-        .catch(() => {
-          toast.error("Não foi possível carregar os eventos.");
-          setEvents([]); // Garante que a lista fique vazia em caso de erro
-        })
-        .finally(() => {
-          setIsLoadingEvents(false);
-        });
-    }
+    //   api
+    //     .get("/api/events", {
+    //       params: { month, year },
+    //       ...authHeaders,
+    //     })
+    //     .then((res) => {
+    //       // Se a API responder com sucesso (mesmo com um array vazio), formatamos
+    //       setEvents(formatEventsForCalendar(res.data));
+    //     })
+    //     .catch(() => {
+    //       toast.error("Não foi possível carregar os eventos.");
+    //       setEvents([]); // Garante que a lista fique vazia em caso de erro
+    //     })
+    //     .finally(() => {
+    //       setIsLoadingEvents(false);
+    //     });
+    // }
   }, [user, authLoading, navigate, currentDate]); // O array de dependências está simples e estável
 
   const handleNavigate = (newDate: Date) => {
