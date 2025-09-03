@@ -112,6 +112,17 @@ const Menu: React.FC = () => {
                 </NavLink>
 
                 <NavLink
+                  to="/admin/calendar"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Agenda
+                </NavLink>
+
+                <NavLink
                   to="/admin/logs"
                   className="menu-item"
                   onClick={() => {

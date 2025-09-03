@@ -19,6 +19,7 @@ import CoursesPage from "./CoursesPage.tsx";
 import LessonPlayer from "./LessonPlayer.tsx";
 import QuizPlayer from "./QuizPlayer.tsx";
 import NotFoundPage from "./NotFoundPage.tsx";
+import AdminCalendar from "./AdminCalendar.tsx";
 
 import "./styles.css";
 
@@ -63,6 +64,7 @@ const AppRouter: React.FC = () => {
             path="/admin/courses/:courseId"
             element={<AdminCourseEditor />}
           />
+          <Route path="/admin/calendar" element={<AdminCalendar />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />
