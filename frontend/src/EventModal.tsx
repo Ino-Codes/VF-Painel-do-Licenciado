@@ -179,11 +179,9 @@ const EventModal: React.FC<EventModalProps> = ({
                   className="form-button delete"
                   disabled={isDeleting}
                 >
-                  {isDeleting ? "Excluindo..." : "Excluir"}
+                  {isDeleting ? "Excluindo" : "Excluir"}
                 </button>
               )}
-            </div>
-            <div>
               <button
                 type="button"
                 onClick={onClose}
