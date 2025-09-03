@@ -1,83 +1,145 @@
-import React, { useState, useEffect } from "react";
+// frontend/src/AdminCalendar.tsx
+
+import React, { useState, useEffect, useCallback } from "react";
 import api from "./api.ts";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction"; // para cliques no calendário
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
+import EventModal from "./EventModal.tsx"; // Criaremos este arquivo a seguir
+import { useAuth } from "./context/AuthContext.tsx";
+import { useNavigate } from "react-router-dom";
 
 const AdminCalendar: React.FC = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  // Função para buscar os eventos da API
-  const fetchEvents = async () => {
+  useEffect(() => {
+    if (!loading && (!user || user.role !== "admin")) {
+      toast.error("Acesso restrito a administradores.");
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
+
+  const fetchEvents = useCallback(async () => {
     try {
       const res = await api.get("/api/admin/events");
-      // O FullCalendar espera os campos 'title', 'start' e 'end'
-      const formattedEvents = res.data.map((event) => ({
+      const formattedEvents = res.data.map((event: any) => ({
         id: event.id,
         title: event.title,
         start: event.start_date,
         end: event.end_date,
-        // Podemos usar a categoria para definir cores diferentes!
+        extendedProps: {
+          description: event.description,
+          category: event.category,
+        },
         backgroundColor:
-          event.category === "Aniversário" ? "#04A146" : "#daa520",
-        borderColor: event.category === "Aniversário" ? "#04A146" : "#daa520",
+          event.category === "Aniversário"
+            ? "#04A146"
+            : event.category === "Feriado"
+            ? "#C82333"
+            : "#daa520",
+        borderColor:
+          event.category === "Aniversário"
+            ? "#04A146"
+            : event.category === "Feriado"
+            ? "#C82333"
+            : "#daa520",
       }));
       setEvents(formattedEvents);
     } catch (err) {
       toast.error("Não foi possível carregar os eventos.");
     }
-  };
-
-  useEffect(() => {
-    fetchEvents();
   }, []);
 
-  // Função para lidar com o clique em uma data (para criar um novo evento)
-  const handleDateClick = (arg) => {
-    // Aqui, podemos abrir um MODAL para criar um novo evento
-    // O modal receberia 'arg.dateStr' como a data de início
-    alert("Abrir modal para criar evento em: " + arg.dateStr);
+  useEffect(() => {
+    if (user && user.role === "admin") {
+      fetchEvents();
+    }
+  }, [user, fetchEvents]);
+
+  const handleDateClick = (arg: any) => {
+    setSelectedDate(arg.dateStr);
+    setSelectedEvent(null);
+    setIsModalOpen(true);
   };
 
-  // Função para lidar com o clique em um evento existente (para editar/excluir)
-  const handleEventClick = (arg) => {
-    // Aqui, podemos abrir o mesmo MODAL, mas preenchido com os dados do evento
-    // para edição ou exclusão. O id do evento é 'arg.event.id'
-    alert("Abrir modal para editar o evento: " + arg.event.title);
+  const handleEventClick = (arg: any) => {
+    const eventData = {
+      id: arg.event.id,
+      title: arg.event.title,
+      start_date: arg.event.startStr,
+      end_date: arg.event.endStr,
+      description: arg.event.extendedProps.description,
+      category: arg.event.extendedProps.category,
+    };
+    setSelectedEvent(eventData);
+    setSelectedDate(null);
+    setIsModalOpen(true);
   };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+    setSelectedDate(null);
+  };
+
+  const handleModalSuccess = () => {
+    handleModalClose();
+    fetchEvents();
+  };
+
+  if (loading || !user || user.role !== "admin") {
+    return <div className="tela-loading">Carregando...</div>;
+  }
 
   return (
     <div className="p-2">
       <Menu />
       <div className="content-area">
         <div className="document-header">
-          <h2>Agenda de Eventos do RH</h2>
+          <h2>Agenda de Eventos</h2>
         </div>
         <div className="calendar-container" style={{ marginTop: "20px" }}>
           <FullCalendar
-            plugins={[dayGridPlugin, interactionPlugin]}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             weekends={true}
             events={events}
-            dateClick={handleDateClick}
-            eventClick={handleEventClick}
-            locale="pt-br" // Para traduzir
+            locale="pt-br"
             headerToolbar={{
               left: "prev,next today",
               center: "title",
-              right: "dayGridMonth,dayGridWeek",
+              right: "dayGridMonth,timeGridWeek,timeGridDay",
             }}
             buttonText={{
               today: "Hoje",
               month: "Mês",
               week: "Semana",
+              day: "Dia",
             }}
+            dateClick={handleDateClick}
+            eventClick={handleEventClick}
+            editable={false} // Drag-and-drop pode ser ativado depois
           />
         </div>
       </div>
+      {isModalOpen && (
+        <EventModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          onSuccess={handleModalSuccess}
+          eventToEdit={selectedEvent}
+          selectedDate={selectedDate}
+        />
+      )}
       <Footer />
     </div>
   );
