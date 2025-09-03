@@ -21,7 +21,7 @@ dourado escuro: #866225
 */
 
 :root {
-  --fc-today-bg-color: #e6e6e6;
+  --fc-today-bg-color: #f4f4f4;
 }
 
 * {
@@ -420,7 +420,7 @@ body::before {
 }
 
 .fc .fc-daygrid-day.fc-day-today {
-  background-color: #e0e0e0;
+  background-color: #f0f0f0;
 }
 
 /* Cursos */
