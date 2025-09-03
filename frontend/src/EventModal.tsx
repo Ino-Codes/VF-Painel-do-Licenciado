@@ -164,19 +164,17 @@ const EventModal: React.FC<EventModalProps> = ({
             />
           </div>
           <div>
-            <div>
+            <div className="modal-actions">
               {eventToEdit && (
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="form-button delete"
-                  disabled={isDeleting}
+                  className="form-button-delete"
                 >
-                  {isDeleting ? "Excluindo..." : "Excluir"}
+                  Excluir
                 </button>
               )}
-            </div>
-            <div className="modal-actions">
+
               <button
                 type="button"
                 onClick={onClose}
@@ -184,6 +182,7 @@ const EventModal: React.FC<EventModalProps> = ({
               >
                 Cancelar
               </button>
+
               <button type="submit" className="form-button">
                 Salvar
               </button>
