@@ -37,19 +37,12 @@ const AdminCalendar: React.FC = () => {
         extendedProps: {
           description: event.description,
           category: event.category,
+          color: event.color, // Passamos a cor para uso posterior
         },
-        backgroundColor:
-          event.category === "Aniversário"
-            ? "#81e18c"
-            : event.category === "Feriado"
-            ? "#e18181"
-            : "#ddb141",
-        borderColor:
-          event.category === "Aniversário"
-            ? "#48bd79"
-            : event.category === "Feriado"
-            ? "#bd4848"
-            : "#daa520",
+        // --- MUDANÇA PRINCIPAL AQUI ---
+        // Agora, a cor vem diretamente do banco de dados!
+        backgroundColor: event.color,
+        borderColor: event.color,
       }));
       setEvents(formattedEvents);
     } catch (err) {
@@ -77,6 +70,7 @@ const AdminCalendar: React.FC = () => {
       end_date: arg.event.end,
       description: arg.event.extendedProps.description,
       category: arg.event.extendedProps.category,
+      color: arg.event.extendedProps.color, // Passamos a cor para o modal de edição
     };
     setSelectedEvent(eventData);
     setSelectedDate(null);

@@ -423,6 +423,32 @@ body::before {
   background-color: #f0f0f0;
 }
 
+/* --- ESTILOS PARA A PALETA DE CORES DO MODAL DE EVENTOS --- */
+
+.color-palette {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+}
+
+.color-swatch.selected {
+  border-color: #333;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
 /* Cursos */
 
 .course-card-thumbnail {
