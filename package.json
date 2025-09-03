@@ -1,8 +1,5 @@
 {
   "dependencies": {
-    "@fullcalendar/daygrid": "^6.1.19",
-    "@fullcalendar/interaction": "^6.1.19",
-    "@fullcalendar/react": "^6.1.19",
     "@vercel/speed-insights": "^1.2.0",
     "jsdom": "^26.1.0",
     "puppeteer": "^24.17.0",

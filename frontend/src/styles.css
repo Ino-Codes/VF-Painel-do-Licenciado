@@ -399,47 +399,6 @@ body::before {
   border: none;
 }
 
-/* --- Estilos para o FullCalendar --- */
-
-.calendar-container {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  margin-top: 20px;
-}
-
-/* Personaliza os botões do cabeçalho */
-.fc .fc-button {
-  background-color: #f0f0f0 !important;
-  border: 1px solid #ccc !important;
-  color: #333 !important;
-  text-transform: capitalize !important;
-  box-shadow: none !important;
-}
-
-.fc .fc-button:hover {
-  background-color: #e0e0e0 !important;
-}
-
-.fc .fc-button.fc-button-primary:not(:disabled).fc-button-active {
-  background-color: #daa520 !important; /* Cor dourada da sua marca */
-  border-color: #daa520 !important;
-}
-
-/* Estiliza os eventos dentro do calendário */
-.fc-event {
-  border: 1px solid #c0901b !important;
-  background-color: #daa520 !important; /* Cor dourada da sua marca */
-  cursor: pointer;
-}
-
-/* Garante que o calendário ocupe o espaço corretamente */
-.fc {
-  max-width: 100%;
-  margin: 0 auto;
-}
-
 /* Cursos */
 
 .course-card-thumbnail {
