@@ -42,16 +42,16 @@ const AdminCalendar: React.FC = () => {
         },
         backgroundColor:
           event.category === "Aniversário"
-            ? "#fff"
+            ? "#81e18c"
             : event.category === "Feriado"
             ? "#e1818a"
-            : "#fff",
+            : "#ddb141",
         borderColor:
           event.category === "Aniversário"
             ? "#48bd79"
             : event.category === "Feriado"
             ? "#c55560"
-            : "#ddb141ff",
+            : "#daa520",
       }));
       setEvents(formattedEvents);
     } catch (err) {
