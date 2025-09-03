@@ -169,7 +169,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="form-button-delete"
+                  className="form-button delete"
                 >
                   Excluir
                 </button>
