@@ -63,27 +63,27 @@ const CalendarPage: React.FC = () => {
       return; // Sai do efeito para evitar mais execuções
     }
 
-    if (user) {
-      setViewState("loading");
+    // if (user) {
+    //   setViewState("loading");
 
-      const month = currentDate.getMonth() + 1;
-      const year = currentDate.getFullYear();
+    //   const month = currentDate.getMonth() + 1;
+    //   const year = currentDate.getFullYear();
 
-      api
-        .get("/api/events", {
-          params: { month, year },
-          ...getAuthHeaders(),
-        })
-        .then((res) => {
-          setEvents(formatEventsForCalendar(res.data));
-          setViewState("loaded");
-        })
-        .catch(() => {
-          toast.error("Não foi possível carregar os eventos.");
-          setEvents([]); // Garante que a lista fique vazia em caso de erro
-          setViewState("error");
-        });
-    }
+    //   api
+    //     .get("/api/events", {
+    //       params: { month, year },
+    //       ...getAuthHeaders(),
+    //     })
+    //     .then((res) => {
+    //       setEvents(formatEventsForCalendar(res.data));
+    //       setViewState("loaded");
+    //     })
+    //     .catch(() => {
+    //       toast.error("Não foi possível carregar os eventos.");
+    //       setEvents([]); // Garante que a lista fique vazia em caso de erro
+    //       setViewState("error");
+    //     });
+    // }
   }, [user, authLoading, navigate, currentDate, getAuthHeaders]);
 
   // A função de navegação apenas atualiza a data, o que aciona o useEffect
