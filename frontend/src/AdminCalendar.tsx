@@ -1,12 +1,10 @@
-// frontend/src/AdminCalendar.tsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import api from "./api.ts";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid"; // PLUGIN ADICIONADO
+import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
 import EventModal from "./EventModal.tsx";
@@ -44,13 +42,13 @@ const AdminCalendar: React.FC = () => {
           event.category === "Aniversário"
             ? "#81e18c"
             : event.category === "Feriado"
-            ? "#a8a8a8"
+            ? "#e18181"
             : "#ddb141",
         borderColor:
           event.category === "Aniversário"
             ? "#48bd79"
             : event.category === "Feriado"
-            ? "#696969"
+            ? "#bd4848"
             : "#daa520",
       }));
       setEvents(formattedEvents);
@@ -75,8 +73,8 @@ const AdminCalendar: React.FC = () => {
     const eventData = {
       id: arg.event.id,
       title: arg.event.title,
-      start_date: arg.event.start, // Usar arg.event.start que já é um objeto Date
-      end_date: arg.event.end, // Usar arg.event.end que já é um objeto Date
+      start_date: arg.event.start,
+      end_date: arg.event.end,
       description: arg.event.extendedProps.description,
       category: arg.event.extendedProps.category,
     };
@@ -84,6 +82,29 @@ const AdminCalendar: React.FC = () => {
     setSelectedDate(null);
     setIsModalOpen(true);
   };
+
+  // --- NOVO HANDLER PARA O EVENTO DE "SOLTAR" (DRAG-AND-DROP) ---
+  const handleEventDrop = async (arg: any) => {
+    const { event } = arg;
+    const eventData = {
+      title: event.title,
+      description: event.extendedProps.description,
+      start_date: event.start.toISOString(),
+      end_date: event.end.toISOString(),
+      category: event.extendedProps.category,
+    };
+
+    try {
+      // Faz a chamada à API para atualizar o evento no backend
+      await api.put(`/api/admin/events/${event.id}`, eventData);
+      toast.success("Evento atualizado com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao atualizar o evento.");
+      // Se a chamada à API falhar, o FullCalendar reverte a mudança visualmente
+      arg.revert();
+    }
+  };
+  // --- FIM DO NOVO HANDLER ---
 
   const handleModalClose = () => {
     setIsModalOpen(false);
@@ -109,19 +130,16 @@ const AdminCalendar: React.FC = () => {
         </div>
         <div className="calendar-container" style={{ marginTop: "20px" }}>
           <FullCalendar
-            // PLUGINS ATUALIZADOS
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             weekends={true}
             events={events}
             locale="pt-br"
-            // HEADER ATUALIZADO para incluir as novas visualizações
             headerToolbar={{
               left: "prev,next today",
               center: "title",
               right: "dayGridMonth,timeGridWeek,timeGridDay",
             }}
-            // TEXTOS DOS BOTÕES ATUALIZADOS
             buttonText={{
               today: "Hoje",
               month: "Mês",
@@ -130,14 +148,16 @@ const AdminCalendar: React.FC = () => {
             }}
             dateClick={handleDateClick}
             eventClick={handleEventClick}
-            editable={false}
-            nowIndicator={true} // Mostra um indicador da hora atual
+            nowIndicator={true}
             eventTimeFormat={{
-              // Formata a hora do evento
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
             }}
+            // --- MUDANÇAS PRINCIPAIS AQUI ---
+            editable={true} // 1. HABILITA A EDIÇÃO (arrastar e soltar)
+            eventDrop={handleEventDrop} // 2. CONECTA O NOSSO NOVO HANDLER AO EVENTO
+            // --- FIM DAS MUDANÇAS ---
           />
         </div>
       </div>
