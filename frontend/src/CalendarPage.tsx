@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -47,16 +47,15 @@ const CalendarPage: React.FC = () => {
   const [viewState, setViewState] = useState<"loading" | "loaded" | "error">(
     "loading"
   );
-
-  // O estado para a data do calendário é a única "fonte da verdade" para a busca de dados
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Este useEffect agora é o único responsável por buscar os dados
+  // Este useEffect agora é o único responsável por buscar os dados.
+  // A lógica de busca está DENTRO dele, quebrando o ciclo de dependências.
   useEffect(() => {
     // 1. Lida com a autenticação
     if (!authLoading && !user) {
       navigate("/");
-      return; // Sai do efeito para evitar mais execuções
+      return;
     }
 
     // 2. Apenas busca dados se tivermos um utilizador
@@ -78,13 +77,12 @@ const CalendarPage: React.FC = () => {
         })
         .catch(() => {
           toast.error("Não foi possível carregar os eventos.");
-          setEvents([]); // Garante que a lista fique vazia em caso de erro
+          setEvents([]);
           setViewState("error");
         });
     }
-  }, [user, authLoading, navigate, currentDate]); // O array de dependências agora é simples e estável
+  }, [user, authLoading, navigate, currentDate]); // O array de dependências agora é 100% estável
 
-  // A função de navegação apenas atualiza a data, o que aciona o useEffect para buscar novos dados
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
   };
@@ -128,7 +126,7 @@ const CalendarPage: React.FC = () => {
                 center: "title",
                 right: "",
               }}
-              events={events} // Passa os eventos (mesmo que seja um array vazio)
+              events={events}
               height="auto"
               // A propriedade 'datesSet' é a forma correta de lidar com a navegação
               datesSet={(dateInfo) => handleNavigate(dateInfo.start)}
