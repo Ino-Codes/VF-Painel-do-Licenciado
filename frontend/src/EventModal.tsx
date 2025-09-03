@@ -21,7 +21,7 @@ const formatDateTimeForInput = (date: Date): string => {
 };
 
 // Paleta de cores pré-definida
-const colorPalette = ["#e1cb81", "#81e18c", "#b8b8b8", "#81a7e1", "#e18181"];
+const colorPalette = ["#efcb6e", "#81e18c", "#b8b8b8", "#81a7e1", "#e18181"];
 
 const EventModal: React.FC<EventModalProps> = ({
   isOpen,
