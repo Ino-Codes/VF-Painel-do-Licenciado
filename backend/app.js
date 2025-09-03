@@ -57,6 +57,7 @@ const logRoutes = require("./routes/logs.js");
 const courseRoutes = require("./routes/courses.js");
 const certificatesRoutes = require("./routes/certificates.js");
 const quizzesRoutes = require("./routes/quizzes.js");
+const eventRoutes = require("./routes/events.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
@@ -69,6 +70,7 @@ app.use("/api/admin/logs", logRoutes(pool));
 app.use("/api/admin/courses", courseRoutes(pool, cloudinary, upload));
 app.use("/api/certificates", certificatesRoutes(pool));
 app.use("/api/quizzes", quizzesRoutes(pool));
+app.use("/api/admin/events", eventRoutes(pool));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
@@ -211,6 +213,17 @@ const createTables = async () => {
       attempted_at TIMESTAMPTZ DEFAULT NOW()
     );`;
 
+  const eventsTable = `
+  CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    start_date TIMESTAMPTZ NOT NULL,
+    end_date TIMESTAMPTZ NOT NULL,
+    category TEXT, -- Ex: 'Aniversário', 'Feriado', 'Comemoração'
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -228,6 +241,7 @@ const createTables = async () => {
     await pool.query(questionsTable);
     await pool.query(optionsTable);
     await pool.query(quizAttemptsTable);
+    await pool.query(eventsTable);
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
