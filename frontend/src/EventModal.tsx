@@ -163,11 +163,8 @@ const EventModal: React.FC<EventModalProps> = ({
               rows={4}
             />
           </div>
-          <div
-            className="modal-actions"
-            style={{ justifyContent: "space-between" }}
-          >
-            <div className="modal-actions">
+          <div>
+            <div>
               {eventToEdit && (
                 <button
                   type="button"
@@ -179,7 +176,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 </button>
               )}
             </div>
-            <div>
+            <div className="modal-actions">
               <button
                 type="button"
                 onClick={onClose}
