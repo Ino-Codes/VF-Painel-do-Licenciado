@@ -399,6 +399,22 @@ body::before {
   border: none;
 }
 
+/* frontend/src/styles.css */
+
+/* --- AJUSTES DE TAMANHO PARA A AGENDA DE EVENTOS --- */
+
+.calendar-container {
+  max-width: 1100px; /* Define uma largura máxima para o calendário */
+  margin: 0 auto; /* Centra o calendário na página */
+  font-size: 14px; /* Reduz o tamanho da fonte base do calendário */
+}
+
+/* Opcional: Ajusta o tamanho dos botões do header se necessário */
+.fc .fc-button {
+  font-size: 0.9em;
+  padding: 6px 12px;
+}
+
 /* Cursos */
 
 .course-card-thumbnail {
