@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, momentLocalizer } from "react-big-calendar";
-import moment from "moment";
-import "moment/locale/pt-br";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+import React, { useState, useEffect } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
@@ -13,53 +13,58 @@ import toast from "react-hot-toast";
 import EventModal from "./EventModal.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 
-// Configura o moment para usar o idioma português
-moment.locale("pt-br");
-const localizer = momentLocalizer(moment);
-
-interface EventData {
+// --- Interfaces e Funções Helper (sem alterações) ---
+interface ApiEvent {
   id: number;
   title: string;
   details: string;
   event_date: string;
 }
-
-// Converte os nossos eventos para o formato que o react-big-calendar espera
-const formatEventsForCalendar = (events: EventData[]) => {
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  allDay: true;
+  extendedProps: { details: string };
+}
+const formatEventsForCalendar = (events: ApiEvent[]): CalendarEvent[] => {
   return events.map((event) => ({
-    id: event.id,
+    id: event.id.toString(),
     title: event.title,
-    start: new Date(event.event_date),
-    end: new Date(event.event_date),
-    resource: event.details,
+    start: event.event_date,
+    allDay: true,
+    extendedProps: { details: event.details },
   }));
 };
+// --- Fim das Helpers ---
 
 const CalendarPage: React.FC = () => {
-  const { user, loading: authLoading } = useAuth(); // Renomeado para evitar conflito
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [events, setEvents] = useState([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+  const [viewState, setViewState] = useState<"loading" | "loaded" | "error">(
+    "loading"
+  );
 
-  // Unimos toda a lógica de busca e autenticação num único e robusto useEffect
+  // O estado para a data do calendário é a única "fonte da verdade" para a busca de dados
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Este useEffect agora é o único responsável por buscar os dados
   useEffect(() => {
-    // 1. Lida com o caso de utilizador não logado
+    // 1. Lida com a autenticação
     if (!authLoading && !user) {
       navigate("/");
-      return;
+      return; // Sai do efeito para evitar mais execuções
     }
 
-    // 2. Apenas continua se o utilizador estiver definido
+    // 2. Apenas busca dados se tivermos um utilizador
     if (user) {
-      setIsLoadingEvents(true);
+      setViewState("loading");
 
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
-
-      // A autenticação é adicionada diretamente aqui
       const authHeaders = { headers: { "x-user-id": user.id } };
 
       api
@@ -68,26 +73,26 @@ const CalendarPage: React.FC = () => {
           ...authHeaders,
         })
         .then((res) => {
-          // Se a API responder com sucesso (mesmo com um array vazio), formatamos
           setEvents(formatEventsForCalendar(res.data));
+          setViewState("loaded");
         })
         .catch(() => {
           toast.error("Não foi possível carregar os eventos.");
           setEvents([]); // Garante que a lista fique vazia em caso de erro
-        })
-        .finally(() => {
-          setIsLoadingEvents(false);
+          setViewState("error");
         });
     }
-  }, [user, authLoading, navigate, currentDate]); // O array de dependências está simples e estável
+  }, [user, authLoading, navigate, currentDate]); // O array de dependências agora é simples e estável
 
+  // A função de navegação apenas atualiza a data, o que aciona o useEffect para buscar novos dados
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
   };
 
   const handleSuccess = () => {
     setIsModalOpen(false);
-    // Força o recarregamento dos eventos para o mês atual
+    // Para recarregar os eventos, simplesmente acionamos o useEffect novamente
+    // ao criar um novo objeto de data para o mês atual.
     setCurrentDate(new Date(currentDate));
   };
 
@@ -112,29 +117,21 @@ const CalendarPage: React.FC = () => {
         </div>
 
         <div className="calendar-container">
-          {isLoadingEvents ? (
-            <LoadingSpinner />
-          ) : (
-            <Calendar
-              localizer={localizer}
-              events={events} // Passa os eventos (mesmo que seja um array vazio)
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: "70vh" }}
-              onNavigate={handleNavigate}
-              date={currentDate}
-              messages={{
-                next: "Próximo",
-                previous: "Anterior",
-                today: "Hoje",
-                month: "Mês",
-                week: "Semana",
-                day: "Dia",
-                agenda: "Agenda",
-                date: "Data",
-                time: "Hora",
-                event: "Evento",
+          {viewState === "loading" && <LoadingSpinner />}
+          {viewState !== "loading" && (
+            <FullCalendar
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              locale={ptBrLocale}
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "",
               }}
+              events={events} // Passa os eventos (mesmo que seja um array vazio)
+              height="auto"
+              // A propriedade 'datesSet' é a forma correta de lidar com a navegação
+              datesSet={(dateInfo) => handleNavigate(dateInfo.start)}
             />
           )}
         </div>
