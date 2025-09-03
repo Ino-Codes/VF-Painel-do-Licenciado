@@ -12,14 +12,15 @@ interface EventModalProps {
   selectedDate: string | null;
 }
 
-// Função auxiliar para formatar a data para o input datetime-local
-const formatDateTimeForInput = (dateString: string | Date): string => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  // Ajusta para o fuso horário local antes de formatar
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-  // Formata para 'YYYY-MM-DDTHH:mm'
-  return date.toISOString().slice(0, 16);
+// Função auxiliar para formatar um objeto Date para o input datetime-local
+const formatDateTimeForInput = (date: Date): string => {
+  if (!date) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -40,15 +41,22 @@ const EventModal: React.FC<EventModalProps> = ({
     if (eventToEdit) {
       setTitle(eventToEdit.title || "");
       setDescription(eventToEdit.description || "");
-      setStartDate(formatDateTimeForInput(eventToEdit.start_date));
-      setEndDate(formatDateTimeForInput(eventToEdit.end_date));
+      // Para editar, a data já vem completa (ISO string), então new Date() funciona corretamente.
+      setStartDate(formatDateTimeForInput(new Date(eventToEdit.start_date)));
+      setEndDate(formatDateTimeForInput(new Date(eventToEdit.end_date)));
       setCategory(eventToEdit.category || "");
     } else if (selectedDate) {
-      // Limpa os campos e define a data clicada como padrão
+      // --- ESTA É A CORREÇÃO PARA O BUG ---
+      // Quando clicamos num dia no modo "mês", selectedDate vem como "YYYY-MM-DD".
+      // new Date("YYYY-MM-DD") interpreta como UTC.
+      // Ao adicionar "T09:00:00", forçamos o JavaScript a interpretar a string no fuso horário LOCAL.
+      // Isso garante que "2025-09-03" seja entendido como 9 da manhã do dia 3, e não 9 da noite do dia 2.
+      const localDate = new Date(`${selectedDate}T09:00:00`);
+
       setTitle("");
       setDescription("");
-      setStartDate(formatDateTimeForInput(new Date(selectedDate)));
-      setEndDate(formatDateTimeForInput(new Date(selectedDate)));
+      setStartDate(formatDateTimeForInput(localDate));
+      setEndDate(formatDateTimeForInput(localDate)); // Define a mesma data/hora de início como padrão
       setCategory("");
     }
   }, [eventToEdit, selectedDate]);
@@ -131,7 +139,6 @@ const EventModal: React.FC<EventModalProps> = ({
           <div className="form-row">
             <div style={{ flex: 1 }}>
               <label>Início</label>
-              {/* CAMPO ATUALIZADO */}
               <input
                 type="datetime-local"
                 value={startDate}
@@ -142,7 +149,6 @@ const EventModal: React.FC<EventModalProps> = ({
             </div>
             <div style={{ flex: 1 }}>
               <label>Fim</label>
-              {/* CAMPO ATUALIZADO */}
               <input
                 type="datetime-local"
                 value={endDate}
@@ -161,18 +167,23 @@ const EventModal: React.FC<EventModalProps> = ({
               rows={4}
             />
           </div>
-          <div>
-            <div className="modal-actions">
+          <div
+            className="modal-actions"
+            style={{ justifyContent: "space-between" }}
+          >
+            <div>
               {eventToEdit && (
                 <button
                   type="button"
                   onClick={handleDelete}
                   className="form-button delete"
+                  disabled={isDeleting}
                 >
-                  Excluir
+                  {isDeleting ? "Excluindo..." : "Excluir"}
                 </button>
               )}
-
+            </div>
+            <div>
               <button
                 type="button"
                 onClick={onClose}
