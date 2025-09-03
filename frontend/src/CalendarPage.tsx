@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, momentLocalizer, Views } from "react-big-calendar";
+import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "moment/locale/pt-br";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -13,19 +13,27 @@ import toast from "react-hot-toast";
 import EventModal from "./EventModal.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 
-// Configura o moment para usar o idioma português
+// Configurações do calendário
 moment.locale("pt-br");
 const localizer = momentLocalizer(moment);
 
-interface EventData {
+interface ApiEvent {
   id: number;
   title: string;
   details: string;
   event_date: string;
 }
 
-// Converte os nossos eventos para o formato que o react-big-calendar espera
-const formatEventsForCalendar = (events: EventData[]) => {
+interface CalendarEvent {
+  id: number;
+  title: string;
+  start: Date;
+  end: Date;
+  resource: string;
+}
+
+// Função Helper para formatar os dados da API para o Calendário
+const formatEventsForCalendar = (events: ApiEvent[]): CalendarEvent[] => {
   return events.map((event) => ({
     id: event.id,
     title: event.title,
@@ -39,48 +47,42 @@ const CalendarPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Usamos um estado mais explícito para a visualização
   const [viewState, setViewState] = useState<"loading" | "loaded" | "error">(
     "loading"
   );
 
-  // Este useEffect agora centraliza toda a lógica de busca de dados
+  // Este useEffect agora centraliza toda a lógica
   useEffect(() => {
-    // 1. Lida com o caso de utilizador não logado
+    // 1. Lida com autenticação
     if (!authLoading && !user) {
       navigate("/");
-      return; // Sai do efeito para evitar mais execuções
+      return;
     }
 
-    // 2. Apenas continua se o utilizador estiver definido e autenticado
+    // 2. Apenas busca dados se tivermos um utilizador
     if (user) {
       setViewState("loading");
 
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
-
       const authHeaders = { headers: { "x-user-id": user.id } };
 
       api
-        .get("/api/events", {
-          params: { month, year },
-          ...authHeaders,
-        })
+        .get("/api/events", { params: { month, year }, ...authHeaders })
         .then((res) => {
           setEvents(formatEventsForCalendar(res.data));
-          setViewState("loaded"); // Marca como carregado com sucesso
+          setViewState("loaded");
         })
         .catch(() => {
           toast.error("Não foi possível carregar os eventos.");
-          setEvents([]); // Garante que a lista fique vazia em caso de erro
-          setViewState("error"); // Marca que ocorreu um erro
+          setEvents([]);
+          setViewState("error");
         });
     }
-  }, [user, authLoading, navigate, currentDate]); // O array de dependências está simples e estável
+  }, [user, authLoading, navigate, currentDate]); // Dependências estáveis
 
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
@@ -88,11 +90,10 @@ const CalendarPage: React.FC = () => {
 
   const handleSuccess = () => {
     setIsModalOpen(false);
-    // Força o recarregamento dos eventos para o mês atual
+    // Aciona a busca de dados novamente para o mês atual
     setCurrentDate(new Date(currentDate));
   };
 
-  // Renderiza o spinner de carregamento inicial enquanto a autenticação está a ser verificada
   if (authLoading) {
     return <LoadingSpinner />;
   }
@@ -119,13 +120,13 @@ const CalendarPage: React.FC = () => {
           ) : (
             <Calendar
               localizer={localizer}
-              events={events} // Passa os eventos (mesmo que seja um array vazio)
+              events={events}
               startAccessor="start"
               endAccessor="end"
               style={{ height: "70vh" }}
               onNavigate={handleNavigate}
               date={currentDate}
-              views={[Views.MONTH]} // Força a visualização apenas por Mês
+              views={["month"]} // Força a visualização apenas por Mês
               messages={{
                 next: "Próximo",
                 previous: "Anterior",
