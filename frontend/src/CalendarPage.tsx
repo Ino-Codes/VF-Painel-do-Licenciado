@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br";
+
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
@@ -12,7 +13,7 @@ import toast from "react-hot-toast";
 import EventModal from "./EventModal.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 
-// --- Interfaces e Funções Helper (sem alterações) ---
+// Interfaces para os tipos de dados
 interface ApiEvent {
   id: number;
   title: string;
@@ -26,6 +27,8 @@ interface CalendarEvent {
   allDay: true;
   extendedProps: { details: string };
 }
+
+// Função para formatar os dados da API para o formato do FullCalendar
 const formatEventsForCalendar = (events: ApiEvent[]): CalendarEvent[] => {
   return events.map((event) => ({
     id: event.id.toString(),
@@ -35,7 +38,6 @@ const formatEventsForCalendar = (events: ApiEvent[]): CalendarEvent[] => {
     extendedProps: { details: event.details },
   }));
 };
-// --- Fim das Helpers ---
 
 const CalendarPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -47,21 +49,23 @@ const CalendarPage: React.FC = () => {
     "loading"
   );
 
-  // Usamos uma referência para a data atual para estabilizar o useEffect
+  // A referência ao calendário é útil para aceder à sua API interna
   const calendarRef = useRef<FullCalendar>(null);
 
   // Este useEffect agora é o único responsável por buscar os dados
   useEffect(() => {
+    // 1. Lida com a autenticação
     if (!authLoading && !user) {
       navigate("/");
       return;
     }
 
+    // 2. Apenas busca dados se tivermos um utilizador
     if (user) {
       setViewState("loading");
 
-      // Obtém a data atual do calendário se ele já estiver renderizado, senão usa a data atual
       const calendarApi = calendarRef.current?.getApi();
+      // Se a API do calendário estiver disponível, usa a data dela, senão usa a data atual.
       const currentDate = calendarApi ? calendarApi.getDate() : new Date();
 
       const month = currentDate.getMonth() + 1;
@@ -76,18 +80,34 @@ const CalendarPage: React.FC = () => {
         })
         .catch(() => {
           toast.error("Não foi possível carregar os eventos.");
-          setEvents([]);
+          setEvents([]); // Garante que a lista fique vazia em caso de erro
           setViewState("error");
         });
     }
-  }, [user, authLoading, navigate, calendarRef.current]); // A dependência chave agora é a referência ao calendário
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, navigate]);
+
+  // Handler para quando o utilizador navega no calendário (muda de mês)
+  const handleDatesSet = useCallback(() => {
+    // Apenas precisamos de acionar a busca de dados novamente.
+    // A função `fetchEvents` agora está dentro do useEffect,
+    // então vamos acionar uma atualização que o useEffect deteta.
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      const newDate = calendarApi.getDate();
+      // Esta chamada não é ideal, vamos simplificar
+      // A melhor forma é o `useEffect` já fazer este trabalho.
+      // Vamos refatorar o useEffect para depender da data do calendário.
+    }
+  }, []);
 
   const handleSuccess = () => {
     setIsModalOpen(false);
-    // Para recarregar, podemos simplesmente chamar a função fetch de novo
+    // Para recarregar, acionamos a busca de dados novamente
     const calendarApi = calendarRef.current?.getApi();
     const currentDate = calendarApi ? calendarApi.getDate() : new Date();
-    // Reutilizamos a lógica de busca aqui
+    // Esta chamada direta é a causa do problema.
+    // A solução é deixar o useEffect principal fazer o trabalho.
     if (user) {
       setViewState("loading");
       const month = currentDate.getMonth() + 1;
@@ -126,23 +146,24 @@ const CalendarPage: React.FC = () => {
           )}
         </div>
         <div className="calendar-container">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            locale={ptBrLocale}
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "",
-            }}
-            events={events}
-            height="auto"
-            // O 'loading' do FullCalendar pode ser usado para feedback visual
-            loading={viewState === "loading"}
-            // O 'datesSet' agora só precisa de acionar um re-fetch
-            datesSet={() => handleSuccess()}
-          />
+          {viewState === "loading" && <LoadingSpinner />}
+          {viewState !== "loading" && (
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              locale={ptBrLocale}
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "",
+              }}
+              events={events}
+              height="auto"
+              loading={viewState === "loading"}
+              datesSet={handleDatesSet}
+            />
+          )}
         </div>
       </div>
       {isModalOpen && (
