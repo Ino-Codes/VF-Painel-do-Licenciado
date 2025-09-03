@@ -220,8 +220,9 @@ const createTables = async () => {
     description TEXT,
     start_date TIMESTAMPTZ NOT NULL,
     end_date TIMESTAMPTZ NOT NULL,
-    category TEXT, -- Ex: 'Aniversário', 'Feriado', 'Comemoração'
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    category TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    color TEXT DEFAULT '#daa520'
   );`;
 
   try {

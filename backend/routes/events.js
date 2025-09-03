@@ -19,11 +19,14 @@ module.exports = function (pool) {
 
   // Rota para CRIAR um novo evento
   router.post("/", async (req, res) => {
-    const { title, description, start_date, end_date, category } = req.body;
+    // 1. Adicionamos 'color' ao desestruturamento
+    const { title, description, start_date, end_date, category, color } =
+      req.body;
     try {
       const result = await pool.query(
-        "INSERT INTO events (title, description, start_date, end_date, category) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        [title, description, start_date, end_date, category]
+        // 2. Adicionamos 'color' à query SQL
+        "INSERT INTO events (title, description, start_date, end_date, category, color) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+        [title, description, start_date, end_date, category, color]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -35,11 +38,14 @@ module.exports = function (pool) {
   // Rota para ATUALIZAR um evento existente
   router.put("/:id", async (req, res) => {
     const { id } = req.params;
-    const { title, description, start_date, end_date, category } = req.body;
+    // 1. Adicionamos 'color' ao desestruturamento
+    const { title, description, start_date, end_date, category, color } =
+      req.body;
     try {
       const result = await pool.query(
-        "UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, category = $5 WHERE id = $6 RETURNING *",
-        [title, description, start_date, end_date, category, id]
+        // 2. Adicionamos 'color' à query SQL
+        "UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, category = $5, color = $6 WHERE id = $7 RETURNING *",
+        [title, description, start_date, end_date, category, color, id]
       );
       if (result.rowCount === 0) {
         return res.status(404).json({ error: "Evento não encontrado." });
@@ -51,7 +57,7 @@ module.exports = function (pool) {
     }
   });
 
-  // Rota para DELETAR um evento
+  // Rota para DELETAR um evento (não precisa de alterações)
   router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     try {
