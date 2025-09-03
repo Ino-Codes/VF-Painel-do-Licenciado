@@ -286,27 +286,11 @@ const Dashboard: React.FC = () => {
 
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
-
-          {user.role !== "licenciado" ? (
-            <p>
-              O dash será exibido aqui para usuários com permissão superior à
-              'Licenciado'
-            </p>
-          ) : (
-            // <div className="powerbi-container">
-            //   <iframe
-            //     title="Relatório Valor Fiscal"
-            //     src={powerBiReportUrl}
-            //     frameBorder="0"
-            //     allowFullScreen={true}
-            //   ></iframe>
-            // </div>
-            <EmptyState
-              image={EmptyDashsImage}
-              title="Relatórios Indisponíveis"
-              message="Estamos desenvolvendo relatórios e gráficos que serão exibidos aqui futuramente"
-            />
-          )}
+          <EmptyState
+            image={EmptyDashsImage}
+            title="Relatórios Indisponíveis"
+            message="Estamos desenvolvendo relatórios e gráficos que serão exibidos aqui futuramente"
+          />
         </div>
       </div>
       <Footer />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, momentLocalizer } from "react-big-calendar";
+import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import moment from "moment";
 import "moment/locale/pt-br";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -36,30 +36,33 @@ const formatEventsForCalendar = (events: EventData[]) => {
 };
 
 const CalendarPage: React.FC = () => {
-  const { user, loading: authLoading } = useAuth(); // Renomeado para evitar conflito
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
-  // Unimos toda a lógica de busca e autenticação num único e robusto useEffect
+  // Usamos um estado mais explícito para a visualização
+  const [viewState, setViewState] = useState<"loading" | "loaded" | "error">(
+    "loading"
+  );
+
+  // Este useEffect agora centraliza toda a lógica de busca de dados
   useEffect(() => {
     // 1. Lida com o caso de utilizador não logado
     if (!authLoading && !user) {
       navigate("/");
-      return;
+      return; // Sai do efeito para evitar mais execuções
     }
 
-    // 2. Apenas continua se o utilizador estiver definido
+    // 2. Apenas continua se o utilizador estiver definido e autenticado
     if (user) {
-      setIsLoadingEvents(true);
+      setViewState("loading");
 
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
 
-      // A autenticação é adicionada diretamente aqui
       const authHeaders = { headers: { "x-user-id": user.id } };
 
       api
@@ -68,15 +71,13 @@ const CalendarPage: React.FC = () => {
           ...authHeaders,
         })
         .then((res) => {
-          // Se a API responder com sucesso (mesmo com um array vazio), formatamos
           setEvents(formatEventsForCalendar(res.data));
+          setViewState("loaded"); // Marca como carregado com sucesso
         })
         .catch(() => {
           toast.error("Não foi possível carregar os eventos.");
           setEvents([]); // Garante que a lista fique vazia em caso de erro
-        })
-        .finally(() => {
-          setIsLoadingEvents(false);
+          setViewState("error"); // Marca que ocorreu um erro
         });
     }
   }, [user, authLoading, navigate, currentDate]); // O array de dependências está simples e estável
@@ -88,10 +89,10 @@ const CalendarPage: React.FC = () => {
   const handleSuccess = () => {
     setIsModalOpen(false);
     // Força o recarregamento dos eventos para o mês atual
-    // Criamos uma nova instância da data para garantir que o useEffect seja acionado
     setCurrentDate(new Date(currentDate));
   };
 
+  // Renderiza o spinner de carregamento inicial enquanto a autenticação está a ser verificada
   if (authLoading) {
     return <LoadingSpinner />;
   }
@@ -113,7 +114,7 @@ const CalendarPage: React.FC = () => {
         </div>
 
         <div className="calendar-container">
-          {isLoadingEvents ? (
+          {viewState === "loading" ? (
             <LoadingSpinner />
           ) : (
             <Calendar
@@ -124,6 +125,7 @@ const CalendarPage: React.FC = () => {
               style={{ height: "70vh" }}
               onNavigate={handleNavigate}
               date={currentDate}
+              views={[Views.MONTH]} // Força a visualização apenas por Mês
               messages={{
                 next: "Próximo",
                 previous: "Anterior",
