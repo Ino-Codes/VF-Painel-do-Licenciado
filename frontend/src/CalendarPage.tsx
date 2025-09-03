@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br";
-
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
 import Menu from "./Menu.tsx";
@@ -13,7 +12,7 @@ import toast from "react-hot-toast";
 import EventModal from "./EventModal.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 
-// Interfaces e função de formatação (sem alterações)
+// --- Interfaces e Funções Helper (sem alterações) ---
 interface ApiEvent {
   id: number;
   title: string;
@@ -36,6 +35,7 @@ const formatEventsForCalendar = (events: ApiEvent[]): CalendarEvent[] => {
     extendedProps: { details: event.details },
   }));
 };
+// --- Fim das Helpers ---
 
 const CalendarPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -43,56 +43,67 @@ const CalendarPage: React.FC = () => {
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const calendarRef = useRef<FullCalendar>(null);
-
-  // Função para buscar eventos, agora mais genérica
-  const fetchEvents = useCallback(
-    async (date: Date) => {
-      if (!user) return;
-      setIsLoading(true);
-      try {
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-        const authHeaders = { headers: { "x-user-id": user.id } };
-
-        const res = await api.get("/api/events", {
-          params: { month, year },
-          ...authHeaders,
-        });
-        setEvents(formatEventsForCalendar(res.data));
-      } catch (err) {
-        toast.error("Não foi possível carregar os eventos.");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [user]
+  const [viewState, setViewState] = useState<"loading" | "loaded" | "error">(
+    "loading"
   );
 
-  // useEffect para a busca inicial de dados
+  // Usamos uma referência para a data atual para estabilizar o useEffect
+  const calendarRef = useRef<FullCalendar>(null);
+
+  // Este useEffect agora é o único responsável por buscar os dados
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/");
       return;
     }
-    if (user) {
-      fetchEvents(new Date()); // Busca os eventos para o mês atual na primeira carga
-    }
-  }, [user, authLoading, navigate, fetchEvents]);
 
-  // Handler para quando o utilizador navega no calendário
-  const handleDatesSet = (dateInfo: { start: Date }) => {
-    // A API do FullCalendar nos dá a nova data, usamos ela para buscar os eventos
-    fetchEvents(dateInfo.start);
-  };
+    if (user) {
+      setViewState("loading");
+
+      // Obtém a data atual do calendário se ele já estiver renderizado, senão usa a data atual
+      const calendarApi = calendarRef.current?.getApi();
+      const currentDate = calendarApi ? calendarApi.getDate() : new Date();
+
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const authHeaders = { headers: { "x-user-id": user.id } };
+
+      api
+        .get("/api/events", { params: { month, year }, ...authHeaders })
+        .then((res) => {
+          setEvents(formatEventsForCalendar(res.data));
+          setViewState("loaded");
+        })
+        .catch(() => {
+          toast.error("Não foi possível carregar os eventos.");
+          setEvents([]);
+          setViewState("error");
+        });
+    }
+  }, [user, authLoading, navigate, calendarRef.current]); // A dependência chave agora é a referência ao calendário
 
   const handleSuccess = () => {
     setIsModalOpen(false);
-    // Para recarregar, podemos chamar fetchEvents com a data atual do calendário
+    // Para recarregar, podemos simplesmente chamar a função fetch de novo
     const calendarApi = calendarRef.current?.getApi();
     const currentDate = calendarApi ? calendarApi.getDate() : new Date();
-    fetchEvents(currentDate);
+    // Reutilizamos a lógica de busca aqui
+    if (user) {
+      setViewState("loading");
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const authHeaders = { headers: { "x-user-id": user.id } };
+      api
+        .get("/api/events", { params: { month, year }, ...authHeaders })
+        .then((res) => {
+          setEvents(formatEventsForCalendar(res.data));
+          setViewState("loaded");
+        })
+        .catch(() => {
+          toast.error("Não foi possível recarregar os eventos.");
+          setViewState("error");
+        });
+    }
   };
 
   if (authLoading) {
@@ -114,27 +125,24 @@ const CalendarPage: React.FC = () => {
             </button>
           )}
         </div>
-
         <div className="calendar-container">
-          {/* Usamos o estado isLoading para mostrar o spinner */}
-          {isLoading ? (
-            <LoadingSpinner />
-          ) : (
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              locale={ptBrLocale}
-              headerToolbar={{
-                left: "prev,next today",
-                center: "title",
-                right: "",
-              }}
-              events={events}
-              height="auto"
-              datesSet={handleDatesSet}
-            />
-          )}
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            locale={ptBrLocale}
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "",
+            }}
+            events={events}
+            height="auto"
+            // O 'loading' do FullCalendar pode ser usado para feedback visual
+            loading={viewState === "loading"}
+            // O 'datesSet' agora só precisa de acionar um re-fetch
+            datesSet={() => handleSuccess()}
+          />
         </div>
       </div>
       {isModalOpen && (
