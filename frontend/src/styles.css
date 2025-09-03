@@ -20,6 +20,10 @@ dourado claro: #E7D26E
 dourado escuro: #866225
 */
 
+:root {
+  --fc-today-bg-color: #e6e6e6;
+}
+
 * {
   box-sizing: border-box;
   text-decoration: none;
@@ -413,6 +417,10 @@ body::before {
 .fc .fc-button {
   font-size: 0.9em;
   padding: 6px 12px;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: #e0e0e0;
 }
 
 /* Cursos */
