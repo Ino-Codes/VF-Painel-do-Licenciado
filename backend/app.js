@@ -27,10 +27,14 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // --- MIDDLEWARES ---
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://painel.valorfiscal.com",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use((req, res, next) => {
-  // Captura o endereço de IP real do utilizador, mesmo por trás de um proxy como o do Render
   req.ipAddress =
     req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   next();
