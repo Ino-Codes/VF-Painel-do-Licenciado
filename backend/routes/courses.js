@@ -377,7 +377,7 @@ module.exports = function (pool, cloudinary, upload) {
           <style>
             body { font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; }
             .certificate-wrapper { 
-                width: 1123px; height: 794px; /* A4 Landscape */
+                width: 1123px; height: 794px;
                 background-image: url("${backgroundImageUrl}");
                 background-size: cover; background-position: center;
                 display: flex; justify-content: center; align-items: center;
@@ -394,10 +394,12 @@ module.exports = function (pool, cloudinary, upload) {
           <div class="certificate-wrapper">
             <div class="certificate-content">
                 <h1>Certificado de Conclusão</h1>
-                <p>Este certificado é concedido a</p>
-                <div class="student-name">${userName}</div>
-                <p>pela conclusão bem-sucedida do Curso: <strong>${course.title}</strong></p>
-                <div class="footer"><p>Concluído em ${completionDate}</p></div>
+                <p>Certificamos que <strong>${userName}</strong> concluiu com êxito o curso</p>
+                <p><strong>${course.title}</strong></p>
+                <div class="footer">
+                  <p>Concluído em ${completionDate}</p>
+                  <p>Emitido por Valor Fiscal Inteligência Tributária</p>
+                </div>
             </div>
           </div>
         </body>
