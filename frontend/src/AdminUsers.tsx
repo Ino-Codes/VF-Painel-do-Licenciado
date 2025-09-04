@@ -1,3 +1,5 @@
+// frontend/src/AdminUsers.tsx
+
 import React, { useEffect, useState, useCallback } from "react";
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
@@ -354,7 +356,9 @@ const AdminUsers: React.FC = () => {
 
         {renderForm()}
 
-        <BulkUserImport onImportSuccess={fetchUsers} />
+        {formType === "licenciado" && (
+          <BulkUserImport onImportSuccess={fetchUsers} />
+        )}
 
         <h2>Usuários Cadastrados:</h2>
         <div className="search-bar">
