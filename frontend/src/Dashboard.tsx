@@ -7,6 +7,9 @@ import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import EmptyState from "./EmptyState.tsx";
+import EventCard from "./EventCard.tsx";
+
+import EmptyEventsImage from "./assets/images/empty_eventos.svg";
 import EmptyAvisosImage from "./assets/images/empty_avisos.svg";
 import EmptyDashsImage from "./assets/images/empty_dashs.svg";
 
@@ -17,6 +20,14 @@ interface Notice {
   id: number;
   message: string;
   created_at: string;
+}
+
+interface MonthlyEvent {
+  id: number;
+  title: string;
+  start_date: string;
+  category: string;
+  color: string;
 }
 
 const TiptapMenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
@@ -111,6 +122,24 @@ const Dashboard: React.FC = () => {
     }
   }, [user, fetchNotices]);
 
+  const fetchMonthlyEvents = useCallback(async () => {
+    if (!user || user.role === "licenciado") return;
+    try {
+      const res = await api.get("/api/events/current-month");
+      setMonthlyEvents(res.data);
+    } catch (err) {
+      console.error("Erro ao buscar eventos do mês:", err);
+      toast.error("Não foi possível carregar os eventos do mês.");
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchNotices();
+      fetchMonthlyEvents();
+    }
+  }, [user, fetchNotices, fetchMonthlyEvents]);
+
   const handlePostNotice = async () => {
     if (!newNoticeEditor) return;
     const message = newNoticeEditor.getHTML();
@@ -193,6 +222,25 @@ const Dashboard: React.FC = () => {
             atuar conosco.
           </p>
         </div>
+
+        {user.role !== "licenciado" && (
+          <div className="dashboard-elements">
+            <h3>Eventos do Mês</h3>
+            <div className="events-grid">
+              {monthlyEvents.length > 0 ? (
+                monthlyEvents.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))
+              ) : (
+                <EmptyState
+                  image={EmptyEventsImage}
+                  title="Nenhum Evento Agendado"
+                  message="Não há eventos agendados para este mês no momento."
+                />
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="dashboard-elements">
           <h3>Mural de Avisos</h3>
