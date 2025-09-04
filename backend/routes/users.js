@@ -51,76 +51,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       );
       const newUserId = userResult.rows[0].id;
 
-      // --- LÓGICA DE CRIAÇÃO DE EVENTOS CORRIGIDA ---
       if (role === "colaborador" && birth_date) {
-        // 1. Em vez de criar um objeto Date, pegamos o mês e o dia da string "YYYY-MM-DD"
-        // Isso evita qualquer conversão automática de fuso horário.
-        const [_, month, day] = birth_date.split("-");
-
-        const eventTitle = `Aniversário - ${nome}`;
-
-        for (let i = 0; i < 10; i++) {
-          const eventYear = new Date().getFullYear() + i;
-
-          // 2. Criamos a data do evento construindo uma string com a hora desejada (08:00)
-          // no formato ISO, que é interpretado corretamente no fuso horário do servidor.
-          const eventStartDate = new Date(
-            `${eventYear}-${month}-${day}T08:00:00`
-          );
-
-          await client.query(
-            `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [
-              eventTitle,
-              "Dia de comemorar!",
-              eventStartDate,
-              eventStartDate,
-              "Aniversário",
-              "#81e18c",
-              newUserId,
-            ]
-          );
-        }
-      }
-
-      await client.query("COMMIT");
-
-      logActivity(
-        newUserId,
-        email,
-        "CREATE_USER",
-        `Usuário ${email} (${role}) foi criado.`,
-        req.ipAddress
-      );
-
-      res.status(201).json({ success: true, id: newUserId });
-    } catch (err) {
-      await client.query("ROLLBACK");
-      console.error("Erro ao criar usuário:", err);
-      res.status(500).json({ error: "Erro ao criar usuário" });
-    } finally {
-      client.release();
-    }
-  });
-  router.post("/admin", async (req, res) => {
-    const { nome, email, password, role, birth_date } = req.body;
-    const client = await pool.connect();
-
-    try {
-      await client.query("BEGIN");
-
-      const hash = await bcrypt.hash(password, 10);
-      const userResult = await client.query(
-        "INSERT INTO users (nome, email, password, role, birth_date) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-        [nome, email, hash, role, birth_date || null]
-      );
-      const newUserId = userResult.rows[0].id;
-
-      // --- LÓGICA DE CRIAÇÃO DE EVENTOS CORRIGIDA ---
-      if (role === "colaborador" && birth_date) {
-        // 1. Em vez de criar um objeto Date, pegamos o mês e o dia da string "YYYY-MM-DD"
-        // Isso evita qualquer conversão automática de fuso horário.
         const [_, month, day] = birth_date.split("-");
 
         const eventTitle = `Aniversário de ${nome}`;
@@ -128,8 +59,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         for (let i = 0; i < 10; i++) {
           const eventYear = new Date().getFullYear() + i;
 
-          // 2. Criamos a data do evento construindo uma string com a hora desejada (08:00)
-          // no formato ISO, que é interpretado corretamente no fuso horário do servidor.
           const eventStartDate = new Date(
             `${eventYear}-${month}-${day}T11:00:00`
           );
