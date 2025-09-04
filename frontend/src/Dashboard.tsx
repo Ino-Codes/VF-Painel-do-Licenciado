@@ -236,7 +236,7 @@ const Dashboard: React.FC = () => {
                 <EmptyState
                   image={EmptyEventsImage}
                   title="Nenhum Evento Agendado"
-                  message="Não há eventos agendados para este mês no momento"
+                  message="Não há eventos agendados para este mês no momento. Verifique novamente mais tarde."
                 />
               )}
             </div>
@@ -327,7 +327,8 @@ const Dashboard: React.FC = () => {
             ) : (
               <EmptyState
                 image={EmptyAvisosImage}
-                title="Não Há Avisos no Momento"
+                title="Nenhum Aviso no Momento"
+                message="Não há avisos postados no momento. Verifique novamente mais tarde."
               ></EmptyState>
             )}
           </div>
@@ -337,8 +338,8 @@ const Dashboard: React.FC = () => {
           <h3>Relatórios</h3>
           <EmptyState
             image={EmptyDashsImage}
-            title="Relatórios Indisponíveis"
-            message="Estamos desenvolvendo relatórios e gráficos que serão exibidos aqui futuramente"
+            title="Relatórios em Desenvolvimento"
+            message="Estamos criando relatórios e gráficos que serão exibidos aqui futuramente."
           />
         </div>
       </div>
