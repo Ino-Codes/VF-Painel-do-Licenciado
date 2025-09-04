@@ -1278,9 +1278,9 @@ body::before {
   height: 36px;
   background-color: #363950;
   color: #ffffff;
-  border-radius: 50%;
+  border-radius: 100%;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 7600;
   text-decoration: none;
   transition: background-color 0.3s ease;
 }
