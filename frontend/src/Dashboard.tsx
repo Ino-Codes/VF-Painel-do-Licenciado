@@ -225,16 +225,18 @@ const Dashboard: React.FC = () => {
         {user.role !== "licenciado" && (
           <div className="dashboard-elements">
             <h3>Eventos do Mês</h3>
-            <div className="events-grid">
+            <div>
               {monthlyEvents.length > 0 ? (
                 monthlyEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <div className="events-grid">
+                    <EventCard key={event.id} event={event} />
+                  </div>
                 ))
               ) : (
                 <EmptyState
                   image={EmptyEventsImage}
                   title="Nenhum Evento Agendado"
-                  message="Não há eventos agendados para este mês no momento."
+                  message="Não há eventos agendados para este mês no momento"
                 />
               )}
             </div>
