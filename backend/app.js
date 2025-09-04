@@ -228,6 +228,32 @@ const createTables = async () => {
     color TEXT DEFAULT '#daa520'
   );`;
 
+  const enneagramQuestionsTable = `
+    CREATE TABLE IF NOT EXISTS enneagram_questions (
+        id SERIAL PRIMARY KEY,
+        statement_a TEXT NOT NULL,
+        type_a INTEGER NOT NULL,
+        statement_b TEXT NOT NULL,
+        type_b INTEGER NOT NULL
+    );`;
+
+  const userEnneagramResultsTable = `
+    CREATE TABLE IF NOT EXISTS user_enneagram_results (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+        dominant_type INTEGER NOT NULL,
+        score_1 INTEGER NOT NULL DEFAULT 0,
+        score_2 INTEGER NOT NULL DEFAULT 0,
+        score_3 INTEGER NOT NULL DEFAULT 0,
+        score_4 INTEGER NOT NULL DEFAULT 0,
+        score_5 INTEGER NOT NULL DEFAULT 0,
+        score_6 INTEGER NOT NULL DEFAULT 0,
+        score_7 INTEGER NOT NULL DEFAULT 0,
+        score_8 INTEGER NOT NULL DEFAULT 0,
+        score_9 INTEGER NOT NULL DEFAULT 0,
+        completed_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -246,6 +272,8 @@ const createTables = async () => {
     await pool.query(optionsTable);
     await pool.query(quizAttemptsTable);
     await pool.query(eventsTable);
+    await pool.query(enneagramQuestionsTable);
+    await pool.query(userEnneagramResultsTable);
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
