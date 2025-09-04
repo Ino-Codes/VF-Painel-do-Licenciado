@@ -387,7 +387,7 @@ module.exports = function (pool, cloudinary, upload) {
              h1 { font-family: 'Playfair Display', serif; font-size: 48px; color: #2D2C2B; margin-bottom: 40px; }
             .course-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 32px; color: #daa520; }
             p { font-size: 18px; line-height: 1.2; margin: 20px 0; }
-            .footer { margin-top: 80px; font-size: 14px; color: #2d2d2d; }
+            .footer { margin-top: 150px; font-size: 14px; color: #2d2d2d; }
           </style>
         </head>
         <body>
