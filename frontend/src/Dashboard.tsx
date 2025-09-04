@@ -73,8 +73,7 @@ const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // const powerBiReportUrl = "URL DO DASH NO POWERBI";
-
+  const [monthlyEvents, setMonthlyEvents] = useState<MonthlyEvent[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
