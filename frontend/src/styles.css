@@ -230,9 +230,10 @@ body::before {
 }
 
 .empty-state-image {
-  max-width: 250px;
-  height: auto;
+  width: auto;
   margin-bottom: 25px;
+  max-height: 250px;
+  max-width: 250px;
 }
 
 .empty-state-title {
