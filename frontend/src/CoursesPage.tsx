@@ -11,7 +11,6 @@ import EmptyCertificadoImage from "./assets/images/empty_certificado.svg";
 import toast from "react-hot-toast";
 import CourseCard from "./CourseCard.tsx";
 
-// Interface para os dados do curso
 interface CourseData {
   id: number;
   title: string;
@@ -21,7 +20,6 @@ interface CourseData {
   completed_lessons: number;
 }
 
-// Interface para os dados do certificado
 interface CertificateData {
   certificate_id: number;
   course_id: number;

@@ -37,10 +37,8 @@ const AdminCalendar: React.FC = () => {
         extendedProps: {
           description: event.description,
           category: event.category,
-          color: event.color, // Passamos a cor para uso posterior
+          color: event.color,
         },
-        // --- MUDANÇA PRINCIPAL AQUI ---
-        // Agora, a cor vem diretamente do banco de dados!
         backgroundColor: event.color,
         borderColor: event.color,
       }));
@@ -70,14 +68,13 @@ const AdminCalendar: React.FC = () => {
       end_date: arg.event.end,
       description: arg.event.extendedProps.description,
       category: arg.event.extendedProps.category,
-      color: arg.event.extendedProps.color, // Passamos a cor para o modal de edição
+      color: arg.event.extendedProps.color,
     };
     setSelectedEvent(eventData);
     setSelectedDate(null);
     setIsModalOpen(true);
   };
 
-  // --- NOVO HANDLER PARA O EVENTO DE "SOLTAR" (DRAG-AND-DROP) ---
   const handleEventDrop = async (arg: any) => {
     const { event } = arg;
     const eventData = {
@@ -89,16 +86,13 @@ const AdminCalendar: React.FC = () => {
     };
 
     try {
-      // Faz a chamada à API para atualizar o evento no backend
       await api.put(`/api/admin/events/${event.id}`, eventData);
       toast.success("Evento atualizado com sucesso!");
     } catch (err) {
       toast.error("Erro ao atualizar o evento.");
-      // Se a chamada à API falhar, o FullCalendar reverte a mudança visualmente
       arg.revert();
     }
   };
-  // --- FIM DO NOVO HANDLER ---
 
   const handleModalClose = () => {
     setIsModalOpen(false);
@@ -148,10 +142,8 @@ const AdminCalendar: React.FC = () => {
               minute: "2-digit",
               hour12: false,
             }}
-            // --- MUDANÇAS PRINCIPAIS AQUI ---
-            editable={true} // 1. HABILITA A EDIÇÃO (arrastar e soltar)
-            eventDrop={handleEventDrop} // 2. CONECTA O NOSSO NOVO HANDLER AO EVENTO
-            // --- FIM DAS MUDANÇAS ---
+            editable={true}
+            eventDrop={handleEventDrop}
           />
         </div>
       </div>

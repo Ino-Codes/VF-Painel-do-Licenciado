@@ -11,7 +11,7 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  role: "admin" | "licenciado" | "comercial" | "colaborador";
+  role: "admin" | "licenciado" | "colaborador";
 }
 
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
@@ -93,7 +93,7 @@ const AdminUsers: React.FC = () => {
     nome: "",
     email: "",
     password: "",
-    role: "licenciado" as "admin" | "licenciado" | "comercial" | "colaborador",
+    role: "licenciado" as "admin" | "licenciado" | "colaborador",
     birth_date: "",
   });
 
@@ -110,7 +110,6 @@ const AdminUsers: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
-  // --- FUNÇÃO CORRIGIDA/ADICIONADA DE VOLTA ---
   const fetchUsers = useCallback(async () => {
     if (user?.role !== "admin") return;
     try {
@@ -128,7 +127,6 @@ const AdminUsers: React.FC = () => {
     }
   }, [user, currentPage, limit, searchQuery]);
 
-  // --- USEEFFECT PARA CHAMAR A FUNÇÃO ACIMA ---
   useEffect(() => {
     if (user) {
       fetchUsers();
@@ -171,7 +169,7 @@ const AdminUsers: React.FC = () => {
           birth_date: "",
         });
       }
-      fetchUsers(); // Esta chamada agora funcionará
+      fetchUsers();
     } catch (err) {
       toast.error("Ocorreu um erro ao salvar o usuário.");
     }
@@ -191,7 +189,7 @@ const AdminUsers: React.FC = () => {
     try {
       await api.delete(`/api/users/admin/${userToDelete}`);
       toast.success("Usuário excluído com sucesso!");
-      fetchUsers(); // Esta chamada agora funcionará
+      fetchUsers();
     } catch (err) {
       toast.error("Erro ao excluir o usuário.");
     } finally {
@@ -205,7 +203,7 @@ const AdminUsers: React.FC = () => {
   };
 
   const handleSearch = () => {
-    setCurrentPage(1); // Reseta para a primeira página ao pesquisar
+    setCurrentPage(1);
     setSearchQuery(searchTerm);
   };
 
@@ -217,9 +215,7 @@ const AdminUsers: React.FC = () => {
   }
 
   const renderForm = () => {
-    // ... (a função renderForm continua a mesma)
     if (editingUser) {
-      // Renderiza um formulário de edição simplificado
       return (
         <form onSubmit={handleSubmit} className="admin-form">
           <p>
@@ -246,7 +242,6 @@ const AdminUsers: React.FC = () => {
             >
               <option value="licenciado">Licenciado</option>
               <option value="colaborador">Colaborador</option>
-              <option value="comercial">Comercial</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -266,7 +261,6 @@ const AdminUsers: React.FC = () => {
       );
     }
 
-    // Renderiza o formulário de criação com base no tipo selecionado
     return (
       <form onSubmit={handleSubmit} className="admin-form">
         <div className="form-row">
@@ -304,7 +298,6 @@ const AdminUsers: React.FC = () => {
               }
             >
               <option value="colaborador">Colaborador</option>
-              <option value="comercial">Comercial</option>
               <option value="admin">Admin</option>
             </select>
           )}

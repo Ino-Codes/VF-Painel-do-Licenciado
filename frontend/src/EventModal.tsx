@@ -20,7 +20,6 @@ const formatDateTimeForInput = (date: Date): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-// Paleta de cores pré-definida
 const colorPalette = ["#efcb6e", "#81e18c", "#b8b8b8", "#81a7e1", "#e18181"];
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -35,7 +34,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
-  const [color, setColor] = useState(colorPalette[0]); // NOVO ESTADO para a cor
+  const [color, setColor] = useState(colorPalette[0]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -45,7 +44,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setStartDate(formatDateTimeForInput(new Date(eventToEdit.start_date)));
       setEndDate(formatDateTimeForInput(new Date(eventToEdit.end_date)));
       setCategory(eventToEdit.category || "");
-      setColor(eventToEdit.color || colorPalette[0]); // Popula o estado com a cor do evento
+      setColor(eventToEdit.color || colorPalette[0]);
     } else if (selectedDate) {
       const localDate = new Date(`${selectedDate}T09:00:00`);
       setTitle("");
@@ -53,7 +52,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setStartDate(formatDateTimeForInput(localDate));
       setEndDate(formatDateTimeForInput(localDate));
       setCategory("");
-      setColor(colorPalette[0]); // Define a cor padrão
+      setColor(colorPalette[0]);
     }
   }, [eventToEdit, selectedDate]);
 
@@ -69,7 +68,7 @@ const EventModal: React.FC<EventModalProps> = ({
       start_date: new Date(startDate).toISOString(),
       end_date: new Date(endDate).toISOString(),
       category,
-      color, // Envia a cor para a API
+      color,
     };
 
     try {

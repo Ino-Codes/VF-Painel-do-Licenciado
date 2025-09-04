@@ -1,5 +1,3 @@
-// frontend/src/EventCard.tsx
-
 import React from "react";
 
 interface Event {
@@ -17,10 +15,8 @@ interface EventCardProps {
 const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const eventDate = new Date(event.start_date);
 
-  // Formata o dia (ex: "09")
   const day = eventDate.toLocaleDateString("pt-BR", { day: "2-digit" });
 
-  // Formata o mês abreviado (ex: "Set")
   const month = eventDate
     .toLocaleDateString("pt-BR", { month: "short" })
     .replace(".", "")

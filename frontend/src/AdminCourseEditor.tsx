@@ -7,7 +7,7 @@ import Footer from "./Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import LessonEditModal from "./LessonEditModal.tsx";
-import { Course, Module, Lesson, Quiz, Question, Option } from "./types.ts"; // Supondo que as interfaces de Quiz estão em types.ts
+import { Course, Module, Lesson, Quiz, Question, Option } from "./types.ts";
 import {
   DndContext,
   closestCenter,
@@ -202,16 +202,13 @@ const AdminCourseEditor: React.FC = () => {
     setLessonToEdit({});
   };
 
-  // --- NOVOS ESTADOS PARA GERIR O QUIZ ---
   const [newQuestionText, setNewQuestionText] = useState("");
   const [newOptionText, setNewOptionText] = useState<{ [key: number]: string }>(
     {}
   );
 
-  // --- NOVAS FUNÇÕES HANDLER PARA O QUIZ ---
   const handleCreateQuiz = async () => {
     if (!courseId) return;
-    // Um título e nota padrão para o novo quiz
     const quizData = {
       title: `Teste Final - ${course?.title}`,
       passing_score: 70,
@@ -225,7 +222,7 @@ const AdminCourseEditor: React.FC = () => {
       );
       toast.dismiss();
       toast.success("Quiz criado com sucesso! Agora adicione as perguntas.");
-      fetchCourseDetails(); // Recarrega os dados para mostrar o novo editor de quiz
+      fetchCourseDetails();
     } catch (err) {
       toast.dismiss();
       toast.error("Não foi possível criar o quiz.");
@@ -245,8 +242,8 @@ const AdminCourseEditor: React.FC = () => {
         getAuthHeaders()
       );
       toast.success("Pergunta adicionada!");
-      setNewQuestionText(""); // Limpa o campo
-      fetchCourseDetails(); // Recarrega os dados para mostrar a nova pergunta
+      setNewQuestionText("");
+      fetchCourseDetails();
     } catch (err) {
       toast.error("Erro ao adicionar pergunta.");
     }
@@ -259,7 +256,7 @@ const AdminCourseEditor: React.FC = () => {
         getAuthHeaders()
       );
       toast.success("Pergunta excluída com sucesso!");
-      fetchCourseDetails(); // Recarrega
+      fetchCourseDetails();
     } catch (err) {
       toast.error("Erro ao excluir pergunta.");
     }
@@ -278,8 +275,8 @@ const AdminCourseEditor: React.FC = () => {
         getAuthHeaders()
       );
       toast.success("Opção adicionada!");
-      setNewOptionText({ ...newOptionText, [questionId]: "" }); // Limpa o campo específico
-      fetchCourseDetails(); // Recarrega
+      setNewOptionText({ ...newOptionText, [questionId]: "" });
+      fetchCourseDetails();
     } catch (err) {
       toast.error("Erro ao adicionar opção.");
     }
@@ -293,7 +290,7 @@ const AdminCourseEditor: React.FC = () => {
         getAuthHeaders()
       );
       toast.success("Opção marcada como correta!");
-      fetchCourseDetails(); // Recarrega para mostrar o feedback visual
+      fetchCourseDetails();
     } catch (err) {
       toast.error("Erro ao definir a resposta correta.");
     }
@@ -303,7 +300,7 @@ const AdminCourseEditor: React.FC = () => {
     try {
       await api.delete(`/api/quizzes/options/${optionId}`, getAuthHeaders());
       toast.success("Opção excluída!");
-      fetchCourseDetails(); // Recarrega
+      fetchCourseDetails();
     } catch (err) {
       toast.error("Erro ao excluir opção.");
     }
@@ -374,7 +371,6 @@ const AdminCourseEditor: React.FC = () => {
 
         <hr className="section-divider" />
 
-        {/* --- SECÇÃO DE GESTÃO DE QUIZ COM ESTRUTURA E CLASSES CORRIGIDAS --- */}
         <div className="quiz-editor-section">
           <h2>Quiz do Curso</h2>
           {!course.quiz ? (
@@ -388,7 +384,6 @@ const AdminCourseEditor: React.FC = () => {
             </div>
           ) : (
             <div>
-              {/* Listar Perguntas e Opções */}
               {course.quiz.questions.map((question) => (
                 <div key={question.id} className="question-editor-item">
                   <div className="question-header">
@@ -430,7 +425,6 @@ const AdminCourseEditor: React.FC = () => {
                     ))}
                   </ul>
 
-                  {/* Formulário para adicionar nova opção */}
                   <div className="add-item-form">
                     <input
                       className="form-input"
@@ -453,7 +447,6 @@ const AdminCourseEditor: React.FC = () => {
                 </div>
               ))}
 
-              {/* Formulário para adicionar nova pergunta */}
               <div className="admin-form add-item-form">
                 <input
                   className="form-input"
