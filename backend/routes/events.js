@@ -4,6 +4,30 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool) {
+  // --- NOVA ROTA PÚBLICA PARA O DASHBOARD ---
+  router.get("/current-month", async (req, res) => {
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+
+      // Define o primeiro e o último dia do mês corrente
+      const firstDayOfMonth = new Date(year, month, 1);
+      const lastDayOfMonth = new Date(year, month + 1, 0, 23, 59, 59); // Até ao final do dia
+
+      const result = await pool.query(
+        "SELECT * FROM events WHERE start_date >= $1 AND start_date <= $2 ORDER BY start_date ASC",
+        [firstDayOfMonth, lastDayOfMonth]
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Erro ao buscar eventos do mês:", err);
+      res.status(500).json({ error: "Erro ao buscar eventos do mês." });
+    }
+  });
+
+  // --- ROTAS DE ADMINISTRAÇÃO (EXISTENTES) ---
+
   // Rota para BUSCAR todos os eventos
   router.get("/", async (req, res) => {
     try {

@@ -71,6 +71,7 @@ app.use("/api/admin/courses", courseRoutes(pool, cloudinary, upload));
 app.use("/api/certificates", certificatesRoutes(pool));
 app.use("/api/quizzes", quizzesRoutes(pool));
 app.use("/api/admin/events", eventRoutes(pool));
+app.use("/api/events", eventRoutes(pool));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
