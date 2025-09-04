@@ -344,7 +344,6 @@ module.exports = function (pool, cloudinary, upload) {
         return res.status(403).send("Curso ainda não concluído.");
       }
 
-      // 1. Buscamos também a URL do novo modelo de certificado
       const courseResult = await pool.query(
         "SELECT title, certificate_template_url FROM courses WHERE id = $1",
         [courseId]
@@ -355,10 +354,15 @@ module.exports = function (pool, cloudinary, upload) {
         return res.status(404).send("Curso não encontrado.");
       }
 
-      // 2. Lógica para usar o modelo personalizado ou o padrão
-      const backgroundImageUrl = course.certificate_template_url
+      let backgroundImageUrl = course.certificate_template_url
         ? course.certificate_template_url
-        : "https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png"; // URL padrão
+        : "https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png";
+
+      if (backgroundImageUrl.toLowerCase().endsWith(".pdf")) {
+        backgroundImageUrl = backgroundImageUrl
+          .replace("/upload/", "/upload/pg_1/")
+          .replace(".pdf", ".png");
+      }
 
       const completionDate = new Date().toLocaleDateString("pt-BR", {
         day: "2-digit",
@@ -366,7 +370,6 @@ module.exports = function (pool, cloudinary, upload) {
         year: "numeric",
       });
 
-      // 3. Usamos a variável `backgroundImageUrl` no estilo do HTML
       const htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -381,7 +384,10 @@ module.exports = function (pool, cloudinary, upload) {
                 box-sizing: border-box; 
             }
             .certificate-content { text-align: center; color: #0D0D0D; }
-            /* ... (o resto do CSS do certificado continua o mesmo) ... */
+             h1 { font-family: 'Playfair Display', serif; font-size: 48px; color: #2D2C2B; margin-bottom: 40px; }
+            .student-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 38px; color: #daa520; margin: 30px 0; }
+            p { font-size: 18px; line-height: 1.2; margin: 20px 0; }
+            .footer { margin-top: 80px; font-size: 14px; color: #2d2d2d; }
           </style>
         </head>
         <body>
@@ -434,7 +440,6 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // --- ROTAS DE ADMINISTRAÇÃO ---
-  // ... (outras rotas de admin continuam as mesmas)
 
   router.post(
     "/:courseId/thumbnail",
