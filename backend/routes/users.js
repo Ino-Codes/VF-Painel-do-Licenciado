@@ -131,7 +131,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           // 2. Criamos a data do evento construindo uma string com a hora desejada (08:00)
           // no formato ISO, que é interpretado corretamente no fuso horário do servidor.
           const eventStartDate = new Date(
-            `${eventYear}-${month}-${day}T08:00:00`
+            `${eventYear}-${month}-${day}T11:00:00`
           );
 
           await client.query(
