@@ -341,13 +341,13 @@ const AdminUsers: React.FC = () => {
               }`}
               onClick={() => setFormType("licenciado")}
             >
-              Licenciado (Externo)
+              Licenciado
             </button>
             <button
               className={`tab-item ${formType === "interno" ? "active" : ""}`}
               onClick={() => setFormType("interno")}
             >
-              Colaborador / Admin (Interno)
+              Colaborador / Admin
             </button>
           </div>
         )}
