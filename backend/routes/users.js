@@ -38,24 +38,67 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   router.post("/admin", async (req, res) => {
-    const { nome, email, password, role } = req.body;
+    // 1. Adicionamos 'birth_date'
+    const { nome, email, password, role, birth_date } = req.body;
+    const client = await pool.connect(); // Usamos um client para garantir a transação
+
     try {
+      await client.query("BEGIN"); // Inicia a transação
+
       const hash = await bcrypt.hash(password, 10);
-      const result = await pool.query(
-        "INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id",
-        [nome, email, hash, role]
+      const userResult = await client.query(
+        "INSERT INTO users (nome, email, password, role, birth_date) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        [nome, email, hash, role, birth_date || null] // Passa a data de nascimento ou null
       );
+      const newUserId = userResult.rows[0].id;
+
+      // 2. Lógica para criar os eventos de aniversário
+      if (role === "colaborador" && birth_date) {
+        const birthDate = new Date(birth_date);
+        const eventTitle = `Aniversário - ${nome}`;
+
+        // Cria eventos para os próximos 10 anos
+        for (let i = 0; i < 10; i++) {
+          const eventYear = new Date().getFullYear() + i;
+
+          // Cria a data do evento para o ano corrente do loop, mantendo o dia e mês
+          const eventStartDate = new Date(
+            Date.UTC(eventYear, birthDate.getUTCMonth(), birthDate.getUTCDate())
+          );
+
+          await client.query(
+            `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              eventTitle,
+              "Dia de comemorar!", // Descrição padrão
+              eventStartDate,
+              eventStartDate, // Aniversário dura 1 dia
+              "Aniversário", // Categoria padrão
+              "#81e18c", // Cor padrão para aniversários
+              newUserId,
+            ]
+          );
+        }
+      }
+
+      await client.query("COMMIT"); // Confirma a transação (salva tudo)
+
       logActivity(
-        null,
+        newUserId,
         email,
         "CREATE_USER",
         `Usuário ${email} (${role}) foi criado.`,
         req.ipAddress
       );
-      res.json({ success: true, id: result.rows[0].id });
+
+      res.status(201).json({ success: true, id: newUserId });
     } catch (err) {
+      await client.query("ROLLBACK"); // Desfaz tudo se der erro
       console.error("Erro ao criar usuário:", err);
       res.status(500).json({ error: "Erro ao criar usuário" });
+    } finally {
+      client.release(); // Libera a conexão
     }
   });
 
