@@ -385,7 +385,7 @@ module.exports = function (pool, cloudinary, upload) {
             }
             .certificate-content { text-align: center; color: #0D0D0D; }
              h1 { font-family: 'Playfair Display', serif; font-size: 48px; color: #2D2C2B; margin-bottom: 40px; }
-            .student-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 38px; color: #daa520; margin: 30px 0; }
+            .course-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 32px; color: #daa520; }
             p { font-size: 18px; line-height: 1.2; margin: 20px 0; }
             .footer { margin-top: 80px; font-size: 14px; color: #2d2d2d; }
           </style>
@@ -395,7 +395,7 @@ module.exports = function (pool, cloudinary, upload) {
             <div class="certificate-content">
                 <h1>Certificado de Conclusão</h1>
                 <p>Certificamos que <strong>${userName}</strong> concluiu com êxito o curso</p>
-                <p><strong>${course.title}</strong></p>
+                <p class="course-name">${course.title}</p>
                 <div class="footer">
                   <p>Concluído em ${completionDate}</p>
                   <p>Emitido por Valor Fiscal Inteligência Tributária</p>
