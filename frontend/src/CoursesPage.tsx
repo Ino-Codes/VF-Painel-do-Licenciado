@@ -154,10 +154,12 @@ const CoursesPage: React.FC = () => {
         ) : (
           <>
             {activeTab === "cursos" && (
-              <div className="courses-grid">
+              <div>
                 {courses.length > 0 ? (
                   courses.map((course) => (
-                    <CourseCard key={course.id} course={course} />
+                    <div className="courses-grid">
+                      <CourseCard key={course.id} course={course} />
+                    </div>
                   ))
                 ) : (
                   <EmptyState
