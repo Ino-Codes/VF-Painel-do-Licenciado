@@ -131,6 +131,9 @@ const Perfil: React.FC = () => {
       <div className="content-area">
         <h2>Meu Perfil</h2>
         <div className="profile-card">
+          <Link to="/enneagram" className="form-button">
+            Fazer Teste Eneagrama
+          </Link>
           <div className="avatar-section">
             <img
               src={

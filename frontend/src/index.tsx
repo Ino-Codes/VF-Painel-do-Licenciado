@@ -20,6 +20,8 @@ import LessonPlayer from "./LessonPlayer.tsx";
 import QuizPlayer from "./QuizPlayer.tsx";
 import NotFoundPage from "./NotFoundPage.tsx";
 import AdminCalendar from "./AdminCalendar.tsx";
+import EnneagramPage from "./EnneagramPage.tsx";
+import EnneagramResultsPage from "./EnneagramResultsPage.tsx";
 
 import "./styles.css";
 
@@ -57,6 +59,11 @@ const AppRouter: React.FC = () => {
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<LessonPlayer />} />
           <Route path="/courses/:courseId/quiz" element={<QuizPlayer />} />
+          <Route path="/enneagram" element={<EnneagramPage />} />
+          <Route
+            path="/perfil/enneagram-results"
+            element={<EnneagramResultsPage />}
+          />
           {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
