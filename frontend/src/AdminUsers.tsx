@@ -291,7 +291,7 @@ const AdminUsers: React.FC = () => {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
           />
-          {formType === "interno" && (
+          {/* {formType === "interno" && (
             <select
               className="form-select"
               value={form.role}
@@ -302,14 +302,23 @@ const AdminUsers: React.FC = () => {
               <option value="colaborador">Colaborador</option>
               <option value="admin">Admin</option>
             </select>
-          )}
+          )} */}
         </div>
 
-        {form.role === "colaborador" && (
+        {form.role !== "licenciado" && (
           <div className="form-row">
-            <label style={{ fontWeight: 500 }}>
-              Data de Nascimento (para aniversário na agenda)
-            </label>
+            <select
+              className="form-select"
+              value={form.role}
+              onChange={(e) =>
+                setForm({ ...form, role: e.target.value as User["role"] })
+              }
+            >
+              <option value="colaborador">Colaborador</option>
+              <option value="admin">Admin</option>
+            </select>
+
+            <label style={{ fontWeight: 500 }}>Data de Nascimento</label>
             <input
               className="form-input"
               type="date"
