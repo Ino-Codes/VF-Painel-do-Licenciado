@@ -3,7 +3,7 @@ import { useAuth } from "./context/AuthContext.tsx";
 import api from "./api.ts";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 
@@ -131,9 +131,6 @@ const Perfil: React.FC = () => {
       <div className="content-area">
         <h2>Meu Perfil</h2>
         <div className="profile-card">
-          <Link to="/enneagram" className="form-button">
-            Fazer Teste Eneagrama
-          </Link>
           <div className="avatar-section">
             <img
               src={
@@ -220,6 +217,24 @@ const Perfil: React.FC = () => {
               <button className="form-button" onClick={handleChangePassword}>
                 Alterar Senha
               </button>
+            </div>
+
+            <div className="password-section">
+              <h3>Perfil Comportamental</h3>
+              <p>
+                Entenda melhor seus traços de personalidade e como você interage
+                em equipe.
+              </p>
+              <Link to="/enneagram" className="form-button">
+                Fazer Teste Eneagrama
+              </Link>
+              <Link
+                to="/perfil/enneagram-results"
+                className="form-button-cancel"
+                style={{ marginLeft: "10px" }}
+              >
+                Ver Resultado
+              </Link>
             </div>
           </div>
         </div>
