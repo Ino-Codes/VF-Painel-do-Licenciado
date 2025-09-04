@@ -14,6 +14,7 @@ interface User {
   role: "admin" | "licenciado" | "comercial" | "colaborador";
 }
 
+// O componente de importação em massa continua o mesmo
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
   onImportSuccess,
 }) => {
@@ -86,13 +87,20 @@ const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const [users, setUsers] = useState<User[]>([]);
+  // --- MUDANÇAS AQUI ---
+  const [formType, setFormType] = useState<"licenciado" | "interno">(
+    "licenciado"
+  );
+
   const [form, setForm] = useState({
     nome: "",
     email: "",
     password: "",
     role: "licenciado" as "admin" | "licenciado" | "comercial" | "colaborador",
+    birth_date: "", // Novo campo para data de nascimento
   });
+
+  const [users, setUsers] = useState<User[]>([]);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -106,45 +114,29 @@ const AdminUsers: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        navigate("/");
-      } else if (user.role !== "admin") {
-        toast.error("Acesso restrito a administradores.");
-        navigate("/dashboard");
-      }
-    }
-  }, [user, loading, navigate]);
-
-  const fetchUsers = useCallback(async () => {
-    if (user?.role !== "admin") return;
-    try {
-      const params: any = { page: currentPage, limit };
-      if (searchQuery) {
-        params.search = searchQuery;
-      }
-      const res = await api.get("/api/users/admin", { params });
-      setUsers(res.data.users);
-      setTotalUsers(res.data.totalCount);
-      setTotalPages(res.data.totalPages);
-    } catch (err) {
-      console.error("Erro ao buscar usuários:", err);
-      toast.error("Não foi possível carregar os usuários.");
-    }
-  }, [user, currentPage, limit, searchQuery]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [limit, searchQuery]);
+    // Altera o 'role' padrão do formulário quando o tipo muda
+    setForm((prev) => ({
+      ...prev,
+      nome: "",
+      email: "",
+      password: "",
+      birth_date: "",
+      role: formType === "licenciado" ? "licenciado" : "colaborador",
+    }));
+  }, [formType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validação da data de nascimento para colaboradores
+    if (form.role === "colaborador" && !form.birth_date) {
+      toast.error("A data de nascimento é obrigatória para colaboradores.");
+      return;
+    }
+
     try {
       if (editingUser) {
+        // Lógica de edição continua a mesma
         await api.put(`/api/users/admin/${editingUser.id}`, {
           nome: editingUser.nome,
           role: editingUser.role,
@@ -152,9 +144,17 @@ const AdminUsers: React.FC = () => {
         toast.success("Usuário atualizado com sucesso!");
         setEditingUser(null);
       } else {
+        // Lógica de criação agora envia a data de nascimento se for colaborador
         await api.post("/api/users/admin", form);
         toast.success("Usuário criado com sucesso!");
-        setForm({ nome: "", email: "", password: "", role: "licenciado" });
+        // Reseta o formulário
+        setForm({
+          nome: "",
+          email: "",
+          password: "",
+          role: form.role,
+          birth_date: "",
+        });
       }
       fetchUsers();
     } catch (err) {
@@ -202,85 +202,149 @@ const AdminUsers: React.FC = () => {
     return null;
   }
 
-  return (
-    <div className="p-2">
-      <Menu />
-      <div className="content-area">
-        <h2>{editingUser ? "Editar Usuário" : "Criar Usuário"}</h2>
+  const renderForm = () => {
+    if (editingUser) {
+      // Renderiza um formulário de edição simplificado
+      return (
         <form onSubmit={handleSubmit} className="admin-form">
+          <p>
+            Editando: <strong>{editingUser.nome}</strong> ({editingUser.email})
+          </p>
           <div className="form-row">
             <input
               className="form-input"
               placeholder="Nome"
-              value={editingUser ? editingUser.nome : form.nome}
-              onChange={(e) => {
-                if (editingUser)
-                  setEditingUser({ ...editingUser, nome: e.target.value });
-                else setForm({ ...form, nome: e.target.value });
-              }}
+              value={editingUser.nome}
+              onChange={(e) =>
+                setEditingUser({ ...editingUser, nome: e.target.value })
+              }
               required
             />
-            {!editingUser && (
-              <>
-                <input
-                  className="form-input"
-                  placeholder="Email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                />
-                <input
-                  className="form-input"
-                  placeholder="Senha"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                  required
-                />
-              </>
-            )}
-          </div>
 
-          <div className="form-row">
             <select
               className="form-select"
-              value={editingUser ? editingUser.role : form.role}
+              value={editingUser.role}
               onChange={(e) => {
-                const newRole = e.target.value as
-                  | "admin"
-                  | "licenciado"
-                  | "comercial"
-                  | "colaborador";
-                if (editingUser)
-                  setEditingUser({ ...editingUser, role: newRole });
-                else setForm({ ...form, role: newRole });
+                const newRole = e.target.value as User["role"];
+                setEditingUser({ ...editingUser, role: newRole });
               }}
             >
               <option value="licenciado">Licenciado</option>
-              <option value="admin">Admin</option>
-              <option value="comercial">Comercial</option>
               <option value="colaborador">Colaborador</option>
+              <option value="comercial">Comercial</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
-
           <div className="form-row">
             <button className="form-button" type="submit">
-              {editingUser ? "Salvar Alterações" : "Criar Usuário"}
+              Salvar Alterações
             </button>
-            {editingUser && (
-              <button
-                className="form-button-cancel"
-                type="button"
-                onClick={() => setEditingUser(null)}
-              >
-                Cancelar Edição
-              </button>
-            )}
+            <button
+              className="form-button-cancel"
+              type="button"
+              onClick={() => setEditingUser(null)}
+            >
+              Cancelar Edição
+            </button>
           </div>
         </form>
+      );
+    }
+
+    // Renderiza o formulário de criação com base no tipo selecionado
+    return (
+      <form onSubmit={handleSubmit} className="admin-form">
+        <div className="form-row">
+          <input
+            className="form-input"
+            placeholder="Nome Completo"
+            value={form.nome}
+            onChange={(e) => setForm({ ...form, nome: e.target.value })}
+            required
+          />
+          <input
+            className="form-input"
+            placeholder="Email"
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
+          />
+        </div>
+        <div className="form-row">
+          <input
+            className="form-input"
+            placeholder="Senha"
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+          />
+          {formType === "interno" && (
+            <select
+              className="form-select"
+              value={form.role}
+              onChange={(e) =>
+                setForm({ ...form, role: e.target.value as User["role"] })
+              }
+            >
+              <option value="colaborador">Colaborador</option>
+              <option value="comercial">Comercial</option>
+              <option value="admin">Admin</option>
+            </select>
+          )}
+        </div>
+
+        {form.role === "colaborador" && (
+          <div className="form-row">
+            <label style={{ fontWeight: 500 }}>
+              Data de Nascimento (para aniversário na agenda)
+            </label>
+            <input
+              className="form-input"
+              type="date"
+              value={form.birth_date}
+              onChange={(e) => setForm({ ...form, birth_date: e.target.value })}
+              required
+            />
+          </div>
+        )}
+
+        <div className="form-row">
+          <button className="form-button" type="submit">
+            Criar Usuário
+          </button>
+        </div>
+      </form>
+    );
+  };
+
+  return (
+    <div className="p-2">
+      <Menu />
+      <div className="content-area">
+        <h2>{editingUser ? "Editar Usuário" : "Criar Novo Usuário"}</h2>
+
+        {!editingUser && (
+          <div className="tabs" style={{ marginBottom: 0 }}>
+            <button
+              className={`tab-item ${
+                formType === "licenciado" ? "active" : ""
+              }`}
+              onClick={() => setFormType("licenciado")}
+            >
+              Licenciado (Externo)
+            </button>
+            <button
+              className={`tab-item ${formType === "interno" ? "active" : ""}`}
+              onClick={() => setFormType("interno")}
+            >
+              Colaborador / Admin (Interno)
+            </button>
+          </div>
+        )}
+
+        {renderForm()}
 
         <BulkUserImport onImportSuccess={fetchUsers} />
 
