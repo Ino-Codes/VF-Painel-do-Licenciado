@@ -1269,6 +1269,26 @@ body::before {
   background-color: #4b4f6c;
 }
 
+/* Ícone de FAQ */
+.faq-icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #363950;
+  color: #ffffff;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.faq-icon-link:hover {
+  background-color: #4b4f6c;
+}
+
 /* Ícone de perfil */
 .profile-info-container {
   display: flex;

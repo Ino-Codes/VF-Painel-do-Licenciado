@@ -50,6 +50,7 @@ const Menu: React.FC = () => {
         >
           Dashboard
         </NavLink>
+
         <NavLink
           to="/documentos"
           className="menu-item"
@@ -57,6 +58,7 @@ const Menu: React.FC = () => {
         >
           Documentos
         </NavLink>
+
         <NavLink
           to="/videos"
           className="menu-item"
@@ -64,19 +66,13 @@ const Menu: React.FC = () => {
         >
           Vídeos
         </NavLink>
+
         <NavLink
           to="/courses"
           className="menu-item"
           onClick={() => setIsMenuOpen(false)}
         >
           Cursos
-        </NavLink>
-        <NavLink
-          to="/faq"
-          className="menu-item"
-          onClick={() => setIsMenuOpen(false)}
-        >
-          FAQ
         </NavLink>
 
         {user && user.role === "admin" && (
@@ -139,6 +135,14 @@ const Menu: React.FC = () => {
       </div>
 
       <div className="menu-right">
+        <NavLink
+          to="/faq"
+          className="faq-icon-link"
+          title="Perguntas Frequentes (FAQ)"
+        >
+          <span>?</span>
+        </NavLink>
+
         {user && (
           <NavLink to="/perfil" className="profile-info-container">
             <div className="profile-text">
