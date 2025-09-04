@@ -14,7 +14,6 @@ interface User {
   role: "admin" | "licenciado" | "comercial" | "colaborador";
 }
 
-// O componente de importação em massa continua o mesmo
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
   onImportSuccess,
 }) => {
@@ -87,17 +86,15 @@ const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // --- MUDANÇAS AQUI ---
   const [formType, setFormType] = useState<"licenciado" | "interno">(
     "licenciado"
   );
-
   const [form, setForm] = useState({
     nome: "",
     email: "",
     password: "",
     role: "licenciado" as "admin" | "licenciado" | "comercial" | "colaborador",
-    birth_date: "", // Novo campo para data de nascimento
+    birth_date: "",
   });
 
   const [users, setUsers] = useState<User[]>([]);
@@ -113,8 +110,32 @@ const AdminUsers: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
+  // --- FUNÇÃO CORRIGIDA/ADICIONADA DE VOLTA ---
+  const fetchUsers = useCallback(async () => {
+    if (user?.role !== "admin") return;
+    try {
+      const params: any = { page: currentPage, limit };
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+      const res = await api.get("/api/users/admin", { params });
+      setUsers(res.data.users);
+      setTotalUsers(res.data.totalCount);
+      setTotalPages(res.data.totalPages);
+    } catch (err) {
+      console.error("Erro ao buscar usuários:", err);
+      toast.error("Não foi possível carregar os usuários.");
+    }
+  }, [user, currentPage, limit, searchQuery]);
+
+  // --- USEEFFECT PARA CHAMAR A FUNÇÃO ACIMA ---
   useEffect(() => {
-    // Altera o 'role' padrão do formulário quando o tipo muda
+    if (user) {
+      fetchUsers();
+    }
+  }, [user, fetchUsers]);
+
+  useEffect(() => {
     setForm((prev) => ({
       ...prev,
       nome: "",
@@ -127,16 +148,12 @@ const AdminUsers: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validação da data de nascimento para colaboradores
     if (form.role === "colaborador" && !form.birth_date) {
       toast.error("A data de nascimento é obrigatória para colaboradores.");
       return;
     }
-
     try {
       if (editingUser) {
-        // Lógica de edição continua a mesma
         await api.put(`/api/users/admin/${editingUser.id}`, {
           nome: editingUser.nome,
           role: editingUser.role,
@@ -144,10 +161,8 @@ const AdminUsers: React.FC = () => {
         toast.success("Usuário atualizado com sucesso!");
         setEditingUser(null);
       } else {
-        // Lógica de criação agora envia a data de nascimento se for colaborador
         await api.post("/api/users/admin", form);
         toast.success("Usuário criado com sucesso!");
-        // Reseta o formulário
         setForm({
           nome: "",
           email: "",
@@ -156,7 +171,7 @@ const AdminUsers: React.FC = () => {
           birth_date: "",
         });
       }
-      fetchUsers();
+      fetchUsers(); // Esta chamada agora funcionará
     } catch (err) {
       toast.error("Ocorreu um erro ao salvar o usuário.");
     }
@@ -176,7 +191,7 @@ const AdminUsers: React.FC = () => {
     try {
       await api.delete(`/api/users/admin/${userToDelete}`);
       toast.success("Usuário excluído com sucesso!");
-      fetchUsers();
+      fetchUsers(); // Esta chamada agora funcionará
     } catch (err) {
       toast.error("Erro ao excluir o usuário.");
     } finally {
@@ -187,22 +202,22 @@ const AdminUsers: React.FC = () => {
 
   const startEdit = (u: User) => {
     setEditingUser(u);
-    setForm({ nome: "", email: "", password: "", role: "licenciado" });
   };
 
   const handleSearch = () => {
+    setCurrentPage(1); // Reseta para a primeira página ao pesquisar
     setSearchQuery(searchTerm);
   };
 
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
-
   if (!user || user.role !== "admin") {
     return null;
   }
 
   const renderForm = () => {
+    // ... (a função renderForm continua a mesma)
     if (editingUser) {
       // Renderiza um formulário de edição simplificado
       return (
