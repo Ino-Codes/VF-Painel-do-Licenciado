@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
+import LoadingSpinner from "./LoadingSpinner.tsx";
 import { useNavigate } from "react-router-dom";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
@@ -112,17 +113,20 @@ const AdminCourses: React.FC = () => {
 
   const handleTemplateUpload = async () => {
     if (!certificateTemplateFile || !editingCourse) {
-      toast.error("Selecione um arquivo de imagem para o modelo.");
+      toast.error("Selecione um arquivo PDF para o modelo.");
       return;
     }
     const formData = new FormData();
     formData.append("template", certificateTemplateFile);
+
     try {
+      const toastId = toast.loading("A fazer o upload do modelo...");
       await api.post(
         `/api/admin/courses/${editingCourse.id}/certificate-template`,
         formData,
         getAuthHeaders()
       );
+      toast.dismiss(toastId);
       toast.success("Modelo de certificado atualizado!");
       setCertificateTemplateFile(null);
       fetchCourses();
@@ -133,10 +137,12 @@ const AdminCourses: React.FC = () => {
 
   const handleManageContent = (courseId: number) =>
     navigate(`/admin/courses/${courseId}`);
+
   const handleDeleteClick = (id: number) => {
     setCourseToDelete(id);
     setIsConfirmModalOpen(true);
   };
+
   const handleConfirmDelete = async () => {
     if (courseToDelete === null) return;
     try {
@@ -155,7 +161,7 @@ const AdminCourses: React.FC = () => {
   };
 
   if (loading || !user || user.role !== "admin") {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   return (
@@ -236,6 +242,60 @@ const AdminCourses: React.FC = () => {
                     alt="Thumbnail atual"
                     style={{ maxWidth: "200px", borderRadius: "8px" }}
                   />
+                </div>
+              )}
+            </div>
+
+            <div
+              className="admin-form"
+              style={{
+                marginTop: "20px",
+                borderTop: "2px solid #f0f0f0",
+                paddingTop: "20px",
+              }}
+            >
+              <h3>Alterar Modelo de Certificado</h3>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#6c757d",
+                  margin: "-10px 0 15px",
+                }}
+              >
+                Faça o upload de um arquivo PDF que será usado como fundo.
+                <br />
+                <strong>Recomendado:</strong> Formato A4 Paisagem (297 x 210mm).
+              </p>
+              <div className="form-row">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) =>
+                    e.target.files &&
+                    setCertificateTemplateFile(e.target.files[0])
+                  }
+                />
+                <button
+                  className="form-button"
+                  type="button"
+                  onClick={handleTemplateUpload}
+                  disabled={!certificateTemplateFile}
+                >
+                  Salvar Modelo
+                </button>
+              </div>
+              {editingCourse.certificate_template_url && (
+                <div>
+                  <p>
+                    Modelo Atual:{" "}
+                    <a
+                      href={editingCourse.certificate_template_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Visualizar PDF
+                    </a>
+                  </p>
                 </div>
               )}
             </div>
