@@ -157,32 +157,52 @@ const Perfil: React.FC = () => {
           </div>
 
           <div className="details-section">
-            <h3>Editar Informações</h3>
-            <div className="form-row">
-              <label htmlFor="nome">Nome:</label>
-              <input
-                id="nome"
-                type="text"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                className="form-input"
-              />
+            <div className="section">
+              <h3>Perfil Comportamental</h3>
+              <p>
+                Entenda melhor seus traços de personalidade e como você interage
+                em equipe.
+              </p>
+              <Link to="/enneagram" className="form-button">
+                Fazer Teste Eneagrama
+              </Link>
+              <Link
+                to="/perfil/enneagram-results"
+                className="form-button-cancel"
+                style={{ marginLeft: "10px" }}
+              >
+                Ver Resultado
+              </Link>
             </div>
-            <div className="form-row">
-              <label htmlFor="email">Email:</label>
-              <input
-                id="email"
-                type="email"
-                value={user.email}
-                disabled
-                className="form-input"
-              />
-            </div>
-            <button className="form-button" onClick={handleSaveChanges}>
-              Salvar Alterações
-            </button>
 
-            <div className="password-section">
+            <div className="other-section">
+              <h3>Editar Informações</h3>
+              <div className="form-row">
+                <label htmlFor="nome">Nome:</label>
+                <input
+                  id="nome"
+                  type="text"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-row">
+                <label htmlFor="email">Email:</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={user.email}
+                  disabled
+                  className="form-input"
+                />
+              </div>
+              <button className="form-button" onClick={handleSaveChanges}>
+                Salvar Alterações
+              </button>
+            </div>
+
+            <div className="other-section">
               <h3>Alterar Senha</h3>
               <div className="form-row">
                 <label htmlFor="current-password">Senha Atual:</label>
@@ -217,24 +237,6 @@ const Perfil: React.FC = () => {
               <button className="form-button" onClick={handleChangePassword}>
                 Alterar Senha
               </button>
-            </div>
-
-            <div className="password-section">
-              <h3>Perfil Comportamental</h3>
-              <p>
-                Entenda melhor seus traços de personalidade e como você interage
-                em equipe.
-              </p>
-              <Link to="/enneagram" className="form-button">
-                Fazer Teste Eneagrama
-              </Link>
-              <Link
-                to="/perfil/enneagram-results"
-                className="form-button-cancel"
-                style={{ marginLeft: "10px" }}
-              >
-                Ver Resultado
-              </Link>
             </div>
           </div>
         </div>
