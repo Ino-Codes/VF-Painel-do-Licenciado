@@ -21,7 +21,8 @@ const App: React.FC = () => {
     try {
       setLoginError("");
       const res = await api.post("/api/auth/login", { email, password });
-      login(res.data);
+      const { user, token } = res.data;
+      login(user, token);
       navigate("/dashboard");
     } catch (err) {
       setLoginError("Revise os dados de login e tente novamente.");
