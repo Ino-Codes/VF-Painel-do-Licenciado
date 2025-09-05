@@ -47,7 +47,12 @@
   flex-basis: 120px;
   flex-shrink: 0;
 }
-
+.profile-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
 /* --- RESPONSIVO (PERFIL) --- */
 @media (max-width: 900px) {
   .profile-card {

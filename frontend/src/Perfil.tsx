@@ -164,16 +164,17 @@ const Perfil: React.FC = () => {
                   Entenda melhor seus traços de personalidade e como você
                   interage em equipe.
                 </p>
-                <Link to="/enneagram" className="form-button">
-                  Fazer Teste Eneagrama
-                </Link>
-                <Link
-                  to="/perfil/enneagram-results"
-                  className="form-button-cancel"
-                  style={{ marginLeft: "10px" }}
-                >
-                  Ver Resultado
-                </Link>
+                <div className="profile-button-group">
+                  <Link to="/enneagram" className="form-button">
+                    Fazer Teste Eneagrama
+                  </Link>
+                  <Link
+                    to="/perfil/enneagram-results"
+                    className="form-button-cancel"
+                  >
+                    Ver Resultado
+                  </Link>
+                </div>
               </div>
             )}
 

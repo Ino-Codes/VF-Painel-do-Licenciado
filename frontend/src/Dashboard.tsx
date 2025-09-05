@@ -213,7 +213,7 @@ const Dashboard: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="dashboard-header">
-          <h2>Bem-vindo, {user.nome}!</h2>
+          <h2>Bem-vindo(a), {user.nome}!</h2>
           <p>
             Este é o seu novo Painel da Valor Fiscal!
             <br />
