@@ -279,6 +279,15 @@ const createTables = async () => {
         completed_at TIMESTAMPTZ DEFAULT NOW()
     );`;
 
+  const enneagramTypes = `
+    CREATE TABLE IF NOT EXISTS enneagram_types (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    work_description TEXT,
+    personal_description TEXT
+  );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -299,6 +308,7 @@ const createTables = async () => {
     await pool.query(eventsTable);
     await pool.query(enneagramQuestionsTable);
     await pool.query(userEnneagramResultsTable);
+    await pool.query(enneagramTypes);
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {

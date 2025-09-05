@@ -1,4 +1,3 @@
-// backend/routes/enneagram.js
 const express = require("express");
 const router = express.Router();
 const { isLoggedIn } = require("../middleware/auth.js");
@@ -9,7 +8,6 @@ module.exports = function (pool) {
   // Rota para buscar todas as perguntas de forma aleatória
   router.get("/questions", checkLoggedIn, async (req, res) => {
     try {
-      // ORDER BY RANDOM() garante que o teste seja diferente a cada vez
       const result = await pool.query(
         "SELECT id, statement_a, type_a, statement_b, type_b FROM enneagram_questions ORDER BY RANDOM()"
       );
@@ -36,7 +34,7 @@ module.exports = function (pool) {
   // Rota para submeter as respostas e calcular o resultado
   router.post("/submit", checkLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
-    const { answers } = req.body; // Ex: { "1": 9, "2": 5, ... } (id da questão: tipo escolhido)
+    const { answers } = req.body;
 
     const scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
     for (const questionId in answers) {
@@ -55,6 +53,17 @@ module.exports = function (pool) {
         dominantType = parseInt(type, 10);
       }
     }
+
+    router.get("/types", checkLoggedIn, async (req, res) => {
+      try {
+        const result = await pool.query(
+          "SELECT * FROM enneagram_types ORDER BY id"
+        );
+        res.json(result.rows);
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao buscar tipos do Eneagrama." });
+      }
+    });
 
     try {
       const query = `
