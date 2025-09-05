@@ -77,3 +77,28 @@
   background-color: #f8d7da;
   border: 2px solid #c82333;
 }
+.detailed-texts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+.text-block {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+.text-block h4 {
+  margin-top: 0;
+  border-bottom: 2px solid #daa520;
+  padding-bottom: 10px;
+}
+.chart-container {
+  max-width: 800px;
+  margin: 20px auto;
+}
+@media (max-width: 768px) {
+  .detailed-texts {
+    grid-template-columns: 1fr;
+  }
+}

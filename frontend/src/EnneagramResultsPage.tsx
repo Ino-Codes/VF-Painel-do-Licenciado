@@ -1,101 +1,79 @@
 import React, { useState, useEffect } from "react";
 import api from "./api.ts";
-import { Bar } from "react-chartjs-2";
+import { Bar, Radar } from "react-chartjs-2";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
-
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  Title,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
   Tooltip,
   Legend,
+  Title,
 } from "chart.js";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  Title,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
   Tooltip,
-  Legend
+  Legend,
+  Title
 );
-
-const enneagramTypes = {
-  1: {
-    name: "O Perfeccionista",
-    description:
-      "Pessoas do tipo 1 são éticas e conscienciosas, com um forte senso de certo e errado.",
-  },
-  2: {
-    name: "O Prestativo",
-    description: "Pessoas do tipo 2 são empáticas, sinceras e calorosas.",
-  },
-  3: {
-    name: "O Bem-Sucedido",
-    description:
-      "Pessoas do tipo 3 são autoconfiantes, charmosas e ambiciosas.",
-  },
-  4: {
-    name: "O Individualista",
-    description:
-      "Pessoas do tipo 4 são autoconscientes, sensíveis e reservadas.",
-  },
-  5: {
-    name: "O Observador",
-    description: "Pessoas do tipo 5 são alertas, perspicazes e curiosas.",
-  },
-  6: {
-    name: "O Leal",
-    description: "Pessoas do tipo 6 são comprometidas, seguras e confiáveis.",
-  },
-  7: {
-    name: "O Entusiasta",
-    description:
-      "Pessoas do tipo 7 são extrovertidas, otimistas e espontâneas.",
-  },
-  8: {
-    name: "O Desafiador",
-    description: "Pessoas do tipo 8 são autoconfiantes, fortes e assertivas.",
-  },
-  9: {
-    name: "O Pacificador",
-    description: "Pessoas do tipo 9 são receptivas, tranquilas e solidárias.",
-  },
-};
 
 const EnneagramResultsPage: React.FC = () => {
   const [results, setResults] = useState(null);
+  const [typesInfo, setTypesInfo] = useState([]);
+  const [activeTab, setActiveTab] = useState("resumo");
 
   useEffect(() => {
-    api.get("/api/enneagram/results").then((res) => setResults(res.data));
+    // Faz as duas chamadas à API em paralelo
+    Promise.all([
+      api.get("/api/enneagram/results"),
+      api.get("/api/enneagram/types"),
+    ]).then(([resultsRes, typesRes]) => {
+      setResults(resultsRes.data);
+      setTypesInfo(typesRes.data);
+    });
   }, []);
 
-  if (!results) return <LoadingSpinner />;
+  if (!results || typesInfo.length === 0) return <LoadingSpinner />;
 
-  const dominantTypeInfo = enneagramTypes[results.dominant_type];
+  const dominantTypeInfo = typesInfo.find(
+    (t) => t.id === results.dominant_type
+  );
+  const scores = [
+    results.score_1,
+    results.score_2,
+    results.score_3,
+    results.score_4,
+    results.score_5,
+    results.score_6,
+    results.score_7,
+    results.score_8,
+    results.score_9,
+  ];
+  const totalScore = scores.reduce((sum, score) => sum + score, 0);
 
-  const chartData = {
-    labels: Object.values(enneagramTypes).map(
-      (t, index) => `Tipo ${index + 1}: ${t.name}`
-    ),
+  const chartLabels = typesInfo.map((t) => `Tipo ${t.id}: ${t.name}`);
+
+  // Dados para o Gráfico de Barras (Pontuação) e Radar
+  const scoreData = {
+    labels: chartLabels,
     datasets: [
       {
         label: "Pontuação",
-        data: [
-          results.score_1,
-          results.score_2,
-          results.score_3,
-          results.score_4,
-          results.score_5,
-          results.score_6,
-          results.score_7,
-          results.score_8,
-          results.score_9,
-        ],
+        data: scores,
         backgroundColor: "rgba(221, 177, 65, 0.6)",
         borderColor: "rgba(221, 177, 65, 1)",
         borderWidth: 1,
@@ -103,22 +81,25 @@ const EnneagramResultsPage: React.FC = () => {
     ],
   };
 
+  // Dados para o Gráfico de Barras (Percentual)
+  const percentageData = {
+    labels: chartLabels,
+    datasets: [
+      {
+        label: "Percentual (%)",
+        data: scores.map((s) =>
+          totalScore > 0 ? ((s / totalScore) * 100).toFixed(1) : 0
+        ),
+        backgroundColor: "rgba(4, 161, 70, 0.6)",
+        borderColor: "rgba(4, 161, 70, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
   const chartOptions = {
     indexAxis: "y" as const,
-    elements: {
-      bar: {
-        borderWidth: 2,
-      },
-    },
-    responsive: true,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: false,
-      },
-    },
+    plugins: { legend: { display: false } },
   };
 
   return (
@@ -126,6 +107,7 @@ const EnneagramResultsPage: React.FC = () => {
       <Menu />
       <div className="content-area">
         <h2>Seu Resultado do Eneagrama</h2>
+
         <div className="result-summary">
           <h3>
             Seu tipo dominante é:{" "}
@@ -135,9 +117,47 @@ const EnneagramResultsPage: React.FC = () => {
           </h3>
           <p>{dominantTypeInfo.description}</p>
         </div>
-        <div style={{ maxWidth: "800px", margin: "40px auto" }}>
-          <h4>Distribuição completa dos seus traços:</h4>
-          <Bar data={chartData} options={chartOptions} />
+
+        <div className="detailed-texts">
+          <div className="text-block">
+            <h4>No Trabalho</h4>
+            <p>{dominantTypeInfo.work_description}</p>
+          </div>
+          <div className="text-block">
+            <h4>Na Vida Pessoal</h4>
+            <p>{dominantTypeInfo.personal_description}</p>
+          </div>
+        </div>
+
+        <div className="tabs" style={{ marginTop: "40px" }}>
+          <button
+            className={`tab-item ${activeTab === "percentual" ? "active" : ""}`}
+            onClick={() => setActiveTab("percentual")}
+          >
+            Gráfico Percentual
+          </button>
+          <button
+            className={`tab-item ${activeTab === "radar" ? "active" : ""}`}
+            onClick={() => setActiveTab("radar")}
+          >
+            Gráfico Radar
+          </button>
+          <button
+            className={`tab-item ${activeTab === "pontos" ? "active" : ""}`}
+            onClick={() => setActiveTab("pontos")}
+          >
+            Gráfico de Pontos
+          </button>
+        </div>
+
+        <div className="chart-container">
+          {activeTab === "percentual" && (
+            <Bar data={percentageData} options={chartOptions} />
+          )}
+          {activeTab === "radar" && <Radar data={scoreData} />}
+          {activeTab === "pontos" && (
+            <Bar data={scoreData} options={chartOptions} />
+          )}
         </div>
       </div>
       <Footer />
