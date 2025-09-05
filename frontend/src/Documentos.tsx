@@ -7,7 +7,6 @@ import Footer from "./Footer.tsx";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
-import "./styles.css";
 
 interface FileData {
   id: number;
