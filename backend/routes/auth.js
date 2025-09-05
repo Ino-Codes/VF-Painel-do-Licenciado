@@ -21,6 +21,14 @@ module.exports = function (pool, sgMail, logActivity) {
         );
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
+
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        nome: user.nome,
+      };
+
       logActivity(
         user.id,
         user.email,
@@ -28,9 +36,11 @@ module.exports = function (pool, sgMail, logActivity) {
         "Usuário logado com sucesso.",
         req.ipAddress
       );
+
       delete user.password;
       delete user.reset_token;
       delete user.reset_token_expires;
+
       res.json(user);
     } catch (err) {
       console.error("Erro na rota /api/login:", err);
