@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const router = express.Router();
+const jwt = require("jsonwebtoken");
 
 module.exports = function (pool, sgMail, logActivity) {
   router.post("/login", async (req, res) => {
@@ -22,12 +23,15 @@ module.exports = function (pool, sgMail, logActivity) {
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
 
-      req.session.user = {
+      const tokenPayload = {
         id: user.id,
         email: user.email,
         role: user.role,
         nome: user.nome,
       };
+      const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
+        expiresIn: "24h",
+      });
 
       logActivity(
         user.id,
@@ -38,10 +42,8 @@ module.exports = function (pool, sgMail, logActivity) {
       );
 
       delete user.password;
-      delete user.reset_token;
-      delete user.reset_token_expires;
 
-      res.json(user);
+      res.json({ user, token });
     } catch (err) {
       console.error("Erro na rota /api/login:", err);
       res.status(500).send({ error: "Erro no servidor" });
@@ -138,6 +140,5 @@ module.exports = function (pool, sgMail, logActivity) {
       res.status(500).send({ error: "Erro no servidor" });
     }
   });
-
   return router;
 };
