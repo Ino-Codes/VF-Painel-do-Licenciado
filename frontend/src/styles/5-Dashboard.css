@@ -68,11 +68,28 @@
   font-weight: 500;
   color: #0d0d0d;
 }
+.notice-board h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 10px;
+}
 .notice-form {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 20px;
+}
+.notice-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-family: "Montserrat", sans-serif;
+  resize: vertical;
+}
+.notice-form button {
+  align-self: flex-end;
 }
 .notice-list {
   display: flex;
@@ -85,6 +102,31 @@
   border-left: 4px solid #daa520;
   border-radius: 5px;
   padding: 15px;
+}
+.notice-card p {
+  margin: 0 0 10px 0;
+  white-space: pre-wrap;
+}
+.notice-card small {
+  color: #6c757d;
+}
+.placeholder-column {
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+.placeholder-column h3 {
+  margin: 0;
+  padding: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+.placeholder-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
 }
 .notice-footer {
   display: flex;
@@ -100,6 +142,15 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+.notice-edit-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-family: "Montserrat", sans-serif;
+  resize: vertical;
 }
 .notice-edit-form .notice-actions {
   align-self: flex-end;
