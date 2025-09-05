@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
-import api from "../api";
+import api from "../api.ts";
 
 interface User {
   id: number;
