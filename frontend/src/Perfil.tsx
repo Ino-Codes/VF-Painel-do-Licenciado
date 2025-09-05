@@ -157,23 +157,25 @@ const Perfil: React.FC = () => {
           </div>
 
           <div className="details-section">
-            <div className="section">
-              <h3>Perfil Comportamental</h3>
-              <p>
-                Entenda melhor seus traços de personalidade e como você interage
-                em equipe.
-              </p>
-              <Link to="/enneagram" className="form-button">
-                Fazer Teste Eneagrama
-              </Link>
-              <Link
-                to="/perfil/enneagram-results"
-                className="form-button-cancel"
-                style={{ marginLeft: "10px" }}
-              >
-                Ver Resultado
-              </Link>
-            </div>
+            {user.role !== "licenciado" && (
+              <div className="section">
+                <h3>Perfil Comportamental</h3>
+                <p>
+                  Entenda melhor seus traços de personalidade e como você
+                  interage em equipe.
+                </p>
+                <Link to="/enneagram" className="form-button">
+                  Fazer Teste Eneagrama
+                </Link>
+                <Link
+                  to="/perfil/enneagram-results"
+                  className="form-button-cancel"
+                  style={{ marginLeft: "10px" }}
+                >
+                  Ver Resultado
+                </Link>
+              </div>
+            )}
 
             <div className="other-section">
               <h3>Editar Informações</h3>
