@@ -1,4 +1,3 @@
-// frontend/src/EnneagramResultsPage.tsx
 import React, { useState, useEffect } from "react";
 import api from "./api.ts";
 import { Bar } from "react-chartjs-2";
@@ -6,7 +5,25 @@ import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 
-// Mapa de descrições para cada tipo
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 const enneagramTypes = {
   1: {
     name: "O Perfeccionista",
@@ -63,10 +80,7 @@ const EnneagramResultsPage: React.FC = () => {
 
   const chartData = {
     labels: Object.values(enneagramTypes).map(
-      (t) =>
-        `Tipo ${Object.keys(enneagramTypes).find(
-          (key) => enneagramTypes[key] === t
-        )}`
+      (t, index) => `Tipo ${index + 1}: ${t.name}`
     ),
     datasets: [
       {
@@ -89,6 +103,24 @@ const EnneagramResultsPage: React.FC = () => {
     ],
   };
 
+  const chartOptions = {
+    indexAxis: "y" as const,
+    elements: {
+      bar: {
+        borderWidth: 2,
+      },
+    },
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: false,
+      },
+    },
+  };
+
   return (
     <div className="p-2">
       <Menu />
@@ -105,7 +137,7 @@ const EnneagramResultsPage: React.FC = () => {
         </div>
         <div style={{ maxWidth: "800px", margin: "40px auto" }}>
           <h4>Distribuição completa dos seus traços:</h4>
-          <Bar data={chartData} options={{ indexAxis: "y" }} />
+          <Bar data={chartData} options={chartOptions} />
         </div>
       </div>
       <Footer />
