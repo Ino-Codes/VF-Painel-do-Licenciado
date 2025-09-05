@@ -176,10 +176,15 @@
   border-top: 1px solid #e9ecef;
   margin-top: 25px;
 }
-.dashboard-main-columns > .dashboard-elements {
-  flex: 1;
-  min-width: 0;
+.dashboard-main-columns > div {
   margin-top: 0;
+  min-width: 0;
+}
+.events-column {
+  flex-basis: 30%;
+}
+.notices-column {
+  flex-basis: 70%;
 }
 @media (max-width: 900px) {
   .dashboard-main-columns {
