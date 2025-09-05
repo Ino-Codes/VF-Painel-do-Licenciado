@@ -1,0 +1,64 @@
+.profile-card {
+  display: flex;
+  gap: 40px;
+  background-color: #f8f9fa;
+  padding: 30px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  flex-basis: 200px;
+  flex-shrink: 0;
+}
+.profile-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.details-section {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+.details-section > div {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.details-section > div:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.details-section h3 {
+  margin-top: 0;
+}
+.details-section .form-row {
+  align-items: center;
+}
+.details-section label {
+  font-weight: 500;
+  flex-basis: 120px;
+  flex-shrink: 0;
+}
+
+/* --- RESPONSIVO (PERFIL) --- */
+@media (max-width: 900px) {
+  .profile-card {
+    flex-direction: column;
+  }
+  .details-section .form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .details-section label {
+    flex-basis: auto;
+    margin-bottom: 5px;
+  }
+}

@@ -23,7 +23,15 @@ import AdminCalendar from "./AdminCalendar.tsx";
 import EnneagramPage from "./EnneagramPage.tsx";
 import EnneagramResultsPage from "./EnneagramResultsPage.tsx";
 
-import "./styles.css";
+import "./styles/1-global.css";
+import "./styles/2-components.css";
+import "./styles/3-Login.css";
+import "./styles/4-Menu.css";
+import "./styles/5-Dashboard.css";
+import "./styles/6-ContentPages.css";
+import "./styles/7-AdminPages.css";
+import "./styles/8-Profile.css";
+import "./styles/9-Assesments.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 

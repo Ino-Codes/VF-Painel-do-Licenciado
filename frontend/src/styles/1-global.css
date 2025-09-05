@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+
+:root {
+  --fc-today-bg-color: #f4f4f4;
+}
+
+* {
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+body {
+  background-image: url(https://d335luupugsy2.cloudfront.net/cms/files/342452/1698426778/$p8rdih6o8);
+  background-size: cover;
+  background-position: top;
+  font-family: "Montserrat", sans-serif;
+  color: #0a0a0a;
+  margin: 0;
+  height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: -1;
+}
+
+.p-2 {
+  background-color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.content-area {
+  padding: 25px;
+  flex-grow: 1;
+}
+
+.tela-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: white;
+  font-weight: bold;
+}
+
+/* --- RESPONSIVO (GERAL) --- */
+@media (max-width: 900px) {
+  .content-area {
+    padding: 15px;
+  }
+}

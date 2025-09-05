@@ -1,0 +1,212 @@
+/* --- BOTÕES --- */
+.form-button {
+  border: none;
+  padding: 10px 20px;
+  color: white;
+  background-color: #04a146;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+.form-button:hover {
+  opacity: 0.85;
+}
+.form-button-cancel {
+  border: none;
+  padding: 10px 20px;
+  color: white;
+  background-color: #60676e;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+.form-button-cancel:hover {
+  opacity: 0.85;
+}
+.form-button.delete,
+.delete-button {
+  background-color: #c82333;
+}
+.form-button.delete:hover,
+.delete-button:hover {
+  background-color: #a21b29;
+  color: white;
+}
+.list-button {
+  background-color: initial;
+  border: 1px solid #3b3e4f;
+  border-radius: 5px;
+  color: #3b3e4f;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 5px 10px;
+  transition: all 0.2s;
+}
+.list-button:hover {
+  opacity: 0.85;
+  background-color: #3b3e4f;
+  color: white;
+}
+.delete-button {
+  background-color: transparent;
+  color: #c82333;
+  border: 1px solid #c82333;
+  padding: 5px 10px;
+  font-weight: bold;
+}
+.botao-logout {
+  width: 140px;
+  height: 30px;
+  border-radius: 100px;
+  border: none;
+  background-color: #c82333;
+  color: white;
+  font-weight: bold;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  margin: 20px auto 10px;
+}
+.botao-logout:hover {
+  opacity: 0.85;
+}
+
+/* --- MODAIS --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 50px 20px;
+  z-index: 1000;
+}
+.modal-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* --- TABS --- */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+.tab-item {
+  padding: 10px 20px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  border-bottom: 3px solid transparent;
+}
+.tab-item.active {
+  border-bottom-color: #daa520;
+  font-weight: 600;
+}
+
+/* --- PESQUISA E PAGINAÇÃO --- */
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.search-bar .form-input {
+  flex-grow: 1;
+}
+.search-bar .form-button {
+  flex-shrink: 0;
+}
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+.limit-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.limit-selector select {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+.page-buttons {
+  display: flex;
+  gap: 10px;
+}
+.pagination-controls button {
+  padding: 8px 15px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+.pagination-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.pagination-controls button:not(:disabled):hover {
+  background-color: #e9ecef;
+}
+
+/* --- OUTROS COMPONENTES --- */
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  margin-top: 30px;
+}
+.empty-state-image {
+  margin-bottom: 25px;
+  max-height: 250px;
+  max-width: 250px;
+}
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+.empty-state-message {
+  color: #6c757d;
+  max-width: 400px;
+  margin-bottom: 20px;
+}
+.empty-state-action {
+  margin-top: 15px;
+}
+.main-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 14px;
+}
+.main-footer p {
+  margin: 0;
+}

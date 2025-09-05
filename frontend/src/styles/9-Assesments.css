@@ -1,0 +1,79 @@
+/* (Eneagrama e Quizzes) */
+.enneagram-question-pair,
+.assessment-question {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.statement-option,
+.assessment-option-label {
+  padding: 15px;
+  border: 2px solid #f0f0f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.statement-option:hover,
+.assessment-option-label:hover {
+  background-color: #f8f9fa;
+}
+.statement-option.selected {
+  border-color: #daa520;
+  background-color: #fffaf0;
+  font-weight: 500;
+}
+.assessment-option-label input {
+  margin-right: 10px;
+}
+.separator-or {
+  text-align: center;
+  margin: 10px 0;
+  font-weight: bold;
+  color: #6c757d;
+}
+.result-summary {
+  background-color: #f8f9fa;
+  border-left: 5px solid #daa520;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.quiz-container {
+  background-color: #f8f9fa;
+  padding: 25px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.quiz-question {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.quiz-question:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
+}
+.quiz-results {
+  text-align: center;
+}
+.result-pass,
+.result-fail {
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.result-pass {
+  background-color: #e7f5e8;
+  border: 2px solid #04a146;
+}
+.result-fail {
+  background-color: #f8d7da;
+  border: 2px solid #c82333;
+}
