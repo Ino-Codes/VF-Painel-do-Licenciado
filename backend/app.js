@@ -30,12 +30,15 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // --- MIDDLEWARES ---
+app.use(cookieParser());
+
 app.use(
   cors({
     origin: "https://painel.valorfiscal.com",
     credentials: true,
   })
 );
+
 app.use(express.json());
 
 app.use(
