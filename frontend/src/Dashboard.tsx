@@ -222,115 +222,116 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
 
-        {user.role !== "licenciado" && (
-          <div className="dashboard-elements">
-            <h3>Eventos do Mês</h3>
-            <div>
-              {monthlyEvents.length > 0 ? (
-                monthlyEvents.map((event) => (
-                  <div className="events-grid">
+        <div className="dashboard-main-columns">
+          {user.role !== "licenciado" && (
+            <div className="dashboard-elements">
+              <h3>Eventos do Mês</h3>
+              <div className="events-grid">
+                {monthlyEvents.length > 0 ? (
+                  monthlyEvents.map((event) => (
                     <EventCard key={event.id} event={event} />
+                  ))
+                ) : (
+                  <EmptyState
+                    image={EmptyEventsImage}
+                    title="Nenhum Evento Agendado"
+                    message="Não há eventos agendados para este mês no momento. Verifique novamente mais tarde."
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="dashboard-elements">
+            <h3>Mural de Avisos</h3>
+            <div className="notice-board">
+              {user.role === "admin" && (
+                <div className="notice-form">
+                  <div className="tiptap-container">
+                    <TiptapMenuBar editor={newNoticeEditor} />
+                    <EditorContent editor={newNoticeEditor} />
+                  </div>
+                  <button className="form-button" onClick={handlePostNotice}>
+                    Postar Aviso
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="notice-list">
+              {notices.length > 0 ? (
+                notices.map((notice) => (
+                  <div key={notice.id} className="notice-card">
+                    {editingNoticeId === notice.id ? (
+                      <div className="notice-edit-form">
+                        <div className="tiptap-container">
+                          <TiptapMenuBar editor={editNoticeEditor} />
+                          <EditorContent editor={editNoticeEditor} />
+                        </div>
+                        <div className="notice-actions">
+                          <button
+                            className="list-button"
+                            onClick={() => setEditingNoticeId(null)}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            className="list-button"
+                            onClick={() => handleUpdateNotice(notice.id)}
+                          >
+                            Salvar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div
+                          className="notice-message"
+                          dangerouslySetInnerHTML={{ __html: notice.message }}
+                        />
+                        <div className="notice-footer">
+                          <small>
+                            {new Date(notice.created_at).toLocaleDateString(
+                              "pt-BR",
+                              {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </small>
+                          {user.role === "admin" && (
+                            <div className="notice-actions">
+                              <button
+                                className="list-button"
+                                onClick={() => handleEditNotice(notice)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className="delete-button"
+                                onClick={() =>
+                                  handleDeleteNoticeClick(notice.id)
+                                }
+                              >
+                                Excluir
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))
               ) : (
                 <EmptyState
-                  image={EmptyEventsImage}
-                  title="Nenhum Evento Agendado"
-                  message="Não há eventos agendados para este mês no momento. Verifique novamente mais tarde."
-                />
+                  image={EmptyAvisosImage}
+                  title="Nenhum Aviso no Momento"
+                  message="Não há avisos postados no momento. Verifique novamente mais tarde."
+                ></EmptyState>
               )}
             </div>
-          </div>
-        )}
-
-        <div className="dashboard-elements">
-          <h3>Mural de Avisos</h3>
-          <div className="notice-board">
-            {user.role === "admin" && (
-              <div className="notice-form">
-                <div className="tiptap-container">
-                  <TiptapMenuBar editor={newNoticeEditor} />
-                  <EditorContent editor={newNoticeEditor} />
-                </div>
-                <button className="form-button" onClick={handlePostNotice}>
-                  Postar Aviso
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="notice-list">
-            {notices.length > 0 ? (
-              notices.map((notice) => (
-                <div key={notice.id} className="notice-card">
-                  {editingNoticeId === notice.id ? (
-                    <div className="notice-edit-form">
-                      <div className="tiptap-container">
-                        <TiptapMenuBar editor={editNoticeEditor} />
-                        <EditorContent editor={editNoticeEditor} />
-                      </div>
-                      <div className="notice-actions">
-                        <button
-                          className="list-button"
-                          onClick={() => setEditingNoticeId(null)}
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          className="list-button"
-                          onClick={() => handleUpdateNotice(notice.id)}
-                        >
-                          Salvar
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div
-                        className="notice-message"
-                        dangerouslySetInnerHTML={{ __html: notice.message }}
-                      />
-                      <div className="notice-footer">
-                        <small>
-                          {new Date(notice.created_at).toLocaleDateString(
-                            "pt-BR",
-                            {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                        </small>
-                        {user.role === "admin" && (
-                          <div className="notice-actions">
-                            <button
-                              className="list-button"
-                              onClick={() => handleEditNotice(notice)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              className="delete-button"
-                              onClick={() => handleDeleteNoticeClick(notice.id)}
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))
-            ) : (
-              <EmptyState
-                image={EmptyAvisosImage}
-                title="Nenhum Aviso no Momento"
-                message="Não há avisos postados no momento. Verifique novamente mais tarde."
-              ></EmptyState>
-            )}
           </div>
         </div>
 
