@@ -67,7 +67,7 @@ const EnneagramResultsPage: React.FC = () => {
 
   const chartLabels = typesInfo.map((t) => `Tipo ${t.id}: ${t.name}`);
 
-  // Dados para o Gráfico de Barras (Pontuação) e Radar
+  // Dados para o Gráfico de Barras (Pontuação)
   const scoreData = {
     labels: chartLabels,
     datasets: [
@@ -76,6 +76,20 @@ const EnneagramResultsPage: React.FC = () => {
         data: scores,
         backgroundColor: "rgba(221, 177, 65, 0.6)",
         borderColor: "rgba(221, 177, 65, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Dados para o Gráfico de Radar
+  const scoreRadarData = {
+    labels: chartLabels,
+    datasets: [
+      {
+        label: "Pontuação",
+        data: scores,
+        backgroundColor: "rgba(4, 67, 161, 0.6)",
+        borderColor: "rgba(4, 90, 161, 1)",
         borderWidth: 1,
       },
     ],
@@ -154,7 +168,9 @@ const EnneagramResultsPage: React.FC = () => {
           {activeTab === "percentual" && (
             <Bar data={percentageData} options={chartOptions} />
           )}
-          {activeTab === "radar" && <Radar data={scoreData} />}
+          {activeTab === "radar" && (
+            <Bar data={scoreRadarData} options={chartOptions} />
+          )}
           {activeTab === "pontos" && (
             <Bar data={scoreData} options={chartOptions} />
           )}
