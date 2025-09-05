@@ -224,7 +224,7 @@ const Dashboard: React.FC = () => {
 
         <div className="dashboard-main-columns">
           {user.role !== "licenciado" && (
-            <div className="dashboard-elements">
+            <div>
               <h3>Eventos do Mês</h3>
               <div className="events-grid">
                 {monthlyEvents.length > 0 ? (
@@ -242,7 +242,7 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
-          <div className="dashboard-elements">
+          <div>
             <h3>Mural de Avisos</h3>
             <div className="notice-board">
               {user.role === "admin" && (

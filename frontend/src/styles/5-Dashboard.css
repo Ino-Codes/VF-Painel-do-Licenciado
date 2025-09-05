@@ -173,6 +173,8 @@
   flex-direction: row;
   gap: 25px;
   align-items: flex-start;
+  border-top: 1px solid #e9ecef;
+  margin-top: 25px;
 }
 .dashboard-main-columns > .dashboard-elements {
   flex: 1;
