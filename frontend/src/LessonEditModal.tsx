@@ -100,8 +100,11 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
               required
             />
           </div>
+
           <div className="form-row">
             <label>URL do Vídeo (Opcional):</label>
+          </div>
+          <div className="form-row">
             <input
               type="text"
               placeholder="https://www.youtube.com/..."
@@ -110,13 +113,17 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
               className="form-input"
             />
           </div>
+
           <div className="form-row">
             <label>Conteúdo em Texto (Opcional):</label>
+          </div>
+          <div className="form-row">
             <div className="tiptap-container">
               <MenuBar editor={editor} />
               <EditorContent editor={editor} />
             </div>
           </div>
+
           <div className="modal-actions">
             <button
               type="button"
