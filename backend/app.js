@@ -84,6 +84,7 @@ const certificatesRoutes = require("./routes/certificates.js");
 const quizzesRoutes = require("./routes/quizzes.js");
 const eventRoutes = require("./routes/events.js");
 const enneagramRoutes = require("./routes/enneagram.js");
+const adminAnalyticsRoutes = require("./routes/adminAnalytics.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
@@ -99,6 +100,7 @@ app.use("/api/quizzes", quizzesRoutes(pool));
 app.use("/api/admin/events", eventRoutes(pool));
 app.use("/api/events", eventRoutes(pool));
 app.use("/api/enneagram", enneagramRoutes(pool));
+app.use("/api/admin/analytics", adminAnalyticsRoutes(pool));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
