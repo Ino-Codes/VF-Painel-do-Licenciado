@@ -16,6 +16,8 @@ import EmptyDashsImage from "./assets/images/empty_dashs.svg";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
+import EnneagramStats from "./EnneagramStats.tsx"; // Adicione a importação
+
 interface Notice {
   id: number;
   message: string;
@@ -337,11 +339,12 @@ const Dashboard: React.FC = () => {
 
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
-          <EmptyState
-            image={EmptyDashsImage}
-            title="Relatórios em Desenvolvimento"
-            message="Estamos criando relatórios e gráficos que serão exibidos aqui futuramente."
-          />
+          {user.role === "admin" && (
+            <div className="dashboard-elements">
+              <h3>Análise Comportamental (Eneagrama)</h3>
+              <EnneagramStats />
+            </div>
+          )}
         </div>
       </div>
       <Footer />
