@@ -6,9 +6,6 @@ const { Pool } = require("pg");
 const cloudinary = require("cloudinary").v2;
 const sgMail = require("@sendgrid/mail");
 
-const session = require("express-session");
-const cookieParser = require("cookie-parser");
-
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -30,7 +27,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // --- MIDDLEWARES ---
-app.use(cookieParser());
 
 app.use(
   cors({
@@ -40,20 +36,6 @@ app.use(
 );
 
 app.use(express.json());
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    },
-  })
-);
 
 app.use((req, res, next) => {
   req.ipAddress =
