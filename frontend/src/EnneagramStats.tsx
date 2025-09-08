@@ -21,19 +21,31 @@ ChartJS.register(
   Legend
 );
 
+interface EnneagramType {
+  id: number;
+  name: string;
+  description: string;
+  work_description: string;
+  personal_description: string;
+}
+
 const EnneagramStats: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
+  const [typesInfo, setTypesInfo] = useState<EnneagramType[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get("/api/admin/analytics/enneagram-stats")
-      .then((res) => {
-        setStats(res.data);
+    Promise.all([
+      api.get("/api/admin/analytics/enneagram-stats"),
+      api.get("/api/enneagram/types"),
+    ])
+      .then(([statsRes, typesRes]) => {
+        setStats(statsRes.data);
+        setTypesInfo(typesRes.data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Erro ao carregar estatísticas", err);
+        console.error("Erro ao carregar dados do Eneagrama", err);
         setLoading(false);
       });
   }, []);
@@ -42,18 +54,23 @@ const EnneagramStats: React.FC = () => {
     return <div className="stats-loading">Carregando estatísticas...</div>;
   }
 
-  if (!stats) {
+  if (!stats || typesInfo.length === 0) {
     return <p>Não foi possível carregar os dados.</p>;
   }
 
-  const typeLabels = Array.from({ length: 9 }, (_, i) => `Tipo ${i + 1}`);
+  const typesMap = typesInfo.reduce((acc, type) => {
+    acc[type.id] = type;
+    return acc;
+  }, {} as Record<number, EnneagramType>);
+
+  const chartLabels = typesInfo.map((t) => `${t.name} (Tipo ${t.id})`);
   const typeData = Array(9).fill(0);
   stats.typeCounts.forEach((item: any) => {
     typeData[item.dominant_type - 1] = item.count;
   });
 
   const chartData = {
-    labels: typeLabels,
+    labels: chartLabels,
     datasets: [
       {
         label: "Nº de Colaboradores",
@@ -111,7 +128,10 @@ const EnneagramStats: React.FC = () => {
           {stats.completedUsers.map((user: any, index: number) => (
             <li key={index}>
               <span className="user-name">{user.nome}</span>
-              <span className="user-type">Tipo {user.dominant_type}</span>
+              <span className="user-type">
+                {typesMap[user.dominant_type]?.name ||
+                  `Tipo ${user.dominant_type}`}
+              </span>
             </li>
           ))}
         </ul>
