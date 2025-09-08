@@ -339,14 +339,14 @@ const Dashboard: React.FC = () => {
 
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
-          {user.role !== "licenciado" && (
+          {user.role === "admin" && (
             <div>
               <h3>Análise Comportamental (Eneagrama)</h3>
               <EnneagramStats />
             </div>
           )}
 
-          {user.role === "licenciado" && (
+          {user.role !== "admin" && (
             <EmptyState
               image={EmptyDashsImage}
               title="Relatórios em Desenvolvimento"

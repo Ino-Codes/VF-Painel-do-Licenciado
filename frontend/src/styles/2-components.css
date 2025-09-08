@@ -152,23 +152,10 @@
   border-radius: 4px;
   border: 1px solid #ccc;
 }
-.page-buttons {
-  display: flex;
-  gap: 10px;
-}
-.pagination-controls button {
-  padding: 8px 15px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  background-color: #f8f9fa;
-  cursor: pointer;
-}
+
 .pagination-controls button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-}
-.pagination-controls button:not(:disabled):hover {
-  background-color: #e9ecef;
 }
 
 /* --- OUTROS COMPONENTES --- */

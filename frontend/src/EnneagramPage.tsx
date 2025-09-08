@@ -118,7 +118,7 @@ const EnneagramPage: React.FC = () => {
             style={{ borderTop: "none", paddingTop: "10px" }}
           >
             <button
-              className="form-button"
+              className="list-button"
               onClick={handlePrevPage}
               disabled={currentPage === 1}
             >
@@ -126,11 +126,11 @@ const EnneagramPage: React.FC = () => {
             </button>
 
             {currentPage < totalPages ? (
-              <button className="form-button" onClick={handleNextPage}>
+              <button className="list-button" onClick={handleNextPage}>
                 Próximo
               </button>
             ) : (
-              <button className="form-button" onClick={handleSubmit}>
+              <button className="list-button" onClick={handleSubmit}>
                 Ver Meu Resultado
               </button>
             )}

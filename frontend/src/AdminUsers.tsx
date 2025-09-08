@@ -426,16 +426,18 @@ const AdminUsers: React.FC = () => {
             <span>
               Página {currentPage} de {totalPages}
             </span>
-            <div className="page-buttons">
+            <div>
               <button
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
+                className="list-button"
               >
                 Anterior
               </button>
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages || totalPages === 0}
+                className="list-button"
               >
                 Próxima
               </button>
