@@ -339,11 +339,19 @@ const Dashboard: React.FC = () => {
 
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
-          {user.role === "admin" && (
-            <div className="dashboard-elements">
+          {user.role !== "licenciado" && (
+            <div>
               <h3>Análise Comportamental (Eneagrama)</h3>
               <EnneagramStats />
             </div>
+          )}
+
+          {user.role === "licenciado" && (
+            <EmptyState
+              image={EmptyDashsImage}
+              title="Relatórios em Desenvolvimento"
+              message="Estamos criando relatórios e gráficos que serão exibidos aqui futuramente."
+            ></EmptyState>
           )}
         </div>
       </div>
