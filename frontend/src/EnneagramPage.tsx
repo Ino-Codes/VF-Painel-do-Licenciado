@@ -125,6 +125,12 @@ const EnneagramPage: React.FC = () => {
               Anterior
             </button>
 
+            {totalPages > 0 && (
+              <span style={{ fontWeight: 500, color: "#6c757d" }}>
+                Página {currentPage} de {totalPages}
+              </span>
+            )}
+
             {currentPage < totalPages ? (
               <button className="list-button" onClick={handleNextPage}>
                 Próximo
