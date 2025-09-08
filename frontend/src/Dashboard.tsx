@@ -16,7 +16,7 @@ import EmptyDashsImage from "./assets/images/empty_dashs.svg";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-import EnneagramStats from "./EnneagramStats.tsx"; // Adicione a importação
+import EnneagramStats from "./EnneagramStats.tsx";
 
 interface Notice {
   id: number;

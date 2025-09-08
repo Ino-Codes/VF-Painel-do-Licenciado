@@ -1,3 +1,4 @@
+// backend/routes/enneagram.js
 const express = require("express");
 const router = express.Router();
 const { isLoggedIn } = require("../middleware/auth.js");
@@ -31,6 +32,19 @@ module.exports = function (pool) {
     }
   });
 
+  // --- ROTA CORRIGIDA ---
+  // A rota GET /types foi movida para fora da rota POST /submit
+  router.get("/types", checkLoggedIn, async (req, res) => {
+    try {
+      const result = await pool.query(
+        "SELECT * FROM enneagram_types ORDER BY id"
+      );
+      res.json(result.rows);
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao buscar tipos do Eneagrama." });
+    }
+  });
+
   // Rota para submeter as respostas e calcular o resultado
   router.post("/submit", checkLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
@@ -44,7 +58,6 @@ module.exports = function (pool) {
       }
     }
 
-    // Encontra o tipo dominante (com a maior pontuação)
     let dominantType = 0;
     let maxScore = -1;
     for (const type in scores) {
@@ -53,17 +66,6 @@ module.exports = function (pool) {
         dominantType = parseInt(type, 10);
       }
     }
-
-    router.get("/types", checkLoggedIn, async (req, res) => {
-      try {
-        const result = await pool.query(
-          "SELECT * FROM enneagram_types ORDER BY id"
-        );
-        res.json(result.rows);
-      } catch (err) {
-        res.status(500).json({ error: "Erro ao buscar tipos do Eneagrama." });
-      }
-    });
 
     try {
       const query = `
