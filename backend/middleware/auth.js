@@ -1,3 +1,5 @@
+// backend/middleware/auth.js
+
 const jwt = require("jsonwebtoken");
 
 const isLoggedIn = (pool) => (req, res, next) => {
@@ -18,6 +20,13 @@ const isLoggedIn = (pool) => (req, res, next) => {
 };
 
 const isAdmin = (pool) => (req, res, next) => {
+  // --- ADICIONE ESTA LINHA PARA DEPURAÇÃO ---
+  console.log(
+    "Verificando permissão de Admin. Conteúdo de req.user:",
+    req.user
+  );
+  // --- FIM DA LINHA DE DEPURAÇÃO ---
+
   if (req.user && req.user.role === "admin") {
     return next();
   }
