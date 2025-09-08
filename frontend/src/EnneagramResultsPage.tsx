@@ -88,8 +88,8 @@ const EnneagramResultsPage: React.FC = () => {
       {
         label: "Pontuação",
         data: scores,
-        backgroundColor: "rgba(4, 67, 161, 0.6)",
-        borderColor: "rgba(4, 90, 161, 1)",
+        backgroundColor: "rgba(25, 99, 209, 0.6)",
+        borderColor: "rgba(13, 107, 185, 1)",
         borderWidth: 1,
       },
     ],
@@ -165,9 +165,7 @@ const EnneagramResultsPage: React.FC = () => {
         </div>
 
         <div className="chart-container">
-          {activeTab === "percentual" && (
-            <Bar data={percentageData} options={chartOptions} />
-          )}
+          {activeTab === "percentual" && <Bar data={percentageData} />}
           {activeTab === "radar" && <Radar data={scoreRadarData} />}
           {activeTab === "pontos" && (
             <Bar data={scoreData} options={chartOptions} />
