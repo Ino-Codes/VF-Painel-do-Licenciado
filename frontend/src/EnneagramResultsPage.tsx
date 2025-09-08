@@ -168,9 +168,7 @@ const EnneagramResultsPage: React.FC = () => {
           {activeTab === "percentual" && (
             <Bar data={percentageData} options={chartOptions} />
           )}
-          {activeTab === "radar" && (
-            <Bar data={scoreRadarData} options={chartOptions} />
-          )}
+          {activeTab === "radar" && <Bar data={scoreRadarData} />}
           {activeTab === "pontos" && (
             <Bar data={scoreData} options={chartOptions} />
           )}
