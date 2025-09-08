@@ -153,6 +153,11 @@
   border: 1px solid #ccc;
 }
 
+.pagination-controls button {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
 .pagination-controls button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
