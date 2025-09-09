@@ -91,4 +91,4 @@ const initScheduledJobs = () => {
   );
 };
 
-module.exports = { initScheduledJobs };
+module.exports = { initScheduledJobs, sendEventNotifications };

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
+const { sendEventNotifications } = require("../cron.js");
 
 module.exports = function (pool) {
   const checkAdmin = isAdmin(pool);
@@ -67,6 +68,31 @@ module.exports = function (pool) {
       } catch (err) {
         console.error("Erro ao buscar estatísticas do Eneagrama:", err);
         res.status(500).json({ error: "Erro ao buscar estatísticas." });
+      }
+    }
+  );
+
+  router.get(
+    "/trigger-email-test",
+    checkLoggedIn,
+    checkAdmin,
+    async (req, res) => {
+      console.log(
+        "ROTA DE TESTE: Disparando manualmente o envio de emails de eventos..."
+      );
+      try {
+        await sendEventNotifications();
+        res
+          .status(200)
+          .send(
+            "Tarefa de notificação de eventos executada manualmente com sucesso. Verifique os logs e a sua caixa de entrada."
+          );
+      } catch (error) {
+        console.error(
+          "ROTA DE TESTE: Erro ao executar a tarefa manualmente.",
+          error
+        );
+        res.status(500).send("Ocorreu um erro ao executar a tarefa.");
       }
     }
   );

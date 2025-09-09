@@ -190,6 +190,8 @@ const EventModal: React.FC<EventModalProps> = ({
 
           <div className="form-row">
             <label>Cor do Evento</label>
+          </div>
+          <div className="form-row">
             <div className="color-palette">
               {colorPalette.map((c) => (
                 <div
@@ -204,6 +206,8 @@ const EventModal: React.FC<EventModalProps> = ({
 
           <div className="form-row">
             <label>Notificar Usuários (opcional)</label>
+          </div>
+          <div className="form-row">
             <Select
               isMulti
               options={allUsers}
