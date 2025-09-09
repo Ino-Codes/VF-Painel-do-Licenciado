@@ -17,7 +17,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         whereClause = `WHERE nome ILIKE $1 OR email ILIKE $1`;
       }
       const countSql = `SELECT COUNT(*) FROM users ${whereClause}`;
-      const usersSql = `SELECT id, nome, email, role, avatar_url FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
+
+      const usersSql = `SELECT id, nome, email, role, avatar_url, birth_date FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
         params.length + 1
       } OFFSET $${params.length + 2}`;
 
