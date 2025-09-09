@@ -1,5 +1,3 @@
-// frontend/src/AdminUsers.tsx
-
 import React, { useEffect, useState, useCallback } from "react";
 import api from "./api.ts";
 import { useAuth } from "./context/AuthContext.tsx";
@@ -14,6 +12,7 @@ interface User {
   nome: string;
   email: string;
   role: "admin" | "licenciado" | "colaborador";
+  birth_date?: string | null;
 }
 
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
@@ -148,16 +147,14 @@ const AdminUsers: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.role === "colaborador" && !form.birth_date) {
-      toast.error("A data de nascimento é obrigatória para colaboradores.");
-      return;
-    }
+
     try {
       if (editingUser) {
-        await api.put(`/api/users/admin/${editingUser.id}`, {
-          nome: editingUser.nome,
-          role: editingUser.role,
-        });
+        if (editingUser.role === "colaborador" && !editingUser.birth_date) {
+          toast.error("A data de nascimento é obrigatória para colaboradores.");
+          return;
+        }
+        await api.put(`/api/users/admin/${editingUser.id}`, editingUser);
         toast.success("Usuário atualizado com sucesso!");
         setEditingUser(null);
       } else {
@@ -172,8 +169,10 @@ const AdminUsers: React.FC = () => {
         });
       }
       fetchUsers();
-    } catch (err) {
-      toast.error("Ocorreu um erro ao salvar o usuário.");
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.error || "Ocorreu um erro ao salvar o usuário.";
+      toast.error(errorMessage);
     }
   };
 
@@ -221,7 +220,7 @@ const AdminUsers: React.FC = () => {
       return (
         <form onSubmit={handleSubmit} className="admin-form">
           <p>
-            Editando: <strong>{editingUser.nome}</strong> ({editingUser.email})
+            Editando: <strong>{editingUser.nome}</strong>
           </p>
           <div className="form-row">
             <input
@@ -233,7 +232,18 @@ const AdminUsers: React.FC = () => {
               }
               required
             />
-
+            <input
+              className="form-input"
+              placeholder="Email"
+              type="email"
+              value={editingUser.email}
+              onChange={(e) =>
+                setEditingUser({ ...editingUser, email: e.target.value })
+              }
+              required
+            />
+          </div>
+          <div className="form-row">
             <select
               className="form-select"
               value={editingUser.role}
@@ -247,6 +257,26 @@ const AdminUsers: React.FC = () => {
               <option value="admin">Admin</option>
             </select>
           </div>
+
+          {editingUser.role === "colaborador" && (
+            <div className="form-row">
+              <label style={{ fontWeight: 500 }}>Data de Nascimento</label>
+              <input
+                className="form-input"
+                type="date"
+                value={
+                  editingUser.birth_date
+                    ? editingUser.birth_date.substring(0, 10)
+                    : ""
+                }
+                onChange={(e) =>
+                  setEditingUser({ ...editingUser, birth_date: e.target.value })
+                }
+                required
+              />
+            </div>
+          )}
+
           <div className="form-row">
             <button className="form-button" type="submit">
               Salvar Alterações
@@ -291,18 +321,6 @@ const AdminUsers: React.FC = () => {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
           />
-          {/* {formType === "interno" && (
-            <select
-              className="form-select"
-              value={form.role}
-              onChange={(e) =>
-                setForm({ ...form, role: e.target.value as User["role"] })
-              }
-            >
-              <option value="colaborador">Colaborador</option>
-              <option value="admin">Admin</option>
-            </select>
-          )} */}
         </div>
 
         {form.role !== "licenciado" && (

@@ -101,24 +101,40 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   router.put("/admin/:id", async (req, res) => {
     const { id } = req.params;
-    const { nome, role } = req.body;
+    const { nome, email, role, birth_date } = req.body;
+
     try {
+      const finalBirthDate = role === "colaborador" ? birth_date : null;
+
       const result = await pool.query(
-        "UPDATE users SET nome = $1, role = $2 WHERE id = $3",
-        [nome, role, id]
+        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4 WHERE id = $5 RETURNING *",
+        [nome, email, role, finalBirthDate, id]
       );
-      if (result.rowCount === 0)
+      if (result.rowCount === 0) {
         return res.status(404).json({ error: "Usuário não encontrado." });
+      }
+
       logActivity(
         id,
-        null,
+        email,
         "UPDATE_USER_ADMIN",
-        `Dados do usuário ID ${id} foram atualizados para nome: ${nome}, role: ${role}.`,
+        `Dados do usuário ID ${id} foram atualizados.`,
         req.ipAddress
       );
-      res.json({ success: true, message: "Usuário atualizado com sucesso." });
+
+      const updatedUser = result.rows[0];
+      delete updatedUser.password;
+      delete updatedUser.reset_token;
+      delete updatedUser.reset_token_expires;
+
+      res.json({ success: true, user: updatedUser });
     } catch (err) {
       console.error("Erro ao atualizar usuário:", err);
+      if (err.code === "23505" && err.constraint === "users_email_key") {
+        return res
+          .status(409)
+          .json({ error: "Este e-mail já está em uso por outro usuário." });
+      }
       res.status(500).json({ error: "Erro no servidor" });
     }
   });
