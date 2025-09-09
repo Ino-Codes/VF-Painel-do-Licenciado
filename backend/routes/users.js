@@ -51,7 +51,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       );
       const newUserId = userResult.rows[0].id;
 
-      if (role === "colaborador" && birth_date) {
+      if (role !== "licenciado" && birth_date) {
         const [_, month, day] = birth_date.split("-");
 
         const eventTitle = `Aniversário de ${nome}`;
@@ -107,7 +107,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       await client.query("BEGIN");
 
-      const finalBirthDate = role === "colaborador" ? birth_date : null;
+      const finalBirthDate = role !== "licenciado" ? birth_date : null;
       const userResult = await client.query(
         "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4 WHERE id = $5 RETURNING *",
         [nome, email, role, finalBirthDate, id]
@@ -124,7 +124,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         [id]
       );
 
-      if (role === "colaborador" && finalBirthDate) {
+      if (role !== "licenciado" && finalBirthDate) {
         const birthDate = new Date(finalBirthDate);
         const eventTitle = `Aniversário - ${nome}`;
 

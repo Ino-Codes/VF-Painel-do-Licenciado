@@ -150,7 +150,7 @@ const AdminUsers: React.FC = () => {
 
     try {
       if (editingUser) {
-        if (editingUser.role === "colaborador" && !editingUser.birth_date) {
+        if (editingUser.role !== "licenciado" && !editingUser.birth_date) {
           toast.error("A data de nascimento é obrigatória para colaboradores.");
           return;
         }
@@ -258,7 +258,7 @@ const AdminUsers: React.FC = () => {
             </select>
           </div>
 
-          {editingUser.role === "colaborador" && (
+          {editingUser.role !== "licenciado" && (
             <div className="form-row">
               <label style={{ fontWeight: 500 }}>Data de Nascimento</label>
               <input
