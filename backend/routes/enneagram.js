@@ -1,4 +1,3 @@
-// backend/routes/enneagram.js
 const express = require("express");
 const router = express.Router();
 const { isLoggedIn } = require("../middleware/auth.js");
@@ -32,8 +31,6 @@ module.exports = function (pool) {
     }
   });
 
-  // --- ROTA CORRIGIDA ---
-  // A rota GET /types foi movida para fora da rota POST /submit
   router.get("/types", checkLoggedIn, async (req, res) => {
     try {
       const result = await pool.query(

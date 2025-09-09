@@ -27,16 +27,16 @@ module.exports = function (pool) {
          ORDER BY u.nome ASC`
         );
 
-        // 3. Contagem total de colaboradores
+        // 3. Contagem total de colaboradores com role diferente de 'licenciado'
         const totalCollaboratorsQuery = pool.query(
-          "SELECT COUNT(*) as total FROM users WHERE role = 'colaborador'"
+          "SELECT COUNT(*) as total FROM users WHERE role != 'licenciado'"
         );
 
         // 4. Contagem de colaboradores que completaram o teste
         const completedCollaboratorsQuery = pool.query(
           `SELECT COUNT(*) as completed FROM user_enneagram_results r
          JOIN users u ON r.user_id = u.id
-         WHERE u.role = 'colaborador'`
+         WHERE u.role != 'licenciado'`
         );
 
         const [
