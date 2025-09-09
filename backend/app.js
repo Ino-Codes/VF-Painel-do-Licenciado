@@ -67,6 +67,7 @@ const quizzesRoutes = require("./routes/quizzes.js");
 const eventRoutes = require("./routes/events.js");
 const enneagramRoutes = require("./routes/enneagram.js");
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.js");
+const { initScheduledJobs } = require("./cron.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
@@ -272,6 +273,13 @@ const createTables = async () => {
     personal_description TEXT
   );`;
 
+  const eventNotifications = `
+  CREATE TABLE IF NOT EXISTS event_notifications (
+    event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (event_id, user_id)
+  );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -293,6 +301,7 @@ const createTables = async () => {
     await pool.query(enneagramQuestionsTable);
     await pool.query(userEnneagramResultsTable);
     await pool.query(enneagramTypes);
+    await pool.query(eventNotifications);
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
@@ -303,4 +312,5 @@ const createTables = async () => {
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
   createTables();
+  initScheduledJobs();
 });

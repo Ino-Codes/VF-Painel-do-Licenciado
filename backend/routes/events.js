@@ -24,6 +24,42 @@ module.exports = function (pool) {
     }
   });
 
+  // ROTA PARA BUSCAR USUÁRIOS (para o modal)
+  router.get(
+    "/users-for-notification",
+    checkLoggedIn,
+    checkAdmin,
+    async (req, res) => {
+      try {
+        const result = await pool.query(
+          "SELECT id, nome, email FROM users WHERE role != 'licenciado' ORDER BY nome ASC"
+        );
+        res.json(result.rows);
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao buscar usuários." });
+      }
+    }
+  );
+
+  // ROTA PARA BUSCAR NOTIFICADOS DE UM EVENTO ESPECÍFICO
+  router.get(
+    "/:id/notified-users",
+    checkLoggedIn,
+    checkAdmin,
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query(
+          "SELECT user_id FROM event_notifications WHERE event_id = $1",
+          [id]
+        );
+        res.json(result.rows.map((row) => row.user_id));
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao buscar usuários notificados." });
+      }
+    }
+  );
+
   // ROTAS DE ADMINISTRAÇÃO
 
   // Rota para BUSCAR todos os eventos
@@ -40,38 +76,83 @@ module.exports = function (pool) {
   });
 
   // Rota para CRIAR um novo evento
-  router.post("/", async (req, res) => {
-    const { title, description, start_date, end_date, category, color } =
-      req.body;
+  router.post("/", checkLoggedIn, checkAdmin, async (req, res) => {
+    const {
+      title,
+      description,
+      start_date,
+      end_date,
+      category,
+      color,
+      notifiedUserIds,
+    } = req.body;
+    const client = await pool.connect();
     try {
-      const result = await pool.query(
-        "INSERT INTO events (title, description, start_date, end_date, category, color) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      await client.query("BEGIN");
+      const eventResult = await client.query(
+        "INSERT INTO events (title, description, start_date, end_date, category, color) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
         [title, description, start_date, end_date, category, color]
       );
-      res.status(201).json(result.rows[0]);
+      const newEventId = eventResult.rows[0].id;
+
+      if (notifiedUserIds && notifiedUserIds.length > 0) {
+        for (const userId of notifiedUserIds) {
+          await client.query(
+            "INSERT INTO event_notifications (event_id, user_id) VALUES ($1, $2)",
+            [newEventId, userId]
+          );
+        }
+      }
+      await client.query("COMMIT");
+      res.status(201).json({ id: newEventId });
     } catch (err) {
-      console.error("Erro ao criar evento:", err);
+      await client.query("ROLLBACK");
       res.status(500).json({ error: "Erro ao criar evento." });
+    } finally {
+      client.release();
     }
   });
 
   // Rota para ATUALIZAR um evento existente
-  router.put("/:id", async (req, res) => {
+  router.put("/:id", checkLoggedIn, checkAdmin, async (req, res) => {
     const { id } = req.params;
-    const { title, description, start_date, end_date, category, color } =
-      req.body;
+    const {
+      title,
+      description,
+      start_date,
+      end_date,
+      category,
+      color,
+      notifiedUserIds,
+    } = req.body;
+    const client = await pool.connect();
     try {
-      const result = await pool.query(
-        "UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, category = $5, color = $6 WHERE id = $7 RETURNING *",
+      await client.query("BEGIN");
+      await client.query(
+        "UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, category = $5, color = $6 WHERE id = $7",
         [title, description, start_date, end_date, category, color, id]
       );
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Evento não encontrado." });
+
+      await client.query(
+        "DELETE FROM event_notifications WHERE event_id = $1",
+        [id]
+      );
+
+      if (notifiedUserIds && notifiedUserIds.length > 0) {
+        for (const userId of notifiedUserIds) {
+          await client.query(
+            "INSERT INTO event_notifications (event_id, user_id) VALUES ($1, $2)",
+            [id, userId]
+          );
+        }
       }
-      res.json(result.rows[0]);
+      await client.query("COMMIT");
+      res.json({ success: true });
     } catch (err) {
-      console.error("Erro ao atualizar evento:", err);
+      await client.query("ROLLBACK");
       res.status(500).json({ error: "Erro ao atualizar evento." });
+    } finally {
+      client.release();
     }
   });
 
