@@ -7,6 +7,9 @@ import Footer from "./Footer.tsx";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
+import EmptyState from "./EmptyState.tsx";
+
+import EmptyDocumentsImage from "./assets/images/empty_documentos.svg";
 
 interface FileData {
   id: number;
@@ -240,7 +243,11 @@ const Documentos: React.FC = () => {
               </div>
             ))
           ) : (
-            <p>Nenhum documento encontrado nesta categoria.</p>
+            <EmptyState
+              image={EmptyDocumentsImage}
+              title="Nenhum Documento Encontrado"
+              message="Estamos incluindo documentos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
+            />
           )}
         </div>
       </div>
