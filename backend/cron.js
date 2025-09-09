@@ -83,7 +83,7 @@ const sendEventNotifications = async () => {
 };
 
 const initScheduledJobs = () => {
-  cron.schedule("0 8 * * *", sendEventNotifications, {
+  cron.schedule("25 15 * * *", sendEventNotifications, {
     timezone: "America/Sao_Paulo",
   });
   console.log(
