@@ -1,7 +1,11 @@
 const express = require("express");
 const router = express.Router();
+const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 
-module.exports = function (pool) {
+module.exports = function (pool, cloudinary, upload) {
+  const checkAdmin = isAdmin(pool);
+  const checkLoggedIn = isLoggedIn(pool);
+
   // ROTA PÚBLICA PARA O DASHBOARD
   router.get("/current-month", async (req, res) => {
     try {
