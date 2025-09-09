@@ -102,17 +102,60 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.put("/admin/:id", async (req, res) => {
     const { id } = req.params;
     const { nome, email, role, birth_date } = req.body;
+    const client = await pool.connect();
 
     try {
-      const finalBirthDate = role === "colaborador" ? birth_date : null;
+      await client.query("BEGIN");
 
-      const result = await pool.query(
+      const finalBirthDate = role === "colaborador" ? birth_date : null;
+      const userResult = await client.query(
         "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4 WHERE id = $5 RETURNING *",
         [nome, email, role, finalBirthDate, id]
       );
-      if (result.rowCount === 0) {
+
+      if (userResult.rowCount === 0) {
+        await client.query("ROLLBACK");
+        client.release();
         return res.status(404).json({ error: "Usuário não encontrado." });
       }
+
+      await client.query(
+        "DELETE FROM events WHERE created_by_user_id = $1 AND category = 'Aniversário'",
+        [id]
+      );
+
+      if (role === "colaborador" && finalBirthDate) {
+        const birthDate = new Date(finalBirthDate);
+        const eventTitle = `Aniversário - ${nome}`;
+
+        for (let i = 0; i < 10; i++) {
+          const eventYear = new Date().getFullYear() + i;
+          const eventStartDate = new Date(
+            Date.UTC(
+              eventYear,
+              birthDate.getUTCMonth(),
+              birthDate.getUTCDate(),
+              8
+            )
+          );
+
+          await client.query(
+            `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              eventTitle,
+              "Dia de comemorar!",
+              eventStartDate,
+              eventStartDate,
+              "Aniversário",
+              "#81e18c",
+              id,
+            ]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
 
       logActivity(
         id,
@@ -122,13 +165,14 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         req.ipAddress
       );
 
-      const updatedUser = result.rows[0];
+      const updatedUser = userResult.rows[0];
       delete updatedUser.password;
       delete updatedUser.reset_token;
       delete updatedUser.reset_token_expires;
 
       res.json({ success: true, user: updatedUser });
     } catch (err) {
+      await client.query("ROLLBACK");
       console.error("Erro ao atualizar usuário:", err);
       if (err.code === "23505" && err.constraint === "users_email_key") {
         return res
@@ -136,6 +180,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           .json({ error: "Este e-mail já está em uso por outro usuário." });
       }
       res.status(500).json({ error: "Erro no servidor" });
+    } finally {
+      client.release();
     }
   });
 
