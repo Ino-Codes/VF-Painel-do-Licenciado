@@ -67,7 +67,7 @@ const quizzesRoutes = require("./routes/quizzes.js");
 const eventRoutes = require("./routes/events.js");
 const enneagramRoutes = require("./routes/enneagram.js");
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.js");
-const { initScheduledJobs } = require("./cron.js");
+const { initScheduledJobs } = require("./routes/cron.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));

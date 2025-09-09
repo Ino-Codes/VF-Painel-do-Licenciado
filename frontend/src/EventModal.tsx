@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "./api.ts";
 import toast from "react-hot-toast";
+import Select from "react-select";
 
 interface EventModalProps {
   isOpen: boolean;
@@ -34,8 +35,21 @@ const EventModal: React.FC<EventModalProps> = ({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
-  const [color, setColor] = useState(colorPalette[0]);
+  const [color, setColor] = useState("#daa520");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+
+  useEffect(() => {
+    api.get("/api/admin/events/users-for-notification").then((res) => {
+      const userOptions = res.data.map((user) => ({
+        value: user.id,
+        label: user.nome,
+      }));
+      setAllUsers(userOptions);
+    });
+  }, []);
 
   useEffect(() => {
     if (eventToEdit) {
@@ -45,6 +59,15 @@ const EventModal: React.FC<EventModalProps> = ({
       setEndDate(formatDateTimeForInput(new Date(eventToEdit.end_date)));
       setCategory(eventToEdit.category || "");
       setColor(eventToEdit.color || colorPalette[0]);
+      api
+        .get(`/api/admin/events/${eventToEdit.id}/notified-users`)
+        .then((res) => {
+          const notifiedIds = res.data;
+          const preSelected = allUsers.filter((user) =>
+            notifiedIds.includes(user.value)
+          );
+          setSelectedUsers(preSelected);
+        });
     } else if (selectedDate) {
       const localDate = new Date(`${selectedDate}T09:00:00`);
       setTitle("");
@@ -53,15 +76,12 @@ const EventModal: React.FC<EventModalProps> = ({
       setEndDate(formatDateTimeForInput(localDate));
       setCategory("");
       setColor(colorPalette[0]);
+      setSelectedUsers([]);
     }
-  }, [eventToEdit, selectedDate]);
+  }, [eventToEdit, selectedDate, allUsers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !startDate || !endDate || !category.trim()) {
-      toast.error("Todos os campos, exceto descrição, são obrigatórios.");
-      return;
-    }
     const eventData = {
       title,
       description,
@@ -69,15 +89,16 @@ const EventModal: React.FC<EventModalProps> = ({
       end_date: new Date(endDate).toISOString(),
       category,
       color,
+      notifiedUserIds: selectedUsers.map((u) => u.value),
     };
 
     try {
       if (eventToEdit) {
         await api.put(`/api/admin/events/${eventToEdit.id}`, eventData);
-        toast.success("Evento atualizado com sucesso!");
+        toast.success("Evento atualizado!");
       } else {
         await api.post("/api/admin/events", eventData);
-        toast.success("Evento criado com sucesso!");
+        toast.success("Evento criado!");
       }
       onSuccess();
     } catch (err) {
@@ -181,6 +202,18 @@ const EventModal: React.FC<EventModalProps> = ({
             </div>
           </div>
 
+          <div className="form-row">
+            <label>Notificar Usuários (opcional)</label>
+            <Select
+              isMulti
+              options={allUsers}
+              value={selectedUsers}
+              onChange={(selectedOptions) => setSelectedUsers(selectedOptions)}
+              placeholder="Selecione os usuários..."
+              noOptionsMessage={() => "Nenhum usuário encontrado"}
+            />
+          </div>
+
           <div>
             <div className="modal-actions">
               {eventToEdit && (
@@ -211,5 +244,4 @@ const EventModal: React.FC<EventModalProps> = ({
     </div>
   );
 };
-
 export default EventModal;
