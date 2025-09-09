@@ -209,6 +209,7 @@ const EventModal: React.FC<EventModalProps> = ({
           </div>
           <div className="form-row">
             <Select
+              className="form-select"
               isMulti
               options={allUsers}
               value={selectedUsers}

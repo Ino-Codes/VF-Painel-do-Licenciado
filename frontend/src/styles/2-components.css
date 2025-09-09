@@ -102,6 +102,10 @@
   gap: 10px;
   margin-top: 20px;
 }
+.form-select {
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+}
 
 /* --- TABS --- */
 .tabs {
