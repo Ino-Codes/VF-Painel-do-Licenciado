@@ -9,6 +9,7 @@ interface EventModalProps {
   onSuccess: () => void;
   eventToEdit: any | null;
   selectedDate: string | null;
+  categories: string[];
 }
 
 const formatDateTimeForInput = (date: Date): string => {
@@ -29,6 +30,7 @@ const EventModal: React.FC<EventModalProps> = ({
   onSuccess,
   eventToEdit,
   selectedDate,
+  categories,
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -149,9 +151,9 @@ const EventModal: React.FC<EventModalProps> = ({
               required
             />
             <datalist id="category-suggestions">
-              <option value="Aniversário" />
-              <option value="Feriado" />
-              <option value="Happy Hour" />
+              {categories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
             </datalist>
           </div>
 

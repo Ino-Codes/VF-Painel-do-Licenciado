@@ -18,6 +18,7 @@ const AdminCalendar: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
@@ -25,6 +26,16 @@ const AdminCalendar: React.FC = () => {
       navigate("/dashboard");
     }
   }, [user, loading, navigate]);
+
+  const fetchCategories = useCallback(async () => {
+    if (!user || user.role !== "admin") return;
+    try {
+      const res = await api.get("/api/admin/events/categories");
+      setCategories(res.data);
+    } catch (err) {
+      toast.error("Não foi possível carregar as categorias de eventos.");
+    }
+  }, [user]);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -51,6 +62,7 @@ const AdminCalendar: React.FC = () => {
   useEffect(() => {
     if (user && user.role === "admin") {
       fetchEvents();
+      fetchCategories();
     }
   }, [user, fetchEvents]);
 
@@ -103,6 +115,7 @@ const AdminCalendar: React.FC = () => {
   const handleModalSuccess = () => {
     handleModalClose();
     fetchEvents();
+    fetchCategories();
   };
 
   if (loading || !user || user.role !== "admin") {
@@ -154,6 +167,7 @@ const AdminCalendar: React.FC = () => {
           onSuccess={handleModalSuccess}
           eventToEdit={selectedEvent}
           selectedDate={selectedDate}
+          categories={categories}
         />
       )}
       <Footer />
