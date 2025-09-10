@@ -1,5 +1,3 @@
-// backend/cron.js
-const cron = require("node-cron");
 const { Pool } = require("pg");
 const sgMail = require("@sendgrid/mail");
 
@@ -11,20 +9,23 @@ const pool = new Pool({
 });
 
 const sendEventNotifications = async () => {
-  console.log("CRON JOB: Verificando eventos para hoje...");
+  console.log("SEND NOTIFICATIONS: Verificando eventos para hoje...");
   const now = new Date();
+  const spDate = new Date(
+    now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+  );
   const todayStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
+    spDate.getFullYear(),
+    spDate.getMonth(),
+    spDate.getDate(),
     0,
     0,
     0
   );
   const todayEnd = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
+    spDate.getFullYear(),
+    spDate.getMonth(),
+    spDate.getDate(),
     23,
     59,
     59
@@ -33,19 +34,19 @@ const sendEventNotifications = async () => {
   try {
     const queryResult = await pool.query(
       `SELECT 
-                e.title, e.description, e.start_date, e.color,
-                u.id as user_id, u.nome, u.email
-             FROM events e
-             JOIN event_notifications en ON e.id = en.event_id
-             JOIN users u ON en.user_id = u.id
-             WHERE e.start_date >= $1 AND e.start_date <= $2
-             ORDER BY u.id, e.start_date`,
+        e.title, e.description, e.start_date, e.color,
+        u.id as user_id, u.nome, u.email
+        FROM events e
+        JOIN event_notifications en ON e.id = en.event_id
+        JOIN users u ON en.user_id = u.id
+        WHERE e.start_date >= $1 AND e.start_date <= $2
+        ORDER BY u.id, e.start_date`,
       [todayStart, todayEnd]
     );
 
     if (queryResult.rows.length === 0) {
       console.log(
-        "CRON JOB: Nenhum evento com notificados para hoje. Encerrando."
+        "SEND NOTIFICATIONS: Nenhum evento com notificados para hoje."
       );
       return;
     }
@@ -61,7 +62,6 @@ const sendEventNotifications = async () => {
 
     for (const userId in notificationsByUser) {
       const user = notificationsByUser[userId];
-
       const eventsHtmlList = user.events
         .map((event) => {
           const eventTime = new Date(event.start_date).toLocaleTimeString(
@@ -142,21 +142,17 @@ const sendEventNotifications = async () => {
 
       await sgMail.send(msg);
       console.log(
-        `CRON JOB: Email de resumo estilizado enviado para ${user.email} com ${user.events.length} evento(s).`
+        `SEND NOTIFICATIONS: Email de resumo estilizado enviado para ${user.email} com ${user.events.length} evento(s).`
       );
     }
   } catch (err) {
-    console.error("CRON JOB: Erro ao enviar notificações de evento:", err);
+    console.error(
+      "SEND NOTIFICATIONS: Erro ao enviar notificações de evento:",
+      err
+    );
+    throw err;
   }
 };
 
-const initScheduledJobs = () => {
-  cron.schedule("30 8 * * *", sendEventNotifications, {
-    timezone: "America/Sao_Paulo",
-  });
-  console.log(
-    "Agendador de tarefas (Cron Job) para notificações de eventos foi iniciado para as 15:30."
-  );
-};
-
-module.exports = { initScheduledJobs, sendEventNotifications };
+// Apenas exportamos a função, sem agendamento
+module.exports = { sendEventNotifications };

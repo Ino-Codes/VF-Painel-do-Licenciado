@@ -67,7 +67,7 @@ const quizzesRoutes = require("./routes/quizzes.js");
 const eventRoutes = require("./routes/events.js");
 const enneagramRoutes = require("./routes/enneagram.js");
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.js");
-const { initScheduledJobs } = require("./cron.js");
+const cronTriggerRoutes = require("./routes/cronTrigger.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
@@ -84,6 +84,7 @@ app.use("/api/admin/events", eventRoutes(pool));
 app.use("/api/events", eventRoutes(pool));
 app.use("/api/enneagram", enneagramRoutes(pool));
 app.use("/api/admin/analytics", adminAnalyticsRoutes(pool));
+app.use("/api/cron", cronTriggerRoutes(pool));
 
 // --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
@@ -312,5 +313,4 @@ const createTables = async () => {
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
   createTables();
-  initScheduledJobs();
 });
