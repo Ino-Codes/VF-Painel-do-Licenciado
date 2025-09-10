@@ -67,7 +67,7 @@ const quizzesRoutes = require("./routes/quizzes.js");
 const eventRoutes = require("./routes/events.js");
 const enneagramRoutes = require("./routes/enneagram.js");
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.js");
-const { initScheduledJobs } = require("./cron.js");
+//INATIVO: const { initScheduledJobs } = require("./cron.js");
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
@@ -312,5 +312,5 @@ const createTables = async () => {
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
   createTables();
-  initScheduledJobs();
+  //INATIVO: initScheduledJobs();
 });

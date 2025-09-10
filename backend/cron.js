@@ -1,5 +1,4 @@
-// backend/cron.js
-const cron = require("node-cron");
+// backend/cron.js (versão simplificada)
 const { Pool } = require("pg");
 const sgMail = require("@sendgrid/mail");
 
@@ -11,26 +10,31 @@ const pool = new Pool({
 });
 
 const sendEventNotifications = async () => {
-  console.log("CRON JOB: Verificando eventos para hoje...");
+  console.log("SEND NOTIFICATIONS: Verificando eventos para hoje...");
   const now = new Date();
+  // Lógica para pegar o dia de hoje no fuso horário de São Paulo
+  const spDate = new Date(
+    now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+  );
   const todayStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
+    spDate.getFullYear(),
+    spDate.getMonth(),
+    spDate.getDate(),
     0,
     0,
     0
   );
   const todayEnd = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
+    spDate.getFullYear(),
+    spDate.getMonth(),
+    spDate.getDate(),
     23,
     59,
     59
   );
 
   try {
+    // ... (o resto da lógica da função para buscar eventos e enviar emails continua exatamente o mesmo)
     const queryResult = await pool.query(
       `SELECT 
                 e.title, e.description, e.start_date, e.color,
@@ -45,7 +49,7 @@ const sendEventNotifications = async () => {
 
     if (queryResult.rows.length === 0) {
       console.log(
-        "CRON JOB: Nenhum evento com notificados para hoje. Encerrando."
+        "SEND NOTIFICATIONS: Nenhum evento com notificados para hoje."
       );
       return;
     }
@@ -61,7 +65,6 @@ const sendEventNotifications = async () => {
 
     for (const userId in notificationsByUser) {
       const user = notificationsByUser[userId];
-
       const eventsHtmlList = user.events
         .map((event) => {
           const eventTime = new Date(event.start_date).toLocaleTimeString(
@@ -74,63 +77,63 @@ const sendEventNotifications = async () => {
           );
           const eventColor = event.color || "#daa520";
           return `
-                    <div style="background-color: #ffffff; border: 1px solid #e9ecef; border-left: 5px solid ${eventColor}; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
-                        <p style="margin: 0; font-size: 16px; font-weight: 600; color: #0D0D0D;">${
-                          event.title
-                        } às ${eventTime}</p>
-                        <p style="margin: 5px 0 0; font-size: 14px; color: #6c757d;">${
-                          event.description || ""
-                        }</p>
-                    </div>
-                `;
+            <div style="background-color: #ffffff; border: 1px solid #e9ecef; border-left: 5px solid ${eventColor}; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <p style="margin: 0; font-size: 16px; font-weight: 600; color: #0D0D0D;">${
+                  event.title
+                } às ${eventTime}</p>
+                <p style="margin: 5px 0 0; font-size: 14px; color: #6c757d;">${
+                  event.description || ""
+                }</p>
+            </div>
+            `;
         })
         .join("");
 
       const html = `
-              <!DOCTYPE html>
-              <html lang="pt-BR">
-              <head>
-                <style>
-                  body { font-family: 'Montserrat', sans-serif; }
-                </style>
-              </head>
-              <body style="margin: 0; padding: 0; background-color: #f4f4f4;">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                  <tr>
-                    <td align="center" style="padding: 20px 0;">
-                      <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                        
-                        <tr>
-                          <td align="center" style="background-color: #111217; padding: 20px 0;">
-                            <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png" alt="Valor Fiscal Logo" style="width: 200px; height: auto;">
-                          </td>
-                        </tr>
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+            <style>
+                body { font-family: 'Montserrat', sans-serif; }
+            </style>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                <td align="center" style="padding: 20px 0;">
+                    <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    
+                    <tr>
+                        <td align="center" style="background-color: #111217; padding: 20px 0;">
+                        <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png" alt="Valor Fiscal Logo" style="width: 200px; height: auto;">
+                        </td>
+                    </tr>
 
-                        <tr>
-                          <td style="padding: 30px 40px; color: #2D2C2B; font-size: 16px; line-height: 1.6;">
-                            <h2 style="font-size: 22px; color: #0D0D0D; margin-top: 0;">Lembrete de Eventos para Hoje</h2>
-                            <p>Olá, ${user.nome}!</p>
-                            <p>Estes são os seus eventos agendados para hoje no Painel da Valor Fiscal:</p>
-                            <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 20px 0;">
-                            ${eventsHtmlList}
-                            <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 20px 0;">
-                            <p style="text-align: center;">Acesse o painel para mais detalhes.</p>
-                          </td>
-                        </tr>
+                    <tr>
+                        <td style="padding: 30px 40px; color: #2D2C2B; font-size: 16px; line-height: 1.6;">
+                        <h2 style="font-size: 22px; color: #0D0D0D; margin-top: 0;">Lembrete de Eventos para Hoje</h2>
+                        <p>Olá, ${user.nome}!</p>
+                        <p>Estes são os seus eventos agendados para hoje no Painel da Valor Fiscal:</p>
+                        <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 20px 0;">
+                        ${eventsHtmlList}
+                        <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 20px 0;">
+                        <p style="text-align: center;">Acesse o painel para mais detalhes.</p>
+                        </td>
+                    </tr>
 
-                        <tr>
-                          <td align="center" style="background-color: #f8f9fa; padding: 20px; font-size: 12px; color: #6c757d;">
-                            <p>Valor Fiscal Inteligência Tributária © ${new Date().getFullYear()}</p>
-                            <p>Esta é uma mensagem automática. Por favor, não responda a este email.</p>
-                          </td>
-                        </tr>
+                    <tr>
+                        <td align="center" style="background-color: #f8f9fa; padding: 20px; font-size: 12px; color: #6c757d;">
+                        <p>Valor Fiscal Inteligência Tributária © ${new Date().getFullYear()}</p>
+                        <p>Esta é uma mensagem automática. Por favor, não responda a este email.</p>
+                        </td>
+                    </tr>
 
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </body>
-              </html>
+                    </table>
+                </td>
+                </tr>
+            </table>
+            </body>
+            </html>
             `;
 
       const msg = {
@@ -146,17 +149,13 @@ const sendEventNotifications = async () => {
       );
     }
   } catch (err) {
-    console.error("CRON JOB: Erro ao enviar notificações de evento:", err);
+    console.error(
+      "SEND NOTIFICATIONS: Erro ao enviar notificações de evento:",
+      err
+    );
+    throw err; // Lança o erro para que o cron-runner saiba que falhou
   }
 };
 
-const initScheduledJobs = () => {
-  cron.schedule("30 8 * * *", sendEventNotifications, {
-    timezone: "America/Sao_Paulo",
-  });
-  console.log(
-    "Agendador de tarefas (Cron Job) para notificações de eventos foi iniciado para as 15:30."
-  );
-};
-
-module.exports = { initScheduledJobs, sendEventNotifications };
+// Removemos a função initScheduledJobs e a importação do 'node-cron'
+module.exports = { sendEventNotifications };
