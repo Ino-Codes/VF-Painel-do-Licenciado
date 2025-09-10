@@ -4,8 +4,8 @@ name: Disparador de Notificações de Eventos
 
 on:
   schedule:
-    # Corre todos os dias às 18:30 UTC, que corresponde às 15:30 no horário de Brasília (UTC-3)
-    - cron: "30 18 * * *"
+    # Corre todos os dias às 11:30 UTC, que corresponde às 08:30 no horário de Brasília (UTC-3)
+    - cron: "30 11 * * *"
   workflow_dispatch: # Permite acionar manualmente pela interface do GitHub
 
 jobs:
