@@ -79,6 +79,18 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
+  // Rota para BUSCAR as categorias
+  router.get("/categories", checkLoggedIn, checkAdmin, async (req, res) => {
+    try {
+      const result = await pool.query(
+        "SELECT DISTINCT category FROM events WHERE category IS NOT NULL AND category != '' ORDER BY category ASC"
+      );
+      res.json(result.rows.map((row) => row.category));
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao buscar categorias de eventos." });
+    }
+  });
+
   // Rota para CRIAR um novo evento
   router.post("/", checkLoggedIn, checkAdmin, async (req, res) => {
     const {
