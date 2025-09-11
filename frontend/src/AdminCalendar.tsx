@@ -168,6 +168,13 @@ const AdminCalendar: React.FC = () => {
             eventConstraint="businessHours"
             height="auto"
             expandRows={false}
+            eventClassNames={(arg) => {
+              const now = new Date();
+              if (arg.event.end < now) {
+                return ["fc-event-past"];
+              }
+              return [];
+            }}
           />
         </div>
       </div>

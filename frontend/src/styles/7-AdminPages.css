@@ -227,6 +227,15 @@
   background-color: transparent !important;
 }
 
+.fc-event-past {
+  opacity: 0.65 !important;
+}
+
+.fc-event-past .fc-event-title,
+.fc-event-past .fc-event-time {
+  color: #333 !important;
+}
+
 /* --- RESPONSIVO (ADMIN) --- */
 @media (max-width: 900px) {
   .user-list-item {
