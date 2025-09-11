@@ -245,6 +245,27 @@
   max-width: 100px;
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.form-group label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.datetime-picker {
+  display: flex;
+  gap: 5px;
+}
+
+.time-part {
+  max-width: 120px;
+}
+
 /* --- RESPONSIVO (ADMIN) --- */
 @media (max-width: 900px) {
   .user-list-item {

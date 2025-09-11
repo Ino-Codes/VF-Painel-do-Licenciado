@@ -43,9 +43,8 @@ const EventModal: React.FC<EventModalProps> = ({
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
 
-  const [startDate, setStartDate] = useState("");
+  const [eventDate, setEventDate] = useState("");
   const [startTime, setStartTime] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
 
   useEffect(() => {
@@ -59,6 +58,11 @@ const EventModal: React.FC<EventModalProps> = ({
   }, []);
 
   useEffect(() => {
+    const getFormattedTime = (date: Date) =>
+      String(date.getHours()).padStart(2, "0") +
+      ":" +
+      String(date.getMinutes()).padStart(2, "0");
+
     if (eventToEdit) {
       setTitle(eventToEdit.title || "");
       setDescription(eventToEdit.description || "");
@@ -66,20 +70,12 @@ const EventModal: React.FC<EventModalProps> = ({
       setColor(eventToEdit.color || colorPalette[0]);
 
       const start = new Date(eventToEdit.start_date);
-      setStartDate(start.toISOString().split("T")[0]);
-      setStartTime(
-        String(start.getHours()).padStart(2, "0") +
-          ":" +
-          String(start.getMinutes()).padStart(2, "0")
-      );
-
       const end = new Date(eventToEdit.end_date);
-      setEndDate(end.toISOString().split("T")[0]);
-      setEndTime(
-        String(end.getHours()).padStart(2, "0") +
-          ":" +
-          String(end.getMinutes()).padStart(2, "0")
-      );
+
+      setEventDate(start.toISOString().split("T")[0]);
+      setStartTime(getFormattedTime(start));
+      setEndTime(getFormattedTime(end));
+
       setCategory(eventToEdit.category || "");
       setColor(eventToEdit.color || colorPalette[0]);
       api
@@ -101,47 +97,22 @@ const EventModal: React.FC<EventModalProps> = ({
 
       setTitle("");
       setDescription("");
-      setStartDate(startDateObj.toISOString().split("T")[0]);
-      setStartTime(
-        String(startDateObj.getHours()).padStart(2, "0") +
-          ":" +
-          String(startDateObj.getMinutes()).padStart(2, "0")
-      );
-      setEndDate(endDateObj.toISOString().split("T")[0]);
-      setEndTime(
-        String(endDateObj.getHours()).padStart(2, "0") +
-          ":" +
-          String(endDateObj.getMinutes()).padStart(2, "0")
-      );
+      setEventDate(startDateObj.toISOString().split("T")[0]);
+      setStartTime(getFormattedTime(startDateObj));
+      setEndTime(getFormattedTime(endDateObj));
       setCategory("");
       setColor(colorPalette[0]);
       setSelectedUsers([]);
     }
   }, [eventToEdit, selectedDate]);
 
-  useEffect(() => {
-    if (!eventToEdit && startDate && startTime) {
-      const startDateObj = new Date(`${startDate}T${startTime}`);
-      if (!isNaN(startDateObj.getTime())) {
-        const endDateObj = new Date(startDateObj.getTime());
-        endDateObj.setMinutes(endDateObj.getMinutes() + 30);
-        setEndDate(endDateObj.toISOString().split("T")[0]);
-        setEndTime(
-          String(endDateObj.getHours()).padStart(2, "0") +
-            ":" +
-            String(endDateObj.getMinutes()).padStart(2, "0")
-        );
-      }
-    }
-  }, [startDate, startTime, eventToEdit]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const eventData = {
       title,
       description,
-      start_date: new Date(`${startDate}T${startTime}`).toISOString(),
-      end_date: new Date(`${endDate}T${endTime}`).toISOString(),
+      start_date: new Date(`${eventDate}T${startTime}`).toISOString(),
+      end_date: new Date(`${eventDate}T${endTime}`).toISOString(),
       category,
       color,
       notifiedUserIds: selectedUsers.map((u) => u.value),
@@ -211,54 +182,49 @@ const EventModal: React.FC<EventModalProps> = ({
           </div>
 
           <div className="form-row">
-            <div style={{ flex: 3 }}>
-              <label>Início</label>
-              <div className="datetime-picker">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="form-input date-part"
-                  required
-                />
-                <input
-                  type="text"
-                  list="time-suggestions"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="form-input time-part"
-                  placeholder="HH:mm"
-                  required
-                />
-                <datalist id="time-suggestions">
-                  {timeOptions.map((time) => (
-                    <option key={time} value={time} />
-                  ))}
-                </datalist>
-              </div>
-            </div>
-            <div style={{ flex: 3 }}>
-              <label>Fim</label>
-              <div className="datetime-picker">
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="form-input date-part"
-                  required
-                />
-                <input
-                  type="text"
-                  list="time-suggestions"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="form-input time-part"
-                  placeholder="HH:mm"
-                  required
-                />
-              </div>
+            <div className="form-group" style={{ width: "100%" }}>
+              <label>Data do Evento</label>
+              <input
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="form-input"
+                required
+              />
             </div>
           </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Início</label>
+              <input
+                type="text"
+                list="time-suggestions"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="form-input time-part"
+                placeholder="HH:mm"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Fim</label>
+              <input
+                type="text"
+                list="time-suggestions"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="form-input time-part"
+                placeholder="HH:mm"
+                required
+              />
+            </div>
+          </div>
+          <datalist id="time-suggestions">
+            {timeOptions.map((time) => (
+              <option key={time} value={time} />
+            ))}
+          </datalist>
 
           <div className="form-row">
             <textarea
