@@ -166,6 +166,8 @@ const AdminCalendar: React.FC = () => {
             }}
             selectConstraint="businessHours"
             eventConstraint="businessHours"
+            height="auto"
+            expandRows={false}
           />
         </div>
       </div>
