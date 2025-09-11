@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import api from "./api.ts";
 import toast from "react-hot-toast";
 import Select from "react-select";
+import DatePicker from "./DatePicker.tsx";
+import { TimePicker } from "./TimePicker.tsx";
 
 interface EventModalProps {
   isOpen: boolean;
@@ -13,69 +15,6 @@ interface EventModalProps {
 }
 
 const colorPalette = ["#efcb6e", "#81e18c", "#b8b8b8", "#81a7e1", "#e18181"];
-
-const TimePicker: React.FC<{
-  value: string;
-  onChange: (value: string) => void;
-}> = ({ value, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  const timeOptions = React.useMemo(() => {
-    const options = [];
-    for (let h = 6; h < 21; h++) {
-      for (let m = 0; m < 60; m += 15) {
-        options.push(
-          `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
-        );
-      }
-    }
-    return options;
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div className="time-picker-wrapper" ref={wrapperRef}>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setIsOpen(true)}
-        className="form-input time-part"
-        placeholder="HH:mm"
-        required
-      />
-      {isOpen && (
-        <div className="time-picker-dropdown">
-          {timeOptions.map((time) => (
-            <div
-              key={time}
-              className="time-picker-option"
-              onClick={() => {
-                onChange(time);
-                setIsOpen(false);
-              }}
-            >
-              {time}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const EventModal: React.FC<EventModalProps> = ({
   isOpen,
@@ -126,8 +65,6 @@ const EventModal: React.FC<EventModalProps> = ({
       setStartTime(getFormattedTime(start));
       setEndTime(getFormattedTime(end));
 
-      setCategory(eventToEdit.category || "");
-      setColor(eventToEdit.color || colorPalette[0]);
       api
         .get(`/api/admin/events/${eventToEdit.id}/notified-users`)
         .then((res) => {
@@ -154,7 +91,7 @@ const EventModal: React.FC<EventModalProps> = ({
       setColor(colorPalette[0]);
       setSelectedUsers([]);
     }
-  }, [eventToEdit, selectedDate]);
+  }, [eventToEdit, selectedDate, allUsers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,7 +104,6 @@ const EventModal: React.FC<EventModalProps> = ({
       color,
       notifiedUserIds: selectedUsers.map((u) => u.value),
     };
-
     try {
       if (eventToEdit) {
         await api.put(`/api/admin/events/${eventToEdit.id}`, eventData);
@@ -199,7 +135,6 @@ const EventModal: React.FC<EventModalProps> = ({
   const handleDateChange = (dateString: string) => {
     const selected = new Date(`${dateString}T12:00:00`);
     const dayOfWeek = selected.getDay();
-
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       toast.error("Não é possível agendar eventos aos sábados ou domingos.");
       return;
@@ -245,13 +180,7 @@ const EventModal: React.FC<EventModalProps> = ({
           <div className="form-row">
             <div className="form-group" style={{ width: "100%" }}>
               <label>Data do Evento</label>
-              <input
-                type="date"
-                value={eventDate}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="form-input"
-                required
-              />
+              <DatePicker value={eventDate} onChange={handleDateChange} />
             </div>
           </div>
 
@@ -337,4 +266,5 @@ const EventModal: React.FC<EventModalProps> = ({
     </div>
   );
 };
+
 export default EventModal;
