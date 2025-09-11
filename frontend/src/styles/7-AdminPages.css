@@ -231,10 +231,19 @@
   opacity: 0.65 !important;
 }
 
-/* .fc-event-past .fc-event-title,
-.fc-event-past .fc-event-time {
-  color: #333 !important;
-} */
+.datetime-picker {
+  display: flex;
+  gap: 5px;
+}
+
+.datetime-picker .date-part {
+  flex: 2;
+}
+
+.datetime-picker .time-part {
+  flex: 1;
+  max-width: 100px;
+}
 
 /* --- RESPONSIVO (ADMIN) --- */
 @media (max-width: 900px) {

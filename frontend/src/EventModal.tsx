@@ -12,15 +12,18 @@ interface EventModalProps {
   categories: string[];
 }
 
-const formatDateTimeForInput = (date: Date): string => {
-  if (!date) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+const generateTimeOptions = () => {
+  const options = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hour = String(h).padStart(2, "0");
+      const minute = String(m).padStart(2, "0");
+      options.push(`${hour}:${minute}`);
+    }
+  }
+  return options;
 };
+const timeOptions = generateTimeOptions();
 
 const colorPalette = ["#efcb6e", "#81e18c", "#b8b8b8", "#81a7e1", "#e18181"];
 
@@ -34,14 +37,16 @@ const EventModal: React.FC<EventModalProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
-  const [color, setColor] = useState("#daa520");
+  const [color, setColor] = useState(colorPalette[0]);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   useEffect(() => {
     api.get("/api/admin/events/users-for-notification").then((res) => {
@@ -57,8 +62,24 @@ const EventModal: React.FC<EventModalProps> = ({
     if (eventToEdit) {
       setTitle(eventToEdit.title || "");
       setDescription(eventToEdit.description || "");
-      setStartDate(formatDateTimeForInput(new Date(eventToEdit.start_date)));
-      setEndDate(formatDateTimeForInput(new Date(eventToEdit.end_date)));
+      setCategory(eventToEdit.category || "");
+      setColor(eventToEdit.color || colorPalette[0]);
+
+      const start = new Date(eventToEdit.start_date);
+      setStartDate(start.toISOString().split("T")[0]);
+      setStartTime(
+        String(start.getHours()).padStart(2, "0") +
+          ":" +
+          String(start.getMinutes()).padStart(2, "0")
+      );
+
+      const end = new Date(eventToEdit.end_date);
+      setEndDate(end.toISOString().split("T")[0]);
+      setEndTime(
+        String(end.getHours()).padStart(2, "0") +
+          ":" +
+          String(end.getMinutes()).padStart(2, "0")
+      );
       setCategory(eventToEdit.category || "");
       setColor(eventToEdit.color || colorPalette[0]);
       api
@@ -80,21 +101,47 @@ const EventModal: React.FC<EventModalProps> = ({
 
       setTitle("");
       setDescription("");
-      setStartDate(formatDateTimeForInput(startDateObj));
-      setEndDate(formatDateTimeForInput(endDateObj));
+      setStartDate(startDateObj.toISOString().split("T")[0]);
+      setStartTime(
+        String(startDateObj.getHours()).padStart(2, "0") +
+          ":" +
+          String(startDateObj.getMinutes()).padStart(2, "0")
+      );
+      setEndDate(endDateObj.toISOString().split("T")[0]);
+      setEndTime(
+        String(endDateObj.getHours()).padStart(2, "0") +
+          ":" +
+          String(endDateObj.getMinutes()).padStart(2, "0")
+      );
       setCategory("");
       setColor(colorPalette[0]);
       setSelectedUsers([]);
     }
-  }, [eventToEdit, selectedDate, allUsers]);
+  }, [eventToEdit, selectedDate]);
+
+  useEffect(() => {
+    if (!eventToEdit && startDate && startTime) {
+      const startDateObj = new Date(`${startDate}T${startTime}`);
+      if (!isNaN(startDateObj.getTime())) {
+        const endDateObj = new Date(startDateObj.getTime());
+        endDateObj.setMinutes(endDateObj.getMinutes() + 30);
+        setEndDate(endDateObj.toISOString().split("T")[0]);
+        setEndTime(
+          String(endDateObj.getHours()).padStart(2, "0") +
+            ":" +
+            String(endDateObj.getMinutes()).padStart(2, "0")
+        );
+      }
+    }
+  }, [startDate, startTime, eventToEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const eventData = {
       title,
       description,
-      start_date: new Date(startDate).toISOString(),
-      end_date: new Date(endDate).toISOString(),
+      start_date: new Date(`${startDate}T${startTime}`).toISOString(),
+      end_date: new Date(`${endDate}T${endTime}`).toISOString(),
       category,
       color,
       notifiedUserIds: selectedUsers.map((u) => u.value),
@@ -164,25 +211,52 @@ const EventModal: React.FC<EventModalProps> = ({
           </div>
 
           <div className="form-row">
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 3 }}>
               <label>Início</label>
-              <input
-                type="datetime-local"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="form-input"
-                required
-              />
+              <div className="datetime-picker">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="form-input date-part"
+                  required
+                />
+                <input
+                  type="text"
+                  list="time-suggestions"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="form-input time-part"
+                  placeholder="HH:mm"
+                  required
+                />
+                <datalist id="time-suggestions">
+                  {timeOptions.map((time) => (
+                    <option key={time} value={time} />
+                  ))}
+                </datalist>
+              </div>
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 3 }}>
               <label>Fim</label>
-              <input
-                type="datetime-local"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="form-input"
-                required
-              />
+              <div className="datetime-picker">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="form-input date-part"
+                  required
+                />
+                <input
+                  type="text"
+                  list="time-suggestions"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="form-input time-part"
+                  placeholder="HH:mm"
+                  required
+                />
+              </div>
             </div>
           </div>
 
