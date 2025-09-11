@@ -223,6 +223,10 @@
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
+.fc .fc-day-today {
+  background-color: transparent !important;
+}
+
 /* --- RESPONSIVO (ADMIN) --- */
 @media (max-width: 900px) {
   .user-list-item {
