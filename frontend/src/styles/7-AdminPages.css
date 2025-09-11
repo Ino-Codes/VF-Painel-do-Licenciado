@@ -255,7 +255,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1001;
-  width: 300px;
+  width: auto;
   padding: 10px;
 }
 
@@ -308,9 +308,8 @@
 }
 
 .date-picker-day.selected {
-  background-color: #daa520;
-  color: white;
   font-weight: bold;
+  border: solid 2px #daa520;
 }
 
 .date-picker-day.disabled {
