@@ -158,7 +158,7 @@ const AdminCalendar: React.FC = () => {
               hour12: false,
             }}
             slotMinTime="06:00:00"
-            slotMaxTime="20:00:00"
+            slotMaxTime="21:00:00"
             businessHours={{
               daysOfWeek: [1, 2, 3, 4, 5],
               startTime: "06:00",
