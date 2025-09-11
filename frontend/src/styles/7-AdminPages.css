@@ -14,14 +14,20 @@
   gap: 15px;
   margin-bottom: 15px;
 }
-.form-input,
-.form-select {
+.form-input {
   flex: 1;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
 }
+
+.form-select {
+  flex: 1;
+  padding: 10px;
+  font-family: "Montserrat", sans-serif;
+}
+
 .user-list {
   list-style: none;
   padding: 0;

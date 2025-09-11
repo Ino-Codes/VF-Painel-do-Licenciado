@@ -243,15 +243,18 @@ const Perfil: React.FC = () => {
             </div>
           </div>
         </div>
-        <button
-          className="botao-logout"
-          onClick={() => {
-            logout();
-            navigate("/");
-          }}
-        >
-          Desconectar
-        </button>
+
+        <div className="centralize">
+          <button
+            className="botao-logout"
+            onClick={() => {
+              logout();
+              navigate("/");
+            }}
+          >
+            Desconectar
+          </button>
+        </div>
       </div>
       <Footer />
       <ConfirmationModal

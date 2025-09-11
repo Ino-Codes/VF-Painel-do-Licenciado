@@ -54,6 +54,11 @@ body::before {
   font-weight: bold;
 }
 
+.centralize {
+  margin: 0 auto;
+  align-content: center;
+}
+
 /* --- RESPONSIVO (GERAL) --- */
 @media (max-width: 900px) {
   .content-area {
