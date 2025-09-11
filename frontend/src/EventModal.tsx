@@ -14,7 +14,7 @@ interface EventModalProps {
 
 const generateTimeOptions = () => {
   const options = [];
-  for (let h = 0; h < 24; h++) {
+  for (let h = 6; h < 21; h++) {
     for (let m = 0; m < 60; m += 15) {
       const hour = String(h).padStart(2, "0");
       const minute = String(m).padStart(2, "0");
@@ -146,6 +146,17 @@ const EventModal: React.FC<EventModalProps> = ({
     }
   };
 
+  const handleDateChange = (dateString: string) => {
+    const selected = new Date(`${dateString}T12:00:00`);
+    const dayOfWeek = selected.getDay();
+
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      toast.error("Não é possível agendar eventos aos sábados ou domingos.");
+      return;
+    }
+    setEventDate(dateString);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -187,7 +198,7 @@ const EventModal: React.FC<EventModalProps> = ({
               <input
                 type="date"
                 value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
+                onChange={(e) => handleDateChange(e.target.value)}
                 className="form-input"
                 required
               />
