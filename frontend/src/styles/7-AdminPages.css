@@ -272,6 +272,19 @@
   max-width: 120px;
 }
 
+.time-part::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
+input[list="time-suggestions"] {
+  position: relative;
+}
+
+input[list="time-suggestions"]::-webkit-calendar-picker-indicator + datalist {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
 /* --- RESPONSIVO (ADMIN) --- */
 @media (max-width: 900px) {
   .user-list-item {
