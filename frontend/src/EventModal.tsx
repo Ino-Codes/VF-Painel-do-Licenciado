@@ -3,6 +3,17 @@ import api from "./api.ts";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
+interface EventModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  eventToEdit: any | null;
+  selectedDate: string | null;
+  categories: string[];
+}
+
+const colorPalette = ["#efcb6e", "#81e18c", "#b8b8b8", "#81a7e1", "#e18181"];
+
 const TimePicker: React.FC<{
   value: string;
   onChange: (value: string) => void;
