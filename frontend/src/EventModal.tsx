@@ -1,31 +1,70 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "./api.ts";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
-interface EventModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  eventToEdit: any | null;
-  selectedDate: string | null;
-  categories: string[];
-}
+const TimePicker: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+}> = ({ value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-const generateTimeOptions = () => {
-  const options = [];
-  for (let h = 6; h < 21; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      const hour = String(h).padStart(2, "0");
-      const minute = String(m).padStart(2, "0");
-      options.push(`${hour}:${minute}`);
+  const timeOptions = React.useMemo(() => {
+    const options = [];
+    for (let h = 6; h < 21; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        options.push(
+          `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
+        );
+      }
     }
-  }
-  return options;
-};
-const timeOptions = generateTimeOptions();
+    return options;
+  }, []);
 
-const colorPalette = ["#efcb6e", "#81e18c", "#b8b8b8", "#81a7e1", "#e18181"];
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="time-picker-wrapper" ref={wrapperRef}>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setIsOpen(true)}
+        className="form-input time-part"
+        placeholder="HH:mm"
+        required
+      />
+      {isOpen && (
+        <div className="time-picker-dropdown">
+          {timeOptions.map((time) => (
+            <div
+              key={time}
+              className="time-picker-option"
+              onClick={() => {
+                onChange(time);
+                setIsOpen(false);
+              }}
+            >
+              {time}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const EventModal: React.FC<EventModalProps> = ({
   isOpen,
@@ -208,34 +247,13 @@ const EventModal: React.FC<EventModalProps> = ({
           <div className="form-row">
             <div className="form-group">
               <label>Início</label>
-              <input
-                type="text"
-                list="time-suggestions"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="form-input time-part"
-                placeholder="HH:mm"
-                required
-              />
+              <TimePicker value={startTime} onChange={setStartTime} />
             </div>
             <div className="form-group">
               <label>Fim</label>
-              <input
-                type="text"
-                list="time-suggestions"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="form-input time-part"
-                placeholder="HH:mm"
-                required
-              />
+              <TimePicker value={endTime} onChange={setEndTime} />
             </div>
           </div>
-          <datalist id="time-suggestions">
-            {timeOptions.map((time) => (
-              <option key={time} value={time} />
-            ))}
-          </datalist>
 
           <div className="form-row">
             <textarea

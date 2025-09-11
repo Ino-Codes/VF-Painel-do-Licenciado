@@ -276,13 +276,35 @@
   display: none !important;
 }
 
-input[list="time-suggestions"] {
+.time-picker-wrapper {
   position: relative;
+  width: 100%;
+  max-width: 120px;
 }
 
-input[list="time-suggestions"]::-webkit-calendar-picker-indicator + datalist {
-  max-height: 200px;
+.time-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+
+  max-height: 180px;
   overflow-y: auto;
+}
+
+.time-picker-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.time-picker-option:hover {
+  background-color: #f0f0f0;
 }
 
 /* --- RESPONSIVO (ADMIN) --- */
