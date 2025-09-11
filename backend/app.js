@@ -14,6 +14,9 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 cloudinary.config({
