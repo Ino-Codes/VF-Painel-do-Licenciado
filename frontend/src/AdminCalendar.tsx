@@ -162,7 +162,7 @@ const AdminCalendar: React.FC = () => {
             businessHours={{
               daysOfWeek: [1, 2, 3, 4, 5],
               startTime: "06:00",
-              endTime: "20:00",
+              endTime: "21:00",
             }}
             selectConstraint="businessHours"
             eventConstraint="businessHours"
