@@ -71,15 +71,22 @@ const EventModal: React.FC<EventModalProps> = ({
           setSelectedUsers(preSelected);
         });
     } else if (selectedDate) {
-      const localDate = new Date(`${selectedDate}T09:00:00`);
+      let startDateObj = new Date(selectedDate);
+      if (!selectedDate.includes('T')) {
+          startDateObj = new Date(`${selectedDate}T09:00:00`);
+      }
+      const endDateObj = new Date(startDateObj.getTime());
+      endDateObj.setMinutes(endDateObj.getMinutes() + 30);
+
       setTitle("");
       setDescription("");
-      setStartDate(formatDateTimeForInput(localDate));
-      setEndDate(formatDateTimeForInput(localDate));
+      setStartDate(formatDateTimeForInput(startDateObj));
+      setEndDate(formatDateTimeForInput(endDateObj));
       setCategory("");
       setColor(colorPalette[0]);
       setSelectedUsers([]);
     }
+  }, [eventToEdit, selectedDate, allUsers]);
   }, [eventToEdit, selectedDate, allUsers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
