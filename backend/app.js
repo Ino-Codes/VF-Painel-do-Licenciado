@@ -1,4 +1,4 @@
-const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
+const { isAdmin, isLoggedIn } = require("./middleware/auth.js");
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
