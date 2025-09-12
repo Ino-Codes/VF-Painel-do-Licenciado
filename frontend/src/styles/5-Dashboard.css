@@ -378,10 +378,14 @@
   position: absolute;
   top: 110%;
   right: 0;
-  z-index: 10;
-  width: 350px;
+  z-index: 1000;
+
+  width: 320px;
+  height: 380px;
+  overflow: hidden;
+
   border: 1px solid #e9ecef;
   border-radius: 8px;
-  overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: white;
 }

@@ -59,6 +59,21 @@ const TiptapMenuBar: React.FC<{
 
   return (
     <div className="tiptap-menu-bar">
+      <div className="emoji-picker-wrapper-in-menu" ref={emojiPickerRef}>
+        <button
+          className="emoji-toggle-button"
+          type="button"
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+        >
+          🙂
+        </button>
+        {showEmojiPicker && (
+          <div className="emoji-picker-container-in-menu">
+            <EmojiPicker onEmojiClick={onEmojiClick} width="100%" />
+          </div>
+        )}
+      </div>
+
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -87,21 +102,6 @@ const TiptapMenuBar: React.FC<{
       >
         Lista Pontuada
       </button>
-
-      <div className="emoji-picker-wrapper-in-menu" ref={emojiPickerRef}>
-        <button
-          className="emoji-toggle-button"
-          type="button"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-        >
-          🙂
-        </button>
-        {showEmojiPicker && (
-          <div className="emoji-picker-container-in-menu">
-            <EmojiPicker onEmojiClick={onEmojiClick} width="100%" />
-          </div>
-        )}
-      </div>
     </div>
   );
 };
