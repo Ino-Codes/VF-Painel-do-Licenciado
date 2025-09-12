@@ -68,6 +68,13 @@ const TiptapMenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
       >
         Lista Pontuada
       </button>
+      <button
+        className="emoji-toggle-button"
+        type="button"
+        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+      >
+        🙂
+      </button>
     </div>
   );
 };
