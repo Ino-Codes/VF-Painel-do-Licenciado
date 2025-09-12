@@ -75,6 +75,16 @@ const TiptapMenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
       >
         🙂
       </button>
+      {showEmojiPicker && (
+        <div className="emoji-picker-container">
+          <EmojiPicker
+            onEmojiClick={(emojiData) =>
+              onEmojiClick(emojiData, newNoticeEditor)
+            }
+            width="100%"
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -269,28 +279,10 @@ const Dashboard: React.FC = () => {
                     <EditorContent editor={newNoticeEditor} />
                   </div>
                   <div className="notice-form-actions">
-                    <button
-                      className="emoji-toggle-button"
-                      type="button"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    >
-                      🙂
-                    </button>
                     <button className="form-button" onClick={handlePostNotice}>
                       Postar Aviso
                     </button>
                   </div>
-
-                  {showEmojiPicker && (
-                    <div className="emoji-picker-container">
-                      <EmojiPicker
-                        onEmojiClick={(emojiData) =>
-                          onEmojiClick(emojiData, newNoticeEditor)
-                        }
-                        width="100%"
-                      />
-                    </div>
-                  )}
                 </div>
               )}
             </div>
