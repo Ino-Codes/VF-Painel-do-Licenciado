@@ -33,7 +33,26 @@ interface MonthlyEvent {
   color: string;
 }
 
-const TiptapMenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
+const TiptapMenuBar: React.FC<{
+  editor: Editor | null;
+  onEmojiClick: (emoji: EmojiClickData) => void;
+}> = ({ editor, onEmojiClick }) => {
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (!editor) {
     return null;
   }
@@ -68,6 +87,21 @@ const TiptapMenuBar: React.FC<{ editor: Editor | null }> = ({ editor }) => {
       >
         Lista Pontuada
       </button>
+
+      <div className="emoji-picker-wrapper-in-menu" ref={emojiPickerRef}>
+        <button
+          className="emoji-toggle-button"
+          type="button"
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+        >
+          🙂
+        </button>
+        {showEmojiPicker && (
+          <div className="emoji-picker-container-in-menu">
+            <EmojiPicker onEmojiClick={onEmojiClick} width="100%" />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -258,32 +292,19 @@ const Dashboard: React.FC = () => {
               {user.role === "admin" && (
                 <div className="notice-form">
                   <div className="tiptap-container">
-                    <TiptapMenuBar editor={newNoticeEditor} />
+                    <TiptapMenuBar
+                      editor={newNoticeEditor}
+                      onEmojiClick={(emojiData) =>
+                        onEmojiClick(emojiData, newNoticeEditor)
+                      }
+                    />
                     <EditorContent editor={newNoticeEditor} />
                   </div>
                   <div className="notice-form-actions">
-                    <button
-                      className="emoji-toggle-button"
-                      type="button"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    >
-                      🙂
-                    </button>
                     <button className="form-button" onClick={handlePostNotice}>
                       Postar Aviso
                     </button>
                   </div>
-
-                  {showEmojiPicker && (
-                    <div className="emoji-picker-container">
-                      <EmojiPicker
-                        onEmojiClick={(emojiData) =>
-                          onEmojiClick(emojiData, newNoticeEditor)
-                        }
-                        width="100%"
-                      />
-                    </div>
-                  )}
                 </div>
               )}
             </div>
