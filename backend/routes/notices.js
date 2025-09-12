@@ -1,15 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 const { JSDOM } = require("jsdom");
 const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
-module.exports = function (pool) {
-  const checkAdmin = isAdmin(pool);
-  const checkLoggedIn = isLoggedIn(pool);
-
+module.exports = function ({ pool, checkLoggedIn, checkAdmin }) {
   router.get("/", checkLoggedIn, async (req, res) => {
     const { role } = req.user;
     try {
