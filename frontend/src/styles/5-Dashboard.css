@@ -325,3 +325,32 @@
   padding: 3px 8px;
   border-radius: 5px;
 }
+
+.notice-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.emoji-toggle-button {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 20px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.emoji-toggle-button:hover {
+  background-color: #f0f0f0;
+}
+
+.emoji-picker-container {
+  margin-top: 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}

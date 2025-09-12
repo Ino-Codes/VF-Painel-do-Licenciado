@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import EmptyState from "./EmptyState.tsx";
 import EventCard from "./EventCard.tsx";
+import EnneagramStats from "./EnneagramStats.tsx";
 
 import EmptyEventsImage from "./assets/images/empty_eventos.svg";
 import EmptyAvisosImage from "./assets/images/empty_avisos.svg";
@@ -16,7 +17,7 @@ import EmptyDashsImage from "./assets/images/empty_dashs.svg";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-import EnneagramStats from "./EnneagramStats.tsx";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
 interface Notice {
   id: number;
@@ -80,6 +81,7 @@ const Dashboard: React.FC = () => {
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const newNoticeEditor = useEditor({
     extensions: [StarterKit],
@@ -202,6 +204,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const onEmojiClick = (emojiData: EmojiClickData, editor: Editor | null) => {
+    if (editor) {
+      editor.chain().focus().insertContent(emojiData.emoji).run();
+    }
+  };
+
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
@@ -253,9 +261,29 @@ const Dashboard: React.FC = () => {
                     <TiptapMenuBar editor={newNoticeEditor} />
                     <EditorContent editor={newNoticeEditor} />
                   </div>
-                  <button className="form-button" onClick={handlePostNotice}>
-                    Postar Aviso
-                  </button>
+                  <div className="notice-form-actions">
+                    <button
+                      className="emoji-toggle-button"
+                      type="button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
+                      🙂
+                    </button>
+                    <button className="form-button" onClick={handlePostNotice}>
+                      Postar Aviso
+                    </button>
+                  </div>
+
+                  {showEmojiPicker && (
+                    <div className="emoji-picker-container">
+                      <EmojiPicker
+                        onEmojiClick={(emojiData) =>
+                          onEmojiClick(emojiData, newNoticeEditor)
+                        }
+                        width="100%"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
