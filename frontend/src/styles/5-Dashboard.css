@@ -354,3 +354,34 @@
   border-radius: 8px;
   overflow: hidden;
 }
+
+.emoji-picker-wrapper-in-menu {
+  position: relative;
+}
+
+.emoji-toggle-button {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 20px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  height: 100%;
+}
+
+.emoji-toggle-button:hover {
+  background-color: #f0f0f0;
+}
+
+.emoji-picker-container-in-menu {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  z-index: 10;
+  width: 350px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
