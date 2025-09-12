@@ -244,7 +244,7 @@ const Perfil: React.FC = () => {
           </div>
         </div>
 
-        <div className="centralize">
+        <div className="avatar-section">
           <button
             className="botao-logout"
             onClick={() => {
