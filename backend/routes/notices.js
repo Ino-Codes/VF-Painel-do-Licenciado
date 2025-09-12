@@ -7,6 +7,9 @@ const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
 module.exports = function (pool) {
+  const checkAdmin = isAdmin(pool);
+  const checkLoggedIn = isLoggedIn(pool);
+
   router.get("/", checkLoggedIn, async (req, res) => {
     const { role } = req.user;
     try {

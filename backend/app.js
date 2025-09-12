@@ -29,6 +29,10 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+module.exports = function (pool) {
+  const checkAdmin = isAdmin(pool);
+  const checkLoggedIn = isLoggedIn(pool);
+
 // --- MIDDLEWARES ---
 
 app.use(
