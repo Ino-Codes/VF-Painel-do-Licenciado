@@ -35,45 +35,23 @@ interface MonthlyEvent {
 
 const TiptapMenuBar: React.FC<{
   editor: Editor | null;
-  onEmojiClick: (emoji: EmojiClickData) => void;
-}> = ({ editor, onEmojiClick }) => {
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        emojiPickerRef.current &&
-        !emojiPickerRef.current.contains(event.target as Node)
-      ) {
-        setShowEmojiPicker(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  onEmojiToggle: () => void;
+}> = ({ editor, onEmojiToggle }) => {
   if (!editor) {
     return null;
   }
 
   return (
     <div className="tiptap-menu-bar">
-      <div className="emoji-picker-wrapper-in-menu" ref={emojiPickerRef}>
+      <div className="emoji-picker-wrapper-in-menu">
         <button
           className="emoji-toggle-button"
           type="button"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          onClick={onEmojiToggle}
         >
           🙂
         </button>
-        {showEmojiPicker && (
-          <div className="emoji-picker-container-in-menu">
-            <EmojiPicker onEmojiClick={onEmojiClick} width="100%" />
-          </div>
-        )}
       </div>
-
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -109,13 +87,14 @@ const TiptapMenuBar: React.FC<{
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-
   const [monthlyEvents, setMonthlyEvents] = useState<MonthlyEvent[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [activeEditor, setActiveEditor] = useState<Editor | null>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const newNoticeEditor = useEditor({
     extensions: [StarterKit],
@@ -136,6 +115,19 @@ const Dashboard: React.FC = () => {
       },
     },
   });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -238,16 +230,21 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const onEmojiClick = (emojiData: EmojiClickData, editor: Editor | null) => {
-    if (editor) {
-      editor.chain().focus().insertContent(emojiData.emoji).run();
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    if (activeEditor) {
+      activeEditor.chain().focus().insertContent(emojiData.emoji).run();
     }
+    setShowEmojiPicker(false);
+  };
+
+  const toggleEmojiPicker = (editor: Editor) => {
+    setActiveEditor(editor);
+    setShowEmojiPicker((prev) => !prev);
   };
 
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
-
   if (!user) {
     return null;
   }
@@ -285,7 +282,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           )}
-
           <div className="dashboard-elements notices-column">
             <h3>Mural de Avisos</h3>
             <div className="notice-board">
@@ -294,9 +290,7 @@ const Dashboard: React.FC = () => {
                   <div className="tiptap-container">
                     <TiptapMenuBar
                       editor={newNoticeEditor}
-                      onEmojiClick={(emojiData) =>
-                        onEmojiClick(emojiData, newNoticeEditor)
-                      }
+                      onEmojiToggle={() => toggleEmojiPicker(newNoticeEditor)}
                     />
                     <EditorContent editor={newNoticeEditor} />
                   </div>
@@ -315,7 +309,12 @@ const Dashboard: React.FC = () => {
                     {editingNoticeId === notice.id ? (
                       <div className="notice-edit-form">
                         <div className="tiptap-container">
-                          <TiptapMenuBar editor={editNoticeEditor} />
+                          <TiptapMenuBar
+                            editor={editNoticeEditor}
+                            onEmojiClick={() =>
+                              toggleEmojiPicker(editNoticeEditor)
+                            }
+                          />
                           <EditorContent editor={editNoticeEditor} />
                         </div>
                         <div className="notice-actions">
@@ -386,24 +385,36 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
+        {showEmojiPicker && (
+          <div className="emoji-picker-container-global" ref={emojiPickerRef}>
+            <EmojiPicker
+              onEmojiClick={onEmojiClick}
+              width="100%"
+              height={380}
+            />
+          </div>
+        )}
+
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
-          {user.role === "admin" && (
-            <div>
-              <h3>Análise Comportamental (Eneagrama)</h3>
+          {user.role === "admin" ? (
+            <div
+              className="dashboard-elements"
+              style={{ marginTop: 0, paddingTop: 0, borderTop: "none" }}
+            >
+              <h4>Análise Comportamental (Eneagrama)</h4>
               <EnneagramStats />
             </div>
-          )}
-
-          {user.role !== "admin" && (
+          ) : (
             <EmptyState
               image={EmptyDashsImage}
               title="Relatórios em Desenvolvimento"
               message="Estamos criando relatórios e gráficos que serão exibidos aqui futuramente."
-            ></EmptyState>
+            />
           )}
         </div>
       </div>
+
       <Footer />
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
