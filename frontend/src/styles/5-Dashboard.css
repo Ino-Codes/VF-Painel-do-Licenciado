@@ -351,11 +351,10 @@
 
 .emoji-picker-container-global {
   position: absolute;
-  top: 200px;
-  right: 50px;
+  top: 230px;
+  right: 25px;
   z-index: 1000;
   width: 350px;
-  height: 400px;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
