@@ -74,7 +74,7 @@ const cronTriggerRoutes = require("./routes/cronTrigger.js");
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
 app.use("/api/users", userRoutes(pool, cloudinary, upload, logActivity));
-app.use("/api/notices", noticeRoutes(pool));
+app.use("/api/notices", noticeRoutes(pool, isLoggedIn(pool)));
 app.use("/api/files", fileRoutes(pool, cloudinary, upload, path));
 app.use("/api/videos", videoRoutes(pool));
 app.use("/api/faq", faqRoutes(pool, cloudinary, upload));

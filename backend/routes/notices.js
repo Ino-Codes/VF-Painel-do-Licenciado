@@ -1,17 +1,26 @@
 const express = require("express");
 const router = express.Router();
-
+const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
 const { JSDOM } = require("jsdom");
 const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
 module.exports = function (pool) {
-  router.get("/", async (req, res) => {
+  router.get("/", checkLoggedIn, async (req, res) => {
+    const { role } = req.user;
     try {
-      const result = await pool.query(
-        "SELECT * FROM notices ORDER BY created_at DESC"
-      );
+      let query = "SELECT * FROM notices";
+      const params = [];
+
+      if (role === "licenciado") {
+        query += " WHERE visibility = 'licenciados' OR visibility = 'todos'";
+      } else {
+        query += " WHERE visibility = 'internos' OR visibility = 'todos'";
+      }
+
+      query += " ORDER BY created_at DESC";
+      const result = await pool.query(query, params);
       res.json(result.rows);
     } catch (err) {
       console.error("Erro ao buscar avisos:", err);
@@ -19,14 +28,14 @@ module.exports = function (pool) {
     }
   });
 
-  router.post("/admin", async (req, res) => {
-    const { message } = req.body;
+  router.post("/admin", checkLoggedIn, checkAdmin, async (req, res) => {
+    const { message, visibility } = req.body;
     try {
       const clean_message = DOMPurify.sanitize(message);
-
-      await pool.query("INSERT INTO notices (message) VALUES ($1)", [
-        clean_message,
-      ]);
+      await pool.query(
+        "INSERT INTO notices (message, visibility) VALUES ($1, $2)",
+        [clean_message, visibility]
+      );
       res.status(201).json({ success: true });
     } catch (err) {
       console.error("Erro ao criar aviso:", err);
@@ -34,15 +43,14 @@ module.exports = function (pool) {
     }
   });
 
-  router.put("/admin/:id", async (req, res) => {
+  router.put("/admin/:id", checkLoggedIn, checkAdmin, async (req, res) => {
     const { id } = req.params;
-    const { message } = req.body;
+    const { message, visibility } = req.body;
     try {
       const clean_message = DOMPurify.sanitize(message);
-
       const result = await pool.query(
-        "UPDATE notices SET message = $1 WHERE id = $2 RETURNING *",
-        [clean_message, id]
+        "UPDATE notices SET message = $1, visibility = $2 WHERE id = $3 RETURNING *",
+        [clean_message, visibility, id]
       );
       if (result.rowCount === 0)
         return res.status(404).json({ error: "Aviso não encontrado." });

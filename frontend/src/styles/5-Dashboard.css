@@ -359,3 +359,26 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+.visibility-selector {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+}
+.visibility-selector label {
+  font-weight: 500;
+  margin-right: 20px;
+}
+.radio-group {
+  display: inline-flex;
+  gap: 15px;
+  margin-left: 10px;
+}
+.radio-group label {
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}

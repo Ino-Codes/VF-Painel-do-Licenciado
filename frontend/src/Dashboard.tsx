@@ -95,6 +95,9 @@ const Dashboard: React.FC = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeEditor, setActiveEditor] = useState<Editor | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const [noticeVisibility, setNoticeVisibility] = useState<
+    "todos" | "internos" | "licenciados"
+  >("todos");
 
   const newNoticeEditor = useEditor({
     extensions: [StarterKit],
@@ -172,18 +175,45 @@ const Dashboard: React.FC = () => {
   const handlePostNotice = async () => {
     if (!newNoticeEditor) return;
     const message = newNoticeEditor.getHTML();
-
     if (newNoticeEditor.isEmpty || message === "<p></p>") {
       toast.error("O aviso não pode estar em branco.");
       return;
     }
     try {
-      await api.post("/api/notices/admin", { message });
+      await api.post("/api/notices/admin", {
+        message,
+        visibility: noticeVisibility,
+      });
       newNoticeEditor.commands.clearContent();
       fetchNotices();
       toast.success("Aviso postado com sucesso!");
     } catch (err) {
       toast.error("Erro ao postar o aviso.");
+    }
+  };
+
+  const handleEditNotice = (notice: Notice) => {
+    setEditingNoticeId(notice.id);
+    editNoticeEditor?.commands.setContent(notice.message);
+    setNoticeVisibility(notice.visibility || "todos");
+  };
+
+  const handleUpdateNotice = async (noticeId: number) => {
+    if (!editNoticeEditor) return;
+    const message = editNoticeEditor.getHTML();
+
+    if (editNoticeEditor.isEmpty || message === "<p></p>") {
+      toast.error("O aviso não pode estar em branco.");
+      return;
+    }
+    try {
+      await api.put(`/api/notices/admin/${noticeId}`, { message });
+      toast.success("Aviso atualizado com sucesso!");
+      setEditingNoticeId(null);
+      editNoticeEditor.commands.clearContent();
+      fetchNotices();
+    } catch (err) {
+      toast.error("Erro ao atualizar o aviso.");
     }
   };
 
@@ -203,30 +233,6 @@ const Dashboard: React.FC = () => {
     } finally {
       setIsConfirmModalOpen(false);
       setNoticeToDelete(null);
-    }
-  };
-
-  const handleEditNotice = (notice: Notice) => {
-    setEditingNoticeId(notice.id);
-    editNoticeEditor?.commands.setContent(notice.message);
-  };
-
-  const handleUpdateNotice = async (noticeId: number) => {
-    if (!editNoticeEditor) return;
-    const message = editNoticeEditor.getHTML();
-
-    if (editNoticeEditor.isEmpty || message === "<p></p>") {
-      toast.error("O aviso não pode estar em branco.");
-      return;
-    }
-    try {
-      await api.put(`/api/notices/admin/${noticeId}`, { message });
-      toast.success("Aviso atualizado com sucesso!");
-      setEditingNoticeId(null);
-      editNoticeEditor.commands.clearContent();
-      fetchNotices();
-    } catch (err) {
-      toast.error("Erro ao atualizar o aviso.");
     }
   };
 
@@ -294,6 +300,43 @@ const Dashboard: React.FC = () => {
                     />
                     <EditorContent editor={newNoticeEditor} />
                   </div>
+
+                  <div className="visibility-selector">
+                    <label>Enviar para:</label>
+                    <div className="radio-group">
+                      <label>
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="todos"
+                          checked={noticeVisibility === "todos"}
+                          onChange={() => setNoticeVisibility("todos")}
+                        />{" "}
+                        Todos
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="internos"
+                          checked={noticeVisibility === "internos"}
+                          onChange={() => setNoticeVisibility("internos")}
+                        />{" "}
+                        Apenas Internos
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="licenciados"
+                          checked={noticeVisibility === "licenciados"}
+                          onChange={() => setNoticeVisibility("licenciados")}
+                        />{" "}
+                        Apenas Licenciados
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="notice-form-actions">
                     <button className="form-button" onClick={handlePostNotice}>
                       Postar Aviso
@@ -317,6 +360,45 @@ const Dashboard: React.FC = () => {
                           />
                           <EditorContent editor={editNoticeEditor} />
                         </div>
+
+                        <div className="visibility-selector">
+                          <label>Enviar para:</label>
+                          <div className="radio-group">
+                            <label>
+                              <input
+                                type="radio"
+                                name="visibility"
+                                value="todos"
+                                checked={noticeVisibility === "todos"}
+                                onChange={() => setNoticeVisibility("todos")}
+                              />{" "}
+                              Todos
+                            </label>
+                            <label>
+                              <input
+                                type="radio"
+                                name="visibility"
+                                value="internos"
+                                checked={noticeVisibility === "internos"}
+                                onChange={() => setNoticeVisibility("internos")}
+                              />{" "}
+                              Apenas Internos
+                            </label>
+                            <label>
+                              <input
+                                type="radio"
+                                name="visibility"
+                                value="licenciados"
+                                checked={noticeVisibility === "licenciados"}
+                                onChange={() =>
+                                  setNoticeVisibility("licenciados")
+                                }
+                              />{" "}
+                              Apenas Licenciados
+                            </label>
+                          </div>
+                        </div>
+
                         <div className="notice-actions">
                           <button
                             className="list-button"
