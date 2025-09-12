@@ -49,7 +49,7 @@ const TiptapMenuBar: React.FC<{
           type="button"
           onClick={onEmojiToggle}
         >
-          🙂
+          :)
         </button>
       </div>
       <button
