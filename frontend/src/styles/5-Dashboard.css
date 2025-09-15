@@ -314,6 +314,13 @@
   background-color: #f8f9fa;
 }
 
+.user-results-list .user-cargo {
+  font-weight: 400;
+  color: #6c757d;
+  margin-right: 8px;
+  font-size: 0.9em;
+}
+
 .user-name {
   font-weight: 500;
 }
