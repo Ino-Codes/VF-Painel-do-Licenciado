@@ -69,8 +69,8 @@
   font-weight: bold;
   transition: opacity 0.2s;
   cursor: pointer;
-  margin: 20px auto 10px;
 }
+
 .botao-logout:hover {
   opacity: 0.85;
 }
