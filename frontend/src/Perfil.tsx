@@ -404,16 +404,7 @@ const Perfil: React.FC = () => {
                     className="form-input"
                   />
                 </div>
-                <div className="form-row">
-                  <label htmlFor="email">Email:</label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={user.email}
-                    disabled
-                    className="form-input"
-                  />
-                </div>
+
                 <button className="form-button" onClick={handleSaveChanges}>
                   Salvar Alterações
                 </button>
