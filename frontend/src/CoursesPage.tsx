@@ -3,11 +3,10 @@ import { useAuth } from "./context/AuthContext.tsx";
 import api from "./api.ts";
 import Menu from "./Menu.tsx";
 import Footer from "./Footer.tsx";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 import EmptyState from "./EmptyState.tsx";
 import EmptyCursosImage from "./assets/images/empty_cursos.svg";
-import toast from "react-hot-toast";
 import CourseCard from "./CourseCard.tsx";
 
 interface CourseData {
@@ -23,43 +22,32 @@ const CoursesPage: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const [courses, setCourses] = useState<CourseData[]>([]);
-  const [activeTab, setActiveTab] = useState<"cursos">("cursos");
+  const [allCourses, setAllCourses] = useState<CourseData[]>([]);
+
+  const [activeTab, setActiveTab] = useState<"all" | "ongoing">("all");
   const [isLoadingContent, setIsLoadingContent] = useState(true);
-
-  const baseURL = api.defaults.baseURL;
-
-  const getAuthHeaders = useCallback(() => {
-    if (!user) return {};
-    return { headers: { "x-user-id": user.id } };
-  }, [user]);
 
   const fetchCourses = useCallback(async () => {
     if (!user) return;
     setIsLoadingContent(true);
     try {
-      const res = await api.get("/api/admin/courses/public", getAuthHeaders());
-      setCourses(res.data);
+      const res = await api.get("/api/admin/courses/public");
+      setAllCourses(res.data);
     } catch (err) {
       console.error("Erro ao buscar cursos:", err);
     } finally {
       setIsLoadingContent(false);
     }
-  }, [user, getAuthHeaders]);
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/");
     }
-  }, [user, loading, navigate]);
-
-  useEffect(() => {
     if (user) {
-      if (activeTab === "cursos") {
-        fetchCourses();
-      }
+      fetchCourses();
     }
-  }, [user, activeTab, fetchCourses]);
+  }, [user, loading, navigate, fetchCourses]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -67,6 +55,27 @@ const CoursesPage: React.FC = () => {
   if (!user) {
     return null;
   }
+
+  const ongoingCourses = allCourses.filter(
+    (course) =>
+      course.completed_lessons > 0 &&
+      course.completed_lessons < course.total_lessons
+  );
+
+  const availableCourses = allCourses.filter(
+    (course) => course.completed_lessons === 0
+  );
+
+  const completedCourses = allCourses.filter(
+    (course) =>
+      course.total_lessons > 0 &&
+      course.completed_lessons >= course.total_lessons
+  );
+
+  const coursesToDisplay =
+    activeTab === "all"
+      ? [...availableCourses, ...completedCourses]
+      : ongoingCourses;
 
   return (
     <div className="p-2">
@@ -78,35 +87,43 @@ const CoursesPage: React.FC = () => {
 
         <div className="tabs">
           <button
-            className={`tab-item ${activeTab === "cursos" ? "active" : ""}`}
-            onClick={() => setActiveTab("cursos")}
+            className={`tab-item ${activeTab === "all" ? "active" : ""}`}
+            onClick={() => setActiveTab("all")}
           >
             Trilhas de Conhecimento
+          </button>
+          <button
+            className={`tab-item ${activeTab === "ongoing" ? "active" : ""}`}
+            onClick={() => setActiveTab("ongoing")}
+          >
+            Cursos em Andamento
           </button>
         </div>
 
         {isLoadingContent ? (
           <LoadingSpinner />
         ) : (
-          <>
-            {activeTab === "cursos" && (
-              <div>
-                {courses.length > 0 ? (
-                  courses.map((course) => (
-                    <div className="courses-grid">
-                      <CourseCard key={course.id} course={course} />
-                    </div>
-                  ))
-                ) : (
-                  <EmptyState
-                    image={EmptyCursosImage}
-                    title="Nenhum Curso Disponível"
-                    message="Ainda não há cursos disponíveis. Volte em breve!"
-                  />
-                )}
-              </div>
+          <div className="courses-grid">
+            {coursesToDisplay.length > 0 ? (
+              coursesToDisplay.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))
+            ) : (
+              <EmptyState
+                image={EmptyCursosImage}
+                title={
+                  activeTab === "all"
+                    ? "Nenhum Curso Disponível"
+                    : "Nenhum Curso em Andamento"
+                }
+                message={
+                  activeTab === "all"
+                    ? "Ainda não há cursos disponíveis. Volte em breve!"
+                    : "Você ainda não iniciou nenhum curso. Explore as Trilhas de Conhecimento para começar!"
+                }
+              />
             )}
-          </>
+          </div>
         )}
       </div>
       <Footer />
