@@ -310,7 +310,7 @@ const Perfil: React.FC = () => {
                   </div>
                 )}
 
-                {isEditing && user.role === "admin" && (
+                {isEditing && (
                   <div className="profile-edit-form">
                     <div className="form-row">
                       <label>Nome:</label>
@@ -323,59 +323,33 @@ const Perfil: React.FC = () => {
                         }
                       />
                     </div>
-                    <div className="form-row">
-                      <label>Cargo:</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editForm.cargo}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, cargo: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="form-row">
-                      <label>Setor:</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editForm.setor}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, setor: e.target.value })
-                        }
-                      />
-                    </div>
 
-                    <div className="form-actions">
-                      <button
-                        className="form-button-cancel"
-                        onClick={() => setIsEditing(false)}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        className="form-button"
-                        onClick={handleSaveChanges}
-                      >
-                        Salvar Alterações
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {isEditing && user.role === "colaborador" && (
-                  <div className="profile-edit-form">
-                    <div className="form-row">
-                      <label>Nome:</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editForm.nome}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, nome: e.target.value })
-                        }
-                      />
-                    </div>
+                    {user.role === "admin" && (
+                      <div className="form-row">
+                        <label>Cargo:</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={editForm.cargo}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, cargo: e.target.value })
+                          }
+                        />
+                      </div>
+                    )}
+                    {user.role === "admin" && (
+                      <div className="form-row">
+                        <label>Setor:</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={editForm.setor}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, setor: e.target.value })
+                          }
+                        />
+                      </div>
+                    )}
 
                     <div className="form-actions">
                       <button
