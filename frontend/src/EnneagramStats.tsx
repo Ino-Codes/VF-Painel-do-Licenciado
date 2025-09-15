@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,6 +28,12 @@ interface EnneagramType {
   description: string;
   work_description: string;
   personal_description: string;
+}
+
+interface User {
+  id: number;
+  nome: string;
+  setor: string;
 }
 
 const EnneagramStats: React.FC = () => {
@@ -127,7 +134,9 @@ const EnneagramStats: React.FC = () => {
         <ul className="user-results-list">
           {stats.completedUsers.map((user: any, index: number) => (
             <li key={index}>
-              <span className="user-name">{user.nome}</span>
+              <span className="user-name">
+                {user.setor} | {user.nome}
+              </span>
               <span className="user-type">
                 {typesMap[user.dominant_type]?.name ||
                   `Tipo ${user.dominant_type}`}
