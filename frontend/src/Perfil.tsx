@@ -386,32 +386,35 @@ const Perfil: React.FC = () => {
                 </div>
               </div>
             )}
-            <div className="other-section">
-              <h3>Editar Informações</h3>
-              <div className="form-row">
-                <label htmlFor="nome">Nome:</label>
-                <input
-                  id="nome"
-                  type="text"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="form-input"
-                />
+
+            {user.role === "licenciado" && (
+              <div className="other-section">
+                <h3>Editar Informações</h3>
+                <div className="form-row">
+                  <label htmlFor="nome">Nome:</label>
+                  <input
+                    id="nome"
+                    type="text"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="email">Email:</label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={user.email}
+                    disabled
+                    className="form-input"
+                  />
+                </div>
+                <button className="form-button" onClick={handleSaveChanges}>
+                  Salvar Alterações
+                </button>
               </div>
-              <div className="form-row">
-                <label htmlFor="email">Email:</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={user.email}
-                  disabled
-                  className="form-input"
-                />
-              </div>
-              <button className="form-button" onClick={handleSaveChanges}>
-                Salvar Alterações
-              </button>
-            </div>
+            )}
 
             <div className="other-section">
               <h3>Alterar Senha</h3>
