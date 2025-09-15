@@ -10,16 +10,16 @@ module.exports = function ({ pool, checkLoggedIn, checkAdmin }) {
     const { role } = req.user;
     try {
       let query = "SELECT * FROM notices";
-      const params = [];
 
-      if (role === "licenciado") {
+      if (role === "admin") {
+      } else if (role === "licenciado") {
         query += " WHERE visibility = 'licenciados' OR visibility = 'todos'";
       } else {
         query += " WHERE visibility = 'internos' OR visibility = 'todos'";
       }
 
       query += " ORDER BY created_at DESC";
-      const result = await pool.query(query, params);
+      const result = await pool.query(query);
       res.json(result.rows);
     } catch (err) {
       console.error("Erro ao buscar avisos:", err);

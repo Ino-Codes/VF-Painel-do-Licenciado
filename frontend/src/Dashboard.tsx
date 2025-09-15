@@ -23,6 +23,7 @@ interface Notice {
   id: number;
   message: string;
   created_at: string;
+  visibility: "todos" | "internos" | "licenciados";
 }
 
 interface MonthlyEvent {
@@ -102,21 +103,12 @@ const Dashboard: React.FC = () => {
   const newNoticeEditor = useEditor({
     extensions: [StarterKit],
     content: "",
-    editorProps: {
-      attributes: {
-        class: "tiptap-editor",
-      },
-    },
+    editorProps: { attributes: { class: "tiptap-editor" } },
   });
-
   const editNoticeEditor = useEditor({
     extensions: [StarterKit],
     content: "",
-    editorProps: {
-      attributes: {
-        class: "tiptap-editor",
-      },
-    },
+    editorProps: { attributes: { class: "tiptap-editor" } },
   });
 
   useEffect(() => {
@@ -139,6 +131,7 @@ const Dashboard: React.FC = () => {
   }, [user, loading, navigate]);
 
   const fetchNotices = useCallback(async () => {
+    if (!user) return;
     try {
       const res = await api.get("/api/notices");
       setNotices(res.data);
@@ -146,13 +139,7 @@ const Dashboard: React.FC = () => {
       console.error("Erro ao buscar avisos:", err);
       toast.error("Não foi possível carregar os avisos.");
     }
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      fetchNotices();
-    }
-  }, [user, fetchNotices]);
+  }, [user]);
 
   const fetchMonthlyEvents = useCallback(async () => {
     if (!user || user.role === "licenciado") return;
@@ -185,6 +172,7 @@ const Dashboard: React.FC = () => {
         visibility: noticeVisibility,
       });
       newNoticeEditor.commands.clearContent();
+      setNoticeVisibility("todos");
       fetchNotices();
       toast.success("Aviso postado com sucesso!");
     } catch (err) {
@@ -201,13 +189,15 @@ const Dashboard: React.FC = () => {
   const handleUpdateNotice = async (noticeId: number) => {
     if (!editNoticeEditor) return;
     const message = editNoticeEditor.getHTML();
-
     if (editNoticeEditor.isEmpty || message === "<p></p>") {
       toast.error("O aviso não pode estar em branco.");
       return;
     }
     try {
-      await api.put(`/api/notices/admin/${noticeId}`, { message });
+      await api.put(`/api/notices/admin/${noticeId}`, {
+        message,
+        visibility: noticeVisibility,
+      });
       toast.success("Aviso atualizado com sucesso!");
       setEditingNoticeId(null);
       editNoticeEditor.commands.clearContent();
@@ -300,14 +290,13 @@ const Dashboard: React.FC = () => {
                     />
                     <EditorContent editor={newNoticeEditor} />
                   </div>
-
                   <div className="visibility-selector">
                     <label>Enviar para:</label>
                     <div className="radio-group">
                       <label>
                         <input
                           type="radio"
-                          name="visibility"
+                          name="visibilityCreate"
                           value="todos"
                           checked={noticeVisibility === "todos"}
                           onChange={() => setNoticeVisibility("todos")}
@@ -317,7 +306,7 @@ const Dashboard: React.FC = () => {
                       <label>
                         <input
                           type="radio"
-                          name="visibility"
+                          name="visibilityCreate"
                           value="internos"
                           checked={noticeVisibility === "internos"}
                           onChange={() => setNoticeVisibility("internos")}
@@ -327,7 +316,7 @@ const Dashboard: React.FC = () => {
                       <label>
                         <input
                           type="radio"
-                          name="visibility"
+                          name="visibilityCreate"
                           value="licenciados"
                           checked={noticeVisibility === "licenciados"}
                           onChange={() => setNoticeVisibility("licenciados")}
@@ -336,7 +325,6 @@ const Dashboard: React.FC = () => {
                       </label>
                     </div>
                   </div>
-
                   <div className="notice-form-actions">
                     <button className="form-button" onClick={handlePostNotice}>
                       Postar Aviso
@@ -354,20 +342,19 @@ const Dashboard: React.FC = () => {
                         <div className="tiptap-container">
                           <TiptapMenuBar
                             editor={editNoticeEditor}
-                            onEmojiClick={() =>
+                            onEmojiToggle={() =>
                               toggleEmojiPicker(editNoticeEditor)
                             }
                           />
                           <EditorContent editor={editNoticeEditor} />
                         </div>
-
                         <div className="visibility-selector">
                           <label>Enviar para:</label>
                           <div className="radio-group">
                             <label>
                               <input
                                 type="radio"
-                                name="visibility"
+                                name={`visibility-edit-${notice.id}`}
                                 value="todos"
                                 checked={noticeVisibility === "todos"}
                                 onChange={() => setNoticeVisibility("todos")}
@@ -377,7 +364,7 @@ const Dashboard: React.FC = () => {
                             <label>
                               <input
                                 type="radio"
-                                name="visibility"
+                                name={`visibility-edit-${notice.id}`}
                                 value="internos"
                                 checked={noticeVisibility === "internos"}
                                 onChange={() => setNoticeVisibility("internos")}
@@ -387,9 +374,9 @@ const Dashboard: React.FC = () => {
                             <label>
                               <input
                                 type="radio"
-                                name="visibility"
+                                name={`visibility-edit-${notice.id}`}
                                 value="licenciados"
-                                checked={noticeVisibility !== "internos"}
+                                checked={noticeVisibility === "licenciados"}
                                 onChange={() =>
                                   setNoticeVisibility("licenciados")
                                 }
@@ -398,7 +385,6 @@ const Dashboard: React.FC = () => {
                             </label>
                           </div>
                         </div>
-
                         <div className="notice-actions">
                           <button
                             className="list-button"
@@ -461,7 +447,7 @@ const Dashboard: React.FC = () => {
                   image={EmptyAvisosImage}
                   title="Nenhum Aviso no Momento"
                   message="Não há avisos postados no momento. Verifique novamente mais tarde."
-                ></EmptyState>
+                />
               )}
             </div>
           </div>
