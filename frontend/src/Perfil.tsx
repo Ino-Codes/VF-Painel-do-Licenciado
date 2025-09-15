@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 import EmptyState from "./EmptyState.tsx";
+import AvatarModal from "./AvatarModal.tsx"; // 1. Importar o novo modal
 import EmptyCertificadoImage from "./assets/images/empty_certificado.svg";
 
 interface CertificateData {
@@ -22,6 +23,8 @@ const Perfil: React.FC = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"info" | "certificates">("info");
+
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   const [nome, setNome] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -199,6 +202,14 @@ const Perfil: React.FC = () => {
             alt="Foto de Perfil"
             className="profile-avatar-main"
           />
+
+          <button
+            className="profile-edit-icon"
+            onClick={() => setIsAvatarModalOpen(true)}
+          >
+            ✎
+          </button>
+
           <div className="profile-header-info">
             <h2>{user.nome}</h2>
             <p>{user.email}</p>
@@ -366,6 +377,10 @@ const Perfil: React.FC = () => {
         onConfirm={handleConfirmRemoveAvatar}
         title="Remover Foto de Perfil"
         message="Tem certeza que deseja remover sua foto de perfil?"
+      />
+      <AvatarModal
+        isOpen={isAvatarModalOpen}
+        onClose={() => setIsAvatarModalOpen(false)}
       />
     </div>
   );
