@@ -249,6 +249,7 @@ const AdminUsers: React.FC = () => {
               required
             />
           </div>
+
           <div className="form-row">
             <select
               className="form-select"
@@ -265,21 +266,43 @@ const AdminUsers: React.FC = () => {
           </div>
 
           {editingUser.role !== "licenciado" && (
-            <div className="form-row">
-              <label style={{ fontWeight: 500 }}>Data de Nascimento</label>
-              <input
-                className="form-input"
-                type="date"
-                value={
-                  editingUser.birth_date
-                    ? editingUser.birth_date.substring(0, 10)
-                    : ""
-                }
-                onChange={(e) =>
-                  setEditingUser({ ...editingUser, birth_date: e.target.value })
-                }
-                required
-              />
+            <div>
+              <div className="form-row">
+                <input
+                  className="form-input"
+                  placeholder="Cargo"
+                  value={form.cargo}
+                  onChange={(e) => setForm({ ...form, cargo: e.target.value })}
+                  required
+                />
+                <input
+                  className="form-input"
+                  placeholder="Setor"
+                  value={form.setor}
+                  onChange={(e) => setForm({ ...form, setor: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <label style={{ fontWeight: 500 }}>Data de Nascimento</label>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={
+                    editingUser.birth_date
+                      ? editingUser.birth_date.substring(0, 10)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      birth_date: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
             </div>
           )}
 
