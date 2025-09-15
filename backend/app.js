@@ -98,7 +98,9 @@ const createTables = async () => {
       CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL,
       role TEXT NOT NULL, nome TEXT, avatar_url TEXT,
-      reset_token TEXT, reset_token_expires TIMESTAMPTZ
+      reset_token TEXT, reset_token_expires TIMESTAMPTZ,
+      cargo TEXT, setor TEXT
+      
     );`;
 
   const noticeTable = `

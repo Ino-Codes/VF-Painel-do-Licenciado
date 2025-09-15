@@ -108,8 +108,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       await client.query("BEGIN");
 
-      const finalBirthDate = role !== "licenciado" ? birth_date : null;
-      const result = await pool.query(
+      const finalBirthDate = role === "colaborador" ? birth_date : null;
+
+      const userResult = await client.query(
         "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6 WHERE id = $7 RETURNING *",
         [nome, email, role, finalBirthDate, cargo, setor, id]
       );
@@ -125,7 +126,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         [id]
       );
 
-      if (role !== "licenciado" && finalBirthDate) {
+      if (role === "colaborador" && finalBirthDate) {
         const birthDate = new Date(finalBirthDate);
         const eventTitle = `Aniversário - ${nome}`;
 
@@ -168,8 +169,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
       const updatedUser = userResult.rows[0];
       delete updatedUser.password;
-      delete updatedUser.reset_token;
-      delete updatedUser.reset_token_expires;
 
       res.json({ success: true, user: updatedUser });
     } catch (err) {
