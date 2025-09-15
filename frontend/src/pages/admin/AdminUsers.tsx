@@ -330,21 +330,6 @@ const AdminUsers: React.FC = () => {
           />
         </div>
 
-        <div className="form-row">
-          <input
-            className="form-input"
-            placeholder="Cargo"
-            value={form.cargo}
-            onChange={(e) => setForm({ ...form, cargo: e.target.value })}
-          />
-          <input
-            className="form-input"
-            placeholder="Setor"
-            value={form.setor}
-            onChange={(e) => setForm({ ...form, setor: e.target.value })}
-          />
-        </div>
-
         {form.role !== "licenciado" && (
           <div>
             <div className="form-row">
