@@ -7,6 +7,7 @@ import Footer from ".../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from ".../components/ui/ConfirmationModal.tsx";
 import LessonEditModal from ".../components/forms/LessonEditModal.tsx";
+import { SortableModuleItem } from ".../components/ui/SortableModuleItem.tsx";
 import { Course, Module, Lesson, Quiz, Question, Option } from "./types.ts";
 import {
   DndContext,
@@ -22,7 +23,6 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { SortableModuleItem } from "./SortableModuleItem.tsx";
 
 const AdminCourseEditor: React.FC = () => {
   const { user, loading } = useAuth();
