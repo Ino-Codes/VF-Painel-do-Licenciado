@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import api from ".../api.ts";
 import Menu from ".../components/layout/Menu.tsx";
 import Footer from ".../components/layout/Footer.tsx";
 import EmptyState from ".../components/ui/EmptyState.tsx";
