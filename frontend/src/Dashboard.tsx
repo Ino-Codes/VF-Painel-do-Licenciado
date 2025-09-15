@@ -389,7 +389,7 @@ const Dashboard: React.FC = () => {
                                 type="radio"
                                 name="visibility"
                                 value="licenciados"
-                                checked={noticeVisibility === "licenciados"}
+                                checked={noticeVisibility !== "internos"}
                                 onChange={() =>
                                   setNoticeVisibility("licenciados")
                                 }
