@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from ".../api.ts";
+import api from "../../api.ts";
 import toast from "react-hot-toast";
 import Select from "react-select";
 import DatePicker from "./DatePicker.tsx";

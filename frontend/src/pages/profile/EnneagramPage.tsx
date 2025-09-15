@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import api from ".../api.ts";
+import api from "../../api.ts";
 import { useNavigate } from "react-router-dom";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
-import LoadingSpinner from ".../components/ui/LoadingSpinner.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const QUESTIONS_PER_PAGE = 10;
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Option } from ".../types.ts";
+import { Option } from "../../types.ts";
 
 interface OptionEditModalProps {
   option: Partial<Option>;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
-import { useAuth } from ".../context/AuthContext.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 const Menu: React.FC = () => {
   const { user } = useAuth();

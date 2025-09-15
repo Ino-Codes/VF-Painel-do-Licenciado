@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
-import api from ".../api.ts";
-import { useAuth } from ".../context/AuthContext.tsx";
+import api from "../../api.ts";
+import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
-import ConfirmationModal from ".../components/ui/ConfirmationModal.tsx";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 
 interface User {
   id: number;

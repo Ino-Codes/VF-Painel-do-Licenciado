@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import api from ".../api.ts";
-import { useAuth } from ".../context/AuthContext.tsx";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
+import api from "../../api.ts";
+import { useAuth } from "../../context/AuthContext.tsx";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
-import ConfirmationModal from ".../components/ui/ConfirmationModal.tsx";
-import EmptyState from ".../components/ui/EmptyState.tsx";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
+import EmptyState from "../../components/ui/EmptyState.tsx";
 import EventCard from "./EventCard.tsx";
 import EnneagramStats from "./EnneagramStats.tsx";
 
-import EmptyEventsImage from ".../assets/images/empty_eventos.svg";
-import EmptyAvisosImage from ".../assets/images/empty_avisos.svg";
-import EmptyDashsImage from ".../assets/images/empty_dashs.svg";
+import EmptyEventsImage from "../../assets/images/empty_eventos.svg";
+import EmptyAvisosImage from "../../assets/images/empty_avisos.svg";
+import EmptyDashsImage from "../../assets/images/empty_dashs.svg";
 
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";

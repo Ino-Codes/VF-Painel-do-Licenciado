@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import api from ".../api.ts";
+import api from "../../api.ts";
 import toast from "react-hot-toast";
 
 const logo =

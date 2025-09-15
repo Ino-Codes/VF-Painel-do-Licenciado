@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import api from ".../api.ts";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
+import api from "../../api.ts";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
-import EventModal from ".../components/forms/EventModal.tsx";
-import { useAuth } from ".../context/AuthContext.tsx";
+import EventModal from "../../components/forms/EventModal.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
 
 const AdminCalendar: React.FC = () => {

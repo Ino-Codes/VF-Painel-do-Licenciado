@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from ".../context/AuthContext.tsx";
-import api from ".../api.ts";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
+import api from "../../api.ts";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
 import { useNavigate } from "react-router-dom";
-import LoadingSpinner from ".../components/ui/LoadingSpinner.tsx";
-import EmptyState from ".../components/ui/EmptyState.tsx";
-import EmptyCursosImage from ".../assets/images/empty_cursos.svg";
-import CourseCard from ".../components/ui/CourseCard.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import EmptyState from "../../components/ui/EmptyState.tsx";
+import EmptyCursosImage from "../../assets/images/empty_cursos.svg";
+import CourseCard from "../../components/ui/CourseCard.tsx";
 
 interface CourseData {
   id: number;

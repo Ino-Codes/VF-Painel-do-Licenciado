@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from ".../context/AuthContext.tsx";
-import api from ".../api.ts";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
+import api from "../../api.ts";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import ConfirmationModal from ".../components/ui/ConfirmationModal.tsx";
-import LoadingSpinner from ".../components/ui/LoadingSpinner.tsx";
-import EmptyState from ".../components/ui/EmptyState.tsx";
-import AvatarModal from ".../components/forms/AvatarModal.tsx";
-import EmptyCertificadoImage from ".../assets/images/empty_certificado.svg";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import EmptyState from "../../components/ui/EmptyState.tsx";
+import AvatarModal from "../../components/forms/AvatarModal.tsx";
+import EmptyCertificadoImage from "../../assets/images/empty_certificado.svg";
 
 interface CertificateData {
   certificate_id: number;

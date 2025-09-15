@@ -1,11 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import api from ".../api.ts";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
-import EmptyState from ".../components/ui/EmptyState.tsx";
-import NotFoundImage from ".../assets/images/404.svg";
-import { useAuth } from ".../context/AuthContext.tsx";
+import api from "../../api.ts";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
+import EmptyState from "../../components/ui/EmptyState.tsx";
+import NotFoundImage from "../../assets/images/404.svg";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 const NotFoundPage: React.FC = () => {
   const { user } = useAuth();

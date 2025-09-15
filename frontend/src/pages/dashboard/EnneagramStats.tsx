@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import api from ".../api.ts";
+import api from "../../api.ts";
 import { Bar } from "react-chartjs-2";
-import LoadingSpinner from ".../components/ui/LoadingSpinner.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 import {
   Chart as ChartJS,

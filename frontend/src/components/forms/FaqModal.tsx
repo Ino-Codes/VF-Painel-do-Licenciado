@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import api from ".../api.ts";
+import api from "../../api.ts";
 import toast from "react-hot-toast";
 
 interface FaqModalProps {

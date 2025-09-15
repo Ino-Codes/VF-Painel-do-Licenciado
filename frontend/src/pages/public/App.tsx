@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import api from ".../api.ts";
+import api from "../../api.ts";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from ".../context/AuthContext.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 const logo =
   "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";

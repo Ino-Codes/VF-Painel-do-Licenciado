@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import api from ".../api.ts";
-import { useAuth } from ".../context/AuthContext.tsx";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
-import LoadingSpinner from ".../components/ui/LoadingSpinner.tsx";
+import api from "../../api.ts";
+import { useAuth } from "../../context/AuthContext.tsx";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import toast from "react-hot-toast";
 
 interface QuizOption {

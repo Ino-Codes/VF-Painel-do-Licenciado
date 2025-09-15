@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useAuth } from ".../context/AuthContext.tsx";
-import api from ".../api.ts";
+import { useAuth } from "../../context/AuthContext.tsx";
+import api from "../../api.ts";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../ui/ConfirmationModal.tsx";
 

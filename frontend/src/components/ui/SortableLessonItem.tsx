@@ -1,7 +1,7 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Lesson } from ".../types.ts";
+import { Lesson } from "../../types.ts";
 
 interface SortableLessonItemProps {
   lesson: Lesson;

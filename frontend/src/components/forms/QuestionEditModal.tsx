@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Question } from ".../types.ts";
+import { Question } from "../../types.ts";
 
 interface QuestionEditModalProps {
   question: Partial<Question>;

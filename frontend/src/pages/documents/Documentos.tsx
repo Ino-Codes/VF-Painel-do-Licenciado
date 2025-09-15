@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from ".../context/AuthContext.tsx";
-import api from ".../api.ts";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
+import api from "../../api.ts";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
 import FileModal from "...components/forms/FileModal.tsx";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import ConfirmationModal from ".../components/forms/ConfirmationModal.tsx";
-import EmptyState from ".../components/ui/EmptyState.tsx";
+import ConfirmationModal from "../../components/forms/ConfirmationModal.tsx";
+import EmptyState from "../../components/ui/EmptyState.tsx";
 
-import EmptyDocumentsImage from ".../assets/images/empty_documentos.svg";
+import EmptyDocumentsImage from "../../assets/images/empty_documentos.svg";
 
 interface FileData {
   id: number;

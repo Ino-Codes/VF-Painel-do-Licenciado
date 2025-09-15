@@ -1,7 +1,7 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Module, Lesson } from ".../types.ts";
+import { Module, Lesson } from "../../types.ts";
 import { SortableLessonItem } from "./SortableLessonItem.tsx";
 import {
   DndContext,

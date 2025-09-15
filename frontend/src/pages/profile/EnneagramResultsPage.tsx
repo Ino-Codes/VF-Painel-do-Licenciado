@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import api from ".../api.ts";
+import api from "../../api.ts";
 import { Bar, Radar } from "react-chartjs-2";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
-import LoadingSpinner from ".../components/ui/LoadingSpinner.tsx";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import {
   Chart as ChartJS,
   CategoryScale,

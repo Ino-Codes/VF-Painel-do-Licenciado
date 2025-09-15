@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from ".../context/AuthContext.tsx";
-import api from ".../api.ts";
-import Menu from ".../components/layout/Menu.tsx";
-import Footer from ".../components/layout/Footer.tsx";
-import VideoModal from ".../components/forms/VideoModal.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
+import api from "../../api.ts";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
+import VideoModal from "../../components/forms/VideoModal.tsx";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import ConfirmationModal from ".../components/ui/ConfirmationModal.tsx";
-import EmptyState from ".../components/ui/EmptyState.tsx";
-import VideoEmptyImage from ".../assets/images/empty_video.svg";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
+import EmptyState from "../../components/ui/EmptyState.tsx";
+import VideoEmptyImage from "../../assets/images/empty_video.svg";
 
 interface VideoData {
   id: number;

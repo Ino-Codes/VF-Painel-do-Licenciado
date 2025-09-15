@@ -1,6 +1,6 @@
 import React from "react";
 import Lottie from "lottie-react";
-import loadingAnimation from ".../animations/loading.json";
+import loadingAnimation from "../../animations/loading.json";
 
 const LoadingSpinner: React.FC = () => {
   const style = {
