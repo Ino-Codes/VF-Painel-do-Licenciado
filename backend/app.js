@@ -100,7 +100,6 @@ const createTables = async () => {
       role TEXT NOT NULL, nome TEXT, avatar_url TEXT,
       reset_token TEXT, reset_token_expires TIMESTAMPTZ,
       cargo TEXT, setor TEXT
-      
     );`;
 
   const noticeTable = `

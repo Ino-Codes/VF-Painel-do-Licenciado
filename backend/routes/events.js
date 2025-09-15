@@ -7,20 +7,23 @@ module.exports = function (pool, cloudinary, upload) {
   const checkLoggedIn = isLoggedIn(pool);
 
   // ROTA PÚBLICA PARA O DASHBOARD
-  router.get("/current-month", async (req, res) => {
+  router.get("/current-month", checkLoggedIn, async (req, res) => {
     try {
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth();
-
-      // Define o primeiro e o último dia do mês corrente
       const firstDayOfMonth = new Date(year, month, 1);
       const lastDayOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
 
-      const result = await pool.query(
-        "SELECT * FROM events WHERE start_date >= $1 AND start_date <= $2 ORDER BY start_date ASC",
-        [firstDayOfMonth, lastDayOfMonth]
-      );
+      const query = `
+                SELECT * FROM events 
+                WHERE start_date >= $1 
+                AND start_date <= $2 
+                ORDER BY start_date ASC
+            `;
+
+      const result = await pool.query(query, [now, lastDayOfMonth]);
+
       res.json(result.rows);
     } catch (err) {
       console.error("Erro ao buscar eventos do mês:", err);
