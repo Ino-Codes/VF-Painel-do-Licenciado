@@ -207,7 +207,7 @@ const Perfil: React.FC = () => {
             className="profile-edit-icon"
             onClick={() => setIsAvatarModalOpen(true)}
           >
-            ✎
+            ✏️
           </button>
 
           <div className="profile-header-info">
