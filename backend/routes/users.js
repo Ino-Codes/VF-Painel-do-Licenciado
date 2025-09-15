@@ -5,6 +5,10 @@ const { Readable } = require("stream");
 const router = express.Router();
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
+  const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
+  const checkAdmin = isAdmin(pool);
+  const checkLoggedIn = isLoggedIn(pool);
+
   // --- Rotas de Admin (Listar, Criar, Editar) ---
   router.get("/admin", async (req, res) => {
     const { search, page = 1, limit = 10 } = req.query;
