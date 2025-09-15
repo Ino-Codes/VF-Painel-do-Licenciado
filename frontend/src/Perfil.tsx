@@ -277,93 +277,94 @@ const Perfil: React.FC = () => {
 
         {activeTab === "info" && (
           <div className="profile-tab-content">
-            <div className="profile-section">
-              <h3>
-                Informações do Perfil
-                {user.role === "admin" && !isEditing && (
-                  <button
-                    className="edit-profile-button"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    ✎ Editar
-                  </button>
-                )}
-              </h3>
-
-              {!isEditing && (
-                <div className="profile-info-grid">
-                  <div className="info-item">
-                    <span>Nome</span>
-                    <p>{user.nome}</p>
-                  </div>
-                  <div className="info-item">
-                    <span>Email</span>
-                    <p>{user.email}</p>
-                  </div>
-                  {user.role !== "licenciado" && (
-                    <>
-                      <div className="info-item">
-                        <span>Cargo</span>
-                        <p>{user.cargo || "Não informado"}</p>
-                      </div>
-                      <div className="info-item">
-                        <span>Setor</span>
-                        <p>{user.setor || "Não informado"}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {isEditing && user.role === "admin" && (
-                <div className="profile-edit-form">
-                  <div className="form-row">
-                    <label>Nome:</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={editForm.nome}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, nome: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="form-row">
-                    <label>Cargo:</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={editForm.cargo}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, cargo: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="form-row">
-                    <label>Setor:</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={editForm.setor}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, setor: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="form-actions">
+            {user.role !== "licenciado" && (
+              <div className="profile-section">
+                <h3>
+                  Informações do Perfil
+                  {user.role === "admin" && !isEditing && (
                     <button
-                      className="form-button-cancel"
-                      onClick={() => setIsEditing(false)}
+                      className="edit-profile-button"
+                      onClick={() => setIsEditing(true)}
                     >
-                      Cancelar
+                      ✏️ Editar
                     </button>
-                    <button className="form-button" onClick={handleSaveChanges}>
-                      Salvar Alterações
-                    </button>
+                  )}
+                </h3>
+
+                {!isEditing && (
+                  <div className="profile-info-grid">
+                    <div className="info-item">
+                      <span>Nome</span>
+                      <p>{user.nome}</p>
+                    </div>
+                    <div className="info-item">
+                      <span>Email</span>
+                      <p>{user.email}</p>
+                    </div>
+                    <div className="info-item">
+                      <span>Cargo</span>
+                      <p>{user.cargo || "Não informado"}</p>
+                    </div>
+                    <div className="info-item">
+                      <span>Setor</span>
+                      <p>{user.setor || "Não informado"}</p>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+
+                {isEditing && user.role === "admin" && (
+                  <div className="profile-edit-form">
+                    <div className="form-row">
+                      <label>Nome:</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editForm.nome}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, nome: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label>Cargo:</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editForm.cargo}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, cargo: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label>Setor:</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editForm.setor}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, setor: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button
+                        className="form-button-cancel"
+                        onClick={() => setIsEditing(false)}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        className="form-button"
+                        onClick={handleSaveChanges}
+                      >
+                        Salvar Alterações
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {user.role !== "licenciado" && (
               <div className="profile-section">
