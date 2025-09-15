@@ -53,27 +53,9 @@
   gap: 10px;
   margin-top: 15px;
 }
-/* --- RESPONSIVO (PERFIL) --- */
-@media (max-width: 900px) {
-  .profile-card {
-    flex-direction: column;
-  }
-  .details-section .form-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .details-section label {
-    flex-basis: auto;
-    margin-bottom: 5px;
-  }
-  .profile-header {
-    flex-direction: column;
-    text-align: center;
-  }
-  .profile-header .botao-logout {
-    margin-left: 0;
-    margin-top: 15px;
-  }
+
+.profile-avatar-container {
+  position: relative;
 }
 
 .profile-header {
@@ -160,4 +142,27 @@
   background-color: white;
   transform: scale(1.1);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --- RESPONSIVO (PERFIL) --- */
+@media (max-width: 900px) {
+  .profile-card {
+    flex-direction: column;
+  }
+  .details-section .form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .details-section label {
+    flex-basis: auto;
+    margin-bottom: 5px;
+  }
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  .profile-header .botao-logout {
+    margin-left: 0;
+    margin-top: 15px;
+  }
 }

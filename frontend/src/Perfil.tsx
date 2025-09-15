@@ -194,21 +194,22 @@ const Perfil: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="profile-header">
-          <img
-            src={
-              user.avatar_url ||
-              "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754077476/imagem-do-usuario-com-fundo-preto_kcuzbg.png"
-            }
-            alt="Foto de Perfil"
-            className="profile-avatar-main"
-          />
-
-          <button
-            className="profile-edit-icon"
-            onClick={() => setIsAvatarModalOpen(true)}
-          >
-            ✏️
-          </button>
+          <div className="profile-avatar-container">
+            <img
+              src={
+                user.avatar_url ||
+                "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754077476/imagem-do-usuario-com-fundo-preto_kcuzbg.png"
+              }
+              alt="Foto de Perfil"
+              className="profile-avatar-main"
+            />
+            <button
+              className="profile-edit-icon"
+              onClick={() => setIsAvatarModalOpen(true)}
+            >
+              ✏️
+            </button>
+          </div>
 
           <div className="profile-header-info">
             <h2>{user.nome}</h2>
