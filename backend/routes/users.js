@@ -18,7 +18,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       }
       const countSql = `SELECT COUNT(*) FROM users ${whereClause}`;
 
-      const usersSql = `SELECT id, nome, email, role, avatar_url, birth_date FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
+      const usersSql = `SELECT id, nome, email, role, avatar_url, birth_date, cargo, setor FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
         params.length + 1
       } OFFSET $${params.length + 2}`;
 
@@ -102,16 +102,16 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   router.put("/admin/:id", async (req, res) => {
     const { id } = req.params;
-    const { nome, email, role, birth_date } = req.body;
+    const { nome, email, role, birth_date, cargo, setor } = req.body;
     const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
 
       const finalBirthDate = role !== "licenciado" ? birth_date : null;
-      const userResult = await client.query(
-        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4 WHERE id = $5 RETURNING *",
-        [nome, email, role, finalBirthDate, id]
+      const result = await pool.query(
+        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6 WHERE id = $7 RETURNING *",
+        [nome, email, role, finalBirthDate, cargo, setor, id]
       );
 
       if (userResult.rowCount === 0) {
@@ -329,11 +329,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   router.put("/:id/profile", async (req, res) => {
     const { id } = req.params;
-    const { nome } = req.body;
+    const { nome, bio } = req.body;
     try {
       const result = await pool.query(
-        "UPDATE users SET nome = $1 WHERE id = $2 RETURNING *",
-        [nome, id]
+        "UPDATE users SET nome = $1, bio = $2 WHERE id = $3 RETURNING *",
+        [nome, bio, id]
       );
       if (result.rowCount === 0)
         return res.status(404).json({ error: "Usuário não encontrado." });
