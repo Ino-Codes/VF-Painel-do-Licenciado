@@ -351,7 +351,7 @@ const Perfil: React.FC = () => {
                   <EmptyState
                     image={EmptyCertificadoImage}
                     title="Nenhum Certificado Encontrado"
-                    message="Você ainda não concluiu nenhum curso para obter um certificado."
+                    message="Você ainda não concluiu nenhum curso para obter um certificado. Complete um curso e ele aparecerá aqui!"
                   />
                 )}
               </div>
