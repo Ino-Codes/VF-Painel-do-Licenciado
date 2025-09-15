@@ -144,6 +144,56 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.profile-section h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.edit-profile-button {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.edit-profile-button:hover {
+  background-color: #f0f0f0;
+}
+
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.info-item span {
+  font-weight: 500;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.info-item p {
+  font-size: 16px;
+  margin: 5px 0 0 0;
+  font-weight: 500;
+}
+
+.profile-edit-form .form-row {
+  align-items: center;
+}
+.profile-edit-form label {
+  flex-basis: 80px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
 /* --- RESPONSIVO (PERFIL) --- */
 @media (max-width: 900px) {
   .profile-card {

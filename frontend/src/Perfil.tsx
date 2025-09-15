@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
 import LoadingSpinner from "./LoadingSpinner.tsx";
 import EmptyState from "./EmptyState.tsx";
-import AvatarModal from "./AvatarModal.tsx"; // 1. Importar o novo modal
+import AvatarModal from "./AvatarModal.tsx";
 import EmptyCertificadoImage from "./assets/images/empty_certificado.svg";
 
 interface CertificateData {
@@ -16,6 +16,16 @@ interface CertificateData {
   course_id: number;
   issue_date: string;
   course_title: string;
+}
+
+interface User {
+  id: number;
+  email: string;
+  nome: string;
+  role: "admin" | "licenciado" | "colaborador";
+  avatar_url?: string;
+  cargo?: string;
+  setor?: string;
 }
 
 const Perfil: React.FC = () => {
@@ -35,6 +45,24 @@ const Perfil: React.FC = () => {
 
   const [certificates, setCertificates] = useState<CertificateData[]>([]);
   const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [editForm, setEditForm] = useState({
+    nome: "",
+    cargo: "",
+    setor: "",
+  });
+
+  useEffect(() => {
+    if (!loading && user) {
+      setEditForm({
+        nome: user.nome || "",
+        cargo: user.cargo || "",
+        setor: user.setor || "",
+      });
+    }
+  }, [user, loading]);
 
   useEffect(() => {
     if (!loading) {
@@ -95,13 +123,17 @@ const Perfil: React.FC = () => {
       return;
     }
     try {
-      const res = await api.put(`/api/users/${user.id}/profile`, { nome });
-      const updatedUser = res.data.user;
-      login(updatedUser);
-      toast.success("Nome atualizado com sucesso!");
+      const res = await api.put(`/api/users/admin/${user.id}`, {
+        ...user,
+        nome: editForm.nome,
+        cargo: editForm.cargo,
+        setor: editForm.setor,
+      });
+      login(res.data.user);
+      toast.success("Perfil atualizado com sucesso!");
+      setIsEditing(false);
     } catch (err) {
       toast.error("Erro ao salvar as alterações.");
-      console.error(err);
     }
   };
 
@@ -245,6 +277,94 @@ const Perfil: React.FC = () => {
 
         {activeTab === "info" && (
           <div className="profile-tab-content">
+            <div className="profile-section">
+              <h3>
+                Informações do Perfil
+                {user.role === "admin" && !isEditing && (
+                  <button
+                    className="edit-profile-button"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    ✎ Editar
+                  </button>
+                )}
+              </h3>
+
+              {!isEditing && (
+                <div className="profile-info-grid">
+                  <div className="info-item">
+                    <span>Nome</span>
+                    <p>{user.nome}</p>
+                  </div>
+                  <div className="info-item">
+                    <span>Email</span>
+                    <p>{user.email}</p>
+                  </div>
+                  {user.role !== "licenciado" && (
+                    <>
+                      <div className="info-item">
+                        <span>Cargo</span>
+                        <p>{user.cargo || "Não informado"}</p>
+                      </div>
+                      <div className="info-item">
+                        <span>Setor</span>
+                        <p>{user.setor || "Não informado"}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {isEditing && user.role === "admin" && (
+                <div className="profile-edit-form">
+                  <div className="form-row">
+                    <label>Nome:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editForm.nome}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, nome: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label>Cargo:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editForm.cargo}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, cargo: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label>Setor:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editForm.setor}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, setor: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="form-actions">
+                    <button
+                      className="form-button-cancel"
+                      onClick={() => setIsEditing(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button className="form-button" onClick={handleSaveChanges}>
+                      Salvar Alterações
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {user.role !== "licenciado" && (
               <div className="profile-section">
                 <h3>Perfil Comportamental</h3>
