@@ -281,14 +281,12 @@ const Perfil: React.FC = () => {
               <div className="profile-section">
                 <h3>
                   Informações do Perfil
-                  {user.role === "admin" && !isEditing && (
-                    <button
-                      className="edit-profile-button"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      ✏️ Editar
-                    </button>
-                  )}
+                  <button
+                    className="edit-profile-button"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    ✏️ Editar
+                  </button>
                 </h3>
 
                 {!isEditing && (
@@ -313,6 +311,58 @@ const Perfil: React.FC = () => {
                 )}
 
                 {isEditing && user.role === "admin" && (
+                  <div className="profile-edit-form">
+                    <div className="form-row">
+                      <label>Nome:</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editForm.nome}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, nome: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label>Cargo:</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editForm.cargo}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, cargo: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label>Setor:</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editForm.setor}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, setor: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button
+                        className="form-button-cancel"
+                        onClick={() => setIsEditing(false)}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        className="form-button"
+                        onClick={handleSaveChanges}
+                      >
+                        Salvar Alterações
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {isEditing && user.role === "colaborador" && (
                   <div className="profile-edit-form">
                     <div className="form-row">
                       <label>Nome:</label>
