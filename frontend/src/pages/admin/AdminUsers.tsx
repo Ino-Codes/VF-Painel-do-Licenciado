@@ -13,6 +13,8 @@ interface User {
   email: string;
   role: "admin" | "licenciado" | "colaborador";
   birth_date?: string | null;
+  cargo?: string;
+  setor?: string;
 }
 
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
@@ -94,8 +96,10 @@ const AdminUsers: React.FC = () => {
     nome: "",
     email: "",
     password: "",
-    role: "licenciado" as "admin" | "licenciado" | "colaborador",
+    role: "licenciado" as User["role"],
     birth_date: "",
+    cargo: "",
+    setor: "",
   });
 
   const [users, setUsers] = useState<User[]>([]);
@@ -164,8 +168,10 @@ const AdminUsers: React.FC = () => {
           nome: "",
           email: "",
           password: "",
-          role: form.role,
           birth_date: "",
+          cargo: "",
+          setor: "",
+          role: formType === "licenciado" ? "licenciado" : "colaborador",
         });
       }
       fetchUsers();
@@ -312,6 +318,7 @@ const AdminUsers: React.FC = () => {
             required
           />
         </div>
+
         <div className="form-row">
           <input
             className="form-input"
@@ -323,27 +330,61 @@ const AdminUsers: React.FC = () => {
           />
         </div>
 
-        {form.role !== "licenciado" && (
-          <div className="form-row">
-            <select
-              className="form-select"
-              value={form.role}
-              onChange={(e) =>
-                setForm({ ...form, role: e.target.value as User["role"] })
-              }
-            >
-              <option value="colaborador">Colaborador</option>
-              <option value="admin">Admin</option>
-            </select>
+        <div className="form-row">
+          <input
+            className="form-input"
+            placeholder="Cargo"
+            value={form.cargo}
+            onChange={(e) => setForm({ ...form, cargo: e.target.value })}
+          />
+          <input
+            className="form-input"
+            placeholder="Setor"
+            value={form.setor}
+            onChange={(e) => setForm({ ...form, setor: e.target.value })}
+          />
+        </div>
 
-            <label style={{ fontWeight: 500 }}>Data de Nascimento</label>
-            <input
-              className="form-input"
-              type="date"
-              value={form.birth_date}
-              onChange={(e) => setForm({ ...form, birth_date: e.target.value })}
-              required
-            />
+        {form.role !== "licenciado" && (
+          <div>
+            <div className="form-row">
+              <input
+                className="form-input"
+                placeholder="Cargo"
+                value={form.cargo}
+                onChange={(e) => setForm({ ...form, cargo: e.target.value })}
+              />
+              <input
+                className="form-input"
+                placeholder="Setor"
+                value={form.setor}
+                onChange={(e) => setForm({ ...form, setor: e.target.value })}
+              />
+            </div>
+
+            <div className="form-row">
+              <select
+                className="form-select"
+                value={form.role}
+                onChange={(e) =>
+                  setForm({ ...form, role: e.target.value as User["role"] })
+                }
+              >
+                <option value="colaborador">Colaborador</option>
+                <option value="admin">Admin</option>
+              </select>
+
+              <label style={{ fontWeight: 500 }}>Data de Nascimento</label>
+              <input
+                className="form-input"
+                type="date"
+                value={form.birth_date}
+                onChange={(e) =>
+                  setForm({ ...form, birth_date: e.target.value })
+                }
+                required
+              />
+            </div>
           </div>
         )}
 

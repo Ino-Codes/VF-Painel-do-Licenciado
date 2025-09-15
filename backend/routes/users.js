@@ -38,17 +38,26 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  router.post("/admin", async (req, res) => {
-    const { nome, email, password, role, birth_date } = req.body;
+  router.post("/admin", checkLoggedIn, checkAdmin, async (req, res) => {
+    const { nome, email, password, role, birth_date, cargo, setor } = req.body;
     const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
 
       const hash = await bcrypt.hash(password, 10);
+
       const userResult = await client.query(
-        "INSERT INTO users (nome, email, password, role, birth_date) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-        [nome, email, hash, role, birth_date || null]
+        "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+        [
+          nome,
+          email,
+          hash,
+          role,
+          birth_date || null,
+          cargo || null,
+          setor || null,
+        ]
       );
       const newUserId = userResult.rows[0].id;
 
