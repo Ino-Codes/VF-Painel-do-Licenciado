@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from ".../api.ts";
-import { useAuth } from "./context/AuthContext.tsx";
+import { useAuth } from ".../context/AuthContext.tsx";
 import Menu from ".../components/layout/Menu.tsx";
 import Footer from ".../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
