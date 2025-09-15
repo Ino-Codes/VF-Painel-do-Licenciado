@@ -345,6 +345,7 @@ const Perfil: React.FC = () => {
                         }
                       />
                     </div>
+
                     <div className="form-actions">
                       <button
                         className="form-button-cancel"
@@ -375,28 +376,7 @@ const Perfil: React.FC = () => {
                         }
                       />
                     </div>
-                    <div className="form-row">
-                      <label>Cargo:</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editForm.cargo}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, cargo: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="form-row">
-                      <label>Setor:</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editForm.setor}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, setor: e.target.value })
-                        }
-                      />
-                    </div>
+
                     <div className="form-actions">
                       <button
                         className="form-button-cancel"
