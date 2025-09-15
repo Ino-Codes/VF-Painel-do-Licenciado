@@ -53,16 +53,6 @@ const CoursesPage: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      if (activeTab === "cursos") {
-        fetchCourses();
-      } else {
-        fetchCertificates();
-      }
-    }
-  }, [user, activeTab, fetchCourses, fetchCertificates]);
-
   if (loading) {
     return <LoadingSpinner />;
   }
