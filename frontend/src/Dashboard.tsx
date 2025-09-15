@@ -36,7 +36,7 @@ interface MonthlyEvent {
 
 const TiptapMenuBar: React.FC<{
   editor: Editor | null;
-  onEmojiToggle: () => void;
+  onEmojiToggle: (event: React.MouseEvent) => void;
 }> = ({ editor, onEmojiToggle }) => {
   if (!editor) {
     return null;
@@ -50,7 +50,7 @@ const TiptapMenuBar: React.FC<{
           type="button"
           onClick={onEmojiToggle}
         >
-          :)
+          🙂
         </button>
       </div>
       <button
@@ -95,6 +95,10 @@ const Dashboard: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeEditor, setActiveEditor] = useState<Editor | null>(null);
+  const [pickerPosition, setPickerPosition] = useState<{
+    top: number;
+    right: number;
+  }>({ top: 0, right: 0 });
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const [noticeVisibility, setNoticeVisibility] = useState<
     "todos" | "internos" | "licenciados"
@@ -162,6 +166,7 @@ const Dashboard: React.FC = () => {
   const handlePostNotice = async () => {
     if (!newNoticeEditor) return;
     const message = newNoticeEditor.getHTML();
+
     if (newNoticeEditor.isEmpty || message === "<p></p>") {
       toast.error("O aviso não pode estar em branco.");
       return;
@@ -189,6 +194,7 @@ const Dashboard: React.FC = () => {
   const handleUpdateNotice = async (noticeId: number) => {
     if (!editNoticeEditor) return;
     const message = editNoticeEditor.getHTML();
+
     if (editNoticeEditor.isEmpty || message === "<p></p>") {
       toast.error("O aviso não pode estar em branco.");
       return;
@@ -233,7 +239,15 @@ const Dashboard: React.FC = () => {
     setShowEmojiPicker(false);
   };
 
-  const toggleEmojiPicker = (editor: Editor) => {
+  const toggleEmojiPicker = (editor: Editor, event: React.MouseEvent) => {
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+
+    setPickerPosition({
+      top: rect.top,
+      right: window.innerWidth - rect.right - 350, // 350 é a largura do picker
+    });
+
     setActiveEditor(editor);
     setShowEmojiPicker((prev) => !prev);
   };
@@ -286,7 +300,9 @@ const Dashboard: React.FC = () => {
                   <div className="tiptap-container">
                     <TiptapMenuBar
                       editor={newNoticeEditor}
-                      onEmojiToggle={() => toggleEmojiPicker(newNoticeEditor)}
+                      onEmojiToggle={(e) =>
+                        toggleEmojiPicker(newNoticeEditor, e)
+                      }
                     />
                     <EditorContent editor={newNoticeEditor} />
                   </div>
@@ -342,8 +358,8 @@ const Dashboard: React.FC = () => {
                         <div className="tiptap-container">
                           <TiptapMenuBar
                             editor={editNoticeEditor}
-                            onEmojiToggle={() =>
-                              toggleEmojiPicker(editNoticeEditor)
+                            onEmojiToggle={(e) =>
+                              toggleEmojiPicker(editNoticeEditor, e)
                             }
                           />
                           <EditorContent editor={editNoticeEditor} />
@@ -454,7 +470,14 @@ const Dashboard: React.FC = () => {
         </div>
 
         {showEmojiPicker && (
-          <div className="emoji-picker-container-global" ref={emojiPickerRef}>
+          <div
+            className="emoji-picker-container-global"
+            ref={emojiPickerRef}
+            style={{
+              top: `${pickerPosition.top}px`,
+              left: `${pickerPosition.right}px`,
+            }}
+          >
             <EmojiPicker
               onEmojiClick={onEmojiClick}
               width="100%"
