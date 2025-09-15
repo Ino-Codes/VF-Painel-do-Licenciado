@@ -13,27 +13,23 @@ module.exports = function (pool) {
     checkAdmin,
     async (req, res) => {
       try {
-        // 1. Contagem de resultados por tipo de Eneagrama
         const typeCountsQuery = pool.query(
           `SELECT dominant_type, COUNT(*) as count 
          FROM user_enneagram_results 
          GROUP BY dominant_type`
         );
 
-        // 2. Lista de usuários que completaram, com seus tipos
         const completedUsersQuery = pool.query(
-          `SELECT u.nome, r.dominant_type 
+          `SELECT u.nome, u.cargo, r.dominant_type 
          FROM user_enneagram_results r 
          JOIN users u ON r.user_id = u.id 
          ORDER BY u.nome ASC`
         );
 
-        // 3. Contagem total de colaboradores com role diferente de 'licenciado'
         const totalCollaboratorsQuery = pool.query(
           "SELECT COUNT(*) as total FROM users WHERE role != 'licenciado'"
         );
 
-        // 4. Contagem de colaboradores que completaram o teste
         const completedCollaboratorsQuery = pool.query(
           `SELECT COUNT(*) as completed FROM user_enneagram_results r
          JOIN users u ON r.user_id = u.id

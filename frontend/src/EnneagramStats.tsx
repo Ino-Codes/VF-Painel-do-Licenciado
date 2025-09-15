@@ -30,10 +30,10 @@ interface EnneagramType {
   personal_description: string;
 }
 
-interface User {
-  id: number;
+interface CompletedUser {
   nome: string;
-  setor: string;
+  cargo?: string;
+  dominant_type: number;
 }
 
 const EnneagramStats: React.FC = () => {
@@ -132,17 +132,23 @@ const EnneagramStats: React.FC = () => {
       <div className="stats-side-column">
         <h4>Resultados Individuais</h4>
         <ul className="user-results-list">
-          {stats.completedUsers.map((user: any, index: number) => (
-            <li key={index}>
-              <span className="user-name">
-                {user.setor} | {user.nome}
-              </span>
-              <span className="user-type">
-                {typesMap[user.dominant_type]?.name ||
-                  `Tipo ${user.dominant_type}`}
-              </span>
-            </li>
-          ))}
+          {stats.completedUsers.map((user: CompletedUser, index: number) => {
+            const firstName = user.nome.split(" ")[0];
+            return (
+              <li key={index}>
+                <span className="user-name">
+                  {user.cargo && (
+                    <span className="user-cargo">({user.cargo})</span>
+                  )}
+                  {firstName}
+                </span>
+                <span className="user-type">
+                  {typesMap[user.dominant_type]?.name ||
+                    `Tipo ${user.dominant_type}`}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
