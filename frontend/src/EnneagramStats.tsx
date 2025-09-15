@@ -32,7 +32,7 @@ interface EnneagramType {
 
 interface CompletedUser {
   nome: string;
-  cargo?: string;
+  setor?: string;
   dominant_type: number;
 }
 
@@ -137,8 +137,8 @@ const EnneagramStats: React.FC = () => {
             return (
               <li key={index}>
                 <span className="user-name">
-                  {user.cargo && (
-                    <span className="user-cargo">({user.cargo})</span>
+                  {user.setor && (
+                    <span className="user-setor">({user.setor})</span>
                   )}
                   {firstName}
                 </span>

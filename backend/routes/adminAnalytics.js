@@ -20,7 +20,7 @@ module.exports = function (pool) {
         );
 
         const completedUsersQuery = pool.query(
-          `SELECT u.nome, u.cargo, r.dominant_type 
+          `SELECT u.nome, u.setor, r.dominant_type 
          FROM user_enneagram_results r 
          JOIN users u ON r.user_id = u.id 
          ORDER BY u.nome ASC`
