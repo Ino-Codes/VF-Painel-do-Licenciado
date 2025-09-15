@@ -103,11 +103,13 @@ const CoursesPage: React.FC = () => {
         {isLoadingContent ? (
           <LoadingSpinner />
         ) : (
-          <div className="courses-grid">
+          <div>
             {coursesToDisplay.length > 0 ? (
-              coursesToDisplay.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))
+              <div className="courses-grid">
+                coursesToDisplay.map((course) => (
+                  <CourseCard key={course.id} course={course} />
+                ))
+              </div>
             ) : (
               <EmptyState
                 image={EmptyCursosImage}
