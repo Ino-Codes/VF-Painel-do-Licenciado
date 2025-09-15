@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./context/AuthContext.tsx";
 import api from "./api.ts";
 import Menu from "./Menu.tsx";
@@ -6,19 +6,32 @@ import Footer from "./Footer.tsx";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./ConfirmationModal.tsx";
+import LoadingSpinner from "./LoadingSpinner.tsx";
+import EmptyState from "./EmptyState.tsx";
+import EmptyCertificadoImage from "./assets/images/empty_certificado.svg";
+
+interface CertificateData {
+  certificate_id: number;
+  course_id: number;
+  issue_date: string;
+  course_title: string;
+}
 
 const Perfil: React.FC = () => {
   const { user, login, logout, loading } = useAuth();
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState<"info" | "certificates">("info");
+
   const [nome, setNome] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  const [certificates, setCertificates] = useState<CertificateData[]>([]);
+  const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -29,6 +42,25 @@ const Perfil: React.FC = () => {
       }
     }
   }, [user, loading, navigate]);
+
+  const fetchCertificates = useCallback(async () => {
+    if (!user) return;
+    setIsLoadingCertificates(true);
+    try {
+      const res = await api.get(`/api/certificates/user/${user.id}`);
+      setCertificates(res.data);
+    } catch (err) {
+      toast.error("Não foi possível carregar os seus certificados.");
+    } finally {
+      setIsLoadingCertificates(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (activeTab === "certificates") {
+      fetchCertificates();
+    }
+  }, [activeTab, fetchCertificates]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -117,10 +149,39 @@ const Perfil: React.FC = () => {
     }
   };
 
+  const handleViewCertificate = async (
+    courseId: number,
+    courseTitle: string
+  ) => {
+    toast.loading("Preparando o seu certificado...");
+    try {
+      const response = await api.get(
+        `/api/admin/courses/${courseId}/certificate`,
+        {
+          ...getAuthHeaders(),
+          responseType: "blob",
+        }
+      );
+      toast.dismiss();
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `certificado-${courseTitle}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Não foi possível gerar o certificado. Tente novamente.");
+      console.error("Erro ao gerar certificado:", err);
+    }
+  };
+
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
-
   if (!user) {
     return null;
   }
@@ -129,36 +190,51 @@ const Perfil: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <h2>Meu Perfil</h2>
-        <div className="profile-card">
-          <div className="avatar-section">
-            <img
-              src={
-                user.avatar_url ||
-                "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754077476/imagem-do-usuario-com-fundo-preto_kcuzbg.png"
-              }
-              alt="Foto de Perfil"
-              className="profile-avatar"
-            />
-            <input type="file" onChange={handleFileChange} />
-            {selectedFile && (
-              <button onClick={handleUpload} className="form-button">
-                Salvar Nova Foto
-              </button>
-            )}
-            {user.avatar_url && !selectedFile && (
-              <button
-                onClick={handleRemoveAvatarClick}
-                className="delete-button"
-              >
-                Remover Foto
-              </button>
-            )}
+        <div className="profile-header">
+          <img
+            src={
+              user.avatar_url ||
+              "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754077476/imagem-do-usuario-com-fundo-preto_kcuzbg.png"
+            }
+            alt="Foto de Perfil"
+            className="profile-avatar-main"
+          />
+          <div className="profile-header-info">
+            <h2>{user.nome}</h2>
+            <p>{user.email}</p>
           </div>
+          <button
+            className="botao-logout"
+            onClick={() => {
+              logout();
+              navigate("/");
+            }}
+          >
+            Desconectar
+          </button>
+        </div>
 
-          <div className="details-section">
+        <div className="tabs">
+          <button
+            className={`tab-item ${activeTab === "info" ? "active" : ""}`}
+            onClick={() => setActiveTab("info")}
+          >
+            Informações Gerais
+          </button>
+          <button
+            className={`tab-item ${
+              activeTab === "certificates" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("certificates")}
+          >
+            Meus Certificados
+          </button>
+        </div>
+
+        {activeTab === "info" && (
+          <div className="profile-tab-content">
             {user.role !== "licenciado" && (
-              <div className="section">
+              <div className="profile-section">
                 <h3>Perfil Comportamental</h3>
                 <p>
                   Entenda melhor seus traços de personalidade e como você
@@ -177,7 +253,6 @@ const Perfil: React.FC = () => {
                 </div>
               </div>
             )}
-
             <div className="other-section">
               <h3>Editar Informações</h3>
               <div className="form-row">
@@ -242,19 +317,47 @@ const Perfil: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="avatar-section">
-          <button
-            className="botao-logout"
-            onClick={() => {
-              logout();
-              navigate("/");
-            }}
-          >
-            Desconectar
-          </button>
-        </div>
+        {activeTab === "certificates" && (
+          <div className="profile-tab-content">
+            {isLoadingCertificates ? (
+              <LoadingSpinner />
+            ) : (
+              <div className="certificates-grid">
+                {certificates.length > 0 ? (
+                  certificates.map((cert) => (
+                    <div key={cert.certificate_id} className="certificate-card">
+                      <h4>{cert.course_title}</h4>
+                      <p>
+                        Emitido em:{" "}
+                        {new Date(cert.issue_date).toLocaleDateString("pt-BR")}
+                      </p>
+                      <button
+                        className="form-button"
+                        id="form-button-certificate"
+                        onClick={() =>
+                          handleViewCertificate(
+                            cert.course_id,
+                            cert.course_title
+                          )
+                        }
+                      >
+                        Visualizar Certificado
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState
+                    image={EmptyCertificadoImage}
+                    title="Nenhum Certificado Encontrado"
+                    message="Você ainda não concluiu nenhum curso para obter um certificado."
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <Footer />
       <ConfirmationModal
