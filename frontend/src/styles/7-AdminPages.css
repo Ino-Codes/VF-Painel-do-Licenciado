@@ -119,6 +119,11 @@
 .lesson-item span:first-of-type {
   flex-grow: 1;
 }
+
+.lesson-actions button {
+  margin-left: 5px;
+}
+
 .section-divider {
   margin: 40px 0;
   border: none;
