@@ -25,7 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("token");
     const userData = localStorage.getItem("userData");
     if (token && userData) {
       setUser(JSON.parse(userData));
@@ -35,14 +35,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = (userData: User, token: string) => {
-    localStorage.setItem("authToken", token);
+    localStorage.setItem("token", token);
     localStorage.setItem("userData", JSON.stringify(userData));
     setUser(userData);
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   };
 
   const logout = () => {
-    localStorage.removeItem("authToken");
+    localStorage.removeItem("token");
     localStorage.removeItem("userData");
     setUser(null);
     delete api.defaults.headers.common["Authorization"];
