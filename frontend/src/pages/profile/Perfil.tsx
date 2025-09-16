@@ -230,7 +230,7 @@ const Perfil: React.FC = () => {
             <img
               src={
                 user.avatar_url ||
-                "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754077476/imagem-do-usuario-com-fundo-preto_kcuzbg.png"
+                "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758024315/user-dark_nj6phs.png"
               }
               alt="Foto de Perfil"
               className="profile-avatar-main"
