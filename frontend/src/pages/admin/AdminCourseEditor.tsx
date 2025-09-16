@@ -216,7 +216,7 @@ const AdminCourseEditor: React.FC = () => {
     try {
       toast.loading("A criar o quiz...");
       await api.post(
-        `/api/quizzes/course/${courseId}`,
+        `/api/admin/courses/${courseId}/quiz`,
         quizData,
         getAuthHeaders()
       );

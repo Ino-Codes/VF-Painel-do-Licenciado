@@ -116,21 +116,6 @@ module.exports = function (pool) {
 
   // --- ROTAS DE ADMINISTRAÇÃO ---
 
-  // QUIZ
-  router.post("/course/:courseId", checkAdmin, async (req, res) => {
-    const { courseId } = req.params;
-    const { title, passing_score } = req.body;
-    try {
-      const result = await pool.query(
-        "INSERT INTO quizzes (course_id, title, passing_score) VALUES ($1, $2, $3) RETURNING *",
-        [courseId, title, passing_score]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      res.status(500).json({ error: "Erro ao criar quiz." });
-    }
-  });
-
   // PERGUNTAS
   router.post("/:quizId/questions", checkAdmin, async (req, res) => {
     const { quizId } = req.params;
