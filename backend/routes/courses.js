@@ -279,29 +279,36 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // QUIZ
-  router.post("/:courseId/quiz", checkAdmin, async (req, res) => {
-    const { courseId } = req.params;
-    const { title, passing_score } = req.body;
+  router.post(
+    "/:courseId/quiz",
+    checkLoggedIn,
+    checkAdmin,
+    async (req, res) => {
+      const { courseId } = req.params;
+      const { title, passing_score } = req.body;
 
-    try {
-      const existingQuiz = await pool.query(
-        "SELECT id FROM quizzes WHERE course_id = $1",
-        [courseId]
-      );
-      if (existingQuiz.rowCount > 0) {
-        return res.status(409).json({ error: "Este curso já possui um quiz." });
+      try {
+        const existingQuiz = await pool.query(
+          "SELECT id FROM quizzes WHERE course_id = $1",
+          [courseId]
+        );
+        if (existingQuiz.rowCount > 0) {
+          return res
+            .status(409)
+            .json({ error: "Este curso já possui um quiz." });
+        }
+
+        const result = await pool.query(
+          "INSERT INTO quizzes (course_id, title, passing_score) VALUES ($1, $2, $3) RETURNING *",
+          [courseId, title, passing_score]
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao criar quiz:", err);
+        res.status(500).json({ error: "Erro interno ao criar o quiz." });
       }
-
-      const result = await pool.query(
-        "INSERT INTO quizzes (course_id, title, passing_score) VALUES ($1, $2, $3) RETURNING *",
-        [courseId, title, passing_score]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro ao criar quiz:", err);
-      res.status(500).json({ error: "Erro interno ao criar o quiz." });
     }
-  });
+  );
 
   // THUMBNAIL
   router.post(
