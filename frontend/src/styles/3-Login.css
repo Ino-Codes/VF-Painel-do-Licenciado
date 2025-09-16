@@ -89,11 +89,21 @@
   .p-1 {
     width: 90%;
     min-width: unset;
+    border: 1px solid #c8a167;
+    background-color: #1e1b1a;
   }
   .input-login {
     width: 100%;
   }
   .p-img img {
     width: 250px;
+  }
+  body {
+    background-image: none;
+    background-position: none;
+    background-size: none;
+    overflow-x: none;
+    color: #ffffff;
+    background-color: #03070f;
   }
 }
