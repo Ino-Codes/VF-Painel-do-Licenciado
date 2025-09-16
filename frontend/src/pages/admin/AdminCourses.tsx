@@ -218,13 +218,28 @@ const AdminCourses: React.FC = () => {
             >
               <h3>Alterar Imagem de Capa</h3>
               <div className="form-row">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    e.target.files && setThumbnailFile(e.target.files[0])
-                  }
-                />
+                <div className="file-upload-wrapper">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="thumbnail-upload"
+                    className="file-upload-input"
+                    onChange={(e) =>
+                      e.target.files && setThumbnailFile(e.target.files[0])
+                    }
+                  />
+                  <label
+                    htmlFor="thumbnail-upload"
+                    className="file-upload-label"
+                  >
+                    Escolher Imagem
+                  </label>
+                  <span className="file-upload-filename">
+                    {thumbnailFile
+                      ? thumbnailFile.name
+                      : "Nenhum arquivo escolhido"}
+                  </span>
+                </div>
                 <button
                   className="form-button"
                   type="button"
@@ -267,14 +282,29 @@ const AdminCourses: React.FC = () => {
                 <strong>Recomendado:</strong> Formato A4 Paisagem (297 x 210mm).
               </p>
               <div className="form-row">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) =>
-                    e.target.files &&
-                    setCertificateTemplateFile(e.target.files[0])
-                  }
-                />
+                <div className="file-upload-wrapper">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    id="template-upload"
+                    className="file-upload-input"
+                    onChange={(e) =>
+                      e.target.files &&
+                      setCertificateTemplateFile(e.target.files[0])
+                    }
+                  />
+                  <label
+                    htmlFor="template-upload"
+                    className="file-upload-label"
+                  >
+                    Escolher Modelo
+                  </label>
+                  <span className="file-upload-filename">
+                    {certificateTemplateFile
+                      ? certificateTemplateFile.name
+                      : "Nenhum arquivo escolhido"}
+                  </span>
+                </div>
                 <button
                   className="form-button"
                   type="button"
@@ -284,6 +314,7 @@ const AdminCourses: React.FC = () => {
                   Salvar Modelo
                 </button>
               </div>
+
               {editingCourse.certificate_template_url && (
                 <div>
                   <p>

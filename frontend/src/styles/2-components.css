@@ -280,3 +280,46 @@
 .tiptap-editor p {
   margin: 0;
 }
+
+/* Botão de Upload de Arquivos */
+
+.file-upload-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.file-upload-input {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.file-upload-label {
+  background-color: #555;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.file-upload-label:hover {
+  background-color: #333;
+}
+
+.file-upload-filename {
+  font-size: 14px;
+  color: #6c757d;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
