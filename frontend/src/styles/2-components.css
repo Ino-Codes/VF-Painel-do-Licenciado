@@ -281,6 +281,12 @@
   margin: 0;
 }
 
+/* Select Radio */
+
+input[type="radio"]:checked {
+  accent-color: #101217;
+}
+
 /* Botão de Upload de Arquivos */
 
 .file-upload-wrapper {
