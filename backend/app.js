@@ -112,6 +112,7 @@ const createTables = async () => {
       CREATE TABLE IF NOT EXISTS files (
       id SERIAL PRIMARY KEY, filename TEXT, originalname TEXT, category TEXT,
       folder TEXT,
+      public_id TEXT,
       visibility TEXT DEFAULT 'public', 
       uploaded_at TIMESTAMPTZ DEFAULT NOW()
     );`;
