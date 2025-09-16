@@ -250,7 +250,7 @@
 }
 
 .date-picker-wrapper input {
-  cursor: pointer; /* Indica que o campo é clicável */
+  cursor: pointer;
 }
 
 .date-picker-dropdown {
@@ -378,6 +378,10 @@
 
 .time-picker-option:hover {
   background-color: #f0f0f0;
+}
+
+.label-birth-day {
+  align-self: center;
 }
 
 /* --- RESPONSIVO (ADMIN) --- */

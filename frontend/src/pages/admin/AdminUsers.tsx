@@ -285,7 +285,9 @@ const AdminUsers: React.FC = () => {
               </div>
 
               <div className="form-row">
-                <label style={{ fontWeight: 500 }}>Data de Nascimento</label>
+                <label style={{ fontWeight: 500 }} className="label-birth-day">
+                  Data de Nascimento
+                </label>
                 <input
                   className="form-input"
                   type="date"
