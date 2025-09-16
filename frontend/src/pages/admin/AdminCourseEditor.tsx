@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import LessonEditModal from "../../components/forms/LessonEditModal.tsx";
 import { SortableModuleItem } from "../../components/ui/SortableModuleItem.tsx";
-import { Course, Module, Lesson, Quiz, Question, Option } from "./types.ts";
+import { Course, Module, Lesson, Quiz, Question, Option } from "../../types.ts";
 import {
   DndContext,
   closestCenter,
@@ -60,11 +60,9 @@ const AdminCourseEditor: React.FC = () => {
       if (reorderedModules) {
         const orderedModuleIds = reorderedModules.map((m) => m.id);
         api
-          .put(
-            `/api/admin/courses/${courseId}/modules/order`,
-            { orderedModuleIds },
-            getAuthHeaders()
-          )
+          .put(`/api/admin/courses/${courseId}/modules/order`, {
+            orderedModuleIds,
+          })
           .then(() => toast.success("Ordem dos módulos salva!"))
           .catch(() => toast.error("Erro ao salvar a ordem dos módulos."));
       }
@@ -76,11 +74,9 @@ const AdminCourseEditor: React.FC = () => {
     orderedLessonIds: number[]
   ) => {
     try {
-      await api.put(
-        `/api/admin/courses/modules/${moduleId}/lessons/order`,
-        { orderedLessonIds },
-        getAuthHeaders()
-      );
+      await api.put(`/api/admin/courses/modules/${moduleId}/lessons/order`, {
+        orderedLessonIds,
+      });
       toast.success("Ordem das aulas salva!");
     } catch (err) {
       toast.error("Erro ao salvar a ordem das aulas.");
@@ -97,24 +93,16 @@ const AdminCourseEditor: React.FC = () => {
   );
   const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
 
-  const getAuthHeaders = useCallback(() => {
-    if (!user) return {};
-    return { headers: { "x-user-id": user.id } };
-  }, [user]);
-
   const fetchCourseDetails = useCallback(async () => {
     if (!user || !courseId) return;
     try {
-      const res = await api.get(
-        `/api/admin/courses/${courseId}`,
-        getAuthHeaders()
-      );
+      const res = await api.get(`/api/admin/courses/${courseId}`);
       setCourse(res.data);
     } catch (err) {
       toast.error("Falha ao carregar detalhes do curso.");
       navigate("/admin/courses");
     }
-  }, [user, courseId, getAuthHeaders, navigate]);
+  }, [user, courseId, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -126,11 +114,10 @@ const AdminCourseEditor: React.FC = () => {
     if (!newModuleTitle.trim() || !course) return;
     try {
       const newOrder = (course.modules.length || 0) + 1;
-      await api.post(
-        `/api/admin/courses/${course.id}/modules`,
-        { title: newModuleTitle, module_order: newOrder },
-        getAuthHeaders()
-      );
+      await api.post(`/api/admin/courses/${course.id}/modules`, {
+        title: newModuleTitle,
+        module_order: newOrder,
+      });
       toast.success("Módulo adicionado!");
       setNewModuleTitle("");
       fetchCourseDetails();
@@ -147,8 +134,7 @@ const AdminCourseEditor: React.FC = () => {
       if (lessonToEdit && "id" in lessonToEdit && lessonToEdit.id) {
         await api.put(
           `/api/admin/courses/lessons/${lessonToEdit.id}`,
-          lessonData,
-          getAuthHeaders()
+          lessonData
         );
         toast.success("Aula atualizada com sucesso!");
       } else {
@@ -161,8 +147,7 @@ const AdminCourseEditor: React.FC = () => {
         const newLessonData = { ...lessonData, lesson_order: newOrder };
         await api.post(
           `/api/admin/courses/modules/${module.id}/lessons`,
-          newLessonData,
-          getAuthHeaders()
+          newLessonData
         );
         toast.success("Aula adicionada com sucesso!");
       }
@@ -185,7 +170,7 @@ const AdminCourseEditor: React.FC = () => {
         ? `/api/admin/courses/modules/${id}`
         : `/api/admin/courses/lessons/${id}`;
     try {
-      await api.delete(url, getAuthHeaders());
+      await api.delete(url);
       toast.success(
         `${type === "module" ? "Módulo" : "Aula"} excluído com sucesso!`
       );
@@ -215,11 +200,7 @@ const AdminCourseEditor: React.FC = () => {
     };
     try {
       toast.loading("A criar o quiz...");
-      await api.post(
-        `/api/admin/courses/${courseId}/quiz`,
-        quizData,
-        getAuthHeaders()
-      );
+      await api.post(`/api/admin/courses/${courseId}/quiz`, quizData);
       toast.dismiss();
       toast.success("Quiz criado com sucesso! Agora adicione as perguntas.");
       fetchCourseDetails();
@@ -236,11 +217,9 @@ const AdminCourseEditor: React.FC = () => {
       return;
     }
     try {
-      await api.post(
-        `/api/quizzes/${course.quiz.id}/questions`,
-        { question_text: newQuestionText },
-        getAuthHeaders()
-      );
+      await api.post(`/api/quizzes/${course.quiz.id}/questions`, {
+        question_text: newQuestionText,
+      });
       toast.success("Pergunta adicionada!");
       setNewQuestionText("");
       fetchCourseDetails();
@@ -251,10 +230,7 @@ const AdminCourseEditor: React.FC = () => {
 
   const handleDeleteQuestion = async (questionId: number) => {
     try {
-      await api.delete(
-        `/api/quizzes/questions/${questionId}`,
-        getAuthHeaders()
-      );
+      await api.delete(`/api/quizzes/questions/${questionId}`);
       toast.success("Pergunta excluída com sucesso!");
       fetchCourseDetails();
     } catch (err) {
@@ -269,11 +245,9 @@ const AdminCourseEditor: React.FC = () => {
       return;
     }
     try {
-      await api.post(
-        `/api/quizzes/questions/${questionId}/options`,
-        { option_text: optionText },
-        getAuthHeaders()
-      );
+      await api.post(`/api/quizzes/questions/${questionId}/options`, {
+        option_text: optionText,
+      });
       toast.success("Opção adicionada!");
       setNewOptionText({ ...newOptionText, [questionId]: "" });
       fetchCourseDetails();
@@ -284,11 +258,7 @@ const AdminCourseEditor: React.FC = () => {
 
   const handleSetCorrectOption = async (optionId: number) => {
     try {
-      await api.put(
-        `/api/quizzes/options/${optionId}/correct`,
-        {},
-        getAuthHeaders()
-      );
+      await api.put(`/api/quizzes/options/${optionId}/correct`, {});
       toast.success("Opção marcada como correta!");
       fetchCourseDetails();
     } catch (err) {
@@ -298,7 +268,7 @@ const AdminCourseEditor: React.FC = () => {
 
   const handleDeleteOption = async (optionId: number) => {
     try {
-      await api.delete(`/api/quizzes/options/${optionId}`, getAuthHeaders());
+      await api.delete(`/api/quizzes/options/${optionId}`);
       toast.success("Opção excluída!");
       fetchCourseDetails();
     } catch (err) {
