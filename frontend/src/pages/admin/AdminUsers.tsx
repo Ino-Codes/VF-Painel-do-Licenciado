@@ -72,13 +72,22 @@ const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
         <strong>nome, email, password, role</strong>
       </p>
       <div className="form-row">
-        <input type="file" accept=".csv" onChange={handleFileChange} />
+        <div className="file-upload-wrapper">
+          <input
+            type="file"
+            accept=".csv"
+            className="file-upload-input"
+            onChange={handleFileChange}
+          />
+          <label className="file-upload-label">Escolher Arquivo</label>
+        </div>
         <button
           className="form-button"
+          type="button"
           onClick={handleUpload}
           disabled={!file || isUploading}
         >
-          {isUploading ? "Importando..." : "Importar Arquivo"}
+          {isUploading ? "Importando..." : "Importar Usuários"}
         </button>
       </div>
     </div>
