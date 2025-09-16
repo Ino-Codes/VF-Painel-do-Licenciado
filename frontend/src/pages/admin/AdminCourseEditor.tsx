@@ -318,7 +318,7 @@ const AdminCourseEditor: React.FC = () => {
           onClick={() => navigate("/admin/courses")}
           className="form-button-cancel mb-4"
         >
-          ← Voltar
+          ⬅️ Voltar
         </button>
 
         <h2>Editor do Curso: {course.title}</h2>

@@ -207,7 +207,7 @@ const LessonPlayer: React.FC = () => {
             className="form-button-cancel mb-4"
             style={{ textDecoration: "none" }}
           >
-            ← Voltar
+            ⬅️ Voltar
           </Link>
           <h2>{course.title}</h2>
         </div>
