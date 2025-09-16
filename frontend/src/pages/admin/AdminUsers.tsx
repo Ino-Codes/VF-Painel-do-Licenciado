@@ -80,6 +80,9 @@ const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
             onChange={handleFileChange}
           />
           <label className="file-upload-label">Escolher Arquivo</label>
+          <span className="file-upload-filename">
+            {file ? file.name : "Nenhum arquivo escolhido"}
+          </span>
         </div>
         <button
           className="form-button"
