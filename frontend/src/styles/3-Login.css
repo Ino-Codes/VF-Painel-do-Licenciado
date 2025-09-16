@@ -98,12 +98,4 @@
   .p-img img {
     width: 250px;
   }
-  body {
-    background-image: none;
-    background-position: none;
-    background-size: none;
-    overflow-x: none;
-    color: #ffffff;
-    background-color: #03070f;
-  }
 }

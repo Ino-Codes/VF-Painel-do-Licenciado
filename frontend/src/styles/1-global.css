@@ -59,10 +59,11 @@ body::before {
   .content-area {
     padding: 15px;
   }
-
   body {
-    background-color: rgb(29, 29, 29);
     background-image: none;
+    background-position: none;
+    background-size: none;
     overflow-x: none;
+    background-color: #03070f;
   }
 }
