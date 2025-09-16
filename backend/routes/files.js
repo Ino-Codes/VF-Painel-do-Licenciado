@@ -129,7 +129,6 @@ module.exports = function (pool, cloudinary, upload) {
       }
 
       const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
-      const fileExtension = path.extname(fileUrl).toLowerCase();
 
       const options = {
         resource_type: resourceType,
@@ -137,9 +136,7 @@ module.exports = function (pool, cloudinary, upload) {
         expires_at: Math.floor(Date.now() / 1000) + 300,
       };
 
-      if (fileExtension !== ".pdf") {
-        options.flags = [`attachment:${originalname}`];
-      }
+      options.flags = ["attachment"];
 
       const signedUrl = cloudinary.url(publicId, options);
 
