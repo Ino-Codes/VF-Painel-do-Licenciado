@@ -76,10 +76,13 @@ const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
           <input
             type="file"
             accept=".csv"
+            id="csv-upload"
             className="file-upload-input"
             onChange={handleFileChange}
           />
-          <label className="file-upload-label">Escolher Arquivo</label>
+          <label htmlFor="csv-upload" className="file-upload-label">
+            Escolher Arquivo
+          </label>
           <span className="file-upload-filename">
             {file ? file.name : "Nenhum arquivo escolhido"}
           </span>
