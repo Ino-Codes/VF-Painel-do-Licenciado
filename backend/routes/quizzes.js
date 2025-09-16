@@ -117,33 +117,44 @@ module.exports = function (pool) {
   // --- ROTAS DE ADMINISTRAÇÃO ---
 
   // PERGUNTAS
-  router.post("/:quizId/questions", checkAdmin, async (req, res) => {
-    const { quizId } = req.params;
-    const { question_text } = req.body;
-    try {
-      const result = await pool.query(
-        "INSERT INTO questions (quiz_id, question_text) VALUES ($1, $2) RETURNING *",
-        [quizId, question_text]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      res.status(500).json({ error: "Erro ao criar pergunta." });
+  router.post(
+    "/:quizId/questions",
+    checkLoggedIn,
+    checkAdmin,
+    async (req, res) => {
+      const { quizId } = req.params;
+      const { question_text } = req.body;
+      try {
+        const result = await pool.query(
+          "INSERT INTO questions (quiz_id, question_text) VALUES ($1, $2) RETURNING *",
+          [quizId, question_text]
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao criar pergunta." });
+      }
     }
-  });
+  );
 
-  router.delete("/questions/:questionId", checkAdmin, async (req, res) => {
-    const { questionId } = req.params;
-    try {
-      await pool.query("DELETE FROM questions WHERE id = $1", [questionId]);
-      res.status(204).send();
-    } catch (err) {
-      res.status(500).json({ error: "Erro ao apagar pergunta." });
+  router.delete(
+    "/questions/:questionId",
+    checkLoggedIn,
+    checkAdmin,
+    async (req, res) => {
+      const { questionId } = req.params;
+      try {
+        await pool.query("DELETE FROM questions WHERE id = $1", [questionId]);
+        res.status(204).send();
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao apagar pergunta." });
+      }
     }
-  });
+  );
 
   // OPÇÕES
   router.post(
     "/questions/:questionId/options",
+    checkLoggedIn,
     checkAdmin,
     async (req, res) => {
       const { questionId } = req.params;
@@ -160,42 +171,53 @@ module.exports = function (pool) {
     }
   );
 
-  router.put("/options/:optionId/correct", checkAdmin, async (req, res) => {
-    const { optionId } = req.params;
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      const optionResult = await client.query(
-        "SELECT question_id FROM options WHERE id = $1",
-        [optionId]
-      );
-      const { question_id } = optionResult.rows[0];
-      await client.query(
-        "UPDATE options SET is_correct = FALSE WHERE question_id = $1",
-        [question_id]
-      );
-      await client.query("UPDATE options SET is_correct = TRUE WHERE id = $1", [
-        optionId,
-      ]);
-      await client.query("COMMIT");
-      res.status(200).json({ success: true });
-    } catch (err) {
-      await client.query("ROLLBACK");
-      res.status(500).json({ error: "Erro ao marcar opção como correta." });
-    } finally {
-      client.release();
+  router.put(
+    "/options/:optionId/correct",
+    checkLoggedIn,
+    checkAdmin,
+    async (req, res) => {
+      const { optionId } = req.params;
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const optionResult = await client.query(
+          "SELECT question_id FROM options WHERE id = $1",
+          [optionId]
+        );
+        const { question_id } = optionResult.rows[0];
+        await client.query(
+          "UPDATE options SET is_correct = FALSE WHERE question_id = $1",
+          [question_id]
+        );
+        await client.query(
+          "UPDATE options SET is_correct = TRUE WHERE id = $1",
+          [optionId]
+        );
+        await client.query("COMMIT");
+        res.status(200).json({ success: true });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        res.status(500).json({ error: "Erro ao marcar opção como correta." });
+      } finally {
+        client.release();
+      }
     }
-  });
+  );
 
-  router.delete("/options/:optionId", checkAdmin, async (req, res) => {
-    const { optionId } = req.params;
-    try {
-      await pool.query("DELETE FROM options WHERE id = $1", [optionId]);
-      res.status(204).send();
-    } catch (err) {
-      res.status(500).json({ error: "Erro ao apagar opção." });
+  router.delete(
+    "/options/:optionId",
+    checkLoggedIn,
+    checkAdmin,
+    async (req, res) => {
+      const { optionId } = req.params;
+      try {
+        await pool.query("DELETE FROM options WHERE id = $1", [optionId]);
+        res.status(204).send();
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao apagar opção." });
+      }
     }
-  });
+  );
 
   return router;
 };
