@@ -14,6 +14,8 @@ const Menu: React.FC = () => {
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const firstName = user.nome.split(" ")[0];
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -149,7 +151,7 @@ const Menu: React.FC = () => {
               <span className="profile-role">
                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>
-              <span className="profile-name">{user.nome}</span>
+              <span className="profile-name">{firstName}</span>
             </div>
             <div className="profile-image-container">
               <img
