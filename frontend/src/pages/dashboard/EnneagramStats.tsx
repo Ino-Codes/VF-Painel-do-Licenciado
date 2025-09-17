@@ -58,7 +58,7 @@ const EnneagramStats: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="stats-loading">Carregando estatísticas...</div>;
+    return <LoadingSpinner />;
   }
 
   if (!stats || typesInfo.length === 0) {
