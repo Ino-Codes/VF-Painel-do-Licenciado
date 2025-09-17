@@ -20,10 +20,47 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen || !user) return null;
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      return;
     }
+
+    const MAX_SIZE_MB = 2;
+    const MAX_WIDTH = 1500;
+    const MAX_HEIGHT = 1500;
+    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+    if (file.size > MAX_SIZE_BYTES) {
+      toast.error(
+        `O arquivo é muito grande. O tamanho máximo é de ${MAX_SIZE_MB}MB.`
+      );
+      e.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        if (this.width > MAX_WIDTH || this.height > MAX_HEIGHT) {
+          toast.error(
+            `A imagem é muito grande em dimensões. O máximo permitido é ${MAX_WIDTH}x${MAX_HEIGHT} pixels.`
+          );
+          e.target.value = "";
+        } else {
+          setSelectedFile(file);
+          toast.success("Imagem selecionada com sucesso!");
+        }
+      };
+      img.onerror = () => {
+        toast.error("Não foi possível ler o arquivo de imagem.");
+        e.target.value = "";
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUpload = async () => {
