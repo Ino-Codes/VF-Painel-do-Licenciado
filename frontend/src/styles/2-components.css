@@ -31,15 +31,13 @@
   opacity: 0.85;
 }
 
-.form-button.delete,
-.delete-button {
+.form-button.delete {
   background-color: var(--action-danger);
   transition: opacity 0.2s;
   color: var(--text-inverted);
 }
 
-.form-button.delete:hover,
-.delete-button:hover {
+.form-button.delete:hover {
   opacity: 0.85;
 }
 
@@ -61,12 +59,20 @@
 }
 
 .delete-button {
-  background-color: transparent;
-  color: var(--action-danger);
+  background-color: initial;
   border: 1px solid var(--action-danger);
-  padding: 5px 10px;
-  font-weight: bold;
   border-radius: 6px;
+  color: var(--action-danger);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 5px 10px;
+  transition: all 0.2s;
+}
+
+.delete-button:hover {
+  opacity: 0.85;
+  background-color: var(--action-danger);
+  color: var(--text-inverted);
 }
 
 .botao-logout {
@@ -277,6 +283,7 @@
 .tiptap-menu-bar button {
   background-color: var(--bg-primary);
   border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   border-radius: 3px;
   padding: 5px 10px;
   cursor: pointer;
@@ -295,7 +302,7 @@
 .tiptap-editor {
   padding: 15px;
   min-height: 150px;
-  background-color: var(--text-inverted);
+  background-color: var(--bg-secondary);
 }
 
 .tiptap-editor:focus {
