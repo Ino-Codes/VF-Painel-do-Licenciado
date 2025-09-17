@@ -43,9 +43,9 @@ body.dark-theme {
   --border-strong: #555555;
 
   /* Cores de ação podem ser mantidas ou suavizadas */
-  --accent-color: #daa520;
+  --accent-color: #dfad2d;
   --action-primary: #04a146;
-  --action-secondary: #60676e;
+  --action-secondary: #6a7279;
   --action-danger: #c82333;
 }
 
