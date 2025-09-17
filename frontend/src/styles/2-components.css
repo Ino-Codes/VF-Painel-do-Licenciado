@@ -10,9 +10,11 @@
   font-size: 14px;
   transition: opacity 0.2s;
 }
+
 .form-button:hover {
   opacity: 0.85;
 }
+
 .form-button-cancel {
   border: none;
   padding: 10px 20px;
@@ -24,18 +26,22 @@
   font-size: 14px;
   transition: opacity 0.2s;
 }
+
 .form-button-cancel:hover {
   opacity: 0.85;
 }
+
 .form-button.delete,
 .delete-button {
   background-color: #c82333;
 }
+
 .form-button.delete:hover,
 .delete-button:hover {
   background-color: #a21b29;
   color: white;
 }
+
 .list-button {
   background-color: initial;
   border: 1px solid #3b3e4f;
@@ -46,11 +52,13 @@
   padding: 5px 10px;
   transition: all 0.2s;
 }
+
 .list-button:hover {
   opacity: 0.85;
   background-color: #3b3e4f;
   color: white;
 }
+
 .delete-button {
   background-color: transparent;
   color: #c82333;
@@ -59,6 +67,7 @@
   font-weight: bold;
   border-radius: 6px;
 }
+
 .botao-logout {
   width: 140px;
   height: 30px;
@@ -90,6 +99,7 @@
   padding: 50px 20px;
   z-index: 1000;
 }
+
 .modal-content {
   background-color: white;
   padding: 30px;
@@ -97,6 +107,7 @@
   width: 90%;
   max-width: 500px;
 }
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -140,6 +151,7 @@
   border-bottom: 1px solid #ccc;
   margin-bottom: 20px;
 }
+
 .tab-item {
   padding: 10px 20px;
   border: none;
@@ -148,6 +160,7 @@
   font-size: 16px;
   border-bottom: 3px solid transparent;
 }
+
 .tab-item.active {
   border-bottom-color: #daa520;
   font-weight: 600;
@@ -159,12 +172,15 @@
   gap: 10px;
   margin-bottom: 20px;
 }
+
 .search-bar .form-input {
   flex-grow: 1;
 }
+
 .search-bar .form-button {
   flex-shrink: 0;
 }
+
 .pagination-controls {
   display: flex;
   justify-content: space-between;
@@ -173,11 +189,13 @@
   padding-top: 20px;
   border-top: 1px solid #e9ecef;
 }
+
 .limit-selector {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .limit-selector select {
   padding: 5px;
   border-radius: 4px;
@@ -204,24 +222,29 @@
   padding: 40px 20px;
   margin-top: 30px;
 }
+
 .empty-state-image {
   margin-bottom: 25px;
   max-height: 250px;
   max-width: 250px;
 }
+
 .empty-state-title {
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 10px 0;
 }
+
 .empty-state-message {
   color: #6c757d;
   max-width: 400px;
   margin-bottom: 20px;
 }
+
 .empty-state-action {
   margin-top: 15px;
 }
+
 .main-footer {
   background-color: #f8f9fa;
   border-top: 1px solid #e0e0e0;
@@ -230,6 +253,7 @@
   color: #6c757d;
   font-size: 14px;
 }
+
 .main-footer p {
   margin: 0;
 }

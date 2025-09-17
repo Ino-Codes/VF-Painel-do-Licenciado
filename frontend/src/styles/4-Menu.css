@@ -7,12 +7,14 @@
   display: flex;
   gap: 25px;
 }
+
 .menu-left,
 .menu-right {
   display: flex;
   align-items: center;
   gap: 25px;
 }
+
 .menu-item {
   color: #ffffff;
   font-weight: 500;
@@ -21,16 +23,20 @@
   border-radius: 5px;
   transition: background-color 0.3s ease;
 }
+
 .menu-item:hover,
 .menu-item.active {
   background-color: #363950;
 }
+
 .menu-logo {
   height: 50px;
 }
+
 .dropdown-menu {
   position: relative;
 }
+
 .dropdown-trigger {
   background: none;
   border: none;
@@ -41,6 +47,7 @@
   color: #ffffff;
   font-weight: 500;
 }
+
 .dropdown-content {
   display: flex;
   flex-direction: column;
@@ -52,15 +59,18 @@
   border-radius: 5px;
   margin-top: 5px;
 }
+
 .dropdown-content .menu-item {
   width: 100%;
   text-align: left;
   padding: 12px 16px;
   border-radius: 0;
 }
+
 .dropdown-content .menu-item:hover {
   background-color: #4b4f6c;
 }
+
 .faq-icon-link {
   display: flex;
   align-items: center;
@@ -74,9 +84,11 @@
   font-weight: 600;
   transition: background-color 0.3s ease;
 }
+
 .faq-icon-link:hover {
   background-color: #4b4f6c;
 }
+
 .profile-info-container {
   display: flex;
   align-items: center;
@@ -86,25 +98,30 @@
   border-radius: 8px;
   transition: background-color 0.3s ease;
 }
+
 .profile-info-container:hover,
 .profile-info-container.active {
   background-color: #363950;
 }
+
 .profile-text {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
+
 .profile-role {
   font-size: 0.8em;
   color: #ccc;
 }
+
 .profile-image-container {
   width: 40px;
   height: 40px;
   border-radius: 4px;
   overflow: hidden;
 }
+
 .profile-avatar-img {
   width: 100%;
   height: 100%;

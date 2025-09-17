@@ -371,15 +371,18 @@
   background-color: #f0f0f0;
   border-radius: 5px;
 }
+
 .visibility-selector label {
   font-weight: 500;
   margin-right: 20px;
 }
+
 .radio-group {
   display: inline-flex;
   gap: 15px;
   margin-left: 10px;
 }
+
 .radio-group label {
   font-weight: 400;
   cursor: pointer;

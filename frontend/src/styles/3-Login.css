@@ -5,6 +5,7 @@
   align-items: center;
   height: 100vh;
 }
+
 .p-1 {
   background-color: rgba(0, 0, 0, 0.6);
   min-width: 350px;
@@ -16,19 +17,23 @@
   flex-direction: column;
   align-items: center;
 }
+
 .p-1 form {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
 }
+
 .p-1 a {
   color: white;
   text-decoration: none;
 }
+
 .p-1 a:hover {
   color: #cccccc;
 }
+
 .p-img {
   display: flex;
   justify-content: center;
@@ -37,9 +42,11 @@
   z-index: 1;
   top: 10px;
 }
+
 .p-img img {
   width: 300px;
 }
+
 .input-login {
   color: white;
   margin-bottom: 10px;
@@ -50,12 +57,15 @@
   border: 2px solid white;
   border-radius: 100px;
 }
+
 .input-login::placeholder {
   color: #cccccc;
 }
+
 .input-login:focus {
   outline: none;
 }
+
 .botao-login {
   width: 180px;
   height: 30px;
@@ -67,12 +77,15 @@
   margin-top: 10px;
   cursor: pointer;
 }
+
 .botao-login:hover {
   background-color: #ab7f11;
 }
+
 .esqueceu-senha {
   margin-top: 20px;
 }
+
 .login-error-message {
   background-color: #fff0f0;
   border: 1px solid #ff4d4d;
