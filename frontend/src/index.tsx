@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-import { ThemeProvider } from "./context/ThemeContext";
+import { ThemeProvider } from "./context/ThemeContext.tsx";
 import App from "./pages/public/App.tsx";
 import Dashboard from "./pages/dashboard/Dashboard.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
