@@ -44,7 +44,7 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        if (this.width > MAX_WIDTH || this.height > MAX_HEIGHT) {
+        if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
           toast.error(
             `A imagem é muito grande em dimensões. O máximo permitido é ${MAX_WIDTH}x${MAX_HEIGHT} pixels.`
           );
