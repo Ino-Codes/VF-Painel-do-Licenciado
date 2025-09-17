@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
+import { ThemeProvider } from "./context/ThemeContext";
 import App from "./pages/public/App.tsx";
 import Dashboard from "./pages/dashboard/Dashboard.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
@@ -95,6 +96,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.Fragment>
-    <AppRouter />
+    <ThemeProvider>
+      <AppRouter />
+    </ThemeProvider>
   </React.Fragment>
 );

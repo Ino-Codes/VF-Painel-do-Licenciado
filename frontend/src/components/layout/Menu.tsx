@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
+import ThemeToggleButton from "../ui/ThemeToggleButton.tsx";
 
 const Menu: React.FC = () => {
   const { user } = useAuth();
@@ -137,6 +138,7 @@ const Menu: React.FC = () => {
       </div>
 
       <div className="menu-right">
+        <ThemeToggleButton />
         <NavLink
           to="/faq"
           className="faq-icon-link"
