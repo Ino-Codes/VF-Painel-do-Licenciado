@@ -1,7 +1,7 @@
 .profile-card {
   display: flex;
   gap: 40px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   padding: 30px;
   border-radius: 8px;
   margin-top: 20px;
@@ -21,7 +21,7 @@
   height: 150px;
   border-radius: 8px;
   object-fit: cover;
-  border: 4px solid #fff;
+  border: 4px solid var(--border-color);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -34,7 +34,7 @@
 
 .details-section > div {
   padding-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .details-section > div:last-child {
@@ -70,7 +70,7 @@
   display: flex;
   align-items: center;
   gap: 25px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 25px;
@@ -81,7 +81,7 @@
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid white;
+  border: 4px solid var(--border-color);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -92,7 +92,7 @@
 
 .profile-header-info p {
   margin: 0;
-  color: #6c757d;
+  color: var(--text-secondary);
 }
 
 .profile-header .botao-logout {
@@ -106,11 +106,11 @@
 }
 
 .profile-section {
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   padding: 25px;
   border-radius: 8px;
   margin-bottom: 25px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
 }
 
 .profile-section:last-child {
@@ -119,7 +119,7 @@
 
 .profile-section h3 {
   margin-top: 0;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
   margin-bottom: 20px;
 }
@@ -135,8 +135,8 @@
   width: 32px;
   height: 32px;
   background-color: rgba(255, 255, 255, 0.9);
-  color: #333;
-  border: 1px solid #ccc;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -148,7 +148,7 @@
 }
 
 .profile-edit-icon:hover {
-  background-color: white;
+  background-color: var(--bg-primary);
   transform: scale(1.1);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -161,7 +161,7 @@
 
 .edit-profile-button {
   background: none;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   padding: 5px 10px;
   font-size: 14px;
@@ -169,7 +169,7 @@
 }
 
 .edit-profile-button:hover {
-  background-color: #f0f0f0;
+  background-color: var(--bg-secondary);
 }
 
 .profile-info-grid {
@@ -180,7 +180,7 @@
 
 .info-item span {
   font-weight: 500;
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 

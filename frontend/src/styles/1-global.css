@@ -1,7 +1,52 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 
 :root {
-  --fc-today-bg-color: #f4f4f4;
+  /* Tema Claro (Padrão) */
+
+  --bg-primary: #ffffff; /* Fundo principal das páginas */
+  --bg-secondary: #f8f9fa; /* Fundo de cards, forms, modais */
+  --bg-menu: #111217; /* Fundo do menu superior */
+  --bg-menu-hover: #363950; /* Hover dos itens de menu */
+  --bg-menu-list: #4b4f6c; /* Fundo dos itens de lista do menu*/
+
+  --bg-accent-color: #f5f1e7; /* Fundo levemente dourado */
+  --bg-action-primary: #e7f5e8; /* Fundo levemente verde */
+  --bg_action-danger: #f8d7da; /* Fundo levemente vermelho */
+  --fc-today-bg-color: #f4f4f4; /* Fundo do dia atual na agenda */
+
+  --text-primary: #0a0a0a; /* Texto principal */
+  --text-secondary: #6c757d; /* Texto secundário, placeholders */
+  --text-green: #155724;
+  --text-inverted: #ffffff; /* Texto sobre fundos escuros (menu, botões) */
+
+  --border-color: #e9ecef; /* Bordas de cards e divisórias */
+  --border-strong: #ccc; /* Bordas de inputs */
+
+  --accent-color: #daa520; /* Dourado/Amarelo para destaques */
+  --action-primary: #04a146; /* Verde para botões de sucesso */
+  --action-secondary: #60676e; /* Cinza para botões secundários */
+  --action-danger: #c82333; /* Vermelho para botões de excluir */
+}
+
+body.dark-theme {
+  /* Tema Escuro */
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-menu: #111217; /* Mantém a mesma cor */
+  --bg-menu-hover: #363950; /* Mantém a mesma cor */
+
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --text-inverted: #ffffff;
+
+  --border-color: #333333;
+  --border-strong: #555555;
+
+  /* Cores de ação podem ser mantidas ou suavizadas */
+  --accent-color: #daa520;
+  --action-primary: #04a146;
+  --action-secondary: #60676e;
+  --action-danger: #c82333;
 }
 
 * {
@@ -14,7 +59,7 @@ body {
   background-size: cover;
   background-position: top;
   font-family: "Montserrat", sans-serif;
-  color: #0a0a0a;
+  color: var(--text-primary);
   margin: 0;
   height: 100vh;
   overflow-x: hidden;
@@ -32,7 +77,7 @@ body::before {
 }
 
 .p-2 {
-  background-color: white;
+  background-color: var(--bg-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -50,7 +95,7 @@ body::before {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: white;
+  color: var(--text-inverted);
   font-weight: bold;
 }
 
@@ -64,6 +109,6 @@ body::before {
     background-position: none;
     background-size: none;
     overflow-x: none;
-    background-color: #03070f;
+    background-color: var(--bg-primary);
   }
 }

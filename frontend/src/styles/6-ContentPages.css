@@ -16,7 +16,7 @@
 }
 
 .folder-item {
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -27,7 +27,7 @@
   align-items: center;
   width: 100%;
   padding: 15px 20px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   border: none;
   text-align: left;
   font-size: 16px;
@@ -36,7 +36,7 @@
 }
 
 .folder-header:hover {
-  background-color: #e9ecef;
+  background-color: var(--border-color);
 }
 
 .folder-toggle {
@@ -46,7 +46,7 @@
 
 .folder-content {
   padding: 10px;
-  background-color: white;
+  background-color: var(--bg-primary);
 }
 
 .file-item {
@@ -54,7 +54,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 10px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .file-item:last-child {
@@ -83,10 +83,10 @@
 }
 
 .video-card {
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
 }
@@ -110,7 +110,7 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  border-top: 4px solid #daa520;
+  border-top: 4px solid var(--accent-color);
 }
 
 .video-info h3 {
@@ -120,7 +120,7 @@
 
 .video-info p {
   flex-grow: 1;
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 0.9em;
 }
 
@@ -144,16 +144,16 @@
 }
 
 .course-card {
-  background-color: #fff;
+  background-color: var(--bg-primary);
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  color: #0a0a0a;
+  color: var(--text-primary);
 }
 
 .course-card:hover {
@@ -180,8 +180,8 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: #04a146;
-  color: white;
+  background-color: var(--action-primary);
+  color: var(--bg-primary);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -190,7 +190,7 @@
   justify-content: center;
   font-size: 20px;
   font-weight: bold;
-  border: 2px solid white;
+  border: 2px solid var(--bg-primary);
 }
 
 .certificates-grid {
@@ -200,8 +200,8 @@
 }
 
 .certificate-card {
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
@@ -223,7 +223,7 @@
 }
 
 .certificate-card p {
-  color: #666;
+  color: var(--text-secondary);
 }
 
 #form-button-certificate {
@@ -241,7 +241,7 @@
 .lesson-content-video {
   position: relative;
   padding-top: 56.25%;
-  background-color: #000;
+  background-color: var(--bg-menu);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -255,15 +255,15 @@
 }
 
 .lesson-content-text {
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   padding: 25px;
   border-radius: 8px;
   line-height: 1.6;
 }
 
 .lesson-sidebar {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 15px;
 }
@@ -281,7 +281,7 @@
 .sidebar-lesson-item {
   display: block;
   padding: 12px;
-  color: #333;
+  color: var(--text-secondary);
   border-radius: 5px;
   margin-bottom: 5px;
   font-weight: 500;
@@ -289,18 +289,18 @@
 
 .sidebar-lesson-item:hover,
 .sidebar-lesson-item.active {
-  background-color: #e9ecef;
+  background-color: var(--border-color);
 }
 
 .sidebar-lesson-item.completed {
-  color: #6c757d;
+  color: var(--text-secondary);
   text-decoration: line-through;
 }
 
 .certificate-banner {
-  background-color: #e7f5e8;
-  border: 1px solid #04a146;
-  border-left: 5px solid #04a146;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--action-primary);
+  border-left: 5px solid var(--action-primary);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 30px;
@@ -313,7 +313,7 @@
 .certificate-banner p {
   margin: 0;
   font-weight: 600;
-  color: #155724;
+  color: var(--text-green);
 }
 
 /* --- FAQ --- */
@@ -325,7 +325,7 @@
 }
 
 .faq-item {
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
   border-radius: 5px;
 }
 
@@ -335,7 +335,7 @@
   align-items: center;
   width: 100%;
   padding: 15px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   border: none;
   text-align: left;
   font-size: 16px;
@@ -344,13 +344,13 @@
 }
 
 .faq-question:hover {
-  background-color: #e9ecef;
+  background-color: var(--border-color);
 }
 
 .faq-answer {
   padding: 20px;
-  background-color: white;
-  border-top: 1px solid #e9ecef;
+  background-color: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
 }
 
 .faq-answer p {
@@ -360,14 +360,14 @@
 .faq-actions {
   margin-top: 20px;
   padding-top: 15px;
-  border-top: 1px dashed #ccc;
+  border-top: 1px dashed var(--border-strong);
   display: flex;
   justify-content: flex-end;
 }
 
 .faq-document-link {
   display: inline-block;
-  color: #111217;
+  color: var(--text-secondary);
   font-weight: 400;
   margin-top: 15px;
 }
@@ -393,8 +393,8 @@
     width: 100%;
     padding: 12px;
     margin-top: 15px;
-    background-color: #343a40;
-    color: white;
+    background-color: var(--bg-menu);
+    color: var(--bg-primary);
     border: none;
     border-radius: 5px;
   }

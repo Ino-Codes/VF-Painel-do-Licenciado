@@ -2,7 +2,7 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  background-color: #111217;
+  background-color: var(--bg-menu);
   padding: 10px 25px;
   display: flex;
   gap: 25px;
@@ -16,7 +16,7 @@
 }
 
 .menu-item {
-  color: #ffffff;
+  color: var(--text-inverted);
   font-weight: 500;
   font-size: 16px;
   padding: 8px 12px;
@@ -26,7 +26,7 @@
 
 .menu-item:hover,
 .menu-item.active {
-  background-color: #363950;
+  background-color: var(--bg-menu-hover);
 }
 
 .menu-logo {
@@ -44,7 +44,7 @@
   padding: 8px 12px;
   font-family: "Montserrat", sans-serif;
   font-size: 16px;
-  color: #ffffff;
+  color: var(--text-inverted);
   font-weight: 500;
 }
 
@@ -52,7 +52,7 @@
   display: flex;
   flex-direction: column;
   position: absolute;
-  background-color: #363950;
+  background-color: var(--bg-menu-hover);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 100;
@@ -68,7 +68,7 @@
 }
 
 .dropdown-content .menu-item:hover {
-  background-color: #4b4f6c;
+  background-color: var(--bg-menu-list);
 }
 
 .faq-icon-link {
@@ -77,8 +77,8 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  background-color: #363950;
-  color: #ffffff;
+  background-color: var(--bg-menu-hover);
+  color: var(--text-inverted);
   border-radius: 100%;
   font-size: 20px;
   font-weight: 600;
@@ -86,14 +86,14 @@
 }
 
 .faq-icon-link:hover {
-  background-color: #4b4f6c;
+  background-color: var(--bg-menu-hover);
 }
 
 .profile-info-container {
   display: flex;
   align-items: center;
   gap: 15px;
-  color: white;
+  color: var(--text-inverted);
   padding: 8px 15px;
   border-radius: 8px;
   transition: background-color 0.3s ease;
@@ -101,7 +101,7 @@
 
 .profile-info-container:hover,
 .profile-info-container.active {
-  background-color: #363950;
+  background-color: var(--bg-menu-hover);
 }
 
 .profile-text {
@@ -112,7 +112,7 @@
 
 .profile-role {
   font-size: 0.8em;
-  color: #ccc;
+  color: var(--border-strong);
 }
 
 .profile-image-container {
@@ -137,7 +137,7 @@
     display: block;
     background: none;
     border: none;
-    color: white;
+    color: var(--text-inverted);
     font-size: 24px;
     cursor: pointer;
   }
@@ -145,7 +145,7 @@
     display: none;
     flex-direction: column;
     width: 100%;
-    background-color: #1c1f26;
+    background-color: var(--bg-menu);
     position: absolute;
     top: 100%;
     left: 0;

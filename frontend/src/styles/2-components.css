@@ -2,8 +2,8 @@
 .form-button {
   border: none;
   padding: 10px 20px;
-  color: white;
-  background-color: #04a146;
+  color: var(--text-inverted);
+  background-color: var(--action-primary);
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
@@ -18,8 +18,8 @@
 .form-button-cancel {
   border: none;
   padding: 10px 20px;
-  color: white;
-  background-color: #60676e;
+  color: var(--text-inverted);
+  background-color: var(--action-secondary);
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
@@ -33,20 +33,21 @@
 
 .form-button.delete,
 .delete-button {
-  background-color: #c82333;
+  background-color: var(--action-danger);
+  transition: opacity 0.2s;
+  color: var(--text-inverted);
 }
 
 .form-button.delete:hover,
 .delete-button:hover {
-  background-color: #a21b29;
-  color: white;
+  opacity: 0.85;
 }
 
 .list-button {
   background-color: initial;
-  border: 1px solid #3b3e4f;
+  border: 1px solid var(--action-secondary);
   border-radius: 6px;
-  color: #3b3e4f;
+  color: var(--action-secondary);
   cursor: pointer;
   font-weight: 700;
   padding: 5px 10px;
@@ -55,14 +56,14 @@
 
 .list-button:hover {
   opacity: 0.85;
-  background-color: #3b3e4f;
-  color: white;
+  background-color: var(--action-secondary);
+  color: var(--text-inverted);
 }
 
 .delete-button {
   background-color: transparent;
-  color: #c82333;
-  border: 1px solid #c82333;
+  color: var(--action-danger);
+  border: 1px solid var(--action-danger);
   padding: 5px 10px;
   font-weight: bold;
   border-radius: 6px;
@@ -73,8 +74,8 @@
   height: 30px;
   border-radius: 100px;
   border: none;
-  background-color: #c82333;
-  color: white;
+  background-color: var(--action-danger);
+  color: var(--text-inverted);
   font-weight: bold;
   transition: opacity 0.2s;
   cursor: pointer;
@@ -101,7 +102,7 @@
 }
 
 .modal-content {
-  background-color: white;
+  background-color: var(--text-inverted);
   padding: 30px;
   border-radius: 8px;
   width: 90%;
@@ -125,7 +126,7 @@
   border-radius: 50%;
   overflow: hidden;
   margin: 15px auto;
-  border: 4px solid #f0f0f0;
+  border: 4px solid var(--border-color);
 }
 
 .avatar-preview img {
@@ -148,7 +149,7 @@
 /* --- TABS --- */
 .tabs {
   display: flex;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--border-strong);
   margin-bottom: 20px;
 }
 
@@ -162,7 +163,7 @@
 }
 
 .tab-item.active {
-  border-bottom-color: #daa520;
+  border-bottom-color: var(--accent-color);
   font-weight: 600;
 }
 
@@ -187,7 +188,7 @@
   align-items: center;
   margin-top: 25px;
   padding-top: 20px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--border-color);
 }
 
 .limit-selector {
@@ -199,7 +200,7 @@
 .limit-selector select {
   padding: 5px;
   border-radius: 4px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-strong);
 }
 
 .pagination-controls button {
@@ -246,8 +247,8 @@
 }
 
 .main-footer {
-  background-color: #f8f9fa;
-  border-top: 1px solid #e0e0e0;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
   padding: 20px;
   text-align: center;
   color: #6c757d;
@@ -260,7 +261,7 @@
 
 /*--- EDITOR TIPTAP ---*/
 .tiptap-container {
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   overflow: hidden;
 }
@@ -269,32 +270,32 @@
   display: flex;
   gap: 5px;
   padding: 8px;
-  background-color: #f1f1f1;
-  border-bottom: 1px solid #ccc;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-strong);
 }
 
 .tiptap-menu-bar button {
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 3px;
   padding: 5px 10px;
   cursor: pointer;
 }
 
 .tiptap-menu-bar button:hover {
-  background-color: #363950;
-  color: white;
+  background-color: var(--bg-menu-hover);
+  color: var(--text-inverted);
 }
 
 .tiptap-menu-bar button.is-active {
-  background-color: #363950;
-  color: white;
+  background-color: var(--bg-menu-hover);
+  color: var(--text-inverted);
 }
 
 .tiptap-editor {
   padding: 15px;
   min-height: 150px;
-  background-color: white;
+  background-color: var(--text-inverted);
 }
 
 .tiptap-editor:focus {
@@ -308,7 +309,7 @@
 /* Select Radio */
 
 input[type="radio"]:checked {
-  accent-color: #101217;
+  accent-color: var(--bg-menu);
 }
 
 /* Botão de Upload de Arquivos */
@@ -330,8 +331,8 @@ input[type="radio"]:checked {
 }
 
 .file-upload-label {
-  background-color: #60676e;
-  color: white;
+  background-color: var(--action-secondary);
+  color: var(--text-inverted);
   padding: 10px 15px;
   border-radius: 5px;
   cursor: pointer;
@@ -348,7 +349,7 @@ input[type="radio"]:checked {
 
 .file-upload-filename {
   font-size: 14px;
-  color: #6c757d;
+  color: var(--text-secondary);
   font-style: italic;
   white-space: nowrap;
   overflow: hidden;

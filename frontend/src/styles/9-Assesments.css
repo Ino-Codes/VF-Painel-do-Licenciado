@@ -2,7 +2,7 @@
 
 .enneagram-question-pair,
 .assessment-question {
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--text-secondary);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
@@ -11,7 +11,7 @@
 .statement-option,
 .assessment-option-label {
   padding: 15px;
-  border: 2px solid #f0f0f0;
+  border: 2px solid var(--text-secondary);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -19,12 +19,12 @@
 
 .statement-option:hover,
 .assessment-option-label:hover {
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
 }
 
 .statement-option.selected {
-  border-color: #daa520;
-  background-color: #fffaf0;
+  border-color: var(--accent-color);
+  background-color: var(--bg-secondary);
   font-weight: 500;
 }
 
@@ -36,19 +36,19 @@
   text-align: center;
   margin: 10px 0;
   font-weight: bold;
-  color: #6c757d;
+  color: var(--text-secondary);
 }
 
 .result-summary {
-  background-color: #f8f9fa;
-  border-left: 5px solid #daa520;
+  background-color: var(--bg-secondary);
+  border-left: 5px solid var(--accent-color);
   padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
 }
 
 .quiz-container {
-  background-color: #f8f9fa;
+  background-color: var(--bg-accent-color);
   padding: 25px;
   border-radius: 8px;
   margin-top: 20px;
@@ -57,7 +57,7 @@
 .quiz-question {
   margin-bottom: 25px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .quiz-question:last-of-type {
@@ -84,13 +84,13 @@
 }
 
 .result-pass {
-  background-color: #e7f5e8;
-  border: 2px solid #04a146;
+  background-color: var(--bg-action-primary);
+  border: 2px solid var(--action-primary);
 }
 
 .result-fail {
-  background-color: #f8d7da;
-  border: 2px solid #c82333;
+  background-color: var(--bg_action-danger);
+  border: 2px solid var(--action-danger);
 }
 
 .detailed-texts {
@@ -101,14 +101,14 @@
 }
 
 .text-block {
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
   padding: 20px;
   border-radius: 8px;
 }
 
 .text-block h4 {
   margin-top: 0;
-  border-bottom: 2px solid #daa520;
+  border-bottom: 2px solid var(--accent-color);
   padding-bottom: 10px;
 }
 
