@@ -13,6 +13,7 @@ import {
   Tooltip,
   Legend,
   ChartOptions,
+  ChartData,
 } from "chart.js";
 
 ChartJS.register(
@@ -43,9 +44,17 @@ const EnneagramStats: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [typesInfo, setTypesInfo] = useState<EnneagramType[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [chartOptions, setChartOptions] = useState<ChartOptions<"bar">>({});
+  const [chartData, setChartData] = useState<ChartData<"bar">>({
+    datasets: [],
+  });
 
   useEffect(() => {
+    if (!stats || typesInfo.length === 0) {
+      return;
+    }
+
     const getCssVar = (varName: string) =>
       getComputedStyle(document.documentElement)
         .getPropertyValue(varName)
@@ -60,24 +69,35 @@ const EnneagramStats: React.FC = () => {
       },
       scales: {
         y: {
-          ticks: {
-            color: getCssVar("--text-secondary"), // Cor dos números do eixo Y
-          },
-          grid: {
-            color: "transparent", // Esconde as linhas de grade do eixo Y
-          },
+          ticks: { color: getCssVar("--text-secondary") },
+          grid: { color: "transparent" },
         },
         x: {
-          ticks: {
-            color: getCssVar("--text-secondary"), // Cor dos textos do eixo X
-          },
-          grid: {
-            color: "transparent", // Esconde as linhas de grade do eixo X
-          },
+          ticks: { color: getCssVar("--text-secondary") },
+          grid: { color: "transparent" },
         },
       },
     });
-  }, [theme]);
+
+    const chartLabels = typesInfo.map((t) => `${t.name} (Tipo ${t.id})`);
+    const typeData = Array(9).fill(0);
+    stats.typeCounts.forEach((item: any) => {
+      typeData[item.dominant_type - 1] = item.count;
+    });
+
+    setChartData({
+      labels: chartLabels,
+      datasets: [
+        {
+          label: "Nº de Colaboradores",
+          data: typeData,
+          backgroundColor: getCssVar("--bg-graph"),
+          borderColor: getCssVar("--border-graph"),
+          borderWidth: 1,
+        },
+      ],
+    });
+  }, [theme, stats, typesInfo]);
 
   useEffect(() => {
     Promise.all([
@@ -87,10 +107,11 @@ const EnneagramStats: React.FC = () => {
       .then(([statsRes, typesRes]) => {
         setStats(statsRes.data);
         setTypesInfo(typesRes.data);
-        setLoading(false);
       })
       .catch((err) => {
         console.error("Erro ao carregar dados do Eneagrama", err);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
@@ -107,25 +128,6 @@ const EnneagramStats: React.FC = () => {
     acc[type.id] = type;
     return acc;
   }, {} as Record<number, EnneagramType>);
-
-  const chartLabels = typesInfo.map((t) => `${t.name} (Tipo ${t.id})`);
-  const typeData = Array(9).fill(0);
-  stats.typeCounts.forEach((item: any) => {
-    typeData[item.dominant_type - 1] = item.count;
-  });
-
-  const chartData = {
-    labels: chartLabels,
-    datasets: [
-      {
-        label: "Nº de Colaboradores",
-        data: typeData,
-        backgroundColor: "rgba(221, 177, 65, 0.6)",
-        borderColor: "rgba(221, 177, 65, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
 
   const participationPercentage =
     stats.collaboratorStats.total > 0

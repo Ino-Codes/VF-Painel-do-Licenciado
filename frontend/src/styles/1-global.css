@@ -6,7 +6,7 @@
   --bg-secondary: #f8f9fa; /* Fundo de cards, forms, modais */
   --bg-menu: #111217; /* Fundo do menu superior */
   --bg-menu-hover: #363950; /* Hover dos itens de menu */
-  --bg-menu-list: #4b4f6c; /* Fundo dos itens de lista do menu*/
+  --bg-menu-list: #4b4f6c; /* Fundo dos itens de lista do menu */
 
   --bg-accent-color: #f5f1e7; /* Fundo levemente dourado */
   --bg-action-primary: #e7f5e8; /* Fundo levemente verde */
@@ -25,6 +25,14 @@
   --action-primary: #04a146; /* Verde para botões de sucesso */
   --action-secondary: #60676e; /* Cinza para botões secundários */
   --action-danger: #c82333; /* Vermelho para botões de excluir */
+
+  --bg-graph: rgba(
+    221,
+    177,
+    65,
+    0.6
+  ); /* Fundo dos elementos dos gráficos (colunas, barras, etc) */
+  --border-graph: rgba(221, 177, 65, 1); /* Borda dos elementos dos gráficos */
 }
 
 body.dark-theme {
@@ -33,9 +41,11 @@ body.dark-theme {
   --bg-secondary: #1e1e1e;
   --bg-menu: #111217; /* Mantém a mesma cor */
   --bg-menu-hover: #363950; /* Mantém a mesma cor */
+  --bg-menu-list: #4b4f6c; /* Fundo dos itens de lista do menu */
 
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
+  --text-green: #155724;
   --text-inverted: #ffffff;
 
   --border-color: #333333;
@@ -46,6 +56,14 @@ body.dark-theme {
   --action-primary: #04a146;
   --action-secondary: #6a7279;
   --action-danger: #c82333;
+
+  --bg-graph: rgba(
+    221,
+    177,
+    65,
+    0.8
+  ); /* Fundo dos elementos dos gráficos (colunas, barras, etc) */
+  --border-graph: rgba(221, 177, 65, 1); /* Borda dos elementos dos gráficos */
 }
 
 * {
