@@ -41,9 +41,9 @@ body.dark-theme {
   /* Tema Escuro */
   --bg-primary: #121212;
   --bg-secondary: #1e1e1e;
-  --bg-menu: #111217; /* Mantém a mesma cor */
-  --bg-menu-hover: #363950; /* Mantém a mesma cor */
-  --bg-menu-list: #4b4f6c; /* Fundo dos itens de lista do menu */
+  --bg-menu: #111217;
+  --bg-menu-hover: #363950;
+  --bg-menu-list: #4b4f6c;
 
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
@@ -58,19 +58,13 @@ body.dark-theme {
 
   --bg-calendar-non-bussiness: #2d2d2d;
 
-  /* Cores de ação podem ser mantidas ou suavizadas */
   --accent-color: #dfad2d;
   --action-primary: #04a146;
   --action-secondary: #6a7279;
   --action-danger: #c82333;
 
-  --bg-graph: rgba(
-    221,
-    177,
-    65,
-    0.8
-  ); /* Fundo dos elementos dos gráficos (colunas, barras, etc) */
-  --border-graph: rgba(221, 177, 65, 1); /* Borda dos elementos dos gráficos */
+  --bg-graph: rgba(221, 177, 65, 0.8);
+  --border-graph: rgba(221, 177, 65, 1);
 }
 
 * {
