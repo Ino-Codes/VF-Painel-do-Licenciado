@@ -298,7 +298,7 @@
 }
 
 .certificate-banner {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-event-color);
   border: 1px solid var(--action-primary);
   border-left: 5px solid var(--action-primary);
   border-radius: 8px;

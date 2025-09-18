@@ -3,8 +3,10 @@
 .admin-form {
   background-color: var(--bg-secondary);
   padding: 20px;
+  margin-bottom: 25px;
+  margin-top: 25px;
   border-radius: 8px;
-  margin-bottom: 30px;
+  border-top: 2px solid var(--border-strong);
 }
 
 .admin-form:first-of-type {

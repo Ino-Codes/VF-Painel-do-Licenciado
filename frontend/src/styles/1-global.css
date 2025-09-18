@@ -8,9 +8,6 @@
   --bg-menu-hover: #363950; /* Hover dos itens de menu */
   --bg-menu-list: #4b4f6c; /* Fundo dos itens de lista do menu */
 
-  --bg-accent-color: #f5f1e7; /* Fundo levemente dourado */
-  --bg-action-primary: #e7f5e8; /* Fundo levemente verde */
-  --bg_action-danger: #f8d7da; /* Fundo levemente vermelho */
   --fc-today-bg-color: #f4f4f4; /* Fundo do dia atual na agenda */
 
   --text-primary: #0a0a0a; /* Texto principal */
@@ -20,6 +17,11 @@
 
   --border-color: #e9ecef; /* Bordas de cards e divisórias */
   --border-strong: #ccc; /* Bordas de inputs */
+
+  --bg-accent-color: #ff99000d;
+  --bg-event-color: #24ff000d;
+  --bg-result-green: #24ff000d;
+  --bg-result-red: #ff00000d;
 
   --accent-color: #daa520; /* Dourado/Amarelo para destaques */
   --action-primary: #04a146; /* Verde para botões de sucesso */
@@ -50,6 +52,9 @@ body.dark-theme {
 
   --border-color: #333333;
   --border-strong: #555555;
+  --bg-event-color: #24ff000d;
+  --bg-result-green: #24ff000d;
+  --bg-result-red: #ff00000d;
 
   /* Cores de ação podem ser mantidas ou suavizadas */
   --accent-color: #dfad2d;

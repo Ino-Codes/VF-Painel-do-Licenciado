@@ -208,14 +208,7 @@ const AdminCourses: React.FC = () => {
 
         {editingCourse && (
           <>
-            <div
-              className="admin-form"
-              style={{
-                marginTop: "20px",
-                borderTop: "2px solid #f0f0f0",
-                paddingTop: "20px",
-              }}
-            >
+            <div className="admin-form">
               <h3>Alterar Imagem de Capa</h3>
               <div className="form-row">
                 <div className="file-upload-wrapper">
@@ -261,14 +254,7 @@ const AdminCourses: React.FC = () => {
               )}
             </div>
 
-            <div
-              className="admin-form"
-              style={{
-                marginTop: "20px",
-                borderTop: "2px solid #f0f0f0",
-                paddingTop: "20px",
-              }}
-            >
+            <div className="admin-form">
               <h3>Alterar Modelo de Certificado</h3>
               <p
                 style={{

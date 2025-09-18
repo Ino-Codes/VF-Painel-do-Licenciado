@@ -48,7 +48,7 @@
 }
 
 .quiz-container {
-  background-color: var(--bg-accent-color);
+  background-color: var(--bg-secondary);
   padding: 25px;
   border-radius: 8px;
   margin-top: 20px;
@@ -84,12 +84,12 @@
 }
 
 .result-pass {
-  background-color: var(--bg-action-primary);
+  background-color: var(--bg-result-green);
   border: 2px solid var(--action-primary);
 }
 
 .result-fail {
-  background-color: var(--bg_action-danger);
+  background-color: var(--bg-result-red);
   border: 2px solid var(--action-danger);
 }
 
