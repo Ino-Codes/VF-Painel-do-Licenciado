@@ -64,7 +64,7 @@ const EnneagramStats: React.FC = () => {
             color: getCssVar("--text-secondary"), // Cor dos números do eixo Y
           },
           grid: {
-            color: getCssVar("--action-danger"), // Cor das linhas de grade do eixo Y
+            color: getCssVar("--bg-secondary"), // Cor das linhas de grade do eixo Y
           },
         },
         x: {
