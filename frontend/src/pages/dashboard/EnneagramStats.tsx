@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import { Bar } from "react-chartjs-2";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { useTheme } from "../../context/ThemeContext.tsx";
 
 import {
   Chart as ChartJS,
@@ -11,6 +12,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartOptions,
 } from "chart.js";
 
 ChartJS.register(
@@ -37,9 +39,45 @@ interface CompletedUser {
 }
 
 const EnneagramStats: React.FC = () => {
+  const { theme } = useTheme();
   const [stats, setStats] = useState<any>(null);
   const [typesInfo, setTypesInfo] = useState<EnneagramType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartOptions, setChartOptions] = useState<ChartOptions<"bar">>({});
+
+  useEffect(() => {
+    const getCssVar = (varName: string) =>
+      getComputedStyle(document.documentElement)
+        .getPropertyValue(varName)
+        .trim();
+
+    setChartOptions({
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+      scales: {
+        y: {
+          ticks: {
+            color: getCssVar("--text-secondary"), // Cor dos números do eixo Y
+          },
+          grid: {
+            color: getCssVar("--border-color"), // Cor das linhas de grade do eixo Y
+          },
+        },
+        x: {
+          ticks: {
+            color: getCssVar("--text-secondary"), // Cor dos textos do eixo X
+          },
+          grid: {
+            color: "transparent", // Esconde as linhas de grade do eixo X
+          },
+        },
+      },
+    });
+  }, [theme]);
 
   useEffect(() => {
     Promise.all([
@@ -83,8 +121,7 @@ const EnneagramStats: React.FC = () => {
         label: "Nº de Colaboradores",
         data: typeData,
         backgroundColor: "rgba(221, 177, 65, 0.6)",
-        // borderColor: "rgba(221, 177, 65, 1)",
-        borderColor: "rgba(28, 178, 215, 1)",
+        borderColor: "rgba(221, 177, 65, 1)",
         borderWidth: 1,
       },
     ],
@@ -103,13 +140,7 @@ const EnneagramStats: React.FC = () => {
       <div className="stats-main-column">
         <h4>Distribuição de Perfis na Equipe</h4>
         <div className="chart-container-stats">
-          <Bar
-            data={chartData}
-            options={{
-              responsive: true,
-              plugins: { legend: { display: false } },
-            }}
-          />
+          <Bar data={chartData} options={chartOptions} />
         </div>
 
         <h4>Participação dos Colaboradores</h4>
