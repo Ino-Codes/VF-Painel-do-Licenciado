@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import Select from "react-select";
 import DatePicker from "./DatePicker.tsx";
 import { TimePicker } from "./TimePicker.tsx";
+import { useTheme } from "../../context/ThemeContext.tsx";
 
 interface EventModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ const EventModal: React.FC<EventModalProps> = ({
   selectedDate,
   categories,
 }) => {
+  const { theme } = useTheme();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -44,7 +46,7 @@ const EventModal: React.FC<EventModalProps> = ({
       }));
       setAllUsers(userOptions);
     });
-  }, []);
+  }, [theme]);
 
   useEffect(() => {
     const getFormattedTime = (date: Date) =>

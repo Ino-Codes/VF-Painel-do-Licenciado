@@ -36,8 +36,7 @@
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
   background-color: var(--bg-primary);
-  /* color: var(--text-primary); */
-  color: black;
+  color: var(--text-primary);
 }
 
 .user-list {
