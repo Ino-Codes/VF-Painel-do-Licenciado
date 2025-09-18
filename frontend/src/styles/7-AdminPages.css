@@ -25,6 +25,8 @@
   border: 1px solid var(--border-strong);
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .form-select {
@@ -34,6 +36,7 @@
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
   background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .user-list {
@@ -62,6 +65,11 @@
 .user-actions {
   display: flex;
   gap: 10px;
+}
+
+.limit-selector select {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .bulk-import-section {
@@ -321,6 +329,7 @@
   z-index: 1001;
   width: auto;
   padding: 10px;
+  color: var(--text-primary);
 }
 
 .date-picker-header {
@@ -338,6 +347,7 @@
   cursor: pointer;
   padding: 5px 10px;
   border-radius: 5px;
+  color: var(--text-primary);
 }
 .date-picker-header button:hover {
   background-color: var(--bg-secondary);
@@ -365,6 +375,7 @@
   height: 38px;
   border-radius: 50%;
   transition: background-color 0.2s;
+  color: var(--text-primary);
 }
 
 .date-picker-day:not(:disabled):hover {
