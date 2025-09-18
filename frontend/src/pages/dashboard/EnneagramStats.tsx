@@ -83,9 +83,9 @@ const EnneagramStats: React.FC = () => {
         label: "Nº de Colaboradores",
         data: typeData,
         backgroundColor: "rgba(221, 177, 65, 0.6)",
-        borderColor: "rgba(221, 177, 65, 1)",
+        // borderColor: "rgba(221, 177, 65, 1)",
+        borderColor: "rgba(28, 178, 215, 1)",
         borderWidth: 1,
-        color: "#fff",
       },
     ],
   };
