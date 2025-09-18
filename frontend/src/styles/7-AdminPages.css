@@ -260,8 +260,8 @@
   background-color: var(--bg-secondary);
 }
 
-.fc-non-business {
-  background-color: var(--bg-secondary);
+.fc .fc-non-business {
+  background-color: var(--bg-calendar-non-bussiness);
 }
 
 .fc-theme-standard td,

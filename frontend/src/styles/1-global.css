@@ -21,6 +21,8 @@
   --bg-result-green: #24ff000d;
   --bg-result-red: #ff00000d;
 
+  --bg-calendar-non-bussiness: #e6e6e6;
+
   --accent-color: #daa520; /* Dourado/Amarelo para destaques */
   --action-primary: #04a146; /* Verde para botões de sucesso */
   --action-secondary: #60676e; /* Cinza para botões secundários */
@@ -53,6 +55,8 @@ body.dark-theme {
   --bg-event-color: #24ff000d;
   --bg-result-green: #24ff000d;
   --bg-result-red: #ff00000d;
+
+  --bg-calendar-non-bussiness: #2d2d2d;
 
   /* Cores de ação podem ser mantidas ou suavizadas */
   --accent-color: #dfad2d;
