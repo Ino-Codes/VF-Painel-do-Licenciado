@@ -64,10 +64,10 @@ const EventModal: React.FC<EventModalProps> = ({
       option: (provided, state) => ({
         ...provided,
         backgroundColor: state.isFocused
-          ? getCssVar("--bg-menu-hover")
+          ? getCssVar("--border-color")
           : getCssVar("--bg-secondary"),
         color: getCssVar("--text-primary"),
-        "&:active": { backgroundColor: getCssVar("--bg-menu-list") },
+        "&:active": { backgroundColor: getCssVar("--border-strong") },
       }),
       input: (provided) => ({
         ...provided,
