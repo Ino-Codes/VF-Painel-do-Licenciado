@@ -313,7 +313,7 @@
 .certificate-banner p {
   margin: 0;
   font-weight: 600;
-  color: var(--text-green);
+  color: var(--text-primary);
 }
 
 /* --- FAQ --- */

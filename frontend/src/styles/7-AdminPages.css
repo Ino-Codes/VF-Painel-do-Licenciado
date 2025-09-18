@@ -256,6 +256,19 @@
   padding: 6px 12px;
 }
 
+.fc-col-header {
+  background-color: var(--bg-secondary);
+}
+
+.fc-non-business {
+  background-color: var(--border-color);
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border: 1px solid var(--border-strong);
+}
+
 .color-palette {
   display: flex;
   gap: 10px;
