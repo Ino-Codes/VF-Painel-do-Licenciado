@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
-import Select from "react-select";
+import Select, { StylesConfig } from "react-select";
 import DatePicker from "./DatePicker.tsx";
 import { TimePicker } from "./TimePicker.tsx";
 import { useTheme } from "../../context/ThemeContext.tsx";
+
+type UserOption = {
+  value: number;
+  label: string;
+};
 
 interface EventModalProps {
   isOpen: boolean;
@@ -31,12 +36,57 @@ const EventModal: React.FC<EventModalProps> = ({
   const [category, setCategory] = useState("");
   const [color, setColor] = useState(colorPalette[0]);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [allUsers, setAllUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState<UserOption[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
 
   const [eventDate, setEventDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+
+  const customSelectStyles: StylesConfig<UserOption, true> = useMemo(() => {
+    const getCssVar = (varName: string) =>
+      getComputedStyle(document.documentElement)
+        .getPropertyValue(varName)
+        .trim();
+
+    return {
+      control: (provided) => ({
+        ...provided,
+        backgroundColor: getCssVar("--bg-primary"),
+        borderColor: getCssVar("--border-strong"),
+        boxShadow: "none",
+        "&:hover": { borderColor: getCssVar("--border-strong") },
+      }),
+      menu: (provided) => ({
+        ...provided,
+        backgroundColor: getCssVar("--bg-secondary"),
+      }),
+      option: (provided, state) => ({
+        ...provided,
+        backgroundColor: state.isFocused
+          ? getCssVar("--bg-menu-hover")
+          : getCssVar("--bg-secondary"),
+        color: getCssVar("--text-primary"),
+        "&:active": { backgroundColor: getCssVar("--bg-menu-list") },
+      }),
+      input: (provided) => ({
+        ...provided,
+        color: getCssVar("--text-primary"),
+      }),
+      multiValue: (provided) => ({
+        ...provided,
+        backgroundColor: getCssVar("--bg-secondary"),
+      }),
+      multiValueLabel: (provided) => ({
+        ...provided,
+        color: getCssVar("--text-primary"),
+      }),
+      placeholder: (provided) => ({
+        ...provided,
+        color: getCssVar("--text-secondary"),
+      }),
+    };
+  }, [theme]);
 
   useEffect(() => {
     api.get("/api/admin/events/users-for-notification").then((res) => {
@@ -46,7 +96,7 @@ const EventModal: React.FC<EventModalProps> = ({
       }));
       setAllUsers(userOptions);
     });
-  }, [theme]);
+  }, []);
 
   useEffect(() => {
     const getFormattedTime = (date: Date) =>
@@ -67,15 +117,17 @@ const EventModal: React.FC<EventModalProps> = ({
       setStartTime(getFormattedTime(start));
       setEndTime(getFormattedTime(end));
 
-      api
-        .get(`/api/admin/events/${eventToEdit.id}/notified-users`)
-        .then((res) => {
-          const notifiedIds = res.data;
-          const preSelected = allUsers.filter((user) =>
-            notifiedIds.includes(user.value)
-          );
-          setSelectedUsers(preSelected);
-        });
+      if (allUsers.length > 0) {
+        api
+          .get(`/api/admin/events/${eventToEdit.id}/notified-users`)
+          .then((res) => {
+            const notifiedIds = res.data;
+            const preSelected = allUsers.filter((user) =>
+              notifiedIds.includes(user.value)
+            );
+            setSelectedUsers(preSelected);
+          });
+      }
     } else if (selectedDate) {
       let startDateObj = new Date(selectedDate);
       if (!selectedDate.includes("T")) {
@@ -228,13 +280,16 @@ const EventModal: React.FC<EventModalProps> = ({
           </div>
           <div className="form-row">
             <Select
-              className="form-select"
+              styles={customSelectStyles}
               isMulti
               options={allUsers}
               value={selectedUsers}
-              onChange={(selectedOptions) => setSelectedUsers(selectedOptions)}
+              onChange={(selectedOptions) =>
+                setSelectedUsers(selectedOptions as UserOption[])
+              }
               placeholder="Selecione os usuários..."
               noOptionsMessage={() => "Nenhum usuário encontrado"}
+              classNamePrefix="react-select"
             />
           </div>
 
