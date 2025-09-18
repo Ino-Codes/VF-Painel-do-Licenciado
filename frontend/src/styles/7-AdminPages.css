@@ -261,7 +261,7 @@
 }
 
 .fc-non-business {
-  background-color: var(--border-color);
+  background-color: var(--bg-secondary);
 }
 
 .fc-theme-standard td,
