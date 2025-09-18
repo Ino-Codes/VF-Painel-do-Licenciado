@@ -85,6 +85,7 @@ const EnneagramStats: React.FC = () => {
         backgroundColor: "rgba(221, 177, 65, 0.6)",
         borderColor: "rgba(221, 177, 65, 1)",
         borderWidth: 1,
+        color: "#fff",
       },
     ],
   };
