@@ -112,7 +112,7 @@
 
 .profile-role {
   font-size: 0.8em;
-  color: var(--border-strong);
+  color: var(--text-secondary);
 }
 
 .profile-image-container {
