@@ -43,9 +43,9 @@
 
 .list-button {
   background-color: initial;
-  border: 1px solid var(--action-secondary);
+  border: 1px solid var(--text-primary);
   border-radius: 6px;
-  color: var(--action-secondary);
+  color: var(--text-primary);
   cursor: pointer;
   font-weight: 700;
   padding: 5px 10px;
@@ -55,6 +55,7 @@
 .list-button:hover {
   opacity: 0.85;
   background-color: var(--action-secondary);
+  border: 1px solid var(--action-secondary);
   color: var(--text-inverted);
 }
 
