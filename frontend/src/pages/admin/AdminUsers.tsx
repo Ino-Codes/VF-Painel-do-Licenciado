@@ -434,7 +434,7 @@ const AdminUsers: React.FC = () => {
         <h2>{editingUser ? "Editar Usuário" : "Criar Novo Usuário"}</h2>
 
         {!editingUser && (
-          <div className="tabs" style={{ marginBottom: 0 }}>
+          <div className="tabs">
             <button
               className={`tab-item ${
                 formType === "licenciado" ? "active" : ""
