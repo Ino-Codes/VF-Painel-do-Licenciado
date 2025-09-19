@@ -105,11 +105,11 @@ const CoursesPage: React.FC = () => {
         ) : (
           <div>
             {coursesToDisplay.length > 0 ? (
-              coursesToDisplay.map((course) => (
-                <div className="courses-grid">
+              <div className="courses-grid">
+                {coursesToDisplay.map((course) => (
                   <CourseCard key={course.id} course={course} />
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
               <EmptyState
                 image={EmptyCursosImage}
