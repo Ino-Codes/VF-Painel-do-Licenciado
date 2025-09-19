@@ -401,22 +401,17 @@
 
 .analytics-tabs {
   display: flex;
-  gap: 10px; /* Espaço entre as abas */
-  padding: 10px 20px 0 20px; /* Espaçamento interno */
-  border-bottom: 1px solid var(--border-color); /* Linha divisória */
 }
 
 .analytics-tab {
-  background: none;
+  background-color: var(--bg-primary);
   border: none;
   padding: 10px 20px;
   font-family: "Montserrat", sans-serif;
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-secondary); /* Cor da aba inativa */
+  color: var(--text-secondary);
   cursor: pointer;
-  border-radius: 20px; /* Borda arredondada para o efeito "pílula" */
-  transition: all 0.2s ease-in-out;
 }
 
 .analytics-tab:hover {
@@ -425,9 +420,9 @@
 }
 
 .analytics-tab.active {
-  background-color: var(--bg-primary); /* Fundo da aba ativa */
+  background-color: var(--bg-secondary); /* Fundo da aba ativa */
   color: var(--text-primary); /* Cor do texto da aba ativa */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sombra para o efeito "flutuante" */
+  border: 1px solid var(--border-color);
 }
 
 .analytics-content {

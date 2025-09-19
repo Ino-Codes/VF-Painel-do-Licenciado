@@ -106,7 +106,7 @@ const TiptapMenuBar: React.FC<{
 
 const CoursesAnalytics: React.FC = () => {
   return (
-    <div style={{ padding: "20px" }}>
+    <div>
       <h4>Análise de Cursos</h4>
       <EmptyState
         image={EmptyDashsImage}
@@ -523,7 +523,7 @@ const Dashboard: React.FC = () => {
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
           {user.role === "admin" ? (
-            <div className="dashboard-elements-child">
+            <div>
               <div className="analytics-tabs">
                 <button
                   className={`analytics-tab ${
@@ -543,9 +543,11 @@ const Dashboard: React.FC = () => {
                 </button>
               </div>
 
-              <div className="analytics-content">
-                {activeReportTab === "eneagrama" && <EnneagramStats />}
-                {activeReportTab === "cursos" && <CoursesAnalytics />}
+              <div className="dashboard-elements-child">
+                <div className="analytics-content">
+                  {activeReportTab === "eneagrama" && <EnneagramStats />}
+                  {activeReportTab === "cursos" && <CoursesAnalytics />}
+                </div>
               </div>
             </div>
           ) : (
