@@ -12,7 +12,7 @@
   padding-top: 25px;
 }
 
-.dashboard-elements-son {
+.dashboard-elements-child {
   padding: 20px;
   border: solid 1px var(--border-color);
   border-radius: 8px;
@@ -318,7 +318,7 @@
 }
 
 .user-results-list li:nth-child(odd) {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-primary);
 }
 
 .user-results-list .user-setor {
