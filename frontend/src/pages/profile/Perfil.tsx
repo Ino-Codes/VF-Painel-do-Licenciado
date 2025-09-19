@@ -254,7 +254,7 @@ const Perfil: React.FC = () => {
             />
             <button
               className="edit-profile-button"
-              onClick={() => setIsEditing(true)}
+              onClick={() => setIsAvatarModalOpen(true)}
             >
               <EditIcon />
             </button>
