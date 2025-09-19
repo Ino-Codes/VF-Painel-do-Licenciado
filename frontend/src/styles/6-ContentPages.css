@@ -297,6 +297,11 @@
   text-decoration: line-through;
 }
 
+.lesson-item .titulo-aula {
+  text-align: -webkit-left;
+  flex-grow: 1;
+}
+
 .certificate-banner {
   background-color: var(--bg-event-color);
   border: 1px solid var(--action-primary);

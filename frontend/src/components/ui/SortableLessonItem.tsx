@@ -28,7 +28,7 @@ export const SortableLessonItem: React.FC<SortableLessonItemProps> = ({
         ⠿
       </span>
 
-      <span>{lesson.title}</span>
+      <span className="titulo-aula">{lesson.title}</span>
 
       <div className="lesson-actions">
         <button
