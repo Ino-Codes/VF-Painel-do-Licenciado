@@ -104,6 +104,19 @@ const TiptapMenuBar: React.FC<{
   );
 };
 
+const CoursesAnalytics: React.FC = () => {
+  return (
+    <div style={{ padding: "20px" }}>
+      <h4>Análise de Cursos</h4>
+      <EmptyState
+        image={EmptyDashsImage}
+        title="Relatórios de Cursos em Desenvolvimento"
+        message="Estamos a criar gráficos sobre o progresso e engajamento dos utilizadores nos cursos. Volte em breve!"
+      />
+    </div>
+  );
+};
+
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -122,6 +135,8 @@ const Dashboard: React.FC = () => {
   const [noticeVisibility, setNoticeVisibility] = useState<
     "todos" | "internos" | "licenciados"
   >("todos");
+
+  const [activeReportTab, setActiveReportTab] = useState("eneagrama");
 
   const newNoticeEditor = useEditor({
     extensions: [StarterKit],
@@ -509,8 +524,29 @@ const Dashboard: React.FC = () => {
           <h3>Relatórios</h3>
           {user.role === "admin" ? (
             <div className="dashboard-elements-child">
-              <h4>Análise Comportamental (Eneagrama)</h4>
-              <EnneagramStats />
+              <div className="analytics-tabs">
+                <button
+                  className={`analytics-tab ${
+                    activeReportTab === "eneagrama" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveReportTab("eneagrama")}
+                >
+                  Eneagrama
+                </button>
+                <button
+                  className={`analytics-tab ${
+                    activeReportTab === "cursos" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveReportTab("cursos")}
+                >
+                  Cursos
+                </button>
+              </div>
+
+              <div className="analytics-content">
+                {activeReportTab === "eneagrama" && <EnneagramStats />}
+                {activeReportTab === "cursos" && <CoursesAnalytics />}
+              </div>
             </div>
           ) : (
             <EmptyState

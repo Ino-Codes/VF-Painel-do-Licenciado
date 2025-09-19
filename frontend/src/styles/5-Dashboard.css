@@ -396,3 +396,40 @@
   align-items: center;
   gap: 5px;
 }
+
+/* -- Abas de Relatórios -- */
+
+.analytics-tabs {
+  display: flex;
+  gap: 10px; /* Espaço entre as abas */
+  padding: 10px 20px 0 20px; /* Espaçamento interno */
+  border-bottom: 1px solid var(--border-color); /* Linha divisória */
+}
+
+.analytics-tab {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary); /* Cor da aba inativa */
+  cursor: pointer;
+  border-radius: 20px; /* Borda arredondada para o efeito "pílula" */
+  transition: all 0.2s ease-in-out;
+}
+
+.analytics-tab:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-primary); /* Fundo subtil no hover */
+}
+
+.analytics-tab.active {
+  background-color: var(--bg-primary); /* Fundo da aba ativa */
+  color: var(--text-primary); /* Cor do texto da aba ativa */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sombra para o efeito "flutuante" */
+}
+
+.analytics-content {
+  margin-top: 10px; /* Pequeno espaço entre as abas e o conteúdo */
+}
