@@ -544,10 +544,8 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div className="dashboard-elements-child">
-                <div className="analytics-content">
-                  {activeReportTab === "eneagrama" && <EnneagramStats />}
-                  {activeReportTab === "cursos" && <CoursesAnalytics />}
-                </div>
+                {activeReportTab === "eneagrama" && <EnneagramStats />}
+                {activeReportTab === "cursos" && <CoursesAnalytics />}
               </div>
             </div>
           ) : (
