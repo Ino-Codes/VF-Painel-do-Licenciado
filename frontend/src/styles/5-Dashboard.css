@@ -14,8 +14,9 @@
 
 .dashboard-elements-son {
   padding: 20px;
-  border: solid 1px var(--bg-secondary);
+  border: solid 1px var(--border-color);
   border-radius: 8px;
+  background-color: var(--bg-secondary);
 }
 
 .events-grid {
