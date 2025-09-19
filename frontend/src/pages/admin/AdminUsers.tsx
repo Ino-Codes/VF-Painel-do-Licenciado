@@ -287,14 +287,14 @@ const AdminUsers: React.FC = () => {
                 <input
                   className="form-input"
                   placeholder="Cargo"
-                  value={form.cargo}
+                  value={editingUser.cargo}
                   onChange={(e) => setForm({ ...form, cargo: e.target.value })}
                   required
                 />
                 <input
                   className="form-input"
                   placeholder="Setor"
-                  value={form.setor}
+                  value={editingUser.setor}
                   onChange={(e) => setForm({ ...form, setor: e.target.value })}
                   required
                 />
