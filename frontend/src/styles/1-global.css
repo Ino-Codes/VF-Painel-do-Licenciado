@@ -25,7 +25,7 @@
 
   --accent-color: #daa520; /* Dourado/Amarelo para destaques */
   --action-primary: #04a146; /* Verde para botões de sucesso */
-  --action-secondary: #60676e; /* Cinza para botões secundários */
+  --action-secondary: #778088; /* Cinza para botões secundários */
   --action-danger: #c82333; /* Vermelho para botões de excluir */
 
   --bg-graph: rgba(
@@ -60,7 +60,7 @@ body.dark-theme {
 
   --accent-color: #dfad2d;
   --action-primary: #04a146;
-  --action-secondary: #6a7279;
+  --action-secondary: #3d4246;
   --action-danger: #c82333;
 
   --bg-graph: rgba(221, 177, 65, 0.8);
