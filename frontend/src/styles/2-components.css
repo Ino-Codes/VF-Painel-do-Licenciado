@@ -91,6 +91,8 @@
   opacity: 0.85;
 }
 
+/* BOTÕES DE `VOLTAR` */
+/* Versão 1 */
 .btn-back-subtle {
   display: inline-flex;
   align-items: center;
@@ -110,7 +112,46 @@
   background-color: var(--bg-secondary);
   color: var(--text-primary);
 }
+/* Versão 2 */
+.btn-back-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
+.btn-back-icon:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+/* Versão 3 */
+.btn-back-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  border: 2px solid var(--action-secondary);
+  color: var(--action-secondary);
+  padding: 8px 15px;
+  border-radius: 100px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back-outline:hover {
+  background-color: var(--action-secondary);
+  color: var(--text-inverted);
+}
 /* --- MODAIS --- */
 .modal-overlay {
   position: fixed;

@@ -219,9 +219,23 @@ const LessonPlayer: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="document-header">
+          {/* Opção 1 */}
           <Link
             to="/courses"
             className="btn-back-subtle"
+            style={{ textDecoration: "none" }}
+          >
+            <BackArrowIcon />
+            Voltar
+          </Link>
+          {/* Opção 2 */}
+          <Link to="/courses" className="btn-back-icon" title="Voltar">
+            <BackArrowIcon />
+          </Link>
+          {/* Opção 3 */}
+          <Link
+            to="/courses"
+            className="btn-back-outline"
             style={{ textDecoration: "none" }}
           >
             <BackArrowIcon />
