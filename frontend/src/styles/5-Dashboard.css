@@ -1,3 +1,7 @@
+.dashboard-header {
+  padding-bottom: 25px;
+}
+
 .dashboard-header h2 {
   margin: 0;
 }
@@ -10,6 +14,7 @@
 .dashboard-elements {
   border-top: 1px solid var(--border-color);
   padding-top: 25px;
+  padding-bottom: 25px;
 }
 
 .dashboard-elements-child {
@@ -207,7 +212,7 @@
   flex-direction: row;
   gap: 25px;
   align-items: flex-start;
-  margin-top: 25px;
+  padding-bottom: 25px;
 }
 
 .dashboard-main-columns > div {

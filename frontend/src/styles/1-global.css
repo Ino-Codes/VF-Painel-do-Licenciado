@@ -43,8 +43,12 @@
 
 body.dark-theme {
   /* Tema Escuro */
-  --bg-primary: #121212;
-  --bg-secondary: #1e1e1e;
+  /* --bg-primary: #121212;
+  --bg-secondary: #1e1e1e; */
+
+  --bg-primary: #1b1c20;
+  --bg-secondary: #25262a;
+
   --bg-menu: #111217;
   --bg-menu-hover: #363950;
   --bg-menu-list: #4b4f6c;
