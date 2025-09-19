@@ -4,6 +4,8 @@ import { Bar, Radar } from "react-chartjs-2";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { useTheme } from "../../context/ThemeContext.tsx";
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -16,6 +18,8 @@ import {
   Tooltip,
   Legend,
   Title,
+  ChartOptions,
+  ChartData,
 } from "chart.js";
 
 ChartJS.register(
@@ -32,12 +36,24 @@ ChartJS.register(
 );
 
 const EnneagramResultsPage: React.FC = () => {
+  const { theme } = useTheme();
   const [results, setResults] = useState(null);
   const [typesInfo, setTypesInfo] = useState([]);
-  const [activeTab, setActiveTab] = useState("resumo");
+  const [activeTab, setActiveTab] = useState("percentual");
+
+  const [percentageChartData, setPercentageChartData] = useState<
+    ChartData<"bar">
+  >({ datasets: [] });
+  const [radarChartData, setRadarChartData] = useState<ChartData<"radar">>({
+    datasets: [],
+  });
+  const [scoreChartData, setScoreChartData] = useState<ChartData<"bar">>({
+    datasets: [],
+  });
+  const [chartOptions, setChartOptions] = useState<ChartOptions>({});
+  const [radarOptions, setRadarOptions] = useState<ChartOptions<"radar">>({});
 
   useEffect(() => {
-    // Faz as duas chamadas à API em paralelo
     Promise.all([
       api.get("/api/enneagram/results"),
       api.get("/api/enneagram/types"),
@@ -47,74 +63,104 @@ const EnneagramResultsPage: React.FC = () => {
     });
   }, []);
 
+  useEffect(() => {
+    if (!results || typesInfo.length === 0) return;
+
+    const getCssVar = (varName: string) =>
+      getComputedStyle(document.documentElement)
+        .getPropertyValue(varName)
+        .trim();
+
+    const textColor = getCssVar("--text-secondary");
+    const borderColor = getCssVar("--border-color");
+
+    const scores = [
+      results.score_1,
+      results.score_2,
+      results.score_3,
+      results.score_4,
+      results.score_5,
+      results.score_6,
+      results.score_7,
+      results.score_8,
+      results.score_9,
+    ];
+    const totalScore = scores.reduce((sum, score) => sum + score, 0);
+    const chartLabels = typesInfo.map((t) => `Tipo ${t.id}: ${t.name}`);
+
+    const barOptions: ChartOptions = {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { color: textColor }, grid: { color: "transparent" } },
+        x: { ticks: { color: textColor }, grid: { color: "transparent" } },
+      },
+    };
+
+    const radarOptionsConfig: ChartOptions<"radar"> = {
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          angleLines: { color: borderColor },
+          grid: { color: borderColor },
+          pointLabels: { color: textColor, font: { size: 12 } },
+          ticks: {
+            color: textColor,
+            backdropColor: getCssVar("--bg-secondary"),
+          },
+        },
+      },
+    };
+
+    setChartOptions(barOptions);
+    setRadarOptions(radarOptionsConfig);
+
+    setPercentageChartData({
+      labels: chartLabels,
+      datasets: [
+        {
+          label: "Percentual (%)",
+          data: scores.map((s) =>
+            totalScore > 0 ? ((s / totalScore) * 100).toFixed(1) : 0
+          ),
+          backgroundColor: getCssVar("--bg-graph-column"),
+          borderColor: getCssVar("--border-graph-column"),
+          borderWidth: 1,
+        },
+      ],
+    });
+
+    setRadarChartData({
+      labels: chartLabels,
+      datasets: [
+        {
+          label: "Pontuação",
+          data: scores,
+          backgroundColor: getCssVar("--bg-graph-radar"),
+          borderColor: getCssVar("--border-graph-radar"),
+          borderWidth: 1,
+        },
+      ],
+    });
+
+    setScoreChartData({
+      labels: chartLabels,
+      datasets: [
+        {
+          label: "Pontuação",
+          data: scores,
+          backgroundColor: getCssVar("--bg-graph-bar"),
+          borderColor: getCssVar("--border-graph-bar"),
+          borderWidth: 1,
+        },
+      ],
+    });
+  }, [theme, results, typesInfo]);
+
   if (!results || typesInfo.length === 0) return <LoadingSpinner />;
 
   const dominantTypeInfo = typesInfo.find(
     (t) => t.id === results.dominant_type
   );
-  const scores = [
-    results.score_1,
-    results.score_2,
-    results.score_3,
-    results.score_4,
-    results.score_5,
-    results.score_6,
-    results.score_7,
-    results.score_8,
-    results.score_9,
-  ];
-  const totalScore = scores.reduce((sum, score) => sum + score, 0);
-
-  const chartLabels = typesInfo.map((t) => `Tipo ${t.id}: ${t.name}`);
-
-  // Dados para o Gráfico de Barras (Pontuação)
-  const scoreData = {
-    labels: chartLabels,
-    datasets: [
-      {
-        label: "Pontuação",
-        data: scores,
-        backgroundColor: "rgba(221, 177, 65, 0.6)",
-        borderColor: "rgba(221, 177, 65, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  // Dados para o Gráfico de Radar
-  const scoreRadarData = {
-    labels: chartLabels,
-    datasets: [
-      {
-        label: "Pontuação",
-        data: scores,
-        backgroundColor: "rgba(25, 99, 209, 0.6)",
-        borderColor: "rgba(13, 107, 185, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  // Dados para o Gráfico de Barras (Percentual)
-  const percentageData = {
-    labels: chartLabels,
-    datasets: [
-      {
-        label: "Percentual (%)",
-        data: scores.map((s) =>
-          totalScore > 0 ? ((s / totalScore) * 100).toFixed(1) : 0
-        ),
-        backgroundColor: "rgba(4, 161, 70, 0.6)",
-        borderColor: "rgba(4, 161, 70, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    indexAxis: "y" as const,
-    plugins: { legend: { display: false } },
-  };
 
   return (
     <div className="p-2">
@@ -165,10 +211,17 @@ const EnneagramResultsPage: React.FC = () => {
         </div>
 
         <div className="chart-container">
-          {activeTab === "percentual" && <Bar data={percentageData} />}
-          {activeTab === "radar" && <Radar data={scoreRadarData} />}
+          {activeTab === "percentual" && (
+            <Bar data={percentageChartData} options={chartOptions} />
+          )}
+          {activeTab === "radar" && (
+            <Radar data={radarChartData} options={radarOptions} />
+          )}
           {activeTab === "pontos" && (
-            <Bar data={scoreData} options={chartOptions} />
+            <Bar
+              data={scoreChartData}
+              options={{ ...chartOptions, indexAxis: "y" }}
+            />
           )}
         </div>
       </div>

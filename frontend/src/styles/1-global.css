@@ -28,13 +28,17 @@
   --action-secondary: #778088; /* Cinza para botões secundários */
   --action-danger: #c82333; /* Vermelho para botões de excluir */
 
-  --bg-graph: rgba(
-    221,
-    177,
-    65,
-    0.6
-  ); /* Fundo dos elementos dos gráficos (colunas, barras, etc) */
-  --border-graph: rgba(221, 177, 65, 1); /* Borda dos elementos dos gráficos */
+  --bg-graph: rgba(221, 177, 65, 0.6);
+  --border-graph: rgba(221, 177, 65, 1);
+
+  --bg-graph-column: rgba(4, 161, 70, 0.6);
+  --border-graph-column: rgba(4, 161, 70, 1);
+
+  --bg-graph-radar: rgba(25, 99, 209, 0.6);
+  --border-graph-radar: rgba(13, 107, 185, 1);
+
+  --bg-graph-bar: rgba(221, 177, 65, 0.6);
+  --border-graph-bar: rgba(221, 177, 65, 1);
 }
 
 body.dark-theme {
@@ -65,6 +69,15 @@ body.dark-theme {
 
   --bg-graph: rgba(221, 177, 65, 0.8);
   --border-graph: rgba(221, 177, 65, 1);
+
+  --bg-graph-column: rgba(4, 161, 70, 0.6);
+  --border-graph-column: rgba(4, 161, 70, 1);
+
+  --bg-graph-radar: rgba(25, 99, 209, 0.6);
+  --border-graph-radar: rgba(13, 107, 185, 1);
+
+  --bg-graph-bar: rgba(221, 177, 65, 0.6);
+  --border-graph-bar: rgba(221, 177, 65, 1);
 }
 
 * {
