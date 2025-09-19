@@ -12,6 +12,12 @@
   padding-top: 25px;
 }
 
+.dashboard-elements-son {
+  padding: 20px;
+  border: solid 1px var(--bg-secondary);
+  border-radius: 8px;
+}
+
 .events-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -249,10 +255,10 @@
 }
 
 .stat-card {
-  background-color: var(--bg-secondary);
+  /* background-color: var(--bg-secondary);
   border-radius: 8px;
+  border: 1px solid var(--border-color); */
   padding: 20px;
-  border: 1px solid var(--border-color);
 }
 
 .stat-value {
@@ -347,7 +353,6 @@
   border-radius: 5px;
   padding: 5px 10px;
   cursor: pointer;
-  transition: background-color 0.2s;
   height: 100%;
 }
 

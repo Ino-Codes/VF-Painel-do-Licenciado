@@ -508,10 +508,7 @@ const Dashboard: React.FC = () => {
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
           {user.role === "admin" ? (
-            <div
-              className="dashboard-elements"
-              style={{ marginTop: 0, paddingTop: 0, borderTop: "none" }}
-            >
+            <div className="dashboard-elements-son">
               <h4>Análise Comportamental (Eneagrama)</h4>
               <EnneagramStats />
             </div>
