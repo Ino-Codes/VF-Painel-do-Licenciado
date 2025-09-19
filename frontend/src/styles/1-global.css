@@ -70,13 +70,13 @@ body.dark-theme {
   --bg-graph: rgba(221, 177, 65, 0.8);
   --border-graph: rgba(221, 177, 65, 1);
 
-  --bg-graph-column: rgba(4, 161, 70, 0.6);
+  --bg-graph-column: rgba(4, 161, 70, 0.4);
   --border-graph-column: rgba(4, 161, 70, 1);
 
-  --bg-graph-radar: rgba(25, 99, 209, 0.6);
+  --bg-graph-radar: rgba(25, 99, 209, 0.4);
   --border-graph-radar: rgba(13, 107, 185, 1);
 
-  --bg-graph-bar: rgba(221, 177, 65, 0.6);
+  --bg-graph-bar: rgba(221, 177, 65, 0.4);
   --border-graph-bar: rgba(221, 177, 65, 1);
 }
 
