@@ -6,7 +6,7 @@ import ThemeToggleButton from "../ui/ThemeToggleButton.tsx";
 const Menu: React.FC = () => {
   const { user } = useAuth();
   const defaultAvatar =
-    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758024315/user-light_b03jlv.png";
+    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-dark_oxwuux.png";
   const logo =
     "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";
 
