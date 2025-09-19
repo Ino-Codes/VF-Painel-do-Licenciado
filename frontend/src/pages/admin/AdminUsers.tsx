@@ -161,6 +161,8 @@ const AdminUsers: React.FC = () => {
       email: "",
       password: "",
       birth_date: "",
+      cargo: "",
+      setor: "",
       role: formType === "licenciado" ? "licenciado" : "colaborador",
     }));
   }, [formType]);
@@ -287,15 +289,19 @@ const AdminUsers: React.FC = () => {
                 <input
                   className="form-input"
                   placeholder="Cargo"
-                  value={editingUser.cargo}
-                  onChange={(e) => setForm({ ...form, cargo: e.target.value })}
+                  value={editingUser.cargo || ""}
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, cargo: e.target.value })
+                  }
                   required
                 />
                 <input
                   className="form-input"
                   placeholder="Setor"
-                  value={editingUser.setor}
-                  onChange={(e) => setForm({ ...form, setor: e.target.value })}
+                  value={editingUser.setor || ""}
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, setor: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -359,7 +365,6 @@ const AdminUsers: React.FC = () => {
             required
           />
         </div>
-
         <div className="form-row">
           <input
             className="form-input"
@@ -370,7 +375,6 @@ const AdminUsers: React.FC = () => {
             required
           />
         </div>
-
         {form.role !== "licenciado" && (
           <div>
             <div className="form-row">
@@ -389,7 +393,6 @@ const AdminUsers: React.FC = () => {
                 required
               />
             </div>
-
             <div className="form-row">
               <select
                 className="form-select"
@@ -401,7 +404,6 @@ const AdminUsers: React.FC = () => {
                 <option value="colaborador">Colaborador</option>
                 <option value="admin">Admin</option>
               </select>
-
               <label style={{ fontWeight: 500 }} className="label-birth-day">
                 Data de Nascimento
               </label>
@@ -417,7 +419,6 @@ const AdminUsers: React.FC = () => {
             </div>
           </div>
         )}
-
         <div className="form-row">
           <button className="form-button" type="submit">
             Criar Usuário
@@ -432,7 +433,6 @@ const AdminUsers: React.FC = () => {
       <Menu />
       <div className="content-area">
         <h2>{editingUser ? "Editar Usuário" : "Criar Novo Usuário"}</h2>
-
         {!editingUser && (
           <div className="tabs">
             <button
@@ -451,13 +451,10 @@ const AdminUsers: React.FC = () => {
             </button>
           </div>
         )}
-
         {renderForm()}
-
-        {formType === "licenciado" && (
+        {formType === "licenciado" && !editingUser && (
           <BulkUserImport onImportSuccess={fetchUsers} />
         )}
-
         <h2>Usuários Cadastrados:</h2>
         <div className="search-bar">
           <input
@@ -472,7 +469,6 @@ const AdminUsers: React.FC = () => {
             Pesquisar
           </button>
         </div>
-
         <ul className="user-list">
           {users.map((u) => (
             <li key={u.id} className="user-list-item">
@@ -497,7 +493,6 @@ const AdminUsers: React.FC = () => {
             </li>
           ))}
         </ul>
-
         {totalUsers > 0 && (
           <div className="pagination-controls">
             <div className="limit-selector">
@@ -545,5 +540,4 @@ const AdminUsers: React.FC = () => {
     </div>
   );
 };
-
 export default AdminUsers;
