@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
@@ -23,6 +23,23 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+
+const BackArrowIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <line x1="19" y1="12" x2="5" y2="12"></line>
+    <polyline points="12 19 5 12 12 5"></polyline>
+  </svg>
+);
 
 const AdminCourseEditor: React.FC = () => {
   const { user, loading } = useAuth();
@@ -284,12 +301,14 @@ const AdminCourseEditor: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <button
-          onClick={() => navigate("/admin/courses")}
-          className="form-button-cancel mb-4"
+        <Link
+          to="/courses"
+          className="btn-back-subtle"
+          style={{ textDecoration: "none" }}
         >
-          ⬅️ Voltar
-        </button>
+          <BackArrowIcon />
+          Voltar
+        </Link>
 
         <h2>Editor do Curso: {course.title}</h2>
 
