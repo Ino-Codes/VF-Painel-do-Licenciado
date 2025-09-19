@@ -169,6 +169,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  color: var(--text-primary);
 }
 
 .edit-profile-button:hover {
