@@ -8,10 +8,12 @@ module.exports = function (pool, sgMail, logActivity) {
   router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     try {
-      const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-        email,
-      ]);
+      const result = await pool.query(
+        "SELECT *, must_change_password FROM users WHERE email = $1",
+        [email]
+      );
       const user = result.rows[0];
+
       if (!user || !(await bcrypt.compare(password, user.password))) {
         logActivity(
           null,
@@ -28,6 +30,7 @@ module.exports = function (pool, sgMail, logActivity) {
         email: user.email,
         role: user.role,
         nome: user.nome,
+        must_change_password: user.must_change_password,
       };
       const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
         expiresIn: "24h",

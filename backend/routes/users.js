@@ -113,6 +113,37 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
+  router.put("/force-change-password", checkLoggedIn, async (req, res) => {
+    const { id: userId } = req.user;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "A senha deve ter pelo menos 6 caracteres." });
+    }
+
+    try {
+      const newHash = await bcrypt.hash(password, 10);
+      await pool.query(
+        "UPDATE users SET password = $1, must_change_password = FALSE WHERE id = $2",
+        [newHash, userId]
+      );
+
+      logActivity(
+        userId,
+        req.user.email,
+        "FORCE_PASSWORD_RESET",
+        "Senha alterada no primeiro acesso.",
+        req.ipAddress
+      );
+      res.json({ success: true, message: "Senha alterada com sucesso!" });
+    } catch (err) {
+      console.error("Erro ao forçar mudança de senha:", err);
+      res.status(500).json({ error: "Erro no servidor" });
+    }
+  });
+
   router.put("/admin/:id", async (req, res) => {
     const { id } = req.params;
     const { nome, email, role, birth_date, cargo, setor } = req.body;

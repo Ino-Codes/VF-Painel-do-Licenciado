@@ -7,6 +7,7 @@ interface User {
   nome: string;
   role: "admin" | "licenciado" | "gestor";
   avatar_url?: string;
+  must_change_password?: boolean;
 }
 
 interface AuthContextType {
