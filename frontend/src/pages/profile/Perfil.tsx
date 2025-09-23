@@ -134,41 +134,42 @@ const Perfil: React.FC = () => {
     }
   };
 
-  // Perfil.tsx - CÓDIGO NOVO E CORRIGIDO
-
-  // Perfil.tsx - CÓDIGO NOVO E CORRIGIDO
+  // Perfil.tsx - CÓDIGO FINAL E DEFINITIVO
 
   const handleSaveChanges = async () => {
-    if (!user) return;
+    if (!user) return; //
 
-    // Determina qual nome usar com base na role do usuário
-    const nomeParaSalvar = user.role === "licenciado" ? nome : editForm.nome;
+    // Determina o nome atualizado a partir do estado correto do formulário
+    const nomeAtualizado = user.role === "licenciado" ? nome : editForm.nome; //
 
-    // Validação: garante que o nome a ser salvo não está vazio
-    if (!nomeParaSalvar.trim()) {
-      toast.error("O nome não pode estar vazio.");
+    if (!nomeAtualizado.trim()) {
+      toast.error("O nome não pode estar vazio."); //
       return;
     }
 
-    // Criamos um payload base com os dados essenciais que o backend precisa
-    const payload: any = {
-      email: user.email, // Incluímos o email para satisfazer a restrição do backend
-      nome: nomeParaSalvar,
-    };
+    // 1. Começamos com uma cópia do objeto 'user' completo do nosso contexto.
+    //    Isso garante que TODOS os campos (id, email, role, etc.) estão presentes.
+    const payload = { ...user }; //
 
-    // Adicionamos os outros campos apenas se o usuário não for 'licenciado'
-    if (user.role !== "licenciado") {
-      payload.cargo = editForm.cargo;
-      payload.setor = editForm.setor;
+    // 2. Agora, atualizamos o 'payload' APENAS com os campos que foram alterados no formulário.
+    if (user.role === "licenciado") {
+      //
+      payload.nome = nomeAtualizado;
+    } else {
+      payload.nome = nomeAtualizado; //
+      payload.cargo = editForm.cargo; //
+      payload.setor = editForm.setor; //
     }
+    // --- FIM DA SOLUÇÃO DEFINITIVA ---
 
     try {
-      const res = await api.put(`/api/users/admin/${user.id}`, payload);
+      const res = await api.put(`/api/users/admin/${user.id}`, payload); //
       login(res.data.user); // Atualiza o estado global do usuário com os novos dados
-      toast.success("Perfil atualizado com sucesso!");
+
+      toast.success("Perfil atualizado com sucesso!"); //
       setIsEditing(false); // Fecha o modo de edição para admin/colaborador
     } catch (err) {
-      toast.error("Erro ao salvar as alterações.");
+      toast.error("Erro ao salvar as alterações."); //
     }
   };
 
