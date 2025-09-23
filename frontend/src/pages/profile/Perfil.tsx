@@ -134,21 +134,37 @@ const Perfil: React.FC = () => {
     }
   };
 
+  // Perfil.tsx - CÓDIGO NOVO E CORRIGIDO
+
+  // Perfil.tsx - CÓDIGO NOVO E CORRIGIDO
+
   const handleSaveChanges = async () => {
-    if (!user || !nome.trim()) {
+    if (!user) return;
+
+    // Determina qual nome usar com base na role do usuário
+    const nomeParaSalvar = user.role === "licenciado" ? nome : editForm.nome;
+
+    // Validação: garante que o nome a ser salvo não está vazio
+    if (!nomeParaSalvar.trim()) {
       toast.error("O nome não pode estar vazio.");
       return;
     }
+
+    // Cria o payload (dados a serem enviados) de forma dinâmica
+    const payload =
+      user.role === "licenciado"
+        ? { nome: nomeParaSalvar } // Para o licenciado, enviamos apenas o nome
+        : {
+            nome: nomeParaSalvar,
+            cargo: editForm.cargo,
+            setor: editForm.setor,
+          }; // Para outros, enviamos o formulário completo
+
     try {
-      const res = await api.put(`/api/users/admin/${user.id}`, {
-        ...user,
-        nome: editForm.nome,
-        cargo: editForm.cargo,
-        setor: editForm.setor,
-      });
-      login(res.data.user);
+      const res = await api.put(`/api/users/admin/${user.id}`, payload);
+      login(res.data.user); // Atualiza o estado global do usuário com os novos dados
       toast.success("Perfil atualizado com sucesso!");
-      setIsEditing(false);
+      setIsEditing(false); // Fecha o modo de edição para admin/colaborador
     } catch (err) {
       toast.error("Erro ao salvar as alterações.");
     }
