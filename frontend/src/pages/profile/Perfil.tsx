@@ -150,15 +150,17 @@ const Perfil: React.FC = () => {
       return;
     }
 
-    // Cria o payload (dados a serem enviados) de forma dinâmica
-    const payload =
-      user.role === "licenciado"
-        ? { nome: nomeParaSalvar } // Para o licenciado, enviamos apenas o nome
-        : {
-            nome: nomeParaSalvar,
-            cargo: editForm.cargo,
-            setor: editForm.setor,
-          }; // Para outros, enviamos o formulário completo
+    // Criamos um payload base com os dados essenciais que o backend precisa
+    const payload: any = {
+      email: user.email, // Incluímos o email para satisfazer a restrição do backend
+      nome: nomeParaSalvar,
+    };
+
+    // Adicionamos os outros campos apenas se o usuário não for 'licenciado'
+    if (user.role !== "licenciado") {
+      payload.cargo = editForm.cargo;
+      payload.setor = editForm.setor;
+    }
 
     try {
       const res = await api.put(`/api/users/admin/${user.id}`, payload);
