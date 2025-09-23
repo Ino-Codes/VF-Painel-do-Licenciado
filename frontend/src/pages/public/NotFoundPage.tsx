@@ -24,7 +24,7 @@ const NotFoundPage: React.FC = () => {
             className="form-button"
             style={{ textDecoration: "none" }}
           >
-            Ir para o Dashboard
+            Tela Inicial
           </Link>
         </EmptyState>
       </div>
