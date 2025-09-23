@@ -134,42 +134,34 @@ const Perfil: React.FC = () => {
     }
   };
 
-  // Perfil.tsx - CÓDIGO FINAL E DEFINITIVO
-
   const handleSaveChanges = async () => {
     if (!user) return; //
 
-    // Determina o nome atualizado a partir do estado correto do formulário
-    const nomeAtualizado = user.role === "licenciado" ? nome : editForm.nome; //
+    const nomeAtualizado = user.role === "licenciado" ? nome : editForm.nome;
 
     if (!nomeAtualizado.trim()) {
-      toast.error("O nome não pode estar vazio."); //
+      toast.error("O nome não pode estar vazio.");
       return;
     }
 
-    // 1. Começamos com uma cópia do objeto 'user' completo do nosso contexto.
-    //    Isso garante que TODOS os campos (id, email, role, etc.) estão presentes.
-    const payload = { ...user }; //
+    const payload = { ...user };
 
-    // 2. Agora, atualizamos o 'payload' APENAS com os campos que foram alterados no formulário.
     if (user.role === "licenciado") {
-      //
       payload.nome = nomeAtualizado;
     } else {
-      payload.nome = nomeAtualizado; //
-      payload.cargo = editForm.cargo; //
-      payload.setor = editForm.setor; //
+      payload.nome = nomeAtualizado;
+      payload.cargo = editForm.cargo;
+      payload.setor = editForm.setor;
     }
-    // --- FIM DA SOLUÇÃO DEFINITIVA ---
 
     try {
-      const res = await api.put(`/api/users/admin/${user.id}`, payload); //
-      login(res.data.user); // Atualiza o estado global do usuário com os novos dados
+      const res = await api.put(`/api/users/admin/${user.id}`, payload);
+      login(res.data.user);
 
-      toast.success("Perfil atualizado com sucesso!"); //
-      setIsEditing(false); // Fecha o modo de edição para admin/colaborador
+      toast.success("Perfil atualizado com sucesso!");
+      setIsEditing(false);
     } catch (err) {
-      toast.error("Erro ao salvar as alterações."); //
+      toast.error("Erro ao salvar as alterações.");
     }
   };
 
