@@ -7,7 +7,7 @@ import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
 // Reutilizamos os componentes de UI que você já tem
-import { TiptapMenuBar, SmileyIcon } from "../../pages/Dashboard/Dashboard.tsx";
+import { TiptapMenuBar, SmileyIcon } from "../../pages/dashboard/Dashboard.tsx";
 
 // Definimos os tipos para as props e para o objeto 'notice'
 interface Notice {
