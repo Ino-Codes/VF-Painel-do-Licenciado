@@ -137,41 +137,20 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           </div>
         )}
 
-        <div className="visibility-selector" style={{ marginTop: "1rem" }}>
-          {/* (Seletor de visibilidade permanece o mesmo) */}
-          <label>Enviar para:</label>
-          <div className="radio-group">
-            <label>
-              <input
-                type="radio"
-                name="visibilityModal"
-                value="todos"
-                checked={visibility === "todos"}
-                onChange={() => setVisibility("todos")}
-              />{" "}
-              Todos
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="visibilityModal"
-                value="internos"
-                checked={visibility === "internos"}
-                onChange={() => setVisibility("internos")}
-              />{" "}
-              Apenas Internos
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="visibilityModal"
-                value="licenciados"
-                checked={visibility === "licenciados"}
-                onChange={() => setVisibility("licenciados")}
-              />{" "}
-              Apenas Licenciados
-            </label>
-          </div>
+        <div className="form-row">
+          <label htmlFor="visibility">Visível para:</label>
+        </div>
+        <div className="form-row">
+          <select
+            id="visibility"
+            value={visibility}
+            onChange={() => setVisibility("todos")}
+            className="form-input"
+          >
+            <option value="todos">Todos</option>
+            <option value="licenciados">Apenas Licenciados</option>
+            <option value="internos">Apenas Internos</option>
+          </select>
         </div>
 
         <div className="modal-actions">
