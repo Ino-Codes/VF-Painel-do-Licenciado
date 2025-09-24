@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import ForcePasswordResetModal from "../../components/ui/ForcePasswordResetModal.tsx";
-
-const logo =
-  "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";
+import Logo from "../../img/logo-clara.png";
 
 const App: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -77,7 +75,7 @@ const App: React.FC = () => {
     <>
       <div className="p-login">
         <div className="p-img">
-          <img alt="Logo da Valor Fiscal" src={logo} />
+          <img alt="Logo da Valor Fiscal" src={Logo} />
         </div>
         <div className="p-1">
           <h2 className="titulo-login">

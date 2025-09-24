@@ -26,7 +26,6 @@ const Menu: React.FC = () => {
   const { user } = useAuth();
   const defaultAvatar =
     "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-light_d0dd5l.png";
-  const logo = Logo;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
@@ -64,7 +63,7 @@ const Menu: React.FC = () => {
 
       <div className={`menu-left ${isMenuOpen ? "open" : ""}`}>
         <NavLink to="/dashboard" className="menu-logo-link">
-          <img src={logo} alt="Valor Fiscal Logo" className="menu-logo" />
+          <img src={Logo} alt="Valor Fiscal Logo" className="menu-logo" />
         </NavLink>
 
         <NavLink
