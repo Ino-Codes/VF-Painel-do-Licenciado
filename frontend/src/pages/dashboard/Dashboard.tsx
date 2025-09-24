@@ -518,39 +518,33 @@ const Dashboard: React.FC = () => {
 
         <div className="dashboard-elements">
           <h3>Relatórios</h3>
-          {user.role === "admin" ? (
-            <div>
-              <div className="analytics-tabs">
-                <button
-                  className={`analytics-tab ${
-                    activeReportTab === "eneagrama" ? "active" : ""
-                  }`}
-                  onClick={() => setActiveReportTab("eneagrama")}
-                >
-                  Eneagrama
-                </button>
-                <button
-                  className={`analytics-tab ${
-                    activeReportTab === "cursos" ? "active" : ""
-                  }`}
-                  onClick={() => setActiveReportTab("cursos")}
-                >
-                  Cursos
-                </button>
-              </div>
 
-              <div className="dashboard-elements-child">
-                {activeReportTab === "eneagrama" && <EnneagramStats />}
-                {activeReportTab === "cursos" && <CoursesAnalytics />}
-              </div>
-            </div>
-          ) : (
-            <EmptyState
-              imageKey="dashs"
-              title="Relatórios em Desenvolvimento"
-              message="Estamos criando relatórios e gráficos que serão exibidos aqui futuramente."
-            />
-          )}
+          <div className="analytics-tabs">
+            {user.role === "admin" && (
+              <button
+                className={`analytics-tab ${
+                  activeReportTab === "eneagrama" ? "active" : ""
+                }`}
+                onClick={() => setActiveReportTab("eneagrama")}
+              >
+                Eneagrama
+              </button>
+            )}
+
+            <button
+              className={`analytics-tab ${
+                activeReportTab === "cursos" ? "active" : ""
+              }`}
+              onClick={() => setActiveReportTab("cursos")}
+            >
+              Cursos
+            </button>
+          </div>
+
+          <div className="dashboard-elements-child">
+            {activeReportTab === "eneagrama" && <EnneagramStats />}
+            {activeReportTab === "cursos" && <CoursesAnalytics />}
+          </div>
         </div>
       </div>
 
