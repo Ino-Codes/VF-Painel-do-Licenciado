@@ -12,6 +12,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [visibility, setVisibility] = useState("todos");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +25,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
     formData.append("category", category);
     formData.append("question", question);
     formData.append("answer", answer);
+    formData.append("visibility", visibility);
     if (documentFile) {
       formData.append("document", documentFile);
     }
@@ -75,6 +77,23 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
               required
             />
           </div>
+
+          <div className="form-row">
+            <label htmlFor="visibility">Visibilidade:</label>
+            <select
+              id="visibility"
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value)}
+              className="form-input"
+            >
+              <option value="todos">Visível para Todos</option>
+              <option value="licenciados">Apenas para Licenciados</option>
+              <option value="internos">
+                Apenas para Internos (Admin/Colaborador)
+              </option>
+            </select>
+          </div>
+
           <div className="modal-actions">
             <button
               type="button"

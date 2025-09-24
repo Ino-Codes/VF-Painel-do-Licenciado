@@ -5,10 +5,23 @@ const path = require("path");
 module.exports = function (pool, cloudinary, upload) {
   router.get("/", async (req, res) => {
     const { category, search, page = 1, limit = 15 } = req.query;
+    const userRole = req.user ? req.user.role : null; // Pega a role do usuário logado
+
     try {
       const offset = (page - 1) * limit;
       let whereClauses = [];
       const params = [];
+
+      if (userRole === "licenciado") {
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'licenciados')"
+        );
+      } else if (userRole === "admin" || userRole === "colaborador") {
+        whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
+      } else {
+        // Para usuários não logados ou sem role definida, mostrar apenas 'todos'
+        whereClauses.push("visibility = 'todos'");
+      }
 
       if (category) {
         params.push(category);
@@ -57,7 +70,6 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  // --- ROTA DE DOWNLOAD CORRIGIDA ---
   router.get("/download/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -108,7 +120,7 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   router.post("/admin", upload.single("document"), async (req, res) => {
-    const { category, question, answer } = req.body;
+    const { category, question, answer, visibility = "todos" } = req.body;
     let document_url = null;
     let document_originalname = null;
 
@@ -130,8 +142,15 @@ module.exports = function (pool, cloudinary, upload) {
       }
 
       const result = await pool.query(
-        "INSERT INTO faq (category, question, answer, document_url, document_originalname) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        [category, question, answer, document_url, document_originalname]
+        "INSERT INTO faq (category, question, answer, document_url, document_originalname, visibility) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+        [
+          category,
+          question,
+          answer,
+          document_url,
+          document_originalname,
+          visibility,
+        ]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
