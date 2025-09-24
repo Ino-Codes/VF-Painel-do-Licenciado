@@ -79,18 +79,18 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
           </div>
 
           <div className="form-row">
-            <label htmlFor="visibility">Visibilidade:</label>
+            <label htmlFor="visibility">Visível para:</label>
+          </div>
+          <div className="form-row">
             <select
               id="visibility"
               value={visibility}
               onChange={(e) => setVisibility(e.target.value)}
               className="form-input"
             >
-              <option value="todos">Visível para Todos</option>
-              <option value="licenciados">Apenas para Licenciados</option>
-              <option value="internos">
-                Apenas para Internos (Admin/Colaborador)
-              </option>
+              <option value="todos">Todos</option>
+              <option value="licenciados">Apenas Licenciados</option>
+              <option value="internos">Apenas Internos</option>
             </select>
           </div>
 
