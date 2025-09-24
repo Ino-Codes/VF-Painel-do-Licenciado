@@ -8,7 +8,6 @@ import EmptyFaqDark from "../assets/images/dark_empty_faq.svg";
 // Adicione outros assets aqui (ex: empty_documentos, etc.)
 
 // Bónus: Importe os logos também
-import LogoLight from "../assets/images/logo-clara.png";
 import LogoDark from "../assets/images/logo-escura.png";
 
 // Mapeamento dos assets
@@ -18,7 +17,7 @@ const themeableAssets = {
     dark: EmptyFaqDark,
   },
   logo: {
-    light: LogoLight,
+    light: LogoDark,
     dark: LogoDark,
   },
   // Adicione outros assets aqui
