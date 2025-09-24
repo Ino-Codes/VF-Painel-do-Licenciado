@@ -24,7 +24,7 @@ const LockIcon = () => (
 const Menu: React.FC = () => {
   const { user } = useAuth();
   const defaultAvatar =
-    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-dark_oxwuux.png";
+    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-light_d0dd5l.png";
   const logo =
     "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";
 
