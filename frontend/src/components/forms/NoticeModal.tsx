@@ -1,16 +1,15 @@
-// frontend/src/components/forms/NoticeModal.tsx
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // 1. Importar o useRef
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
+// 1. Importar o EmojiPicker e o tipo de dado do emoji
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
-import { TiptapMenuBar, SmileyIcon } from "../editor/TiptapEditor.tsx";
+import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
 
-// Definimos os tipos para as props e para o objeto 'notice'
+// Interface Notice (sem alterações)
 interface Notice {
   id: number;
   message: string;
@@ -18,6 +17,7 @@ interface Notice {
   visibility: "todos" | "internos" | "licenciados";
 }
 
+// Interface NoticeModalProps (sem alterações)
 interface NoticeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,13 +35,16 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     "todos" | "internos" | "licenciados"
   >("todos");
 
+  // 2. Adicionar estados para controlar o Emoji Picker
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null); // Ref para o container do picker
+
   const editor = useEditor({
     extensions: [StarterKit],
     content: "",
     editorProps: { attributes: { class: "tiptap-editor" } },
   });
 
-  // Efeito para popular o formulário quando estiver no modo de edição
   useEffect(() => {
     if (noticeToEdit && editor) {
       editor.commands.setContent(noticeToEdit.message);
@@ -50,33 +53,63 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       editor.commands.clearContent();
       setVisibility("todos");
     }
-  }, [noticeToEdit, editor, isOpen]); // Roda quando o modal abre ou a notícia a editar muda
+    // Fecha o emoji picker sempre que o modal for reaberto
+    setShowEmojiPicker(false);
+  }, [noticeToEdit, editor, isOpen]);
+
+  // 3. Adicionar efeito para fechar o picker ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   if (!isOpen) {
     return null;
   }
 
+  // 4. Criar a função que insere o emoji no editor
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    if (editor) {
+      editor.chain().focus().insertContent(emojiData.emoji).run();
+    }
+    setShowEmojiPicker(false);
+  };
+
+  // 5. Criar a função que abre/fecha o picker
+  const toggleEmojiPicker = () => {
+    setShowEmojiPicker((prev) => !prev);
+  };
+
   const handleSubmit = async () => {
+    // (Lógica do handleSubmit permanece a mesma)
     if (!editor || editor.isEmpty) {
       toast.error("O aviso não pode estar em branco.");
       return;
     }
-
     const message = editor.getHTML();
     const payload = { message, visibility };
-
     try {
       if (noticeToEdit) {
-        // Modo Edição
         await api.put(`/api/notices/admin/${noticeToEdit.id}`, payload);
         toast.success("Aviso atualizado com sucesso!");
       } else {
-        // Modo Criação
         await api.post("/api/notices/admin", payload);
         toast.success("Aviso postado com sucesso!");
       }
-      onSuccess(); // Chama a função de sucesso (para recarregar a lista)
-      onClose(); // Fecha o modal
+      onSuccess();
+      onClose();
     } catch (err) {
       toast.error("Ocorreu um erro ao salvar o aviso.");
     }
@@ -88,12 +121,24 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
         <h2>{noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}</h2>
 
         <div className="tiptap-container">
-          <TiptapMenuBar editor={editor} onEmojiToggle={() => {}} />{" "}
-          {/* Emoji picker pode ser adicionado depois */}
+          {/* 6. Atualizar a chamada da TiptapMenuBar */}
+          <TiptapMenuBar editor={editor} onEmojiToggle={toggleEmojiPicker} />
           <EditorContent editor={editor} />
         </div>
 
+        {/* 7. Adicionar o JSX para renderizar o EmojiPicker */}
+        {showEmojiPicker && (
+          <div ref={emojiPickerRef} className="emoji-picker-container-modal">
+            <EmojiPicker
+              onEmojiClick={onEmojiClick}
+              width="100%"
+              height={350}
+            />
+          </div>
+        )}
+
         <div className="visibility-selector" style={{ marginTop: "1rem" }}>
+          {/* (Seletor de visibilidade permanece o mesmo) */}
           <label>Enviar para:</label>
           <div className="radio-group">
             <label>
