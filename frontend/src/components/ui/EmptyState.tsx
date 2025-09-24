@@ -1,5 +1,5 @@
 import React from "react";
-import { useThemeableAsset } from "../../utils/assets";
+import { useThemeableAsset } from "../../utils/assets.ts";
 
 interface EmptyStateProps {
   imageKey: "faq" | "logo";
