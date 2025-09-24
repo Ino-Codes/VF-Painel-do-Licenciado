@@ -32,15 +32,6 @@ interface MonthlyEvent {
   color: string;
 }
 
-const TiptapMenuBar: React.FC<{
-  editor: Editor | null;
-  onEmojiToggle: (event: React.MouseEvent) => void;
-}> = ({ editor, onEmojiToggle }) => {
-  if (!editor) {
-    return null;
-  }
-};
-
 const CoursesAnalytics: React.FC = () => {
   return (
     <div>
