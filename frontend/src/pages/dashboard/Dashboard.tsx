@@ -132,7 +132,9 @@ const Dashboard: React.FC = () => {
     "todos" | "internos" | "licenciados"
   >("todos");
 
-  const [activeReportTab, setActiveReportTab] = useState("eneagrama");
+  const [activeReportTab, setActiveReportTab] = useState(
+    user?.role === "admin" ? "eneagrama" : "cursos"
+  );
 
   const newNoticeEditor = useEditor({
     extensions: [StarterKit],
