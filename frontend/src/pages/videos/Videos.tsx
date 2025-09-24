@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
-import VideoEmptyImage from "../../assets/images/empty_video.svg";
 
 interface VideoData {
   id: number;
@@ -242,7 +241,7 @@ const Videos: React.FC = () => {
                 ))
               ) : (
                 <EmptyState
-                  image={VideoEmptyImage}
+                  imageKey="video"
                   title="Nenhum Vídeo Encontrado"
                   message="Estamos incluindo vídeos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
                 ></EmptyState>

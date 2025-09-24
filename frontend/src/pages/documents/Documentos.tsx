@@ -9,8 +9,6 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 
-import EmptyDocumentsImage from "../../assets/images/empty_documentos.svg";
-
 interface FileData {
   id: number;
   originalname: string;
@@ -244,7 +242,7 @@ const Documentos: React.FC = () => {
             ))
           ) : (
             <EmptyState
-              image={EmptyDocumentsImage}
+              imageKey="documentos"
               title="Nenhum Documento Encontrado"
               message="Estamos incluindo documentos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
             />

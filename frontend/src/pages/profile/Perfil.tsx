@@ -9,7 +9,6 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import AvatarModal from "../../components/forms/AvatarModal.tsx";
-import EmptyCertificadoImage from "../../assets/images/empty_certificado.svg";
 
 interface CertificateData {
   certificate_id: number;
@@ -508,7 +507,7 @@ const Perfil: React.FC = () => {
                   ))
                 ) : (
                   <EmptyState
-                    image={EmptyCertificadoImage}
+                    imageKey="certificado"
                     title="Nenhum Certificado Encontrado"
                     message="Você ainda não concluiu nenhum curso para obter um certificado. Complete um curso e ele aparecerá aqui!"
                   />

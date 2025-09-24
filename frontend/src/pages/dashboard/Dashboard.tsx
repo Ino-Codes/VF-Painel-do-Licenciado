@@ -10,10 +10,6 @@ import EmptyState from "../../components/ui/EmptyState.tsx";
 import EventCard from "./EventCard.tsx";
 import EnneagramStats from "./EnneagramStats.tsx";
 
-import EmptyEventsImage from "../../assets/images/empty_eventos.svg";
-import EmptyAvisosImage from "../../assets/images/empty_avisos.svg";
-import EmptyDashsImage from "../../assets/images/empty_dashs.svg";
-
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
@@ -109,7 +105,7 @@ const CoursesAnalytics: React.FC = () => {
     <div>
       <h4>Análise de Cursos</h4>
       <EmptyState
-        image={EmptyDashsImage}
+        imageKey="dashs"
         title="Relatórios de Cursos em Desenvolvimento"
         message="Estamos a criar gráficos sobre o progresso e engajamento dos utilizadores nos cursos. Volte em breve!"
       />
@@ -318,7 +314,7 @@ const Dashboard: React.FC = () => {
                   ))
                 ) : (
                   <EmptyState
-                    image={EmptyEventsImage}
+                    imageKey="eventos"
                     title="Nenhum Evento Agendado"
                     message="Não há eventos agendados para este mês no momento. Verifique novamente mais tarde."
                   />
@@ -494,7 +490,7 @@ const Dashboard: React.FC = () => {
                 ))
               ) : (
                 <EmptyState
-                  image={EmptyAvisosImage}
+                  imageKey="avisos"
                   title="Nenhum Aviso no Momento"
                   message="Não há avisos postados no momento. Verifique novamente mais tarde."
                 />
@@ -550,7 +546,7 @@ const Dashboard: React.FC = () => {
             </div>
           ) : (
             <EmptyState
-              image={EmptyDashsImage}
+              imageKey="dashs"
               title="Relatórios em Desenvolvimento"
               message="Estamos criando relatórios e gráficos que serão exibidos aqui futuramente."
             />

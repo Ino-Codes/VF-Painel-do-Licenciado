@@ -6,7 +6,6 @@ import Footer from "../../components/layout/Footer.tsx";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
-import EmptyCursosImage from "../../assets/images/empty_cursos.svg";
 import CourseCard from "../../components/ui/CourseCard.tsx";
 
 interface CourseData {
@@ -112,7 +111,7 @@ const CoursesPage: React.FC = () => {
               </div>
             ) : (
               <EmptyState
-                image={EmptyCursosImage}
+                imageKey="cursos"
                 title={
                   activeTab === "all"
                     ? "Nenhum Curso Disponível"

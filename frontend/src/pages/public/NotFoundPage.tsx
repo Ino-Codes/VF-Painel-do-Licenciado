@@ -4,7 +4,6 @@ import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
-import NotFoundImage from "../../assets/images/404.svg";
 import { useAuth } from "../../context/AuthContext.tsx";
 
 const NotFoundPage: React.FC = () => {
@@ -15,7 +14,7 @@ const NotFoundPage: React.FC = () => {
       {user && <Menu />}
       <div className="content-area">
         <EmptyState
-          image={NotFoundImage}
+          imageKey="404"
           title="Página Não Encontrada"
           message="O endereço que você tentou acessar não existe ou foi movido. Que tal voltar para um lugar seguro?"
         >
