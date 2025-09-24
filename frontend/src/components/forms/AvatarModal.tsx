@@ -16,7 +16,7 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const defaultAvatar =
-    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-light_d0dd5l.png";
+    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-dark_oxwuux.png";
 
   if (!isOpen || !user) return null;
 
