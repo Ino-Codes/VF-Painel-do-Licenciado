@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import { useNavigate } from "react-router-dom";
 import EmptyState from "../../components/ui/EmptyState.tsx";
-import EmptyFaqImage from "../../assets/images/empty_faq.svg";
 
 interface FaqData {
   id: number;
@@ -199,7 +198,7 @@ const Faq: React.FC = () => {
             ))
           ) : (
             <EmptyState
-              image={EmptyFaqImage}
+              imageKey="faq"
               title="Nenhuma Pergunta Encontrada"
               message="Estamos incluindo perguntas e respostas ao FAQ. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
             ></EmptyState>
