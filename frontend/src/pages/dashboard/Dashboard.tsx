@@ -9,6 +9,7 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import EventCard from "./EventCard.tsx";
 import EnneagramStats from "./EnneagramStats.tsx";
+import NoticeModal from "../../components/forms/NoticeModal.tsx";
 
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -118,7 +119,6 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [monthlyEvents, setMonthlyEvents] = useState<MonthlyEvent[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -128,24 +128,13 @@ const Dashboard: React.FC = () => {
     right: number;
   }>({ top: 0, right: 0 });
   const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const [noticeVisibility, setNoticeVisibility] = useState<
-    "todos" | "internos" | "licenciados"
-  >("todos");
+
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
+  const [noticeToEdit, setNoticeToEdit] = useState<Notice | null>(null);
 
   const [activeReportTab, setActiveReportTab] = useState(
     user?.role === "admin" ? "eneagrama" : "cursos"
   );
-
-  const newNoticeEditor = useEditor({
-    extensions: [StarterKit],
-    content: "",
-    editorProps: { attributes: { class: "tiptap-editor" } },
-  });
-  const editNoticeEditor = useEditor({
-    extensions: [StarterKit],
-    content: "",
-    editorProps: { attributes: { class: "tiptap-editor" } },
-  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -195,54 +184,14 @@ const Dashboard: React.FC = () => {
     }
   }, [user, fetchNotices, fetchMonthlyEvents]);
 
-  const handlePostNotice = async () => {
-    if (!newNoticeEditor) return;
-    const message = newNoticeEditor.getHTML();
-
-    if (newNoticeEditor.isEmpty || message === "<p></p>") {
-      toast.error("O aviso não pode estar em branco.");
-      return;
-    }
-    try {
-      await api.post("/api/notices/admin", {
-        message,
-        visibility: noticeVisibility,
-      });
-      newNoticeEditor.commands.clearContent();
-      setNoticeVisibility("todos");
-      fetchNotices();
-      toast.success("Aviso postado com sucesso!");
-    } catch (err) {
-      toast.error("Erro ao postar o aviso.");
-    }
+  const handleOpenCreateNotice = () => {
+    setNoticeToEdit(null); // Garante que o modal abra no modo de criação
+    setIsNoticeModalOpen(true);
   };
 
-  const handleEditNotice = (notice: Notice) => {
-    setEditingNoticeId(notice.id);
-    editNoticeEditor?.commands.setContent(notice.message);
-    setNoticeVisibility(notice.visibility || "todos");
-  };
-
-  const handleUpdateNotice = async (noticeId: number) => {
-    if (!editNoticeEditor) return;
-    const message = editNoticeEditor.getHTML();
-
-    if (editNoticeEditor.isEmpty || message === "<p></p>") {
-      toast.error("O aviso não pode estar em branco.");
-      return;
-    }
-    try {
-      await api.put(`/api/notices/admin/${noticeId}`, {
-        message,
-        visibility: noticeVisibility,
-      });
-      toast.success("Aviso atualizado com sucesso!");
-      setEditingNoticeId(null);
-      editNoticeEditor.commands.clearContent();
-      fetchNotices();
-    } catch (err) {
-      toast.error("Erro ao atualizar o aviso.");
-    }
+  const handleOpenEditNotice = (notice: Notice) => {
+    setNoticeToEdit(notice); // Passa a notícia a ser editada
+    setIsNoticeModalOpen(true);
   };
 
   const handleDeleteNoticeClick = (noticeId: number) => {
@@ -328,56 +277,13 @@ const Dashboard: React.FC = () => {
             <h3>Mural de Avisos</h3>
             <div className="notice-board">
               {user.role === "admin" && (
-                <div className="notice-form">
-                  <div className="tiptap-container">
-                    <TiptapMenuBar
-                      editor={newNoticeEditor}
-                      onEmojiToggle={(e) =>
-                        toggleEmojiPicker(newNoticeEditor, e)
-                      }
-                    />
-                    <EditorContent editor={newNoticeEditor} />
-                  </div>
-                  <div className="visibility-selector">
-                    <label>Enviar para:</label>
-                    <div className="radio-group">
-                      <label>
-                        <input
-                          type="radio"
-                          name="visibilityCreate"
-                          value="todos"
-                          checked={noticeVisibility === "todos"}
-                          onChange={() => setNoticeVisibility("todos")}
-                        />{" "}
-                        Todos
-                      </label>
-                      <label>
-                        <input
-                          type="radio"
-                          name="visibilityCreate"
-                          value="internos"
-                          checked={noticeVisibility === "internos"}
-                          onChange={() => setNoticeVisibility("internos")}
-                        />{" "}
-                        Apenas Internos
-                      </label>
-                      <label>
-                        <input
-                          type="radio"
-                          name="visibilityCreate"
-                          value="licenciados"
-                          checked={noticeVisibility === "licenciados"}
-                          onChange={() => setNoticeVisibility("licenciados")}
-                        />{" "}
-                        Apenas Licenciados
-                      </label>
-                    </div>
-                  </div>
-                  <div className="notice-form-actions">
-                    <button className="form-button" onClick={handlePostNotice}>
-                      Postar Aviso
-                    </button>
-                  </div>
+                <div className="notice-form-actions">
+                  <button
+                    className="form-button"
+                    onClick={handleOpenCreateNotice}
+                  >
+                    + Adicionar Aviso
+                  </button>
                 </div>
               )}
             </div>
@@ -385,109 +291,42 @@ const Dashboard: React.FC = () => {
               {notices.length > 0 ? (
                 notices.map((notice) => (
                   <div key={notice.id} className="notice-card">
-                    {editingNoticeId === notice.id ? (
-                      <div className="notice-edit-form">
-                        <div className="tiptap-container">
-                          <TiptapMenuBar
-                            editor={editNoticeEditor}
-                            onEmojiToggle={(e) =>
-                              toggleEmojiPicker(editNoticeEditor, e)
+                    <>
+                      <div
+                        className="notice-message"
+                        dangerouslySetInnerHTML={{ __html: notice.message }}
+                      />
+                      <div className="notice-footer">
+                        <small>
+                          {new Date(notice.created_at).toLocaleDateString(
+                            "pt-BR",
+                            {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
                             }
-                          />
-                          <EditorContent editor={editNoticeEditor} />
-                        </div>
-                        <div className="visibility-selector">
-                          <label>Enviar para:</label>
-                          <div className="radio-group">
-                            <label>
-                              <input
-                                type="radio"
-                                name={`visibility-edit-${notice.id}`}
-                                value="todos"
-                                checked={noticeVisibility === "todos"}
-                                onChange={() => setNoticeVisibility("todos")}
-                              />{" "}
-                              Todos
-                            </label>
-                            <label>
-                              <input
-                                type="radio"
-                                name={`visibility-edit-${notice.id}`}
-                                value="internos"
-                                checked={noticeVisibility === "internos"}
-                                onChange={() => setNoticeVisibility("internos")}
-                              />{" "}
-                              Apenas Internos
-                            </label>
-                            <label>
-                              <input
-                                type="radio"
-                                name={`visibility-edit-${notice.id}`}
-                                value="licenciados"
-                                checked={noticeVisibility === "licenciados"}
-                                onChange={() =>
-                                  setNoticeVisibility("licenciados")
-                                }
-                              />{" "}
-                              Apenas Licenciados
-                            </label>
-                          </div>
-                        </div>
-                        <div className="notice-actions">
-                          <button
-                            className="list-button"
-                            onClick={() => setEditingNoticeId(null)}
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            className="list-button"
-                            onClick={() => handleUpdateNotice(notice.id)}
-                          >
-                            Salvar
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div
-                          className="notice-message"
-                          dangerouslySetInnerHTML={{ __html: notice.message }}
-                        />
-                        <div className="notice-footer">
-                          <small>
-                            {new Date(notice.created_at).toLocaleDateString(
-                              "pt-BR",
-                              {
-                                day: "2-digit",
-                                month: "long",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </small>
-                          {user.role === "admin" && (
-                            <div className="notice-actions">
-                              <button
-                                className="list-button"
-                                onClick={() => handleEditNotice(notice)}
-                              >
-                                Editar
-                              </button>
-                              <button
-                                className="delete-button"
-                                onClick={() =>
-                                  handleDeleteNoticeClick(notice.id)
-                                }
-                              >
-                                Excluir
-                              </button>
-                            </div>
                           )}
-                        </div>
-                      </>
-                    )}
+                        </small>
+                        {user.role === "admin" && (
+                          <div className="notice-actions">
+                            <button
+                              className="list-button"
+                              onClick={() => handleOpenEditNotice(notice)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              className="delete-button"
+                              onClick={() => handleDeleteNoticeClick(notice.id)}
+                            >
+                              Excluir
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   </div>
                 ))
               ) : (
@@ -550,6 +389,14 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      <NoticeModal
+        isOpen={isNoticeModalOpen}
+        onClose={() => setIsNoticeModalOpen(false)}
+        onSuccess={() => {
+          fetchNotices();
+        }}
+        noticeToEdit={noticeToEdit}
+      />
       <Footer />
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
