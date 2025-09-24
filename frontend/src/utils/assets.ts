@@ -1,6 +1,6 @@
 // src/utils/assets.ts
 
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext.tsx";
 
 // Importe aqui TODOS os seus assets 'light' e 'dark'
 import EmptyFaqLight from "../assets/images/empty_faq.svg";
