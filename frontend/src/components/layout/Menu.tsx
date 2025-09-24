@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import ThemeToggleButton from "../ui/ThemeToggleButton.tsx";
 import LoadingSpinner from "../ui/LoadingSpinner.tsx";
+import Logo from "../../img/logo-clara.png";
 
 const LockIcon = () => (
   <svg
@@ -25,8 +26,7 @@ const Menu: React.FC = () => {
   const { user } = useAuth();
   const defaultAvatar =
     "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-light_d0dd5l.png";
-  const logo =
-    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";
+  const logo = Logo;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
