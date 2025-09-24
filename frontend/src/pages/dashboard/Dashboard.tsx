@@ -107,7 +107,7 @@ const CoursesAnalytics: React.FC = () => {
       <EmptyState
         imageKey="dashs"
         title="Relatórios de Cursos em Desenvolvimento"
-        message="Estamos a criar gráficos sobre o progresso e engajamento dos utilizadores nos cursos. Volte em breve!"
+        message="Estamos criando gráficos sobre o progresso e engajamento nos cursos. Volte em breve!"
       />
     </div>
   );
