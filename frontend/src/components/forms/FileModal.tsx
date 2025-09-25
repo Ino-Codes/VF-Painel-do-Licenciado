@@ -50,7 +50,7 @@ const FileModal: React.FC<FileModalProps> = ({
     e.preventDefault();
 
     if (!category.trim() || !originalname.trim() || !folder.trim()) {
-      toast.error("Nome, Categoria e Pasta são obrigatórios.");
+      toast.error("Categoria, Pasta e Nome são obrigatórios.");
       return;
     }
 
@@ -152,11 +152,12 @@ const FileModal: React.FC<FileModalProps> = ({
               <div className="file-upload-wrapper">
                 <input
                   type="file"
+                  id="file-upload"
                   className="file-upload-input"
                   onChange={handleFileChange}
                   required
                 />
-                <label htmlFor="csv-upload" className="file-upload-label">
+                <label htmlFor="file-upload" className="file-upload-label">
                   Escolher Arquivo
                 </label>
                 <span className="file-upload-filename">
