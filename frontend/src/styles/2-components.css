@@ -297,7 +297,6 @@
 
 /*--- EDITOR TIPTAP ---*/
 .tiptap-container {
-  border: 1px solid var(--border-strong);
   border-radius: 5px;
   overflow: hidden;
 }
@@ -307,10 +306,12 @@
   gap: 5px;
   padding: 8px;
   background-color: var(--bg-primary);
+  border-bottom: 2px solid var(--bg-secondary);
 }
 
 .tiptap-menu-bar button {
   background-color: var(--bg-secondary);
+  border: none;
   color: var(--text-primary);
   border-radius: 3px;
   padding: 5px 10px;
