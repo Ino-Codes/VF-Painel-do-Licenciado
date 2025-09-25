@@ -299,13 +299,13 @@
 .tiptap-container {
   position: relative;
   border-radius: 5px;
-  overflow: hidden;
 }
 
 .tiptap-menu-bar {
   display: flex;
   gap: 5px;
   padding: 8px;
+  border-radius: 5px 5px 0px 0px;
   background-color: var(--bg-primary);
   border-bottom: 2px solid var(--bg-secondary);
 }
@@ -331,6 +331,7 @@
   padding: 15px;
   min-height: 150px;
   background-color: var(--bg-primary);
+  border-radius: 0px 0px 5px 5px;
 }
 
 .tiptap-editor:focus {
