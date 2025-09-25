@@ -356,7 +356,7 @@
   background-color: var(--bg-secondary);
 }
 
-.emoji-picker-container-modal .epr-category-label {
+.epr-emoji-category-label {
   display: none;
 }
 
