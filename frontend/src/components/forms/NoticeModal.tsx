@@ -120,22 +120,22 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       <div className="modal-content">
         <h2>{noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}</h2>
 
-        <div className="tiptap-container">
-          {/* 6. Atualizar a chamada da TiptapMenuBar */}
-          <TiptapMenuBar editor={editor} onEmojiToggle={toggleEmojiPicker} />
-          <EditorContent editor={editor} />
-        </div>
-
-        {/* 7. Adicionar o JSX para renderizar o EmojiPicker */}
-        {showEmojiPicker && (
-          <div ref={emojiPickerRef} className="emoji-picker-container-modal">
-            <EmojiPicker
-              onEmojiClick={onEmojiClick}
-              width="100%"
-              height={350}
-            />
+        <div className="form-row">
+          <div className="tiptap-container">
+            <TiptapMenuBar editor={editor} onEmojiToggle={toggleEmojiPicker} />
+            <EditorContent editor={editor} />
           </div>
-        )}
+
+          {showEmojiPicker && (
+            <div ref={emojiPickerRef} className="emoji-picker-container-modal">
+              <EmojiPicker
+                onEmojiClick={onEmojiClick}
+                width="100%"
+                height={350}
+              />
+            </div>
+          )}
+        </div>
 
         <div className="form-row">
           <label htmlFor="visibility">Visível para:</label>
@@ -144,7 +144,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           <select
             id="visibility"
             value={visibility}
-            onChange={() => setVisibility("todos")}
+            onChange={(e) => setVisibility(e.target.value)}
             className="form-input"
           >
             <option value="todos">Todos</option>
