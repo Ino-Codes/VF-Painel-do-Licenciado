@@ -328,7 +328,7 @@
 .tiptap-editor {
   padding: 15px;
   min-height: 150px;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-primary);
 }
 
 .tiptap-editor:focus {
