@@ -214,6 +214,10 @@
   color: var(--text-primary);
 }
 
+.form-input:focus {
+  outline: none;
+}
+
 .pagination-controls {
   display: flex;
   justify-content: space-between;
@@ -302,13 +306,11 @@
   display: flex;
   gap: 5px;
   padding: 8px;
-  background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-strong);
+  background-color: var(--bg-primary);
 }
 
 .tiptap-menu-bar button {
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background-color: var(--bg-secondary);
   color: var(--text-primary);
   border-radius: 3px;
   padding: 5px 10px;
@@ -316,13 +318,11 @@
 }
 
 .tiptap-menu-bar button:hover {
-  background-color: var(--bg-menu-hover);
-  color: var(--text-inverted);
+  background-color: var(--border-color);
 }
 
 .tiptap-menu-bar button.is-active {
-  background-color: var(--bg-menu-hover);
-  color: var(--text-inverted);
+  background-color: var(--border-strong);
 }
 
 .tiptap-editor {
