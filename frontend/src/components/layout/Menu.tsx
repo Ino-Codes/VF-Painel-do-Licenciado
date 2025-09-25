@@ -98,6 +98,14 @@ const Menu: React.FC = () => {
           Cursos
         </NavLink>
 
+        <NavLink
+          to="/faq"
+          className="faq-icon-link"
+          title="Perguntas Frequentes (FAQ)"
+        >
+          FAQ
+        </NavLink>
+
         {user && user.role === "admin" && (
           <div className="dropdown-menu" ref={dropdownRef}>
             <button
@@ -160,13 +168,6 @@ const Menu: React.FC = () => {
 
       <div className="menu-right">
         <ThemeToggleButton />
-        <NavLink
-          to="/faq"
-          className="faq-icon-link"
-          title="Perguntas Frequentes (FAQ)"
-        >
-          <span>?</span>
-        </NavLink>
 
         {user && (
           <NavLink to="/perfil" className="profile-info-container">
