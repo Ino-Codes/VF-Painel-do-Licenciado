@@ -356,6 +356,10 @@
   background-color: var(--bg-secondary);
 }
 
+.emoji-picker-container-modal .epr-category-label {
+  display: none;
+}
+
 /* Select Radio */
 
 input[type="radio"]:checked {

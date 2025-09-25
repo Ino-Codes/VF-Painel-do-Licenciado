@@ -134,6 +134,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
                   onEmojiClick={onEmojiClick}
                   width="100%"
                   height={350}
+                  previewConfig={{ showPreview: false }}
                 />
               </div>
             )}
