@@ -124,17 +124,20 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           <div className="tiptap-container">
             <TiptapMenuBar editor={editor} onEmojiToggle={toggleEmojiPicker} />
             <EditorContent editor={editor} />
-          </div>
 
-          {showEmojiPicker && (
-            <div ref={emojiPickerRef} className="emoji-picker-container-modal">
-              <EmojiPicker
-                onEmojiClick={onEmojiClick}
-                width="100%"
-                height={350}
-              />
-            </div>
-          )}
+            {showEmojiPicker && (
+              <div
+                ref={emojiPickerRef}
+                className="emoji-picker-container-modal"
+              >
+                <EmojiPicker
+                  onEmojiClick={onEmojiClick}
+                  width="100%"
+                  height={350}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="form-row">
@@ -152,7 +155,6 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
             <option value="internos">Apenas Internos</option>
           </select>
         </div>
-
         <div className="modal-actions">
           <button
             type="button"

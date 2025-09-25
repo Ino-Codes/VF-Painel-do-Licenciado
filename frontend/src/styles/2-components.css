@@ -297,6 +297,7 @@
 
 /*--- EDITOR TIPTAP ---*/
 .tiptap-container {
+  position: relative;
   border-radius: 5px;
   overflow: hidden;
 }
@@ -338,6 +339,20 @@
 
 .tiptap-editor p {
   margin: 0;
+}
+
+/* Seletor de emojis */
+
+.emoji-picker-container-modal {
+  position: absolute;
+  top: 45px;
+  left: 0;
+  z-index: 100;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 350px;
+  background-color: var(--bg-secondary);
 }
 
 /* Select Radio */
