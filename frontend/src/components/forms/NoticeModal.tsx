@@ -116,15 +116,15 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   };
 
   const categoryConfig = [
-    { category: "suggested", name: "" },
-    { category: "smileys_people", name: "" },
-    { category: "animals_nature", name: "" },
-    { category: "food_drink", name: "" },
-    { category: "travel_places", name: "" },
-    { category: "activities", name: "" },
-    { category: "objects", name: "" },
-    { category: "symbols", name: "" },
-    { category: "flags", name: "" },
+    { category: "suggested", name: "Sugeridos" },
+    { category: "smileys_people", name: "Expressões e Pessoas" },
+    { category: "animals_nature", name: "Animais e Natureza" },
+    { category: "food_drink", name: "Comidas e Bebidas" },
+    { category: "travel_places", name: "Viagens e Lugares" },
+    { category: "activities", name: "Atividades" },
+    { category: "objects", name: "Objetos" },
+    { category: "symbols", name: "Símbolos" },
+    { category: "flags", name: "Bandeiras" },
   ];
 
   return (
