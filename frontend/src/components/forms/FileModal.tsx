@@ -40,22 +40,10 @@ const FileModal: React.FC<FileModalProps> = ({
     }
   }, [fileToEdit]);
 
-  const [isUploading, setIsUploading] = useState(false);
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFile(e.target.files[0]);
     }
-  };
-
-  const handleUpload = async () => {
-    if (!file) {
-      toast.error("Tipo de arquivo não suportado");
-      return;
-    }
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,15 +163,6 @@ const FileModal: React.FC<FileModalProps> = ({
                   {file ? file.name : "Nenhum arquivo escolhido"}
                 </span>
               </div>
-
-              <button
-                className="form-button"
-                type="button"
-                onClick={handleUpload}
-                disabled={!file || isUploading}
-              >
-                {isUploading ? "Importando..." : "Importar Usuários"}
-              </button>
             </div>
           )}
 
