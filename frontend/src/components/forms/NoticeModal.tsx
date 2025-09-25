@@ -115,6 +115,18 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     }
   };
 
+  const categoryConfig = [
+    { category: "suggested", name: "" },
+    { category: "smileys_people", name: "" },
+    { category: "animals_nature", name: "" },
+    { category: "food_drink", name: "" },
+    { category: "travel_places", name: "" },
+    { category: "activities", name: "" },
+    { category: "objects", name: "" },
+    { category: "symbols", name: "" },
+    { category: "flags", name: "" },
+  ];
+
   return (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -135,6 +147,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
                   width="100%"
                   height={350}
                   previewConfig={{ showPreview: false }}
+                  categories={categoryConfig}
                 />
               </div>
             )}
