@@ -6,7 +6,6 @@
   margin-bottom: 25px;
   margin-top: 25px;
   border-radius: 8px;
-  border-top: 2px solid var(--border-strong);
 }
 
 .admin-form:first-of-type {
@@ -77,7 +76,6 @@
   padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
-  border: 1px solid var(--border-color);
 }
 
 .bulk-import-section h3 {
