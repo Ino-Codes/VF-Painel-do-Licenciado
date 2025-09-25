@@ -100,8 +100,8 @@ const Menu: React.FC = () => {
 
         <NavLink
           to="/faq"
-          className="faq-icon-link"
-          title="Perguntas Frequentes (FAQ)"
+          className="menu-item"
+          onClick={() => setIsMenuOpen(false)}
         >
           FAQ
         </NavLink>
