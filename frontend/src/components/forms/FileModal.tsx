@@ -41,8 +41,17 @@ const FileModal: React.FC<FileModalProps> = ({
   }, [fileToEdit]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // Limite de 10 MB
+
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        toast.error("O arquivo é muito grande. O limite máximo é de 10 MB.");
+        e.target.value = "";
+        setFile(null);
+      } else {
+        setFile(selectedFile);
+      }
     }
   };
 
