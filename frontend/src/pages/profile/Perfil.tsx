@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import InputMask from "react-input-mask";
 import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
@@ -153,6 +154,8 @@ const Perfil: React.FC = () => {
 
     const payload = { ...user };
 
+    const telefoneLimpo = editForm.telefone.replace(/\D/g, "");
+
     if (user.role === "licenciado") {
       payload.nome = nomeAtualizado;
     } else {
@@ -160,7 +163,7 @@ const Perfil: React.FC = () => {
       payload.cargo = editForm.cargo;
       payload.setor = editForm.setor;
       payload.unidade = editForm.unidade;
-      payload.telefone = editForm.telefone;
+      payload.telefone = telefoneLimpo;
     }
 
     try {
@@ -422,15 +425,21 @@ const Perfil: React.FC = () => {
 
                     <div className="form-row">
                       <label>Telefone:</label>
-                      <input
-                        type="tel"
-                        pattern="[0-9]{2}-[0-9]{5}-[0-9]{4}"
-                        className="form-input"
+                      <InputMask
+                        mask="(99) 99999-9999"
                         value={editForm.telefone}
                         onChange={(e) =>
                           setEditForm({ ...editForm, telefone: e.target.value })
                         }
-                      />
+                      >
+                        {(inputProps: any) => (
+                          <input
+                            {...inputProps}
+                            type="tel"
+                            className="form-input"
+                          />
+                        )}
+                      </InputMask>
                     </div>
 
                     <div className="form-actions">
