@@ -46,30 +46,24 @@ const Menu: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [isFileDropdownOpen, setFileDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const adminDropdownRef = useRef<HTMLDivElement>(null);
+  const fileDropdownRef = useRef<HTMLDivElement>(null);
 
   const firstName = user?.nome?.split(" ")[0] || "";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        adminDropdownRef.current &&
+        !adminDropdownRef.current.contains(event.target as Node)
       ) {
         setAdminDropdownOpen(false);
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [dropdownRef]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        fileDropdownRef.current &&
+        !fileDropdownRef.current.contains(event.target as Node)
       ) {
         setFileDropdownOpen(false);
       }
@@ -78,7 +72,7 @@ const Menu: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [dropdownRef]);
+  }, []);
 
   if (!user) {
     return <LoadingSpinner />;
@@ -106,7 +100,7 @@ const Menu: React.FC = () => {
           Dashboard
         </NavLink>
 
-        <div className="dropdown-menu" ref={dropdownRef}>
+        <div className="dropdown-menu" ref={fileDropdownRef}>
           <button
             className="menu-item dropdown-trigger"
             onClick={() => setFileDropdownOpen(!isFileDropdownOpen)}
@@ -121,18 +115,18 @@ const Menu: React.FC = () => {
                 className="menu-item"
                 onClick={() => {
                   setIsMenuOpen(false);
-                  setAdminDropdownOpen(false);
+                  setFileDropdownOpen(false);
                 }}
               >
                 Documentos
               </NavLink>
 
               <NavLink
-                to="videos"
+                to="/videos"
                 className="menu-item"
                 onClick={() => {
                   setIsMenuOpen(false);
-                  setAdminDropdownOpen(false);
+                  setFileDropdownOpen(false);
                 }}
               >
                 Vídeos
@@ -158,7 +152,7 @@ const Menu: React.FC = () => {
         </NavLink>
 
         {user && user.role === "admin" && (
-          <div className="dropdown-menu" ref={dropdownRef}>
+          <div className="dropdown-menu" ref={adminDropdownRef}>
             <button
               className="menu-item dropdown-trigger"
               onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
