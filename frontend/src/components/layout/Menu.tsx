@@ -45,6 +45,7 @@ const Menu: React.FC = () => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const [isFileDropdownOpen, setFileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const firstName = user?.nome?.split(" ")[0] || "";
@@ -56,6 +57,21 @@ const Menu: React.FC = () => {
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setAdminDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setFileDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -93,25 +109,31 @@ const Menu: React.FC = () => {
         <div className="dropdown-menu" ref={dropdownRef}>
           <button
             className="menu-item dropdown-trigger"
-            onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
+            onClick={() => setFileDropdownOpen(!isFileDropdownOpen)}
           >
             <FileIcon />
             Arquivos
           </button>
-          {isAdminDropdownOpen && (
+          {isFileDropdownOpen && (
             <div className="dropdown-content">
               <NavLink
                 to="/documentos"
                 className="menu-item"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  setAdminDropdownOpen(false);
+                }}
               >
                 Documentos
               </NavLink>
 
               <NavLink
-                to="/videos"
+                to="videos"
                 className="menu-item"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  setAdminDropdownOpen(false);
+                }}
               >
                 Vídeos
               </NavLink>
