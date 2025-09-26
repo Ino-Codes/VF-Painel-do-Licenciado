@@ -111,36 +111,48 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
               alt="Pré-visualização do Avatar"
             />
           </div>
-          <div className="avatar-actions">
-            <label className="form-button">
-              Escolher Arquivo
+          <div
+            className="form-row"
+            style={{ justifyContent: "center", margin: "20px 0" }}
+          >
+            <div className="file-upload-wrapper">
               <input
                 type="file"
                 accept="image/*"
+                id="file-upload"
+                className="file-upload-input"
                 onChange={handleFileChange}
-                style={{ display: "none" }}
               />
-            </label>
+              <label htmlFor="file-upload" className="file-upload-label">
+                Escolher Arquivo
+              </label>
+              <span className="file-upload-filename">
+                {selectedFile ? selectedFile.name : "Nenhum arquivo escolhido"}
+              </span>
+            </div>
+          </div>
+
+          <div className="modal-actions">
+            <button onClick={onClose} className="list-button">
+              Cancelar
+            </button>
+
+            {user.avatar_url && (
+              <button
+                onClick={() => setIsConfirmOpen(true)}
+                className="delete-button"
+                disabled={isUploading}
+              >
+                Remover Foto Atual
+              </button>
+            )}
+
             <button
               onClick={handleUpload}
               className="form-button"
               disabled={!selectedFile || isUploading}
             >
-              {isUploading ? "A Enviar..." : "Salvar Nova Foto"}
-            </button>
-          </div>
-          {user.avatar_url && (
-            <button
-              onClick={() => setIsConfirmOpen(true)}
-              className="delete-button"
-              disabled={isUploading}
-            >
-              Remover Foto Atual
-            </button>
-          )}
-          <div className="modal-actions">
-            <button onClick={onClose} className="form-button-cancel">
-              Fechar
+              {isUploading ? "Salvando..." : "Salvar"}
             </button>
           </div>
         </div>
