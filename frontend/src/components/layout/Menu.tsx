@@ -151,68 +151,68 @@ const Menu: React.FC = () => {
           FAQ
         </NavLink>
 
+        {user && user.role !== "licenciado" && (
+          <NavLink to="/empresa" className="menu-item">
+            Empresa
+          </NavLink>
+        )}
+
         {user && user.role === "admin" && (
-          <div>
-            <NavLink to="/empresa" className="menu-item">
-              Empresa
-            </NavLink>
+          <div className="dropdown-menu" ref={adminDropdownRef}>
+            <button
+              className="menu-item dropdown-trigger"
+              onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
+            >
+              <LockIcon />
+              Administração
+            </button>
+            {isAdminDropdownOpen && (
+              <div className="dropdown-content">
+                <NavLink
+                  to="/admin/users"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Usuários
+                </NavLink>
 
-            <div className="dropdown-menu" ref={adminDropdownRef}>
-              <button
-                className="menu-item dropdown-trigger"
-                onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
-              >
-                <LockIcon />
-                Administração
-              </button>
-              {isAdminDropdownOpen && (
-                <div className="dropdown-content">
-                  <NavLink
-                    to="/admin/users"
-                    className="menu-item"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setAdminDropdownOpen(false);
-                    }}
-                  >
-                    Usuários
-                  </NavLink>
+                <NavLink
+                  to="/admin/courses"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Cursos
+                </NavLink>
 
-                  <NavLink
-                    to="/admin/courses"
-                    className="menu-item"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setAdminDropdownOpen(false);
-                    }}
-                  >
-                    Cursos
-                  </NavLink>
+                <NavLink
+                  to="/admin/calendar"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Agenda
+                </NavLink>
 
-                  <NavLink
-                    to="/admin/calendar"
-                    className="menu-item"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setAdminDropdownOpen(false);
-                    }}
-                  >
-                    Agenda
-                  </NavLink>
-
-                  <NavLink
-                    to="/admin/logs"
-                    className="menu-item"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setAdminDropdownOpen(false);
-                    }}
-                  >
-                    Logs
-                  </NavLink>
-                </div>
-              )}
-            </div>
+                <NavLink
+                  to="/admin/logs"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Logs
+                </NavLink>
+              </div>
+            )}
           </div>
         )}
       </div>
