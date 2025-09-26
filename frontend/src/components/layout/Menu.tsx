@@ -143,14 +143,6 @@ const Menu: React.FC = () => {
           Cursos
         </NavLink>
 
-        <NavLink
-          to="/faq"
-          className="menu-item"
-          onClick={() => setIsMenuOpen(false)}
-        >
-          FAQ
-        </NavLink>
-
         {user && user.role !== "licenciado" && (
           <NavLink to="/empresa" className="menu-item">
             Empresa
@@ -216,6 +208,14 @@ const Menu: React.FC = () => {
           </div>
         )}
       </div>
+
+      <NavLink
+        to="/faq"
+        className="menu-item"
+        onClick={() => setIsMenuOpen(false)}
+      >
+        FAQ
+      </NavLink>
 
       <div className="menu-right">
         <ThemeToggleButton />

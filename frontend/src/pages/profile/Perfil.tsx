@@ -26,6 +26,7 @@ interface User {
   cargo?: string;
   setor?: string;
   unidade?: string;
+  telefone?: string;
 }
 
 const Unidades = ["Matriz", "Filial SC", "Filial SP"];
@@ -72,6 +73,7 @@ const Perfil: React.FC = () => {
     cargo: "",
     setor: "",
     unidade: "",
+    telefone: "",
   });
 
   useEffect(() => {
@@ -81,6 +83,7 @@ const Perfil: React.FC = () => {
         cargo: user.cargo || "",
         setor: user.setor || "",
         unidade: user.unidade || "",
+        telefone: user.telefone || "",
       });
     }
   }, [user, loading]);
@@ -157,6 +160,7 @@ const Perfil: React.FC = () => {
       payload.cargo = editForm.cargo;
       payload.setor = editForm.setor;
       payload.unidade = editForm.unidade;
+      payload.telefone = editForm.telefone;
     }
 
     try {
@@ -344,6 +348,10 @@ const Perfil: React.FC = () => {
                       <span>Unidade</span>
                       <p>{user.unidade || "Não informado"}</p>
                     </div>
+                    <div className="info-item">
+                      <span>Telefone</span>
+                      <p>{user.telefone || "Não informado"}</p>
+                    </div>
                   </div>
                 )}
 
@@ -411,6 +419,18 @@ const Perfil: React.FC = () => {
                         </select>
                       </div>
                     )}
+
+                    <div className="form-row">
+                      <label>Telefone:</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editForm.telefone}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, telefone: e.target.value })
+                        }
+                      />
+                    </div>
 
                     <div className="form-actions">
                       <button
