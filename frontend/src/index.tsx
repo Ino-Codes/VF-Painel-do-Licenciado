@@ -23,7 +23,7 @@ import NotFoundPage from "./pages/public/NotFoundPage.tsx";
 import AdminCalendar from "./pages/admin/AdminCalendar.tsx";
 import EnneagramPage from "./pages/profile/EnneagramPage.tsx";
 import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
-import Empresa from "./pages/empresa/Empresa.tsx";
+import Empresa from "./pages/company/Empresa.tsx";
 
 import "./styles/1-global.css";
 import "./styles/2-components.css";
