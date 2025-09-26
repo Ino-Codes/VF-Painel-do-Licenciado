@@ -73,6 +73,7 @@ const AppRouter: React.FC = () => {
             path="/perfil/enneagram-results"
             element={<EnneagramResultsPage />}
           />
+          <Route path="/empresa" element={<Empresa />} />
           {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
