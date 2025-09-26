@@ -22,7 +22,7 @@ const LockIcon = () => (
   </svg>
 );
 
-const DocIcon = () => (
+const FileIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="16"
@@ -95,8 +95,8 @@ const Menu: React.FC = () => {
             className="menu-item dropdown-trigger"
             onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
           >
-            <DocIcon />
-            Documentos
+            <FileIcon />
+            Arquivos
           </button>
           {isAdminDropdownOpen && (
             <div className="dropdown-content">
