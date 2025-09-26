@@ -49,6 +49,23 @@ const EditIcon = () => (
   </svg>
 );
 
+const formatarTelefone = (telefone?: string | null): string => {
+  if (!telefone) {
+    return "Não informado";
+  }
+
+  const digitos = telefone.replace(/\D/g, "");
+
+  if (digitos.length !== 11) {
+    return telefone;
+  }
+
+  return `(${digitos.substring(0, 2)}) ${digitos.substring(
+    2,
+    7
+  )}-${digitos.substring(7)}`;
+};
+
 const Perfil: React.FC = () => {
   const { user, login, logout, loading } = useAuth();
   const navigate = useNavigate();
@@ -353,7 +370,7 @@ const Perfil: React.FC = () => {
                     </div>
                     <div className="info-item">
                       <span>Telefone</span>
-                      <p>{user.telefone || "Não informado"}</p>
+                      <p>{formatarTelefone(user.telefone)}</p>
                     </div>
                   </div>
                 )}
