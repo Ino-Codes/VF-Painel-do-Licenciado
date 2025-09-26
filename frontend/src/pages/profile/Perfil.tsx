@@ -25,7 +25,10 @@ interface User {
   avatar_url?: string;
   cargo?: string;
   setor?: string;
+  unidade?: string;
 }
+
+const Unidades = ["Matriz", "Filial SC", "Filial SP"];
 
 const EditIcon = () => (
   <svg
@@ -68,6 +71,7 @@ const Perfil: React.FC = () => {
     nome: "",
     cargo: "",
     setor: "",
+    unidade: "",
   });
 
   useEffect(() => {
@@ -76,6 +80,7 @@ const Perfil: React.FC = () => {
         nome: user.nome || "",
         cargo: user.cargo || "",
         setor: user.setor || "",
+        unidade: user.unidade || "",
       });
     }
   }, [user, loading]);
@@ -151,6 +156,7 @@ const Perfil: React.FC = () => {
       payload.nome = nomeAtualizado;
       payload.cargo = editForm.cargo;
       payload.setor = editForm.setor;
+      payload.unidade = editForm.unidade;
     }
 
     try {
@@ -334,6 +340,10 @@ const Perfil: React.FC = () => {
                       <span>Setor</span>
                       <p>{user.setor || "Não informado"}</p>
                     </div>
+                    <div className="info-item">
+                      <span>Unidade</span>
+                      <p>{user.unidade || "Não informado"}</p>
+                    </div>
                   </div>
                 )}
 
@@ -375,6 +385,30 @@ const Perfil: React.FC = () => {
                             setEditForm({ ...editForm, setor: e.target.value })
                           }
                         />
+                      </div>
+                    )}
+                    {user.role === "admin" && (
+                      <div className="form-row">
+                        <label>Unidade:</label>
+                        <select
+                          className="form-select"
+                          value={editForm.unidade}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              unidade: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="" disabled>
+                            Selecione a Unidade
+                          </option>
+                          {Unidades.map((unidade) => (
+                            <option key={unidade} value={unidade}>
+                              {unidade}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     )}
 

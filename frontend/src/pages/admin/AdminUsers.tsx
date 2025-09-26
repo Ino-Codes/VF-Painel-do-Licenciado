@@ -15,7 +15,10 @@ interface User {
   birth_date?: string | null;
   cargo?: string;
   setor?: string;
+  unidade?: string;
 }
+
+const Unidades = ["Matriz", "Filial SC", "Filial SP"];
 
 const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
   onImportSuccess,
@@ -116,6 +119,7 @@ const AdminUsers: React.FC = () => {
     birth_date: "",
     cargo: "",
     setor: "",
+    unidade: "",
   });
 
   const [users, setUsers] = useState<User[]>([]);
@@ -189,6 +193,7 @@ const AdminUsers: React.FC = () => {
           birth_date: "",
           cargo: "",
           setor: "",
+          unidade: "",
           role: formType === "licenciado" ? "licenciado" : "colaborador",
         });
       }
@@ -295,6 +300,7 @@ const AdminUsers: React.FC = () => {
                   }
                   required
                 />
+
                 <input
                   className="form-input"
                   placeholder="Setor"
@@ -305,6 +311,24 @@ const AdminUsers: React.FC = () => {
                   required
                 />
               </div>
+
+              <select
+                className="form-select"
+                value={editingUser.unidade || ""}
+                onChange={(e) =>
+                  setEditingUser({ ...editingUser, unidade: e.target.value })
+                }
+                required
+              >
+                <option value="" disabled>
+                  Selecione a Unidade
+                </option>
+                {Unidades.map((unidade) => (
+                  <option key={unidade} value={unidade}>
+                    {unidade}
+                  </option>
+                ))}
+              </select>
 
               <div className="form-row">
                 <label style={{ fontWeight: 500 }} className="label-birth-day">
@@ -385,6 +409,7 @@ const AdminUsers: React.FC = () => {
                 onChange={(e) => setForm({ ...form, cargo: e.target.value })}
                 required
               />
+
               <input
                 className="form-input"
                 placeholder="Setor"
@@ -392,6 +417,22 @@ const AdminUsers: React.FC = () => {
                 onChange={(e) => setForm({ ...form, setor: e.target.value })}
                 required
               />
+
+              <select
+                className="form-select"
+                value={form.unidade}
+                onChange={(e) => setForm({ ...form, unidade: e.target.value })}
+                required
+              >
+                <option value="" disabled>
+                  Selecione a Unidade
+                </option>
+                {Unidades.map((unidade) => (
+                  <option key={unidade} value={unidade}>
+                    {unidade}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-row">
               <select
@@ -475,7 +516,7 @@ const AdminUsers: React.FC = () => {
               <div className="user-info">
                 <strong>{u.nome}</strong>
                 <span>
-                  {u.email} ({u.role})
+                  {u.email} ({u.role}) {u.unidade && `- ${u.unidade}`}
                 </span>
               </div>
               <div className="user-actions">
