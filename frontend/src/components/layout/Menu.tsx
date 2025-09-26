@@ -207,15 +207,15 @@ const Menu: React.FC = () => {
             )}
           </div>
         )}
-      </div>
 
-      <NavLink
-        to="/faq"
-        className="menu-item"
-        onClick={() => setIsMenuOpen(false)}
-      >
-        FAQ
-      </NavLink>
+        <NavLink
+          to="/faq"
+          className="menu-item"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          FAQ
+        </NavLink>
+      </div>
 
       <div className="menu-right">
         <ThemeToggleButton />

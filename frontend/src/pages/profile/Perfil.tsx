@@ -423,7 +423,8 @@ const Perfil: React.FC = () => {
                     <div className="form-row">
                       <label>Telefone:</label>
                       <input
-                        type="text"
+                        type="tel"
+                        pattern="[0-9]{2}-[0-9]{5}-[0-9]{4}"
                         className="form-input"
                         value={editForm.telefone}
                         onChange={(e) =>
