@@ -23,7 +23,7 @@
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.5.2",
-    "react-input-mask": "^2.0.4",
+    "react-imask": "^7.6.1",
     "react-router-dom": "^7.7.1",
     "react-scripts": "^5.0.1",
     "react-select": "^5.10.2",
@@ -55,7 +55,6 @@
     ]
   },
   "devDependencies": {
-    "@types/react": "^19.1.9",
-    "@types/react-input-mask": "^3.0.6"
+    "@types/react": "^19.1.9"
   }
 }

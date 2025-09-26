@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import InputMask from "react-input-mask";
+import { IMaskInput } from "react-imask";
 import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
@@ -425,21 +425,16 @@ const Perfil: React.FC = () => {
 
                     <div className="form-row">
                       <label>Telefone:</label>
-                      <InputMask
-                        mask="(99) 99999-9999"
+                      <IMaskInput
+                        mask="(00) 00000-0000"
                         value={editForm.telefone}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, telefone: e.target.value })
+                        onAccept={(value: any) =>
+                          setEditForm({ ...editForm, telefone: value })
                         }
-                      >
-                        {(inputProps: any) => (
-                          <input
-                            {...inputProps}
-                            type="tel"
-                            className="form-input"
-                          />
-                        )}
-                      </InputMask>
+                        type="tel"
+                        className="form-input"
+                        placeholder="(00) 00000-0000"
+                      />
                     </div>
 
                     <div className="form-actions">
