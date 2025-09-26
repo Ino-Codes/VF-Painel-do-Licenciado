@@ -10,6 +10,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   const checkLoggedIn = isLoggedIn(pool);
 
   // --- Rotas de Admin (Listar, Criar, Editar) ---
+
   router.get("/admin", async (req, res) => {
     const { search, page = 1, limit = 10 } = req.query;
     try {
@@ -22,7 +23,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       }
       const countSql = `SELECT COUNT(*) FROM users ${whereClause}`;
 
-      const usersSql = `SELECT id, nome, email, role, avatar_url, birth_date, cargo, setor, unidade FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
+      const usersSql = `SELECT id, nome, email, role, avatar_url, birth_date, cargo, setor, unidade, telefone FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
         params.length + 1
       } OFFSET $${params.length + 2}`;
 
@@ -42,10 +43,35 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // Substitua a sua rota POST /admin por esta
+  router.get("/internal", checkLoggedIn, async (req, res) => {
+    try {
+      const internalUsersSql = `
+      SELECT id, nome, email, role, avatar_url, cargo, setor, unidade, telefone 
+      FROM users 
+      WHERE role IN ('admin', 'colaborador') 
+      ORDER BY nome ASC
+    `;
+
+      const result = await pool.query(internalUsersSql);
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Erro ao buscar usuários internos:", err);
+      res.status(500).json({ error: "Erro ao buscar usuários internos" });
+    }
+  });
+
   router.post("/admin", checkLoggedIn, checkAdmin, async (req, res) => {
-    const { nome, email, password, role, birth_date, cargo, setor, unidade } =
-      req.body;
+    const {
+      nome,
+      email,
+      password,
+      role,
+      birth_date,
+      cargo,
+      setor,
+      unidade,
+      telefone,
+    } = req.body;
     const client = await pool.connect();
 
     try {
@@ -63,7 +89,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const hash = await bcrypt.hash(password, 10);
 
       const userResult = await client.query(
-        "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+        "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
         [
           nome,
           email,
@@ -73,6 +99,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           cargo || null,
           setor || null,
           unidade || null,
+          telefone || null,
         ]
       );
       const newUserId = userResult.rows[0].id;
@@ -158,7 +185,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   router.put("/admin/:id", async (req, res) => {
     const { id } = req.params;
-    const { nome, email, role, birth_date, cargo, setor, unidade } = req.body;
+    const { nome, email, role, birth_date, cargo, setor, unidade, telefone } =
+      req.body;
     const client = await pool.connect();
 
     try {
@@ -166,21 +194,28 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         (role === "admin" || role === "colaborador") &&
         (!unidade || !unidade.trim())
       ) {
-        return res
-          .status(400)
-          .json({
-            error: "O campo Unidade é obrigatório para Admins e Colaboradores.",
-          });
+        return res.status(400).json({
+          error: "O campo Unidade é obrigatório para Admins e Colaboradores.",
+        });
       }
 
       await client.query("BEGIN");
 
       const finalBirthDate = role === "colaborador" ? birth_date : null;
 
-      // 3. Adicione 'unidade' à query UPDATE
       const userResult = await client.query(
-        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7 WHERE id = $8 RETURNING *",
-        [nome, email, role, finalBirthDate, cargo, setor, unidade || null, id]
+        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8 WHERE id = $9 RETURNING *",
+        [
+          nome,
+          email,
+          role,
+          finalBirthDate,
+          cargo,
+          setor,
+          unidade || null,
+          telefone,
+          id,
+        ]
       );
 
       if (userResult.rowCount === 0) {
