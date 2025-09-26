@@ -106,7 +106,8 @@ const createTables = async () => {
       role TEXT NOT NULL, nome TEXT, avatar_url TEXT,
       reset_token TEXT, reset_token_expires TIMESTAMPTZ,
       birth_date DATE, cargo TEXT, setor TEXT,
-      must_change_password BOOLEAN DEFAULT TRUE
+      must_change_password BOOLEAN DEFAULT TRUE,
+      unidade TEXT
     );`;
 
   const noticeTable = `
