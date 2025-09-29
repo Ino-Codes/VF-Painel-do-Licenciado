@@ -6,6 +6,7 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
+import CorporatePhotoUploader from "./CorporatePhotoUploader.tsx";
 
 interface User {
   id: number;
@@ -366,6 +367,12 @@ const AdminUsers: React.FC = () => {
               Cancelar Edição
             </button>
           </div>
+
+          <hr style={{ margin: "2rem 0" }} />
+          <CorporatePhotoUploader
+            userId={editingUser.id}
+            onUploadSuccess={fetchUsers}
+          />
         </form>
       );
     }

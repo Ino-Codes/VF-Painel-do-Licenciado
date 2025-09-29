@@ -46,7 +46,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.get("/internal", checkLoggedIn, async (req, res) => {
     try {
       const internalUsersSql = `
-      SELECT id, nome, email, role, avatar_url, cargo, setor, unidade, telefone 
+      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone 
       FROM users 
       WHERE role IN ('admin', 'colaborador') 
       ORDER BY nome ASC
@@ -428,6 +428,69 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       res.status(500).json({ error: "Erro no servidor durante o upload." });
     }
   });
+
+  // backend/routes/users.js
+
+  // ROTA PARA ADMIN FAZER UPLOAD DA FOTO CORPORATIVA
+  router.put(
+    "/admin/:id/corporate-photo",
+    upload.single("corporate_photo"),
+    async (req, res) => {
+      const { id } = req.params;
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      }
+
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+
+        const userResult = await client.query(
+          "SELECT corporate_photo_url FROM users WHERE id = $1",
+          [id]
+        );
+        const oldPhotoUrl = userResult.rows[0]?.corporate_photo_url;
+
+        // Se já existir uma foto, apaga a antiga do Cloudinary
+        if (oldPhotoUrl) {
+          const publicId = oldPhotoUrl.split("/").pop().split(".")[0];
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "image",
+          });
+        }
+
+        // Faz o upload da nova foto
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: "image" }, (error, result) => {
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+
+        const newPhotoUrl = uploadResult.secure_url;
+
+        // Atualiza o URL no banco de dados
+        const updateResult = await client.query(
+          "UPDATE users SET corporate_photo_url = $1 WHERE id = $2 RETURNING corporate_photo_url",
+          [newPhotoUrl, id]
+        );
+
+        await client.query("COMMIT");
+        res.json({
+          success: true,
+          corporatePhotoUrl: updateResult.rows[0].corporate_photo_url,
+        });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Erro no upload de foto corporativa:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
+      } finally {
+        client.release();
+      }
+    }
+  );
 
   router.put("/:id/profile", async (req, res) => {
     const { id } = req.params;
