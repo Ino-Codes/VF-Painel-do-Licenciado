@@ -1,6 +1,6 @@
 // frontend/src/pages/admin/CorporatePhotoUploader.tsx
 import React, { useState } from "react";
-import api from "../../api";
+import api from "../../api.ts";
 import toast from "react-hot-toast";
 
 interface Props {
