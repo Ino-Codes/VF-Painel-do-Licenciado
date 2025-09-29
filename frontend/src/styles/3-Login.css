@@ -88,7 +88,7 @@
 }
 
 .login-error-message {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-result-red);
   border: 1px solid var(--action-danger);
   color: var(--action-danger);
   padding: 12px;

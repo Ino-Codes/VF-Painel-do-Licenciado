@@ -34,6 +34,11 @@ const upload = multer({
   },
 });
 
+const corsOptions = {
+  origin: "https://painel.valorfiscal.com",
+  optionsSuccessStatus: 200,
+};
+
 // --- MIDDLEWARES ---
 
 app.use(
