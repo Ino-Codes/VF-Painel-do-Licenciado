@@ -25,9 +25,8 @@ const UserCard: React.FC<{ user: User }> = ({ user }) => {
       <div className="corp-user-card-info">
         <h3 className="corp-user-card-name">{user.nome}</h3>
         <p className="corp-user-card-title">{title}</p>
-        <div className="corp-user-card-logo">
-          <LogosTheme imageKey="minilogo" />
-        </div>
+
+        <LogosTheme imageKey="minilogo" />
       </div>
     </div>
   );

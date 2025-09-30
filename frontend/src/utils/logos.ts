@@ -6,8 +6,8 @@ import MiniLogoDark from "../assets/images/dark_minilogo.svg";
 
 const themeableLogos = {
   minilogo: {
-    light: MiniLogoLight,
-    dark: MiniLogoDark,
+    light: MiniLogoDark,
+    dark: MiniLogoLight,
   },
 };
 
