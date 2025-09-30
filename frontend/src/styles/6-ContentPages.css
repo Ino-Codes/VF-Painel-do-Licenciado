@@ -8,27 +8,17 @@
 
 .corp-user-card {
   /* background-color: #212529; Cor de fundo escura do exemplo */
-  background: linear-gradient(180deg, #dfad2d 10%, #dfad2d 20%, #0000 65%);
+  background: linear-gradient(
+    180deg,
+    #dfad2d 10%,
+    #dfad2d 20%,
+    var(--bg-primary) 60%
+  );
   border-radius: 16px;
   overflow: hidden;
   position: relative;
   color: #fff;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-}
-
-.corp-user-card-accent {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 60px;
-  height: 60px;
-  background-color: #f0b90b; /* Cor dourada do exemplo */
-  clip-path: polygon(100% 0, 0 0, 100% 100%);
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding: 8px;
-  color: #1a1a1a;
 }
 
 .corp-user-card-photo img {
