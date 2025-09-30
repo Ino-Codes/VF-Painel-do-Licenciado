@@ -24,32 +24,12 @@
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Adicione esta nova regra ao seu CSS */
-.corp-user-card-photo {
-  width: 150px; /* Largura do círculo */
-  height: 150px; /* Altura do círculo */
-  border-radius: 50%;
-  overflow: hidden;
-  margin-top: 30px; /* Espaçamento do topo */
-  border: 4px solid #fff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0; /* Previne que a imagem encolha */
-}
-
-/* Encontre e substitua esta regra */
 .corp-user-card-photo img {
-  width: 100%; /* Mude de 'auto' para '100%' */
-  height: 100%; /* Garante que a altura também preencha o container */
-  object-fit: cover;
-  display: block;
-}
-
-/* .corp-user-card-photo img {
   width: auto;
   height: 300px;
   object-fit: cover;
   display: block;
-} */
+}
 
 .corp-user-card-info {
   padding: 20px;
