@@ -26,10 +26,9 @@ const UserCard: React.FC<{ user: User }> = ({ user }) => {
         <p className="corp-user-card-title">{title}</p>
         <div className="corp-user-card-logo">
           <img
-            src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759170273/mini-logo_nocnod.svg"
+            src="https://painel.valorfiscal.com/static/media/logo-clara.0b00333403580519486a.png"
             alt="Valor Fiscal"
           />
-          <span>Valor Fiscal</span>
         </div>
       </div>
     </div>

@@ -34,6 +34,9 @@
 .corp-user-card-info {
   padding: 20px;
   background-color: var(--bg-secondary);
+  display: block;
+  width: 100%;
+  text-align: center;
 }
 
 .corp-user-card-name {
@@ -51,12 +54,11 @@
 .corp-user-card-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .corp-user-card-logo img {
-  width: 24px;
-  height: 24px;
+  width: 130px;
+  height: auto;
 }
 
 .corp-user-card-logo span {
