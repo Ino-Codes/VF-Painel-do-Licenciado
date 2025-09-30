@@ -13,8 +13,8 @@
 
   background: linear-gradient(
     180deg,
-    var(--accent-color) 10%,
-    var(--accent-color) 20%,
+    var(--accent-color) 0%,
+    var(--accent-color) 1%,
     var(--bg-primary) 60%
   );
   border-radius: 16px;

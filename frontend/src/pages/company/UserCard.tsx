@@ -10,7 +10,7 @@ interface User {
 
 const UserCard: React.FC<{ user: User }> = ({ user }) => {
   const defaultPhoto =
-    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-dark_oxwuux.png";
+    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1759255539/default-corporate-user_eyle7x.png";
   const title = [user.setor, user.cargo].filter(Boolean).join(" · ");
 
   return (
