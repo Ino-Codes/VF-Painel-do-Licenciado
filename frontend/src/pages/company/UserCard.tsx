@@ -15,7 +15,7 @@ const UserCard: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="corp-user-card">
-      <div className="corp-user-card-accent">
+      {/* <div className="corp-user-card-accent">
         <svg
           width="24"
           height="24"
@@ -23,7 +23,7 @@ const UserCard: React.FC<{ user: User }> = ({ user }) => {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Ícone de chevron ou logo da empresa pode ir aqui */}
+          
           <path
             d="M9 18L15 12L9 6"
             stroke="currentColor"
@@ -32,7 +32,7 @@ const UserCard: React.FC<{ user: User }> = ({ user }) => {
             strokeLinejoin="round"
           />
         </svg>
-      </div>
+      </div> */}
       <div className="corp-user-card-photo">
         <img
           src={user.corporate_photo_url || defaultPhoto}

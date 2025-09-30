@@ -8,12 +8,7 @@
 
 .corp-user-card {
   /* background-color: #212529; Cor de fundo escura do exemplo */
-  background: linear-gradient(
-    180deg,
-    rgba(223, 173, 45, 1) 20%,
-    rgba(223, 173, 45, 1) 30%,
-    rgba(0, 0, 0, 0) 100%
-  );
+  background: linear-gradient(180deg, #dfad2d 10%, #dfad2d 20%, #0000 65%);
   border-radius: 16px;
   overflow: hidden;
   position: relative;
