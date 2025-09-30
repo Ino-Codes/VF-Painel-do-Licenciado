@@ -1,5 +1,6 @@
 // frontend/src/pages/Empresa/UserCard.tsx
 import React from "react";
+import LogosTheme from "../../components/ui/LogosTheme.tsx";
 
 interface User {
   corporate_photo_url?: string; // Usaremos esta foto
@@ -25,10 +26,7 @@ const UserCard: React.FC<{ user: User }> = ({ user }) => {
         <h3 className="corp-user-card-name">{user.nome}</h3>
         <p className="corp-user-card-title">{title}</p>
         <div className="corp-user-card-logo">
-          <img
-            src="https://painel.valorfiscal.com/static/media/logo-clara.0b00333403580519486a.png"
-            alt="Valor Fiscal"
-          />
+          <LogosTheme imageKey="minilogo" />
         </div>
       </div>
     </div>
