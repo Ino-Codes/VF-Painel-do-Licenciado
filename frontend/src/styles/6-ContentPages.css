@@ -13,14 +13,13 @@
 
   background: linear-gradient(
     180deg,
-    #dfad2d 10%,
-    #dfad2d 20%,
+    var(--accent-color) 10%,
+    var(--accent-color) 20%,
     var(--bg-primary) 60%
   );
   border-radius: 16px;
   overflow: hidden;
   position: relative;
-  color: #fff;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
@@ -59,6 +58,7 @@
 .corp-user-card-logo img {
   width: 130px;
   height: auto;
+  margin: 0 auto;
 }
 
 .corp-user-card-logo span {

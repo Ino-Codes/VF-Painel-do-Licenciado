@@ -368,7 +368,6 @@ const AdminUsers: React.FC = () => {
             </button>
           </div>
 
-          <hr style={{ margin: "2rem 0" }} />
           <CorporatePhotoUploader
             userId={editingUser.id}
             onUploadSuccess={fetchUsers}

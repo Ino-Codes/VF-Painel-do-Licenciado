@@ -41,7 +41,7 @@ const CorporatePhotoUploader: React.FC<Props> = ({
   return (
     <div className="corporate-photo-uploader">
       <h4>Foto Corporativa</h4>
-      <div className="file-upload-wrapper">
+      <div className="form-row">
         <input
           type="file"
           accept="image/*"

@@ -66,6 +66,10 @@
   gap: 10px;
 }
 
+.corporate-photo-uploader {
+  border-top: 1px solid var(--border-strong);
+}
+
 .limit-selector select {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
