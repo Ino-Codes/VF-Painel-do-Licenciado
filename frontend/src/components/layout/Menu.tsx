@@ -145,7 +145,7 @@ const Menu: React.FC = () => {
 
         {user && user.role !== "licenciado" && (
           <NavLink to="/empresa" className="menu-item">
-            Empresa
+            Quem Somos
           </NavLink>
         )}
 

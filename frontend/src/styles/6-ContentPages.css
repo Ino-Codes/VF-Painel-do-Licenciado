@@ -20,7 +20,7 @@
   border-radius: 16px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 10px -10px rgba(0, 0, 0, 0.2);
   width: 90%;
 }
 
@@ -57,7 +57,7 @@
 }
 
 .corp-user-card-logo img {
-  width: 50px;
+  width: 40px;
   height: auto;
   margin: 0 auto;
 }
