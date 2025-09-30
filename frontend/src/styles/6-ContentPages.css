@@ -21,6 +21,7 @@
   overflow: hidden;
   position: relative;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
 }
 
 .corp-user-card-photo img {
@@ -31,7 +32,7 @@
 }
 
 .corp-user-card-info {
-  padding: 20px;
+  padding: 10px;
   background-color: var(--bg-secondary);
   display: block;
   width: 100%;
