@@ -11,16 +11,18 @@ module.exports = function (pool, cloudinary, upload) {
       let whereClauses = [];
       const params = [];
 
-      if (role === "licenciado") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')"
-        );
-      } else if (role === "colaborador" || role === "admin") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'colaboradores')"
-        );
-      } else {
-        whereClauses.push("visibility = 'todos'");
+      if (role !== "admin") {
+        if (role === "licenciado") {
+          whereClauses.push(
+            "(visibility = 'todos' OR visibility = 'licenciados')"
+          );
+        } else if (role === "colaborador") {
+          whereClauses.push(
+            "(visibility = 'todos' OR visibility = 'colaboradores')"
+          );
+        } else {
+          whereClauses.push("visibility = 'todos'");
+        }
       }
 
       if (category) {
@@ -34,7 +36,8 @@ module.exports = function (pool, cloudinary, upload) {
         );
       }
 
-      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const whereString =
+        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
       const filesSql = `SELECT * FROM files ${whereString} ORDER BY folder ASC, originalname ASC`;
 
       const filesResult = await pool.query(filesSql, params);
@@ -188,15 +191,20 @@ module.exports = function (pool, cloudinary, upload) {
     const { role } = req.query;
     try {
       let whereClause = "";
-      if (role === "licenciado") {
-        whereClause =
-          "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
-      } else if (role === "colaborador" || role === "admin") {
-        whereClause =
-          "WHERE (visibility = 'todos' OR visibility = 'colaboradores')";
-      } else {
-        whereClause = "WHERE visibility = 'todos'";
+
+      // --- NOVA LÓGICA DE VISIBILIDADE PARA ADMINS ---
+      if (role !== "admin") {
+        if (role === "licenciado") {
+          whereClause =
+            "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
+        } else if (role === "colaborador") {
+          whereClause =
+            "WHERE (visibility = 'todos' OR visibility = 'colaboradores')";
+        } else {
+          whereClause = "WHERE visibility = 'todos'";
+        }
       }
+      // Se for admin, whereClause permanece "", então ele vê todas as categorias.
 
       const query = `SELECT DISTINCT category FROM files ${whereClause} ORDER BY category ASC`;
       const result = await pool.query(query);
