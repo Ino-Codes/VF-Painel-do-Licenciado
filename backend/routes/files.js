@@ -12,7 +12,15 @@ module.exports = function (pool, cloudinary, upload) {
       const params = [];
 
       if (role === "licenciado") {
-        whereClauses.push("visibility = 'public'");
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'licenciados')"
+        );
+      } else if (role === "colaborador" || role === "admin") {
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'colaboradores')"
+        );
+      } else {
+        whereClauses.push("visibility = 'todos'");
       }
 
       if (category) {
@@ -26,8 +34,7 @@ module.exports = function (pool, cloudinary, upload) {
         );
       }
 
-      const whereString =
-        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
       const filesSql = `SELECT * FROM files ${whereString} ORDER BY folder ASC, originalname ASC`;
 
       const filesResult = await pool.query(filesSql, params);
@@ -180,11 +187,18 @@ module.exports = function (pool, cloudinary, upload) {
   router.get("/categories", async (req, res) => {
     const { role } = req.query;
     try {
-      let query = "SELECT DISTINCT category FROM files";
+      let whereClause = "";
       if (role === "licenciado") {
-        query += " WHERE visibility = 'public'";
+        whereClause =
+          "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
+      } else if (role === "colaborador" || role === "admin") {
+        whereClause =
+          "WHERE (visibility = 'todos' OR visibility = 'colaboradores')";
+      } else {
+        whereClause = "WHERE visibility = 'todos'";
       }
-      query += " ORDER BY category ASC";
+
+      const query = `SELECT DISTINCT category FROM files ${whereClause} ORDER BY category ASC`;
       const result = await pool.query(query);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
