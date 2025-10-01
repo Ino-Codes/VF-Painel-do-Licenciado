@@ -155,6 +155,8 @@ const FileModal: React.FC<FileModalProps> = ({
             <label htmlFor="visibility" style={{ marginRight: "10px" }}>
               Visibilidade:
             </label>
+          </div>
+          <div className="form-row">
             <select
               id="visibility"
               value={visibility}
