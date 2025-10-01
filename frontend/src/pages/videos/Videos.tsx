@@ -14,7 +14,7 @@ interface VideoData {
   title: string;
   description: string;
   youtube_url: string;
-  visibility: "public" | "internal";
+  visibility: "todos" | "internos" | "licenciados";
   category: string;
 }
 

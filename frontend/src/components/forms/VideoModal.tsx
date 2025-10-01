@@ -7,7 +7,7 @@ interface VideoData {
   title: string;
   description: string;
   youtube_url: string;
-  visibility: "public" | "internal";
+  visibility: "todos" | "licenciados" | "colaboradores";
   category: string;
 }
 
@@ -27,7 +27,9 @@ const VideoModal: React.FC<VideoModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [youtube_url, setYoutubeUrl] = useState("");
-  const [visibility, setVisibility] = useState<"public" | "internal">("public");
+  const [visibility, setVisibility] = useState<
+    "todos" | "licenciados" | "colaboradores"
+  >("todos");
   const [category, setCategory] = useState("");
 
   useEffect(() => {
@@ -35,7 +37,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
       setTitle(videoToEdit.title);
       setDescription(videoToEdit.description);
       setYoutubeUrl(videoToEdit.youtube_url);
-      setVisibility(videoToEdit.visibility || "public");
+      setVisibility(videoToEdit.visibility || "todos");
       setCategory(videoToEdit.category || "");
     }
   }, [videoToEdit]);
@@ -116,16 +118,23 @@ const VideoModal: React.FC<VideoModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={visibility === "internal"}
-                onChange={(e) =>
-                  setVisibility(e.target.checked ? "internal" : "public")
-                }
-              />
-              Acesso privado (apenas colaboradores internos)
+            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+              Visibilidade:
             </label>
+          </div>
+          <div className="form-row">
+            <select
+              id="visibility"
+              value={visibility}
+              onChange={(e) =>
+                setVisibility(e.target.value as VideoData["visibility"])
+              }
+              className="form-select"
+            >
+              <option value="todos">Visível para Todos</option>
+              <option value="licenciados">Apenas para Licenciados</option>
+              <option value="colaboradores">Apenas para Colaboradores</option>
+            </select>
           </div>
 
           <div className="modal-actions">

@@ -10,27 +10,38 @@ module.exports = function (pool) {
       let params = [];
       let whereClauses = [];
 
-      if (role === "licenciado") {
-        whereClauses.push("visibility = 'public'");
+      if (role !== "admin") {
+        if (role === "licenciado") {
+          whereClauses.push(
+            "(visibility = 'todos' OR visibility = 'licenciados')"
+          );
+        } else if (role === "colaborador") {
+          whereClauses.push(
+            "(visibility = 'todos' OR visibility = 'colaboradores')"
+          );
+        } else {
+          whereClauses.push("visibility = 'todos'");
+        }
+
+        if (category) {
+          params.push(category);
+          whereClauses.push(`category = $${params.length}`);
+        }
+        const whereString =
+          whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+        const countSql = `SELECT COUNT(*) FROM videos ${whereString}`;
+
+        const pagedParams = [...params, limit, offset];
+        const videosSql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC LIMIT $${
+          params.length + 1
+        } OFFSET $${params.length + 2}`;
+
+        const [countResult, videosResult] = await Promise.all([
+          pool.query(countSql, params),
+          pool.query(videosSql, pagedParams),
+        ]);
       }
-      if (category) {
-        params.push(category);
-        whereClauses.push(`category = $${params.length}`);
-      }
-      const whereString =
-        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-
-      const countSql = `SELECT COUNT(*) FROM videos ${whereString}`;
-
-      const pagedParams = [...params, limit, offset];
-      const videosSql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC LIMIT $${
-        params.length + 1
-      } OFFSET $${params.length + 2}`;
-
-      const [countResult, videosResult] = await Promise.all([
-        pool.query(countSql, params),
-        pool.query(videosSql, pagedParams),
-      ]);
 
       const totalCount = parseInt(countResult.rows[0].count, 10);
 
@@ -51,8 +62,14 @@ module.exports = function (pool) {
       let sql =
         "SELECT DISTINCT category FROM videos WHERE category IS NOT NULL AND category != ''";
 
-      if (role === "licenciado") {
-        sql += " AND visibility = 'public'";
+      if (role !== "admin") {
+        if (role === "licenciado") {
+          sql += "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
+        } else if (role === "colaborador") {
+          sql = "WHERE (visibility = 'todos' OR visibility = 'colaboradores')";
+        } else {
+          sql = "WHERE visibility = 'todos'";
+        }
       }
 
       sql += " ORDER BY category ASC";
