@@ -302,7 +302,7 @@ const AdminCourseEditor: React.FC = () => {
       <Menu />
       <div className="content-area">
         <Link
-          to="/courses"
+          to="/admin/courses"
           className="btn-back-subtle"
           style={{ textDecoration: "none" }}
         >
