@@ -7,7 +7,7 @@ interface FileData {
   originalname: string;
   category: string;
   folder?: string;
-  visibility: "public" | "internal";
+  visibility: "todos" | "licenciados" | "colaboradores";
 }
 
 interface FileModalProps {
@@ -28,7 +28,9 @@ const FileModal: React.FC<FileModalProps> = ({
   const [originalname, setOriginalname] = useState("");
   const [category, setCategory] = useState("");
   const [folder, setFolder] = useState("");
-  const [visibility, setVisibility] = useState<"public" | "internal">("public");
+  const [visibility, setVisibility] = useState<
+    "todos" | "licenciados" | "colaboradores"
+  >("todos");
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -36,14 +38,20 @@ const FileModal: React.FC<FileModalProps> = ({
       setOriginalname(fileToEdit.originalname);
       setCategory(fileToEdit.category);
       setFolder(fileToEdit.folder || "");
-      setVisibility(fileToEdit.visibility || "public");
+      setVisibility(fileToEdit.visibility || "todos");
+    } else {
+      setOriginalname("");
+      setCategory("");
+      setFolder("");
+      setVisibility("todos");
+      setFile(null);
     }
   }, [fileToEdit]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // Limite de 10 MB
+      const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
       if (selectedFile.size > MAX_FILE_SIZE) {
         toast.error("O arquivo é muito grande. O limite máximo é de 10 MB.");
@@ -144,16 +152,21 @@ const FileModal: React.FC<FileModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={visibility === "internal"}
-                onChange={(e) =>
-                  setVisibility(e.target.checked ? "internal" : "public")
-                }
-              />
-              Acesso privado (apenas colaboradores internos)
+            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+              Visibilidade:
             </label>
+            <select
+              id="visibility"
+              value={visibility}
+              onChange={(e) =>
+                setVisibility(e.target.value as FileData["visibility"])
+              }
+              className="form-select"
+            >
+              <option value="todos">Visível para Todos</option>
+              <option value="licenciados">Apenas para Licenciados</option>
+              <option value="colaboradores">Apenas para Colaboradores</option>
+            </select>
           </div>
 
           {!fileToEdit && (

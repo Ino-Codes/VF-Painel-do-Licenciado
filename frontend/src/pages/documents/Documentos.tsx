@@ -15,7 +15,7 @@ interface FileData {
   filename: string;
   category: string;
   folder?: string;
-  visibility: "public" | "internal";
+  visibility: "todos" | "licenciados" | "colaboradores";
   uploaded_at: string;
 }
 
