@@ -192,7 +192,6 @@ module.exports = function (pool, cloudinary, upload) {
     try {
       let whereClause = "";
 
-      // --- NOVA LÓGICA DE VISIBILIDADE PARA ADMINS ---
       if (role !== "admin") {
         if (role === "licenciado") {
           whereClause =
@@ -204,7 +203,6 @@ module.exports = function (pool, cloudinary, upload) {
           whereClause = "WHERE visibility = 'todos'";
         }
       }
-      // Se for admin, whereClause permanece "", então ele vê todas as categorias.
 
       const query = `SELECT DISTINCT category FROM files ${whereClause} ORDER BY category ASC`;
       const result = await pool.query(query);
