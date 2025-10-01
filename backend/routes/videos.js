@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool) {
-  // --- ROTA DE BUSCA DOS VÍDEOS ATUALIZADA COM PAGINAÇÃO ---
+  // Rota de busca dos vídeos
   router.get("/", async (req, res) => {
     const { role, category, page = 1, limit = 4 } = req.query;
     try {
@@ -22,26 +22,27 @@ module.exports = function (pool) {
         } else {
           whereClauses.push("visibility = 'todos'");
         }
-
-        if (category) {
-          params.push(category);
-          whereClauses.push(`category = $${params.length}`);
-        }
-        const whereString =
-          whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-
-        const countSql = `SELECT COUNT(*) FROM videos ${whereString}`;
-
-        const pagedParams = [...params, limit, offset];
-        const videosSql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC LIMIT $${
-          params.length + 1
-        } OFFSET $${params.length + 2}`;
-
-        const [countResult, videosResult] = await Promise.all([
-          pool.query(countSql, params),
-          pool.query(videosSql, pagedParams),
-        ]);
       }
+
+      if (category) {
+        params.push(category);
+        whereClauses.push(`category = $${params.length}`);
+      }
+
+      const whereString =
+        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+      const countSql = `SELECT COUNT(*) FROM videos ${whereString}`;
+      const videosSql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC LIMIT $${
+        params.length + 1
+      } OFFSET $${params.length + 2}`;
+
+      const pagedParams = [...params, limit, offset];
+
+      const [countResult, videosResult] = await Promise.all([
+        pool.query(countSql, params),
+        pool.query(videosSql, pagedParams),
+      ]);
 
       const totalCount = parseInt(countResult.rows[0].count, 10);
 
@@ -59,22 +60,25 @@ module.exports = function (pool) {
   router.get("/categories", async (req, res) => {
     const { role } = req.query;
     try {
-      let sql =
+      let baseSql =
         "SELECT DISTINCT category FROM videos WHERE category IS NOT NULL AND category != ''";
+      let whereClause = "";
 
       if (role !== "admin") {
         if (role === "licenciado") {
-          sql += "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
+          whereClause =
+            "AND (visibility = 'todos' OR visibility = 'licenciados')";
         } else if (role === "colaborador") {
-          sql = "WHERE (visibility = 'todos' OR visibility = 'colaboradores')";
+          whereClause =
+            "AND (visibility = 'todos' OR visibility = 'colaboradores')";
         } else {
-          sql = "WHERE visibility = 'todos'";
+          whereClause = "AND visibility = 'todos'";
         }
       }
 
-      sql += " ORDER BY category ASC";
+      const finalSql = `${baseSql} ${whereClause} ORDER BY category ASC`;
 
-      const result = await pool.query(sql);
+      const result = await pool.query(finalSql);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
       console.error("Erro ao buscar categorias de vídeos:", err);
