@@ -227,8 +227,8 @@
 
 .map-svg {
   width: 100%;
-  max-width: 300px;
-  height: auto;
+  max-width: 400px;
+  height: 500px;
 }
 
 .map-svg path {
