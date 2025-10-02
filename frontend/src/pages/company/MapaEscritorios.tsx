@@ -44,7 +44,8 @@ const MapaEscritorios: React.FC<MapaProps> = ({
 
   return (
     <div className="map-container">
-      <svg className="map-svg" viewBox="190 295 125 190">
+      {/* AQUI ESTÁ A CORREÇÃO PRINCIPAL: Usar a viewBox original do SVG */}
+      <svg className="map-svg" viewBox="0 0 450 460">
         {states.map((state) => (
           <g
             key={state.id}
@@ -57,14 +58,12 @@ const MapaEscritorios: React.FC<MapaProps> = ({
           >
             <path
               d={state.path}
-              stroke="currentColor"
+              // Os estilos como fill e stroke serão controlados pelo CSS
               strokeWidth="1.0404"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <text transform={state.textTransform} fill="currentColor">
-              {state.abbr}
-            </text>
+            <text transform={state.textTransform}>{state.abbr}</text>
           </g>
         ))}
       </svg>

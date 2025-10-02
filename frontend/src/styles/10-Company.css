@@ -186,28 +186,6 @@
   margin: 40px 0 20px 0;
 }
 
-.map-svg {
-  width: 100%;
-  max-width: 250px;
-  height: auto;
-}
-
-.map-svg path {
-  fill: var(--bg-secondary);
-  stroke: var(--border-color);
-  stroke-width: 1.0404;
-  transition: fill 0.2s ease-in-out;
-}
-
-.map-svg path:hover {
-  cursor: pointer;
-  fill: var(--accent-color-hover);
-}
-
-.map-svg path:active {
-  fill: var(--accent-color);
-}
-
 .map-controls {
   text-align: center;
   margin-bottom: 40px;
@@ -239,13 +217,47 @@
   padding-top: 2rem;
 }
 
+/* frontend/src/styles/10-Empresa.css */
+
+.map-container {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0 20px 0;
+}
+
+.map-svg {
+  width: 100%;
+  max-width: 300px; /* Aumentamos um pouco para melhor visualização */
+  height: auto;
+}
+
+.map-svg path {
+  fill: var(--bg-secondary);
+  stroke: var(--border-color); /* Linha divisória com cor de borda */
+  stroke-width: 1.0404; /* Espessura correta da fonte original */
+  transition: fill 0.2s ease-in-out;
+}
+
+.map-svg path.interactive {
+  cursor: pointer;
+}
+
+.map-svg path.interactive:hover {
+  fill: var(--accent-color-hover);
+}
+
+.map-svg path.active {
+  fill: var(--accent--color);
+}
+
 .map-svg text {
   font-family: "Montserrat", sans-serif;
   font-weight: bold;
   font-size: 10px;
-  pointer-events: none; /* Garante que o clique seja no estado, não no texto */
+  pointer-events: none;
+  fill: var(--text-primary); /* Cor do texto padrão */
 }
 
 .map-svg g.active text {
-  fill: var(--bg-menu);
+  fill: var(--bg-menu); /* Cor escura para contrastar com o fundo ativo */
 }
