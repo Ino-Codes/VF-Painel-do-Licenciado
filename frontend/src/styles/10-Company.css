@@ -264,3 +264,9 @@
 .map-svg g.active text {
   fill: var(--bg-menu);
 }
+
+.map-svg g:not(.interactive) path {
+  fill: none; /* Garante que não tenham cor de fundo */
+  pointer-events: none; /* Faz com que não sejam clicáveis */
+  stroke: var(--border-strong); /* Mantém apenas a linha de fronteira */
+}
