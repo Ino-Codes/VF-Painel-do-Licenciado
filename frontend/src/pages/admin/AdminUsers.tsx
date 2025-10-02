@@ -7,7 +7,6 @@ import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import CorporatePhotoUploader from "./CorporatePhotoUploader.tsx";
-import NotFoundPage from "../public/NotFoundPage.tsx";
 
 interface User {
   id: number;
@@ -109,6 +108,13 @@ const BulkUserImport: React.FC<{ onImportSuccess: () => void }> = ({
 const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== "admin")) {
+      toast.error("Acesso restrito aos administradores.");
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
 
   const [formType, setFormType] = useState<"licenciado" | "interno">(
     "licenciado"
@@ -241,9 +247,6 @@ const AdminUsers: React.FC = () => {
 
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
-  }
-  if (!user || user.role !== "admin") {
-    return <NotFoundPage />;
   }
 
   const renderForm = () => {

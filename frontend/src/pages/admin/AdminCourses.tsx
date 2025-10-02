@@ -21,6 +21,13 @@ const AdminCourses: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!loading && (!user || user.role !== "admin")) {
+      toast.error("Acesso restrito aos administradores.");
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [form, setForm] = useState({ title: "", description: "" });
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);

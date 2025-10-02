@@ -16,16 +16,8 @@ const NotFoundPage: React.FC = () => {
         <EmptyState
           imageKey="404"
           title="Página Não Encontrada"
-          message="O endereço que você tentou acessar não existe ou foi movido. Que tal voltar para um lugar seguro?"
-        >
-          <Link
-            to="/dashboard"
-            className="form-button"
-            style={{ textDecoration: "none" }}
-          >
-            Tela Inicial
-          </Link>
-        </EmptyState>
+          message="O endereço que você tentou acessar não existe ou foi movido."
+        ></EmptyState>
       </div>
       {user && <Footer />}
     </div>

@@ -46,6 +46,13 @@ const AdminCourseEditor: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!loading && (!user || user.role !== "admin")) {
+      toast.error("Acesso restrito aos administradores.");
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
+
   const [course, setCourse] = useState<Course | null>(null);
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [modules, setModules] = useState<Module[]>([]);

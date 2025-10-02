@@ -28,6 +28,7 @@ const ActivityLogs: React.FC = () => {
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
+      toast.error("Acesso restrito aos administradores.");
       navigate("/dashboard");
     }
   }, [user, loading, navigate]);
