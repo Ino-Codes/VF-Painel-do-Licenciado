@@ -191,24 +191,6 @@
   margin-bottom: 40px;
 }
 
-.map-button {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-strong);
-  color: var(--text-primary);
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.map-button.active,
-.map-button:hover {
-  background-color: var(--accent-color);
-  border-color: var(--accent-color);
-  color: #fff;
-}
-
 .equipe-local-title {
   text-align: center;
   color: var(--text-secondary);
@@ -238,7 +220,7 @@
 
 .map-button {
   background-color: var(--bg-secondary);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 10px 20px;
   border-radius: 6px;
@@ -262,8 +244,6 @@
   padding-top: 2rem;
 }
 
-/* --- REGRAS DO MAPA CORRIGIDAS --- */
-
 .map-svg path {
   stroke-width: 1.0404;
   stroke-linecap: round;
@@ -279,13 +259,12 @@
 
 .map-svg g.interactive path {
   fill: var(--bg-secondary);
-  stroke: none;
+  stroke: var(--border-color);
   cursor: pointer;
 }
 
-/* CORREÇÃO DO HOVER E ACTIVE */
 .map-svg g.interactive:hover path {
-  fill: var(--accent-color-hover);
+  fill: var(--border-strong);
 }
 
 .map-svg g.interactive.active path {

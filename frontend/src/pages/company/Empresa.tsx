@@ -178,8 +178,10 @@ const Empresa: React.FC = () => {
           <div className="page-header">
             <h2>Nossa Equipe</h2>
             <p>
-              Selecione um estado no mapa para ver a equipe local ou veja todos
-              os colaboradores.
+              Com sede em Porto Alegre/RS e filiais em Balneário Camboriú/SC e
+              São Paulo/SP, a Valor Fiscal atua em todo o país. Selecione um
+              estado no mapa para ver a equipe local ou veja todos os
+              colaboradores.
             </p>
           </div>
 
