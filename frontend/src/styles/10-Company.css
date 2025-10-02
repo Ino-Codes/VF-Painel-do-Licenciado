@@ -241,3 +241,14 @@
   border-top: 1px solid var(--border-color);
   padding-top: 2rem;
 }
+
+.map-svg text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: bold;
+  font-size: 10px;
+  pointer-events: none; /* Garante que o clique seja no estado, não no texto */
+}
+
+.map-svg g.active text {
+  fill: var(--bg-menu);
+}
