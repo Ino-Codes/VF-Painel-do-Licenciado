@@ -34,6 +34,7 @@ import "./styles/6-ContentPages.css";
 import "./styles/7-AdminPages.css";
 import "./styles/8-Profile.css";
 import "./styles/9-Assesments.css";
+import "./styles/10-Company.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
