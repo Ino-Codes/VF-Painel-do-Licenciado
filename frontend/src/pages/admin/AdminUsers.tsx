@@ -7,6 +7,7 @@ import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import CorporatePhotoUploader from "./CorporatePhotoUploader.tsx";
+import NotFoundPage from "../public/NotFoundPage.tsx";
 
 interface User {
   id: number;
@@ -242,7 +243,7 @@ const AdminUsers: React.FC = () => {
     return <div className="tela-loading">Carregando...</div>;
   }
   if (!user || user.role !== "admin") {
-    return null;
+    return <NotFoundPage />;
   }
 
   const renderForm = () => {
