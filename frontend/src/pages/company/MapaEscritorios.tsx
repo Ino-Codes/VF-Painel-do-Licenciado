@@ -48,7 +48,7 @@ const MapaEscritorios: React.FC<MapaProps> = ({
     <div className="map-container">
       <svg
         className="map-svg"
-        viewBox="110 40 800 900"
+        viewBox="-20 30 500 400"
         preserveAspectRatio="xMidYMid meet"
       >
         {states.map((state) => (
