@@ -11,7 +11,8 @@
   --text-primary: #0a0a0a; /* Texto principal */
   --text-secondary: #6c757d; /* Texto secundário, placeholders */
   --text-green: #155724;
-  --text-inverted: #ffffff; /* Texto sobre fundos escuros (menu, botões) */
+  --text-white: #ffffff; /* Texto sobre fundos escuros (menu, botões) */
+  --text-black: #0a0a0a;
 
   --border-color: #e9ecef; /* Bordas de cards e divisórias */
   --border-strong: #ccc; /* Bordas de inputs */
@@ -55,7 +56,8 @@ body.dark-theme {
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
   --text-green: #155724;
-  --text-inverted: #ffffff;
+  --text-white: #ffffff;
+  --text-black: #0a0a0a;
 
   --border-color: #333333;
   --border-strong: #555555;
@@ -130,7 +132,7 @@ body::before {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: var(--text-inverted);
+  color: var(--text-white);
   font-weight: bold;
 }
 

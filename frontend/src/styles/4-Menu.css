@@ -17,7 +17,7 @@
 }
 
 .menu-item {
-  color: var(--text-inverted);
+  color: var(--text-white);
   font-weight: 500;
   font-size: 16px;
   padding: 8px 12px;
@@ -45,7 +45,7 @@
   padding: 8px 12px;
   font-family: "Montserrat", sans-serif;
   font-size: 16px;
-  color: var(--text-inverted);
+  color: var(--text-white);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -82,7 +82,7 @@
   width: 36px;
   height: 36px;
   background-color: var(--bg-menu-hover);
-  color: var(--text-inverted);
+  color: var(--text-white);
   border-radius: 100%;
   font-size: 20px;
   font-weight: 600;
@@ -97,7 +97,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  color: var(--text-inverted);
+  color: var(--text-white);
   padding: 8px 15px;
   border-radius: 8px;
   transition: background-color 0.3s ease;
@@ -116,7 +116,7 @@
 
 .profile-role {
   font-size: 0.8em;
-  color: var(--text-inverted);
+  color: var(--text-white);
   font-weight: 200;
 }
 
@@ -142,7 +142,7 @@
     display: block;
     background: none;
     border: none;
-    color: var(--text-inverted);
+    color: var(--text-white);
     font-size: 24px;
     cursor: pointer;
   }

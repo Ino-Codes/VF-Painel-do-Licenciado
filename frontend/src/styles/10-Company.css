@@ -157,7 +157,7 @@
 
 .map-svg g.interactive path {
   fill: var(--bg-secondary);
-  stroke: none;
+  stroke: var(--border-color);
   cursor: pointer;
 }
 
@@ -178,7 +178,7 @@
 }
 
 .map-svg g.active text {
-  fill: var(--bg-menu);
+  fill: var(--text-white);
 }
 
 .map-controls {
@@ -188,7 +188,7 @@
 
 .map-button {
   background-color: var(--bg-secondary);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 10px 20px;
   border-radius: 6px;
@@ -204,6 +204,7 @@
   color: #fff;
 }
 
+/* Estilo da seção de colaboradores */
 .equipe-local-title {
   text-align: center;
   color: var(--text-secondary);

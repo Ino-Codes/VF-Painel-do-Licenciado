@@ -12,7 +12,7 @@
   text-align: center;
   border-radius: 10px;
   padding: 20px;
-  color: var(--text-inverted);
+  color: var(--text-white);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -26,7 +26,7 @@
 }
 
 .p-1 a {
-  color: var(--text-inverted);
+  color: var(--text-white);
   text-decoration: none;
 }
 
@@ -48,7 +48,7 @@
 }
 
 .input-login {
-  color: var(--text-inverted);
+  color: var(--text-white);
   margin-bottom: 10px;
   width: 250px;
   height: 30px;
@@ -72,7 +72,7 @@
   border-radius: 100px;
   border: none;
   background-color: var(--accent-color);
-  color: var(--text-inverted);
+  color: var(--text-white);
   font-weight: bold;
   margin-top: 10px;
   cursor: pointer;

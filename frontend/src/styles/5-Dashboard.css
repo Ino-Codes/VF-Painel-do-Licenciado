@@ -256,7 +256,7 @@
 .progress-bar-foreground {
   height: 100%;
   background-color: var(--action-primary);
-  color: var(--text-inverted);
+  color: var(--text-white);
   display: flex;
   align-items: center;
   justify-content: center;

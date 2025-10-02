@@ -2,7 +2,7 @@
 .form-button {
   border: none;
   padding: 10px 20px;
-  color: var(--text-inverted);
+  color: var(--text-white);
   background-color: var(--action-primary);
   border-radius: 5px;
   cursor: pointer;
@@ -18,7 +18,7 @@
 .form-button-cancel {
   border: none;
   padding: 10px 20px;
-  color: var(--text-inverted);
+  color: var(--text-white);
   background-color: var(--action-secondary);
   border-radius: 5px;
   cursor: pointer;
@@ -34,7 +34,7 @@
 .form-button.delete {
   background-color: var(--action-danger);
   transition: opacity 0.2s;
-  color: var(--text-inverted);
+  color: var(--text-white);
 }
 
 .form-button.delete:hover {
@@ -56,7 +56,7 @@
   opacity: 0.85;
   background-color: var(--action-secondary);
   border: 1px solid var(--action-secondary);
-  color: var(--text-inverted);
+  color: var(--text-white);
 }
 
 .delete-button {
@@ -73,7 +73,7 @@
 .delete-button:hover {
   opacity: 0.85;
   background-color: var(--action-danger);
-  color: var(--text-inverted);
+  color: var(--text-white);
 }
 
 .botao-logout {
@@ -82,7 +82,7 @@
   border-radius: 100px;
   border: none;
   background-color: var(--action-danger);
-  color: var(--text-inverted);
+  color: var(--text-white);
   font-weight: bold;
   transition: opacity 0.2s;
   cursor: pointer;
@@ -382,7 +382,7 @@ input[type="radio"]:checked {
 
 .file-upload-label {
   background-color: var(--action-secondary);
-  color: var(--text-inverted);
+  color: var(--text-white);
   padding: 10px 15px;
   border-radius: 5px;
   cursor: pointer;
