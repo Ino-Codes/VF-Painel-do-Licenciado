@@ -227,14 +227,14 @@
 
 .map-svg {
   width: 100%;
-  max-width: 300px; /* Aumentamos um pouco para melhor visualização */
+  max-width: 300px;
   height: auto;
 }
 
 .map-svg path {
   fill: var(--bg-secondary);
-  stroke: var(--border-color); /* Linha divisória com cor de borda */
-  stroke-width: 1.0404; /* Espessura correta da fonte original */
+  stroke: var(--border-strong); /* Linha divisória com cor de borda visível */
+  stroke-width: 1.0404;
   transition: fill 0.2s ease-in-out;
 }
 
@@ -247,7 +247,10 @@
 }
 
 .map-svg path.active {
-  fill: var(--accent--color);
+  fill: var(--accent-color);
+  stroke: var(
+    --bg-primary
+  ); /* Stroke mais escuro no estado ativo para contraste */
 }
 
 .map-svg text {
@@ -255,9 +258,9 @@
   font-weight: bold;
   font-size: 10px;
   pointer-events: none;
-  fill: var(--text-primary); /* Cor do texto padrão */
+  fill: var(--text-primary);
 }
 
 .map-svg g.active text {
-  fill: var(--bg-menu); /* Cor escura para contrastar com o fundo ativo */
+  fill: var(--bg-menu);
 }

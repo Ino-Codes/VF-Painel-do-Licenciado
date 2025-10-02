@@ -45,7 +45,11 @@ const MapaEscritorios: React.FC<MapaProps> = ({
   return (
     <div className="map-container">
       {/* AQUI ESTÁ A CORREÇÃO PRINCIPAL: Usar a viewBox original do SVG */}
-      <svg className="map-svg" viewBox="0 0 450 460">
+      <svg
+        className="map-svg"
+        viewBox="0 0 450 460"
+        preserveAspectRatio="xMidYMid meet"
+      >
         {states.map((state) => (
           <g
             key={state.id}
