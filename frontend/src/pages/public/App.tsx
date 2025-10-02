@@ -12,12 +12,14 @@ const App: React.FC = () => {
   const [emailRecuperacao, setEmailRecuperacao] = useState("");
   const [loginError, setLoginError] = useState("");
   const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, logout } = useAuth();
   const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true); // Para acompanhar o processo de validação dos dados e dar retorno visual ao usuário
     try {
       setLoginError("");
       const res = await api.post("/api/auth/login", { email, password });
@@ -32,6 +34,8 @@ const App: React.FC = () => {
       }
     } catch (err) {
       setLoginError("Revise os dados de login e tente novamente.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,8 +114,12 @@ const App: React.FC = () => {
                 }}
                 required
               />
-              <button className="botao-login" type="submit">
-                Login
+              <button
+                className="botao-login"
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? "Logando..." : "Login"}
               </button>
               <p className="esqueceu-senha">
                 <a href="#" onClick={toggleRecuperacao}>
