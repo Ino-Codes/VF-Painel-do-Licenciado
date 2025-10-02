@@ -180,8 +180,11 @@ const Empresa: React.FC = () => {
             <p>
               Com atuação nacional, a matriz da Valor Fiscal está localizada em
               Porto Alegre/RS, e conta com filiais em Balneário Camboriú/SC e
-              São Paulo/SP. Selecione um estado no mapa para ver a equipe local
-              ou veja todos os colaboradores.
+              São Paulo/SP.
+            </p>
+            <p>
+              Selecione um estado no mapa para ver a equipe local ou veja todos
+              os colaboradores.
             </p>
           </div>
 
@@ -211,7 +214,7 @@ const Empresa: React.FC = () => {
               )}
 
               {selectedState === "todos" && (
-                <h3 className="equipe-local-titlhe">
+                <h3 className="equipe-local-title">
                   Todos os colaboradores da Valor Fiscal
                 </h3>
               )}

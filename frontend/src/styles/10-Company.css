@@ -112,28 +112,29 @@
 /* Estilos da seção "Nossa Equipe" */
 .equipe-layout {
   display: flex;
-  gap: 2rem; /* Espaçamento entre as colunas */
-  align-items: flex-start; /* Alinha os topos das colunas */
+  gap: 2rem;
+  align-items: flex-start;
 }
 
 /* Coluna da esquerda (mapa) */
 .equipe-sidebar {
-  flex: 0 0 25%; /* Define a largura da coluna em 25% */
-  max-width: 300px; /* Largura máxima para não ficar muito grande em telas largas */
-  position: sticky; /* Efeito 'flutuante' ao rolar a página */
-  top: 20px; /* Distância do topo ao 'flutuar' */
+  flex: 0 0 30%;
+  max-width: 300px;
+  position: sticky;
+  top: 20px;
+  margin-top: 1em;
 }
 
 /* Coluna da direita (cards) */
 .equipe-main-content {
-  flex-grow: 1; /* Ocupa o restante do espaço disponível */
+  flex-grow: 1;
 }
 
-/* --- ESTILOS DO MAPA (JÁ CORRIGIDOS) --- */
+/* Estilos dos mapas */
 .map-container {
   display: flex;
   justify-content: center;
-  margin: 0 0 20px 0; /* Ajuste de margem */
+  margin: 0 0 20px 0;
 }
 
 .map-svg {
@@ -207,7 +208,6 @@
   text-align: center;
   color: var(--text-secondary);
   margin-top: 0;
-  border-top: 1px solid var(--border-color);
   padding-top: 2rem;
 }
 
@@ -215,7 +215,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
-  padding: 0; /* Removido padding extra */
+  padding: 0;
 }
 
 .corp-user-card {
@@ -283,14 +283,15 @@
 /* --- AJUSTE RESPONSIVO PARA TELAS MENORES --- */
 @media (max-width: 900px) {
   .equipe-layout {
-    flex-direction: column; /* As colunas ficam uma em cima da outra */
+    flex-direction: column;
   }
 
   .equipe-sidebar {
-    position: static; /* Remove o efeito 'flutuante' */
+    position: static;
     width: 100%;
     max-width: 100%;
-    margin: 0 auto; /* Centraliza o mapa */
+    margin: 0 auto;
+    margin-top: 1em;
   }
 
   .equipe-main-content {
