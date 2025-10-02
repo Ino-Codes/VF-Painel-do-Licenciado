@@ -44,7 +44,7 @@ const MapaEscritorios: React.FC<MapaProps> = ({
 
   return (
     <div className="map-container">
-      <svg className="map-svg" viewBox="185 290 150 200">
+      <svg className="map-svg" viewBox="190 295 125 190">
         {states.map((state) => (
           <g
             key={state.id}

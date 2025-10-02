@@ -24,6 +24,7 @@
   --bg-calendar-non-bussiness: #e6e6e6;
 
   --accent-color: #daa520; /* Dourado/Amarelo para destaques */
+  --accent-color-hover: #a07812;
   --action-primary: #04a146; /* Verde para botões de sucesso */
   --action-secondary: #778088; /* Cinza para botões secundários */
   --action-danger: #c82333; /* Vermelho para botões de excluir */
@@ -65,6 +66,7 @@ body.dark-theme {
   --bg-calendar-non-bussiness: #2d2d2d;
 
   --accent-color: #dfad2d;
+  --accent-color-hover: #b78a19;
   --action-primary: #04a146;
   --action-secondary: #555;
   --action-danger: #c82333;
