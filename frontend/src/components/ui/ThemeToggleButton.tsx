@@ -46,7 +46,7 @@ const ThemeToggleButton: React.FC = () => {
 
   const buttonStyle: React.CSSProperties = {
     background: "var(--bg-menu-hover)",
-    color: "var(--text-inverted)",
+    color: "var(--text-white)",
     border: "none",
     width: "40px",
     height: "40px",
