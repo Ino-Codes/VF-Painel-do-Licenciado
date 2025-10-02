@@ -5,8 +5,9 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import UserCard from "./UserCard.tsx";
 import { useNavigate } from "react-router-dom";
+import MapaEscritorios from "./MapaEscritorios.tsx";
 
-// --- ÍCONES SVG ---
+// Ícones SVG
 const IconeMissao = () => (
   <svg
     width="48"
@@ -59,6 +60,9 @@ const Empresa: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [internalUsers, setInternalUsers] = useState<any[]>([]);
+  const [selectedState, setSelectedState] = useState<
+    "rs" | "sc" | "sp" | "todos"
+  >("todos");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -70,6 +74,24 @@ const Empresa: React.FC = () => {
         .catch((err) => console.error("Erro ao buscar equipe", err));
     }
   }, [user, loading, navigate]);
+
+  // 3. Lógica para filtrar os utilizadores
+  const unitMap = {
+    rs: "Matriz",
+    sc: "Filial SC",
+    sp: "Filial SP",
+  };
+
+  const filteredUsers = internalUsers.filter((user) => {
+    if (selectedState === "todos") return true;
+    return user.unidade === unitMap[selectedState];
+  });
+
+  const stateNames = {
+    rs: "Rio Grande do Sul (Matriz)",
+    sc: "Santa Catarina",
+    sp: "São Paulo",
+  };
 
   if (loading || !user) {
     return <div className="tela-loading">Carregando...</div>;
@@ -155,10 +177,35 @@ const Empresa: React.FC = () => {
         <section className="info-section">
           <div className="page-header">
             <h2>Nossa Equipe</h2>
-            <p>Conheça os colaboradores que fazem parte da Valor Fiscal.</p>
+            <p>
+              Selecione um estado no mapa para ver a equipe local ou veja todos
+              os colaboradores.
+            </p>
           </div>
+
+          <MapaEscritorios
+            activeState={selectedState}
+            onStateClick={setSelectedState}
+          />
+          <div className="map-controls">
+            <button
+              className={`map-button ${
+                selectedState === "todos" ? "active" : ""
+              }`}
+              onClick={() => setSelectedState("todos")}
+            >
+              Ver Todos
+            </button>
+          </div>
+
+          {selectedState !== "todos" && (
+            <h3 className="equipe-local-title">
+              Equipe Local: {stateNames[selectedState]}
+            </h3>
+          )}
+
           <div className="user-grid">
-            {internalUsers.map((internalUser) => (
+            {filteredUsers.map((internalUser) => (
               <UserCard key={internalUser.id} user={internalUser} />
             ))}
           </div>
