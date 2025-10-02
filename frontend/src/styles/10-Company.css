@@ -231,28 +231,40 @@
   height: auto;
 }
 
+/* --- REGRAS DE ESTILO CORRIGIDAS --- */
+
+/* 1. Configuração base para todos os paths */
 .map-svg path {
-  fill: var(--bg-secondary);
-  stroke: var(--border-strong); /* Linha divisória com cor de borda visível */
   stroke-width: 1.0404;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   transition: fill 0.2s ease-in-out;
 }
 
-.map-svg path.interactive {
+/* 2. Estilo para os estados NÃO-INTERATIVOS (PR e MG) */
+.map-svg g:not(.interactive) path {
+  fill: none; /* Eles não têm cor de fundo */
+  stroke: var(--border-color); /* Eles SÃO a linha de fronteira */
+  pointer-events: none;
+}
+
+/* 3. Estilo para os estados INTERATIVOS (SP, SC, RS) */
+.map-svg g.interactive path {
+  fill: var(--bg-secondary); /* Eles têm cor de fundo */
+  stroke: none; /* ELES NÃO DESENHAM A PRÓPRIA BORDA */
   cursor: pointer;
 }
 
-.map-svg path.interactive:hover {
+/* 4. Efeitos de Hover e Ativo para os estados INTERATIVOS */
+.map-svg g.interactive:hover path {
   fill: var(--accent-color-hover);
 }
 
-.map-svg path.active {
+.map-svg g.interactive.active path {
   fill: var(--accent-color);
-  stroke: var(
-    --bg-primary
-  ); /* Stroke mais escuro no estado ativo para contraste */
 }
 
+/* 5. Estilos do texto (sem alterações, mas mantidos para clareza) */
 .map-svg text {
   font-family: "Montserrat", sans-serif;
   font-weight: bold;
@@ -263,10 +275,4 @@
 
 .map-svg g.active text {
   fill: var(--bg-menu);
-}
-
-.map-svg g:not(.interactive) path {
-  fill: none; /* Garante que não tenham cor de fundo */
-  pointer-events: none; /* Faz com que não sejam clicáveis */
-  stroke: var(--border-strong); /* Mantém apenas a linha de fronteira */
 }
