@@ -178,38 +178,42 @@ const Empresa: React.FC = () => {
           <div className="page-header">
             <h2>Nossa Equipe</h2>
             <p>
-              Com sede em Porto Alegre/RS e filiais em Balneário Camboriú/SC e
-              São Paulo/SP, a Valor Fiscal atua em todo o país. Selecione um
-              estado no mapa para ver a equipe local ou veja todos os
-              colaboradores.
+              Selecione um estado no mapa para ver a equipe local ou veja todos
+              os colaboradores.
             </p>
           </div>
 
-          <MapaEscritorios
-            activeState={selectedState}
-            onStateClick={setSelectedState}
-          />
-          <div className="map-controls">
-            <button
-              className={`map-button ${
-                selectedState === "todos" ? "active" : ""
-              }`}
-              onClick={() => setSelectedState("todos")}
-            >
-              Ver Todos
-            </button>
-          </div>
+          <div className="equipe-layout">
+            <div className="equipe-sidebar">
+              <MapaEscritorios
+                activeState={selectedState}
+                onStateClick={setSelectedState}
+              />
+              <div className="map-controls">
+                <button
+                  className={`map-button ${
+                    selectedState === "todos" ? "active" : ""
+                  }`}
+                  onClick={() => setSelectedState("todos")}
+                >
+                  Ver Todos
+                </button>
+              </div>
+            </div>
 
-          {selectedState !== "todos" && (
-            <h3 className="equipe-local-title">
-              Equipe Local: {stateNames[selectedState]}
-            </h3>
-          )}
+            <div className="equipe-main-content">
+              {selectedState !== "todos" && (
+                <h3 className="equipe-local-title">
+                  Equipe Local: {stateNames[selectedState]}
+                </h3>
+              )}
 
-          <div className="user-grid">
-            {filteredUsers.map((internalUser) => (
-              <UserCard key={internalUser.id} user={internalUser} />
-            ))}
+              <div className="user-grid">
+                {filteredUsers.map((internalUser) => (
+                  <UserCard key={internalUser.id} user={internalUser} />
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       </div>

@@ -110,11 +110,112 @@
 }
 
 /* Estilos da seção "Nossa Equipe" */
+.equipe-layout {
+  display: flex;
+  gap: 2rem; /* Espaçamento entre as colunas */
+  align-items: flex-start; /* Alinha os topos das colunas */
+}
+
+/* Coluna da esquerda (mapa) */
+.equipe-sidebar {
+  flex: 0 0 25%; /* Define a largura da coluna em 25% */
+  max-width: 300px; /* Largura máxima para não ficar muito grande em telas largas */
+  position: sticky; /* Efeito 'flutuante' ao rolar a página */
+  top: 20px; /* Distância do topo ao 'flutuar' */
+}
+
+/* Coluna da direita (cards) */
+.equipe-main-content {
+  flex-grow: 1; /* Ocupa o restante do espaço disponível */
+}
+
+/* --- ESTILOS DO MAPA (JÁ CORRIGIDOS) --- */
+.map-container {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 20px 0; /* Ajuste de margem */
+}
+
+.map-svg {
+  width: 100%;
+  height: auto;
+}
+
+.map-svg path {
+  stroke-width: 1.0404;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease-in-out;
+}
+
+.map-svg g:not(.interactive) path {
+  fill: none;
+  stroke: var(--border-color);
+  pointer-events: none;
+}
+
+.map-svg g.interactive path {
+  fill: var(--bg-secondary);
+  stroke: none;
+  cursor: pointer;
+}
+
+.map-svg g.interactive:hover path {
+  fill: var(--accent-color-hover);
+}
+
+.map-svg g.interactive.active path {
+  fill: var(--accent-color);
+}
+
+.map-svg text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  pointer-events: none;
+  fill: var(--text-primary);
+}
+
+.map-svg g.active text {
+  fill: var(--bg-menu);
+}
+
+.map-controls {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.map-button {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-button.active,
+.map-button:hover {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+.equipe-local-title {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-top: 0;
+  border-top: 1px solid var(--border-color);
+  padding-top: 2rem;
+}
+
 .user-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
-  padding: 2rem 0;
+  padding: 0; /* Removido padding extra */
 }
 
 .corp-user-card {
@@ -179,106 +280,20 @@
   color: var(--text-primary);
 }
 
-/* Estilo do mapa */
-.map-container {
-  display: flex;
-  justify-content: center;
-  margin: 40px 0 20px 0;
-}
+/* --- AJUSTE RESPONSIVO PARA TELAS MENORES --- */
+@media (max-width: 900px) {
+  .equipe-layout {
+    flex-direction: column; /* As colunas ficam uma em cima da outra */
+  }
 
-.map-controls {
-  text-align: center;
-  margin-bottom: 40px;
-}
+  .equipe-sidebar {
+    position: static; /* Remove o efeito 'flutuante' */
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto; /* Centraliza o mapa */
+  }
 
-.equipe-local-title {
-  text-align: center;
-  color: var(--text-secondary);
-  margin-top: 2rem;
-  border-top: 1px solid var(--border-color);
-  padding-top: 2rem;
-}
-
-/* frontend/src/styles/10-Company.css */
-
-.map-container {
-  display: flex;
-  justify-content: center;
-  margin: 40px 0 20px 0;
-}
-
-.map-svg {
-  width: 100%;
-  max-width: 300px;
-  height: auto;
-}
-
-.map-controls {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.map-button {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.map-button.active,
-.map-button:hover {
-  background-color: var(--accent-color);
-  border-color: var(--accent-color);
-  color: #fff;
-}
-
-.equipe-local-title {
-  text-align: center;
-  color: var(--text-secondary);
-  margin-top: 2rem;
-  border-top: 1px solid var(--border-color);
-  padding-top: 2rem;
-}
-
-.map-svg path {
-  stroke-width: 1.0404;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: fill 0.2s ease-in-out;
-}
-
-.map-svg g:not(.interactive) path {
-  fill: none;
-  stroke: var(--border-color);
-  pointer-events: none;
-}
-
-.map-svg g.interactive path {
-  fill: var(--bg-secondary);
-  stroke: var(--border-color);
-  cursor: pointer;
-}
-
-.map-svg g.interactive:hover path {
-  fill: var(--border-strong);
-}
-
-.map-svg g.interactive.active path {
-  fill: var(--accent-color);
-}
-
-.map-svg text {
-  font-family: "Montserrat", sans-serif;
-  font-weight: 700; /* Texto mais forte */
-  font-size: 14px; /* Tamanho ligeiramente maior */
-  pointer-events: none;
-  fill: var(--text-primary);
-}
-
-.map-svg g.active text {
-  fill: var(--bg-menu);
+  .equipe-main-content {
+    width: 100%;
+  }
 }
