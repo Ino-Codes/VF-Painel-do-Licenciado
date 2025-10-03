@@ -373,7 +373,7 @@ const AdminUsers: React.FC = () => {
           </div>
 
           <CorporatePhotoUploader
-            userId={editingUser.id}
+            user={editingUser}
             onUploadSuccess={fetchUsers}
           />
         </form>
