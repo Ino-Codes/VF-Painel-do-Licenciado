@@ -492,6 +492,48 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
+  router.delete("/admin/:id/corporate-photo", async (req, res) => {
+    const { id } = req.params;
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const userResult = await client.query(
+        "SELECT corporate_photo_url FROM users WHERE id = $1",
+        [id]
+      );
+      const oldPhotoUrl = userResult.rows[0]?.corporate_photo_url;
+
+      if (oldPhotoUrl) {
+        const publicIdWithFolder = oldPhotoUrl.substring(
+          oldPhotoUrl.lastIndexOf("/") + 1,
+          oldPhotoUrl.lastIndexOf(".")
+        );
+        await cloudinary.uploader.destroy(publicIdWithFolder, {
+          resource_type: "image",
+        });
+      }
+
+      await client.query(
+        "UPDATE users SET corporate_photo_url = NULL WHERE id = $1",
+        [id]
+      );
+
+      await client.query("COMMIT");
+      res.json({
+        success: true,
+        message: "Foto corporativa removida com sucesso.",
+      });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error("Erro ao remover foto corporativa:", err);
+      res.status(500).json({ error: "Erro no servidor ao remover a foto." });
+    } finally {
+      client.release();
+    }
+  });
+
   router.put("/:id/profile", async (req, res) => {
     const { id } = req.params;
     const { nome, bio } = req.body;
