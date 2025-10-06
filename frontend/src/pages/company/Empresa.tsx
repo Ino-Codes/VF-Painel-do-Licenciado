@@ -119,8 +119,11 @@ const Empresa: React.FC = () => {
                 Somos uma empresa de inteligência tributária que une
                 conhecimentos administrativos e contábeis para construir
                 soluções que fazem sentido para quem está na linha de frente dos
-                negócios. Buscamos incessantemente ser os melhores – nada menos
-                que os melhores.
+                negócios.
+              </p>
+              <p>
+                Buscamos incessantemente ser os melhores – nada menos que os
+                melhores.
               </p>
             </div>
             <div className="identidade-item">
@@ -128,12 +131,7 @@ const Empresa: React.FC = () => {
               <h3>Visão</h3>
               <p>
                 Ser referência nacional em nosso segmento, por meio de um
-                trabalho extremamente técnico, ético e de excelência. Cumprir o
-                nosso propósito, alinhado ao projeto de expansão para todo o
-                território brasileiro, buscando o equilíbrio entre a
-                lucratividade e a consciência social, para fazer o bem no mundo,
-                impactar positivamente a vida de nossos clientes, colaboradores
-                e sociedade em geral.
+                trabalho extremamente técnico, ético e de excelência.
               </p>
             </div>
             <div className="identidade-item">
@@ -143,10 +141,7 @@ const Empresa: React.FC = () => {
                 Somos uma empresa comprometida com a ética, integridade e
                 honestidade. Trabalhamos de forma transparente e entregamos
                 serviços de excelência com foco na geração de resultados que
-                superem as expectativas de nossos clientes. Visamos o bem estar
-                de todos os nossos colaboradores. Baseados na responsabilidade e
-                confiança entre as partes, também oportunizamos crescimento
-                profissional pelo conceito de meritocracia.
+                superem as expectativas de nossos clientes.
               </p>
             </div>
           </div>
