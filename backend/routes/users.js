@@ -492,45 +492,35 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
-  router.delete("/admin/:id/corporate-photo", async (req, res) => {
-    const { id } = req.params;
-    const client = await pool.connect();
-
+  router.get("/admin", async (req, res) => {
+    const { search, page = 1, limit = 10 } = req.query;
     try {
-      await client.query("BEGIN");
-
-      const userResult = await client.query(
-        "SELECT corporate_photo_url FROM users WHERE id = $1",
-        [id]
-      );
-      const oldPhotoUrl = userResult.rows[0]?.corporate_photo_url;
-
-      if (oldPhotoUrl) {
-        const publicIdWithFolder = oldPhotoUrl.substring(
-          oldPhotoUrl.lastIndexOf("/") + 1,
-          oldPhotoUrl.lastIndexOf(".")
-        );
-        await cloudinary.uploader.destroy(publicIdWithFolder, {
-          resource_type: "image",
-        });
+      const offset = (page - 1) * limit;
+      let whereClause = "";
+      const params = [];
+      if (search) {
+        params.push(`%${search}%`);
+        whereClause = `WHERE nome ILIKE $1 OR email ILIKE $1`;
       }
+      const countSql = `SELECT COUNT(*) FROM users ${whereClause}`;
 
-      await client.query(
-        "UPDATE users SET corporate_photo_url = NULL WHERE id = $1",
-        [id]
-      );
+      const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
+        params.length + 1
+      } OFFSET $${params.length + 2}`;
 
-      await client.query("COMMIT");
+      const [countResult, usersResult] = await Promise.all([
+        pool.query(countSql, params),
+        pool.query(usersSql, [...params, limit, offset]),
+      ]);
+      const totalCount = parseInt(countResult.rows[0].count, 10);
       res.json({
-        success: true,
-        message: "Foto corporativa removida com sucesso.",
+        users: usersResult.rows,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
       });
     } catch (err) {
-      await client.query("ROLLBACK");
-      console.error("Erro ao remover foto corporativa:", err);
-      res.status(500).json({ error: "Erro no servidor ao remover a foto." });
-    } finally {
-      client.release();
+      console.error("Erro ao buscar usuários:", err);
+      res.status(500).json({ error: "Erro ao buscar usuários" });
     }
   });
 
