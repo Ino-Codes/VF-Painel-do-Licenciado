@@ -46,12 +46,19 @@ const IconeValores = () => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2.5"
+    strokeWidth="2.0"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M12 2L4 9l8 13 8-13z" />
-    <path d="M4 9h16" />
+    <polygon
+      class="st0"
+      points=".67 9.04 12 21.36 23.33 9.04 19.39 2.64 4.61 2.64 .67 9.04"
+    />
+    <path class="st0" d="M.67,9.04h22.66H.67Z" />
+    <polygon
+      class="st0"
+      points="8.89 2.64 7.07 8.79 12 20.61 16.93 8.79 15.09 2.64 8.89 2.64"
+    />
   </svg>
 );
 
