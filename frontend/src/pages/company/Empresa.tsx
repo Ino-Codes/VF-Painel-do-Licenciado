@@ -50,10 +50,8 @@ const IconeValores = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M12 2L2 7l10 12L22 7l-10-5z" />
-    <path d="M2 7l10 5" />
-    <path d="M22 7l-10 5" />
-    <path d="M12 2v17" />
+    <path d="M12 2L4 9l8 13 8-13L12 2z" />
+    <path d="M4 9h16" />
   </svg>
 );
 
