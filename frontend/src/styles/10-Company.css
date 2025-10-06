@@ -150,14 +150,14 @@
 }
 
 .map-svg g:not(.interactive) path {
-  fill: none;
-  stroke: var(--border-color);
+  fill: var(--bg-secondary);
+  stroke: var(--border-strong);
   pointer-events: none;
 }
 
 .map-svg g.interactive path {
-  fill: var(--bg-secondary);
-  stroke: var(--border-color);
+  fill: var(--border-color);
+  stroke: var(--border-strong);
   cursor: pointer;
 }
 
