@@ -120,8 +120,7 @@ const Empresa: React.FC = () => {
                 conhecimentos administrativos e contábeis para construir
                 soluções que fazem sentido para quem está na linha de frente dos
                 negócios.
-              </p>
-              <p>
+                <br />
                 Buscamos incessantemente ser os melhores – nada menos que os
                 melhores.
               </p>
@@ -131,7 +130,10 @@ const Empresa: React.FC = () => {
               <h3>Visão</h3>
               <p>
                 Ser referência nacional em nosso segmento, por meio de um
-                trabalho extremamente técnico, ético e de excelência.
+                trabalho extremamente técnico, ético e de excelência. Cumprir o
+                nosso propósito, alinhado ao projeto de expansão para todo o
+                território brasileiro, buscando o equilíbrio entre a
+                lucratividade e a consciência social
               </p>
             </div>
             <div className="identidade-item">
