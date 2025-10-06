@@ -46,11 +46,11 @@ const IconeValores = () => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="2.5"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M12 2L4 9l8 13 8-13L12 2z" />
+    <path d="M12 2L4 9l8 13 8-13z" />
     <path d="M4 9h16" />
   </svg>
 );
