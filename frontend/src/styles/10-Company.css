@@ -98,6 +98,14 @@
   color: var(--text-secondary);
 }
 
+.timeline-image-placeholder img {
+  width: 100%;
+  height: 150px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: flex;
+}
+
 .timeline-content p {
   color: var(--text-secondary);
 }

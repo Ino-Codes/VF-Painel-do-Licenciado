@@ -170,7 +170,7 @@ const Empresa: React.FC = () => {
               <div className="timeline-content">
                 <h4>Bolsa de Valores B3</h4>
                 <div className="timeline-image-placeholder">
-                  <img src="../../img/bolsa-valores.png"></img>
+                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
                 </div>
                 <p>
                   Em 2021, passamos a integrar o{" "}
