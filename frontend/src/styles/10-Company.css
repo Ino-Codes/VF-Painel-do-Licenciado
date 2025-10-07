@@ -98,13 +98,6 @@
   color: var(--text-secondary);
 }
 
-/* Adiciona um ícone de imagem ao placeholder */
-.timeline-image-placeholder::after {
-  content: "🖼️";
-  font-size: 40px;
-  opacity: 0.3;
-}
-
 .timeline-content p {
   color: var(--text-secondary);
 }

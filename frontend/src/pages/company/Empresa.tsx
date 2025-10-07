@@ -168,11 +168,14 @@ const Empresa: React.FC = () => {
             <div className="timeline-item">
               <div className="timeline-dot"></div>
               <div className="timeline-content">
-                <h4>Momento</h4>
-                <div className="timeline-image-placeholder"></div>
+                <h4>Bolsa de Valores B3</h4>
+                <div className="timeline-image-placeholder">
+                  <img src="../../img/bolsa-valores.png"></img>
+                </div>
                 <p>
-                  Descreva um marco importante na história da empresa, uma
-                  conquista ou expansão significativa.
+                  Em 2021, passamos a integrar o{" "}
+                  <strong>exclusivo rol de consultorias</strong> que atendem
+                  empresas que atuam na bolsa de valores - B3.
                 </p>
               </div>
             </div>
