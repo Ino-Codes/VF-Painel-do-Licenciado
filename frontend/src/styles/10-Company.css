@@ -3,8 +3,13 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.info-section:first-child {
+  padding: 0 0 40px 0;
+}
+
 .info-section:last-child {
   border-bottom: none;
+  padding: 40px 0 0 0;
 }
 
 /* Estilos da seção "Quem Somos" */
