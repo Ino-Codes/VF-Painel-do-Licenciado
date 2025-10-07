@@ -100,10 +100,10 @@
 
 .timeline-image-placeholder img {
   width: 100%;
-  max-width: 400px;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   border-radius: 8px;
-  display: flex;
+  display: block;
 }
 
 .timeline-content p {
