@@ -477,8 +477,8 @@ const Perfil: React.FC = () => {
               <div className="profile-section">
                 <h3>Perfil Comportamental</h3>
                 <p>
-                  Entenda melhor seus traços de personalidade e como você
-                  interage em equipe.
+                  Realize este teste rápido e entenda melhor seus traços de
+                  personalidade e como você interage em equipe.
                 </p>
                 <div className="profile-button-group">
                   <Link to="/enneagram" className="form-button">
