@@ -8,7 +8,7 @@ const path = require("path");
 const { Pool } = require("pg");
 const cloudinary = require("cloudinary").v2;
 const sgMail = require("@sendgrid/mail");
-
+const app = express();
 const port = process.env.PORT || 3001;
 
 // --- CONFIGURAÇÕES ---
