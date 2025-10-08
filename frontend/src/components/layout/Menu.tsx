@@ -143,11 +143,11 @@ const Menu: React.FC = () => {
           Cursos
         </NavLink>
 
-        {/* {user && user.role !== "licenciado" && (
+        {user && user.role !== "licenciado" && (
           <NavLink to="/empresa" className="menu-item">
             Empresa
           </NavLink>
-        )} */}
+        )}
 
         {user && user.role === "admin" && (
           <div className="dropdown-menu" ref={adminDropdownRef}>

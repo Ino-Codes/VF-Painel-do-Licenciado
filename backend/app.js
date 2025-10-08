@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 const { isAdmin, isLoggedIn } = require("./middleware/auth.js");
 const express = require("express");
 const cors = require("cors");
@@ -36,25 +34,19 @@ const upload = multer({
   },
 });
 
-const allowedOrigins = [
-  "https://painel.valorfiscal.com",
-  "http://localhost:3000",
-];
-
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: "https://painel.valorfiscal.com",
   optionsSuccessStatus: 200,
 };
 
-app.use(cors(corsOptions));
-
 // --- MIDDLEWARES ---
+
+app.use(
+  cors({
+    origin: "https://painel.valorfiscal.com",
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
