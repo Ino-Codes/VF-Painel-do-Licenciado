@@ -12,18 +12,31 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   // --- Rotas de Admin (Listar, Criar, Editar) ---
 
   router.get("/admin", async (req, res) => {
-    const { search, page = 1, limit = 10 } = req.query;
+    const { search, page = 1, limit = 10, roles } = req.query;
     try {
       const offset = (page - 1) * limit;
-      let whereClause = "";
+      let whereClauses = [];
       const params = [];
+
+      if (roles) {
+        const roleList = roles.split(",");
+        params.push(roleList);
+        whereClauses.push(`role = ANY($${params.length})`);
+      }
+
       if (search) {
         params.push(`%${search}%`);
-        whereClause = `WHERE nome ILIKE $1 OR email ILIKE $1`;
+        whereClauses.push(
+          `(nome ILIKE $${params.length} OR email ILIKE $${params.length})`
+        );
       }
-      const countSql = `SELECT COUNT(*) FROM users ${whereClause}`;
 
-      const usersSql = `SELECT id, nome, email, role, avatar_url, birth_date, cargo, setor, unidade, telefone FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
+      const whereString =
+        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+      const countSql = `SELECT COUNT(*) FROM users ${whereString}`;
+
+      const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone FROM users ${whereString} ORDER BY nome ASC LIMIT $${
         params.length + 1
       } OFFSET $${params.length + 2}`;
 
@@ -31,6 +44,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         pool.query(countSql, params),
         pool.query(usersSql, [...params, limit, offset]),
       ]);
+
       const totalCount = parseInt(countResult.rows[0].count, 10);
       res.json({
         users: usersResult.rows,
