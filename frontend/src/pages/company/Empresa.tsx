@@ -153,6 +153,7 @@ const Empresa: React.FC = () => {
           <div className="page-header">
             <h2>Nossa História</h2>
           </div>
+
           <div className="timeline-container">
             <div className="timeline-item">
               <div className="timeline-image-placeholder">
