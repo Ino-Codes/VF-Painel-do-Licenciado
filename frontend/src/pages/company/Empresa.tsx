@@ -155,12 +155,15 @@ const Empresa: React.FC = () => {
           </div>
           <div className="timeline-container">
             <div className="timeline-item">
+              <div className="timeline-image-placeholder">
+                <img
+                  src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"
+                  alt="Fundação da Valor Fiscal"
+                />
+              </div>
               <div className="timeline-dot"></div>
               <div className="timeline-content">
                 <h4>2014</h4>
-                <div className="timeline-image-placeholder">
-                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
-                </div>
                 <p>
                   Descreva o início da Valor Fiscal, a sua fundação, os
                   fundadores e o contexto da época.
@@ -169,12 +172,15 @@ const Empresa: React.FC = () => {
             </div>
 
             <div className="timeline-item">
+              <div className="timeline-image-placeholder">
+                <img
+                  src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"
+                  alt="Atuação na B3"
+                />
+              </div>
               <div className="timeline-dot"></div>
               <div className="timeline-content">
                 <h4>2021</h4>
-                <div className="timeline-image-placeholder">
-                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
-                </div>
                 <p>
                   Em 2021, passamos a integrar o{" "}
                   <strong>exclusivo rol de consultorias</strong> que atendem
@@ -184,23 +190,29 @@ const Empresa: React.FC = () => {
             </div>
 
             <div className="timeline-item">
+              <div className="timeline-image-placeholder">
+                <img
+                  src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"
+                  alt="Outro marco importante"
+                />
+              </div>
               <div className="timeline-dot"></div>
               <div className="timeline-content">
                 <h4>2022</h4>
-                <div className="timeline-image-placeholder">
-                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
-                </div>
                 <p>Descrição de outro momento.</p>
               </div>
             </div>
 
             <div className="timeline-item">
+              <div className="timeline-image-placeholder">
+                <img
+                  src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"
+                  alt="Estado atual da empresa"
+                />
+              </div>
               <div className="timeline-dot"></div>
               <div className="timeline-content">
                 <h4>2025</h4>
-                <div className="timeline-image-placeholder">
-                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
-                </div>
                 <p>
                   Descreva o estado atual da empresa, as suas principais áreas
                   de atuação e a sua posição no mercado.
