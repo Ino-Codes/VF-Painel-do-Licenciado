@@ -9,10 +9,30 @@ const { Pool } = require("pg");
 const cloudinary = require("cloudinary").v2;
 const sgMail = require("@sendgrid/mail");
 
-const app = express();
 const port = process.env.PORT || 3001;
 
 // --- CONFIGURAÇÕES ---
+
+// Lista de origens permitidas
+const allowedOrigins = [
+  "https://painel.valorfiscal.com", // Domínio de produção
+  "http://localhost:3000", // Ambiente de desenvolvimento local
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Não permitido pelo CORS"));
+    }
+  },
+  optionsSuccessStatus: 200,
+};
+
+// Garanta que esta linha está ANTES das suas rotas
+app.use(cors(corsOptions));
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const pool = new Pool({
@@ -35,24 +55,6 @@ const upload = multer({
     fileSize: 200 * 1024 * 1024,
   },
 });
-
-const allowedOrigins = [
-  "https://painel.valorfiscal.com",
-  "http://localhost:3000",
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  optionsSuccessStatus: 200,
-};
-
-app.use(cors(corsOptions));
 
 // --- MIDDLEWARES ---
 
