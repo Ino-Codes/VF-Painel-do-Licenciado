@@ -157,18 +157,21 @@ const Empresa: React.FC = () => {
             <div className="timeline-item">
               <div className="timeline-dot"></div>
               <div className="timeline-content">
-                <h4>Fundação</h4>
-                <div className="timeline-image-placeholder"></div>
+                <h4>2014</h4>
+                <div className="timeline-image-placeholder">
+                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
+                </div>
                 <p>
                   Descreva o início da Valor Fiscal, a sua fundação, os
                   fundadores e o contexto da época.
                 </p>
               </div>
             </div>
+
             <div className="timeline-item">
               <div className="timeline-dot"></div>
               <div className="timeline-content">
-                <h4>Bolsa de Valores B3</h4>
+                <h4>2021</h4>
                 <div className="timeline-image-placeholder">
                   <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
                 </div>
@@ -179,11 +182,25 @@ const Empresa: React.FC = () => {
                 </p>
               </div>
             </div>
+
             <div className="timeline-item">
               <div className="timeline-dot"></div>
               <div className="timeline-content">
-                <h4>Hoje</h4>
-                <div className="timeline-image-placeholder"></div>
+                <h4>2022</h4>
+                <div className="timeline-image-placeholder">
+                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
+                </div>
+                <p>Descrição de outro momento.</p>
+              </div>
+            </div>
+
+            <div className="timeline-item">
+              <div className="timeline-dot"></div>
+              <div className="timeline-content">
+                <h4>2025</h4>
+                <div className="timeline-image-placeholder">
+                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759866516/bolsa-valores_nmss6r.png"></img>
+                </div>
                 <p>
                   Descreva o estado atual da empresa, as suas principais áreas
                   de atuação e a sua posição no mercado.
