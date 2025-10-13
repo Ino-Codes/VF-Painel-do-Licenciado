@@ -290,7 +290,91 @@
   color: var(--text-primary);
 }
 
+/* Estilo para o modal de usuário */
+
+.corp-user-card {
+  cursor: pointer;
+}
+
+.user-detail-modal-content {
+  max-width: 800px;
+  width: 90%;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.user-detail-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  z-index: 10;
+}
+
+.user-detail-layout {
+  display: flex;
+  align-items: stretch;
+}
+
+.user-detail-photo-section {
+  flex: 0 0 40%;
+  background: linear-gradient(
+    180deg,
+    var(--accent-color) 0%,
+    var(--accent-color) 10%,
+    var(--bg-primary) 80%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-inverted);
+}
+
+.user-detail-photo img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.user-detail-name {
+  margin: 0;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.user-detail-info {
+  flex-grow: 1;
+  padding: 40px;
+  background-color: var(--bg-primary);
+}
+
+.user-detail-info p,
+.user-detail-info h1 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.user-detail-info p span {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
 /* --- AJUSTE RESPONSIVO PARA TELAS MENORES --- */
+@media (max-width: 768px) {
+  .user-detail-layout {
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 900px) {
   .equipe-layout {
     flex-direction: column;

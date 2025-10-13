@@ -6,6 +6,7 @@ import Footer from "../../components/layout/Footer.tsx";
 import UserCard from "./UserCard.tsx";
 import { useNavigate } from "react-router-dom";
 import MapaEscritorios from "./MapaEscritorios.tsx";
+import UserDetailModal from "./UserDetailModal.tsx";
 
 // Ícones SVG
 const IconeMissao = () => (
@@ -69,6 +70,7 @@ const Empresa: React.FC = () => {
   const [selectedState, setSelectedState] = useState<
     "rs" | "sc" | "sp" | "todos"
   >("todos");
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -97,6 +99,13 @@ const Empresa: React.FC = () => {
     rs: "Matriz em RS",
     sc: "Filial em SC",
     sp: "Filial em SP",
+  };
+
+  const handleOpenModal = (userToShow: any) => {
+    setSelectedUser(userToShow);
+  };
+  const handleCloseModal = () => {
+    setSelectedUser(null);
   };
 
   if (loading || !user) {
@@ -260,7 +269,11 @@ const Empresa: React.FC = () => {
 
               <div className="user-grid">
                 {filteredUsers.map((internalUser) => (
-                  <UserCard key={internalUser.id} user={internalUser} />
+                  <UserCard
+                    key={internalUser.id}
+                    user={internalUser}
+                    onClick={() => handleOpenModal(internalUser)}
+                  />
                 ))}
               </div>
             </div>
@@ -268,6 +281,11 @@ const Empresa: React.FC = () => {
         </section>
       </div>
       <Footer />
+      <UserDetailModal
+        isOpen={selectedUser !== null}
+        onClose={handleCloseModal}
+        user={selectedUser}
+      />
     </div>
   );
 };

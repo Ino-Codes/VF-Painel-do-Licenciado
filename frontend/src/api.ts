@@ -3,7 +3,7 @@ import axios from "axios";
 const api = axios.create({
   baseURL:
     process.env.REACT_APP_API_URL ||
-    // URL DE HOMOLOGAÇÃO "http://localhost:3001",
+    // "http://localhost:3001",
     "https://vf-painel-do-licenciado-leba.onrender.com",
 });
 

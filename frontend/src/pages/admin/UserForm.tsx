@@ -161,6 +161,13 @@ const UserForm: React.FC<{
               className="form-input"
             />
           </div>
+
+          {userToEdit && (
+            <CorporatePhotoUploader
+              user={userToEdit}
+              onUploadSuccess={onSuccess}
+            />
+          )}
         </div>
       )}
       <div className="modal-actions">
@@ -171,9 +178,6 @@ const UserForm: React.FC<{
           {userToEdit ? "Salvar Alterações" : "Criar Usuário"}
         </button>
       </div>
-      {userToEdit && (
-        <CorporatePhotoUploader user={userToEdit} onUploadSuccess={onSuccess} />
-      )}
     </form>
   );
 };

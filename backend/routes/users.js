@@ -60,7 +60,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.get("/internal", checkLoggedIn, async (req, res) => {
     try {
       const internalUsersSql = `
-      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone 
+      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone, birth_date 
       FROM users 
       WHERE role IN ('admin', 'colaborador') 
       ORDER BY nome ASC

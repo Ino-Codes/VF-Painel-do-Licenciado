@@ -101,7 +101,7 @@ const CorporatePhotoUploader: React.FC<Props> = ({ user, onUploadSuccess }) => {
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleRemove}
         title="Remover Foto Corporativa"
-        message="Tem a certeza de que deseja remover a foto corporativa deste utilizador?"
+        message="Tem a certeza de que deseja remover a foto corporativa deste colaborador?"
       />
     </>
   );

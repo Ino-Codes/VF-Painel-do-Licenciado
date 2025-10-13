@@ -2,9 +2,7 @@
 
 .admin-form {
   background-color: var(--bg-secondary);
-  padding: 20px;
-  margin-bottom: 25px;
-  margin-top: 25px;
+
   border-radius: 8px;
 }
 

@@ -199,7 +199,7 @@ const AdminUsers: React.FC = () => {
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Confirmar Exclusão"
-        message="Tem a certeza de que deseja excluir este utilizador?"
+        message="Tem a certeza de que deseja excluir este usuário?"
       />
     </div>
   );
