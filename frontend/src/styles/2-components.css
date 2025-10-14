@@ -121,7 +121,7 @@
   background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   overflow-y: auto;
   padding: 50px 20px;
   z-index: 1000;
