@@ -9,24 +9,27 @@ const cloudinary = require("cloudinary").v2;
 const sgMail = require("@sendgrid/mail");
 
 const app = express();
+
 const port = process.env.PORT || 3001;
 
 // --- CONFIGURAÇÕES ---
-const allowedOrigins = [
-  "https://painel.valorfiscal.com",
-  "http://localhost:3000",
-];
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Não permitido pelo CORS"));
-    }
-  },
-  optionsSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
+// const allowedOrigins = [
+//   "https://painel.valorfiscal.com",
+//   "http://localhost:3000",
+// ];
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Não permitido pelo CORS"));
+//     }
+//   },
+//   optionsSuccessStatus: 200,
+// };
+// app.use(cors(corsOptions));
+app.use(cors());
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
