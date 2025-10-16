@@ -38,22 +38,69 @@ const FileIcon = () => (
   </svg>
 );
 
+const BriefcaseIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+
 const Menu: React.FC = () => {
   const { user } = useAuth();
   const defaultAvatar =
     "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-light_d0dd5l.png";
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isRhDropdownOpen, setRhDropdownOpen] = useState(false);
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [isFileDropdownOpen, setFileDropdownOpen] = useState(false);
+  const [isComercialDropdownOpen, setIsComercialDropdownOpen] = useState(false);
 
+  const rhDropdownRef = useRef<HTMLDivElement>(null);
   const adminDropdownRef = useRef<HTMLDivElement>(null);
   const fileDropdownRef = useRef<HTMLDivElement>(null);
+  const comercialDropdownRef = useRef<HTMLDivElement>(null);
 
   const firstName = user?.nome?.split(" ")[0] || "";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (
+        rhDropdownRef.current &&
+        !rhDropdownRef.current.contains(event.target as Node)
+      ) {
+        setRhDropdownOpen(false);
+      }
+
       if (
         adminDropdownRef.current &&
         !adminDropdownRef.current.contains(event.target as Node)
@@ -66,6 +113,13 @@ const Menu: React.FC = () => {
         !fileDropdownRef.current.contains(event.target as Node)
       ) {
         setFileDropdownOpen(false);
+      }
+
+      if (
+        comercialDropdownRef.current &&
+        !comercialDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsComercialDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -106,10 +160,18 @@ const Menu: React.FC = () => {
             onClick={() => setFileDropdownOpen(!isFileDropdownOpen)}
           >
             <FileIcon />
-            Arquivos
+            Conteúdos
           </button>
           {isFileDropdownOpen && (
             <div className="dropdown-content">
+              <NavLink
+                to="/courses"
+                className="menu-item"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Cursos
+              </NavLink>
+
               <NavLink
                 to="/documentos"
                 className="menu-item"
@@ -135,13 +197,35 @@ const Menu: React.FC = () => {
           )}
         </div>
 
-        <NavLink
-          to="/courses"
-          className="menu-item"
-          onClick={() => setIsMenuOpen(false)}
-        >
-          Cursos
-        </NavLink>
+        {/* {(user.role === "admin" ||
+          user.role === "comercial" ||
+          user.role === "licenciado") && (
+          <div className="dropdown-menu" ref={comercialDropdownRef}>
+            <button
+              className="menu-item dropdown-trigger"
+              onClick={() =>
+                setIsComercialDropdownOpen(!isComercialDropdownOpen)
+              }
+            >
+              <BriefcaseIcon />
+              Comercial
+            </button>
+            {isComercialDropdownOpen && (
+              <div className="dropdown-content">
+                <NavLink
+                  to="/oportunidades"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsComercialDropdownOpen(false);
+                  }}
+                >
+                  Oportunidades
+                </NavLink>
+              </div>
+            )}
+          </div>
+        )} */}
 
         {/* {user && user.role !== "licenciado" && (
           <NavLink to="/empresa" className="menu-item">
@@ -149,26 +233,26 @@ const Menu: React.FC = () => {
           </NavLink>
         )} */}
 
-        {user && user.role === "admin" && (
-          <div className="dropdown-menu" ref={adminDropdownRef}>
+        {((user && user.role === "admin") || user.role === "rh") && (
+          <div className="dropdown-menu" ref={rhDropdownRef}>
             <button
               className="menu-item dropdown-trigger"
-              onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
+              onClick={() => setRhDropdownOpen(!isRhDropdownOpen)}
             >
-              <LockIcon />
-              Administração
+              <CalendarIcon />
+              RH
             </button>
-            {isAdminDropdownOpen && (
+            {isRhDropdownOpen && (
               <div className="dropdown-content">
                 <NavLink
-                  to="/admin/users"
+                  to="/admin/calendar"
                   className="menu-item"
                   onClick={() => {
                     setIsMenuOpen(false);
-                    setAdminDropdownOpen(false);
+                    setRhDropdownOpen(false);
                   }}
                 >
-                  Usuários
+                  Agenda
                 </NavLink>
 
                 <NavLink
@@ -176,32 +260,21 @@ const Menu: React.FC = () => {
                   className="menu-item"
                   onClick={() => {
                     setIsMenuOpen(false);
-                    setAdminDropdownOpen(false);
+                    setRhDropdownOpen(false);
                   }}
                 >
                   Cursos
                 </NavLink>
 
                 <NavLink
-                  to="/admin/calendar"
+                  to="/admin/ferias"
                   className="menu-item"
                   onClick={() => {
                     setIsMenuOpen(false);
-                    setAdminDropdownOpen(false);
+                    setRhDropdownOpen(false);
                   }}
                 >
-                  Agenda
-                </NavLink>
-
-                <NavLink
-                  to="/admin/logs"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setAdminDropdownOpen(false);
-                  }}
-                >
-                  Logs
+                  Férias
                 </NavLink>
               </div>
             )}
@@ -215,6 +288,43 @@ const Menu: React.FC = () => {
         >
           FAQ
         </NavLink>
+
+        {user && user.role === "admin" && (
+          <div className="dropdown-menu" ref={adminDropdownRef}>
+            <button
+              className="menu-item dropdown-trigger"
+              onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
+            >
+              <LockIcon />
+              Admin
+            </button>
+            {isAdminDropdownOpen && (
+              <div className="dropdown-content">
+                <NavLink
+                  to="/admin/logs"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Logs
+                </NavLink>
+
+                <NavLink
+                  to="/admin/users"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setAdminDropdownOpen(false);
+                  }}
+                >
+                  Usuários
+                </NavLink>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="menu-right">

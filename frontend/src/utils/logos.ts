@@ -1,6 +1,5 @@
 import { useTheme } from "../context/ThemeContext.tsx";
 
-// 404
 import MiniLogoLight from "../assets/images/minilogo.svg";
 import MiniLogoDark from "../assets/images/dark_minilogo.svg";
 

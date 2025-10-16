@@ -3,9 +3,10 @@ const path = require("path");
 const https = require("https");
 const mime = require("mime-types");
 const router = express.Router();
+const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
-  router.get("/", async (req, res) => {
+  router.get("/", isLoggedIn, async (req, res) => {
     const { category, search, role } = req.query;
     try {
       let whereClauses = [];
@@ -58,45 +59,51 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.post("/", upload.single("file"), async (req, res) => {
-    const { originalname, category, folder, visibility } = req.body;
-    if (!req.file)
-      return res.status(400).json({ error: "Nenhum arquivo enviado." });
-    try {
-      const resourceType = req.file.mimetype.startsWith("image")
-        ? "image"
-        : "raw";
-      const uploadResult = await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            {
-              resource_type: resourceType,
-              folder: category,
-              tags: [category, folder],
-            },
-            (error, result) => {
-              if (error) reject(error);
-              resolve(result);
-            }
-          )
-          .end(req.file.buffer);
-      });
+  router.post(
+    "/",
+    isLoggedIn,
+    isAdmin,
+    upload.single("file"),
+    async (req, res) => {
+      const { originalname, category, folder, visibility } = req.body;
+      if (!req.file)
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      try {
+        const resourceType = req.file.mimetype.startsWith("image")
+          ? "image"
+          : "raw";
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              {
+                resource_type: resourceType,
+                folder: category,
+                tags: [category, folder],
+              },
+              (error, result) => {
+                if (error) reject(error);
+                resolve(result);
+              }
+            )
+            .end(req.file.buffer);
+        });
 
-      const { secure_url: fileUrl, public_id: publicId } = uploadResult;
+        const { secure_url: fileUrl, public_id: publicId } = uploadResult;
 
-      const result = await pool.query(
-        "INSERT INTO files (filename, originalname, category, folder, visibility, public_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-        [fileUrl, originalname, category, folder, visibility, publicId]
-      );
+        const result = await pool.query(
+          "INSERT INTO files (filename, originalname, category, folder, visibility, public_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+          [fileUrl, originalname, category, folder, visibility, publicId]
+        );
 
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro no upload de arquivo:", err);
-      res.status(500).json({ error: "Erro no servidor durante o upload." });
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro no upload de arquivo:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
+      }
     }
-  });
+  );
 
-  router.put("/:id", async (req, res) => {
+  router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
     const { id } = req.params;
     const { originalname, category, folder, visibility } = req.body;
     try {
@@ -157,7 +164,7 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.delete("/:id", async (req, res) => {
+  router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
     const { id } = req.params;
     try {
       const fileResult = await pool.query(

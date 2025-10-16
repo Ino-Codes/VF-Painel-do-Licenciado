@@ -1,4 +1,3 @@
-// frontend/src/pages/admin/UserFormModal.tsx
 import React from "react";
 import UserForm from "../../pages/admin/UserForm.tsx"; // Importa o formulário que acabámos de criar
 
@@ -8,7 +7,8 @@ const UserFormModal: React.FC<{
   onSuccess: () => void;
   userToEdit: any | null; // Usamos 'any' para simplificar a passagem de props
   formType: "licenciado" | "interno";
-}> = ({ isOpen, onClose, onSuccess, userToEdit, formType }) => {
+  managers: { id: number; nome: string }[];
+}> = ({ isOpen, onClose, onSuccess, userToEdit, formType, managers }) => {
   if (!isOpen) return null;
 
   return (
@@ -19,6 +19,7 @@ const UserFormModal: React.FC<{
           formType={formType}
           onSuccess={onSuccess}
           onCancel={onClose}
+          managers={managers}
         />
       </div>
     </div>

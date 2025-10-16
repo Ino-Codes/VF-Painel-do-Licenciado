@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
+const { isLoggedIn } = require("../middleware/auth.js");
 
 module.exports = function (pool) {
   // Rota para listar os certificados do usuário
-  router.get("/user/:userId", async (req, res) => {
+  router.get("/user/:userId", isLoggedIn, async (req, res) => {
     const { userId } = req.params;
     try {
       const result = await pool.query(

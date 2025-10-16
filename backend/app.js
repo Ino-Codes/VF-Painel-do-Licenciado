@@ -1,6 +1,5 @@
 require("dotenv").config();
 
-const { isAdmin, isLoggedIn } = require("./middleware/auth.js");
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -8,17 +7,15 @@ const path = require("path");
 const { Pool } = require("pg");
 const cloudinary = require("cloudinary").v2;
 const sgMail = require("@sendgrid/mail");
+
 const app = express();
 const port = process.env.PORT || 3001;
 
 // --- CONFIGURAÇÕES ---
-
-// Lista de origens permitidas
 const allowedOrigins = [
-  "https://painel.valorfiscal.com", // Domínio de produção
-  "http://localhost:3000", // Ambiente de desenvolvimento local
+  "https://painel.valorfiscal.com",
+  "http://localhost:3000",
 ];
-
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
@@ -29,37 +26,25 @@ const corsOptions = {
   },
   optionsSuccessStatus: 200,
 };
-
-// Garanta que esta linha está ANTES das suas rotas
 app.use(cors(corsOptions));
-
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: { rejectUnauthorized: false },
 });
-
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
 const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 200 * 1024 * 1024,
-  },
+  limits: { fileSize: 200 * 1024 * 1024 },
 });
 
 // --- MIDDLEWARES ---
-
 app.use(express.json());
-
 app.use((req, res, next) => {
   req.ipAddress =
     req.headers["x-forwarded-for"] || req.connection.remoteAddress;
@@ -77,44 +62,46 @@ const logActivity = async (userId, userEmail, action, details, ipAddress) => {
 };
 
 // --- IMPORTAÇÃO DAS ROTAS ---
-const authRoutes = require("./routes/auth.js");
-const userRoutes = require("./routes/users.js");
-const noticeRoutes = require("./routes/notices.js");
-const fileRoutes = require("./routes/files.js");
-const videoRoutes = require("./routes/videos.js");
-const faqRoutes = require("./routes/faq.js");
-const logRoutes = require("./routes/logs.js");
-const courseRoutes = require("./routes/courses.js");
-const certificatesRoutes = require("./routes/certificates.js");
-const quizzesRoutes = require("./routes/quizzes.js");
-const eventRoutes = require("./routes/events.js");
-const enneagramRoutes = require("./routes/enneagram.js");
-const adminAnalyticsRoutes = require("./routes/adminAnalytics.js");
-const cronTriggerRoutes = require("./routes/cronTrigger.js");
-
-const checkAdmin = isAdmin(pool);
-const checkLoggedIn = isLoggedIn(pool);
+const authRoutes = require("./routes/auth.js")(pool, sgMail, logActivity);
+const userRoutes = require("./routes/users.js")(
+  pool,
+  cloudinary,
+  upload,
+  logActivity
+);
+const noticeRoutes = require("./routes/notices.js")(pool); // Simplificado
+const fileRoutes = require("./routes/files.js")(pool, cloudinary, upload, path);
+const videoRoutes = require("./routes/videos.js")(pool);
+const faqRoutes = require("./routes/faq.js")(pool, cloudinary, upload);
+const logRoutes = require("./routes/logs.js")(pool);
+const courseRoutes = require("./routes/courses.js")(pool, cloudinary, upload);
+const certificatesRoutes = require("./routes/certificates.js")(pool);
+const quizzesRoutes = require("./routes/quizzes.js")(pool);
+const eventRoutes = require("./routes/events.js")(pool);
+const enneagramRoutes = require("./routes/enneagram.js")(pool);
+const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(pool);
+const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
+const opportunitiesRoutes = require("./routes/opportunities.js")(pool);
 
 // --- USO DAS ROTAS ---
-app.use("/api/auth", authRoutes(pool, sgMail, logActivity));
-app.use("/api/users", userRoutes(pool, cloudinary, upload, logActivity));
-app.use("/api/notices", noticeRoutes({ pool, checkLoggedIn, checkAdmin }));
-app.use("/api/files", fileRoutes(pool, cloudinary, upload, path));
-app.use("/api/videos", videoRoutes(pool));
-app.use("/api/faq", faqRoutes(pool, cloudinary, upload));
-app.use("/api/admin/logs", logRoutes(pool));
-app.use("/api/admin/courses", courseRoutes(pool, cloudinary, upload));
-app.use("/api/certificates", certificatesRoutes(pool));
-app.use("/api/quizzes", quizzesRoutes(pool));
-app.use("/api/admin/events", eventRoutes(pool));
-app.use("/api/events", eventRoutes(pool));
-app.use("/api/enneagram", enneagramRoutes(pool));
-app.use("/api/admin/analytics", adminAnalyticsRoutes(pool));
-app.use("/api/cron", cronTriggerRoutes(pool));
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/notices", noticeRoutes);
+app.use("/api/files", fileRoutes);
+app.use("/api/videos", videoRoutes);
+app.use("/api/faq", faqRoutes);
+app.use("/api/admin/logs", logRoutes);
+app.use("/api/admin/courses", courseRoutes);
+app.use("/api/certificates", certificatesRoutes);
+app.use("/api/quizzes", quizzesRoutes);
+app.use("/api/admin/events", eventRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/enneagram", enneagramRoutes);
+app.use("/api/admin/analytics", adminAnalyticsRoutes);
+app.use("/api/cron", cronTriggerRoutes);
+app.use("/api/opportunities", opportunitiesRoutes);
 
-// --- INICIALIZAÇÃO DO SERVIDOR E BANCO ---
 const createTables = async () => {
-  // --- DEFINIÇÕES DE TABELAS ATUALIZADAS ---
   const userTable = `
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL,
@@ -122,7 +109,9 @@ const createTables = async () => {
       reset_token TEXT, reset_token_expires TIMESTAMPTZ,
       birth_date DATE, cargo TEXT, setor TEXT,
       must_change_password BOOLEAN DEFAULT TRUE,
-      unidade TEXT
+      unidade TEXT,
+      is_vendedor BOOLEAN NOT NULL DEFAULT FALSE, -- ADICIONADO
+      gestor_id INTEGER REFERENCES users(id)      -- ADICIONADO
     );`;
 
   const noticeTable = `
@@ -295,8 +284,6 @@ const createTables = async () => {
     console.error("Erro ao criar tabelas:", err);
   }
 };
-
-// Retorno visual
 
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);

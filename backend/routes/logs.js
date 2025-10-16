@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
+const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool) {
-  router.get("/", async (req, res) => {
+  router.get("/", isLoggedIn, isAdmin, async (req, res) => {
     const { page = 1, limit = 20, search } = req.query;
     try {
       const offset = (page - 1) * limit;

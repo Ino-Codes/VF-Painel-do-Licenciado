@@ -7,12 +7,14 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  role: "admin" | "licenciado" | "colaborador";
+  role: "admin" | "licenciado" | "comercial" | "rh" | "operacional";
   birth_date?: string | null;
   cargo?: string;
   setor?: string;
   unidade?: string;
   corporate_photo_url?: string;
+  is_vendedor?: boolean;
+  gestor_id?: number | null;
 }
 
 const Unidades = ["Matriz", "Filial SC", "Filial SP"];
@@ -22,7 +24,8 @@ const UserForm: React.FC<{
   formType: "licenciado" | "interno";
   onSuccess: () => void;
   onCancel: () => void;
-}> = ({ userToEdit, formType, onSuccess, onCancel }) => {
+  managers: { id: number; nome: string }[];
+}> = ({ userToEdit, formType, onSuccess, onCancel, managers }) => {
   const [formData, setFormData] = useState<Partial<User>>({});
 
   useEffect(() => {
@@ -36,7 +39,7 @@ const UserForm: React.FC<{
         cargo: "",
         setor: "",
         birth_date: "",
-        role: formType === "licenciado" ? "licenciado" : "colaborador",
+        role: formType === "licenciado" ? "licenciado" : "operacional",
       });
     }
   }, [userToEdit, formType]);
@@ -87,6 +90,28 @@ const UserForm: React.FC<{
           className="form-input"
         />
       </div>
+
+      {formType === "licenciado" && (
+        <div className="form-row">
+          <select
+            name="gestor_id"
+            value={formData.gestor_id || ""}
+            onChange={handleChange}
+            required
+            className="form-select"
+          >
+            <option value="" disabled>
+              Selecione o Gestor Responsável
+            </option>
+            {managers.map((manager) => (
+              <option key={manager.id} value={manager.id}>
+                {manager.nome}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {!userToEdit && (
         <div className="form-row">
           <input
@@ -119,6 +144,7 @@ const UserForm: React.FC<{
               className="form-input"
             />
           </div>
+
           <div className="form-row">
             <select
               name="unidade"
@@ -143,11 +169,31 @@ const UserForm: React.FC<{
                 onChange={handleChange}
                 className="form-select"
               >
-                <option value="colaborador">Colaborador</option>
+                <option value="comercial">Comercial</option>
+                <option value="rh">RH</option>
+                <option value="operacional">Operacional</option>
                 <option value="admin">Admin</option>
               </select>
             )}
           </div>
+
+          <div className="form-row">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="is_vendedor"
+                checked={!!formData.is_vendedor}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    is_vendedor: e.target.checked,
+                  }))
+                }
+              />
+              Terá vínculo com licenciados?
+            </label>
+          </div>
+
           <div className="form-row">
             <label className="label-birth-day">Data de Nascimento</label>
             <input

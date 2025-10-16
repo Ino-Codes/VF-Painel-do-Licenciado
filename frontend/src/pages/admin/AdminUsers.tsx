@@ -1,4 +1,3 @@
-// frontend/src/pages/admin/AdminUsers.tsx
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
@@ -10,11 +9,25 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import UserFormModal from "../../components/forms/UserFormModal.tsx";
 import TabContent from "./TabContent.tsx";
 
+interface User {
+  id: number;
+  nome: string;
+  email: string;
+  role: "admin" | "licenciado" | "comercial" | "rh" | "operacional";
+  birth_date?: string | null;
+  cargo?: string;
+  setor?: string;
+  unidade?: string;
+  corporate_photo_url?: string;
+  is_vendedor?: boolean;
+  gestor_id?: number | null;
+}
+
 const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<"licenciados" | "colaboradores">(
+  const [activeTab, setActiveTab] = useState<"licenciados" | "interno">(
     "licenciados"
   );
 
@@ -31,49 +44,67 @@ const AdminUsers: React.FC = () => {
     totalPages: 0,
   });
 
-  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [managers, setManagers] = useState<{ id: number; nome: string }[]>([]);
 
-  const fetchUsers = useCallback(
-    async (
-      tab: "licenciados" | "colaboradores",
-      page?: number,
-      search?: string
-    ) => {
-      const isLicenciadoTab = tab === "licenciados";
-      const state = isLicenciadoTab ? licenciadoState : colaboradorState;
-      const setState = isLicenciadoTab
-        ? setLicenciadoState
-        : setColaboradorState;
-      const roles = isLicenciadoTab ? "licenciado" : "colaborador,admin";
+  useEffect(() => {
+    if (!user) return;
 
-      try {
-        const params = {
-          page: page || state.currentPage,
-          limit: 10,
-          roles,
-          search: search || state.searchQuery,
-        };
-        const res = await api.get("/api/users/admin", { params });
+    const isLicenciadoTab = activeTab === "licenciados";
+    const state = isLicenciadoTab ? licenciadoState : colaboradorState;
+    const roles = isLicenciadoTab
+      ? "licenciado"
+      : "comercial,rh,operacional,admin";
+
+    const params = {
+      page: state.currentPage,
+      limit: 10,
+      roles,
+      search: state.searchQuery,
+    };
+
+    api
+      .get("/api/users/admin", { params })
+      .then((res) => {
+        const setState = isLicenciadoTab
+          ? setLicenciadoState
+          : setColaboradorState;
         setState((prev) => ({
           ...prev,
           users: res.data.users,
           totalPages: res.data.totalPages,
         }));
-      } catch (err) {
-        toast.error(`Não foi possível carregar os ${tab}.`);
-      }
-    },
-    [licenciadoState, colaboradorState]
-  );
+      })
+      .catch((err) => {
+        toast.error(`Não foi possível carregar os ${activeTab}.`);
+      });
+  }, [
+    user,
+    activeTab,
+    licenciadoState.currentPage,
+    licenciadoState.searchQuery,
+    colaboradorState.currentPage,
+    colaboradorState.searchQuery,
+  ]);
+
+  useEffect(() => {
+    if (user) {
+      api
+        .get("/api/users/managers")
+        .then((res) => setManagers(res.data))
+        .catch((err) =>
+          toast.error("Não foi possível carregar a lista de vendedores.")
+        );
+    }
+  }, [user]);
 
   const handleSearch = (tab: "licenciados" | "colaboradores", term: string) => {
     const setState =
       tab === "licenciados" ? setLicenciadoState : setColaboradorState;
     setState((prev) => ({ ...prev, searchQuery: term, currentPage: 1 }));
-    fetchUsers(tab, 1, term);
   };
 
   const handlePageChange = (
@@ -83,7 +114,32 @@ const AdminUsers: React.FC = () => {
     const setState =
       tab === "licenciados" ? setLicenciadoState : setColaboradorState;
     setState((prev) => ({ ...prev, currentPage: newPage }));
-    fetchUsers(tab, newPage);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (userToDelete === null) return;
+    try {
+      await api.delete(`/api/users/admin/${userToDelete}`);
+      toast.success("Usuário excluído!");
+      const setState =
+        activeTab === "licenciados" ? setLicenciadoState : setColaboradorState;
+      setState((prev) => ({
+        ...prev,
+        users: prev.users.filter((u) => u.id !== userToDelete),
+      }));
+    } catch (err) {
+      toast.error("Erro ao excluir.");
+    } finally {
+      setIsConfirmModalOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const handleFormSuccess = () => {
+    setIsFormModalOpen(false);
+    const setState =
+      activeTab === "licenciados" ? setLicenciadoState : setColaboradorState;
+    setState((prev) => ({ ...prev, currentPage: 1, searchQuery: "" }));
   };
 
   const handleDeleteClick = (id: number) => {
@@ -95,21 +151,7 @@ const AdminUsers: React.FC = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (userToDelete === null) return;
-    try {
-      await api.delete(`/api/users/admin/${userToDelete}`);
-      toast.success("Usuário excluído!");
-      fetchUsers(activeTab);
-    } catch (err) {
-      toast.error("Erro ao excluir.");
-    } finally {
-      setIsConfirmModalOpen(false);
-      setUserToDelete(null);
-    }
-  };
-
-  const handleOpenEditModal = (userToEdit: any) => {
+  const handleOpenEditModal = (userToEdit: User) => {
     setEditingUser(userToEdit);
     setIsFormModalOpen(true);
   };
@@ -118,18 +160,6 @@ const AdminUsers: React.FC = () => {
     setEditingUser(null);
     setIsFormModalOpen(true);
   };
-
-  const handleFormSuccess = () => {
-    setIsFormModalOpen(false);
-    fetchUsers(activeTab);
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchUsers("licenciados");
-      fetchUsers("colaboradores");
-    }
-  }, [user]);
 
   if (loading || !user)
     return <div className="tela-loading">Carregando...</div>;
@@ -148,6 +178,7 @@ const AdminUsers: React.FC = () => {
           >
             Licenciados
           </button>
+
           <button
             className={`tab-item ${
               activeTab === "colaboradores" ? "active" : ""
@@ -169,7 +200,6 @@ const AdminUsers: React.FC = () => {
             handleSearch={handleSearch}
             handlePageChange={handlePageChange}
             handleDeleteClick={handleDeleteClick}
-            fetchUsers={fetchUsers}
           />
         ) : (
           <TabContent
@@ -182,18 +212,20 @@ const AdminUsers: React.FC = () => {
             handleSearch={handleSearch}
             handlePageChange={handlePageChange}
             handleDeleteClick={handleDeleteClick}
-            fetchUsers={fetchUsers}
           />
         )}
       </div>
       <Footer />
+
       <UserFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         onSuccess={handleFormSuccess}
         userToEdit={editingUser}
         formType={activeTab === "licenciados" ? "licenciado" : "interno"}
+        managers={managers}
       />
+
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}

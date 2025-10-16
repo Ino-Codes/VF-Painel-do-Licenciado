@@ -5,13 +5,11 @@ const { Readable } = require("stream");
 const router = express.Router();
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
-  const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
-  const checkAdmin = isAdmin(pool);
-  const checkLoggedIn = isLoggedIn(pool);
+  const { isAdmin, isLoggedIn, checkRole } = require("../middleware/auth.js");
 
-  // --- Rotas de Admin (Listar, Criar, Editar) ---
+  // --- Rotas de Admin (Listar, Criar, Editar, Excluir) ---
 
-  router.get("/admin", async (req, res) => {
+  router.get("/admin", isLoggedIn, isAdmin, async (req, res) => {
     const { search, page = 1, limit = 10, roles } = req.query;
     try {
       const offset = (page - 1) * limit;
@@ -35,8 +33,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
       const countSql = `SELECT COUNT(*) FROM users ${whereString}`;
-
-      const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone FROM users ${whereString} ORDER BY nome ASC LIMIT $${
+      const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id FROM users ${whereString} ORDER BY nome ASC LIMIT $${
         params.length + 1
       } OFFSET $${params.length + 2}`;
 
@@ -57,24 +54,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  router.get("/internal", checkLoggedIn, async (req, res) => {
-    try {
-      const internalUsersSql = `
-      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone, birth_date 
-      FROM users 
-      WHERE role IN ('admin', 'colaborador') 
-      ORDER BY nome ASC
-    `;
-
-      const result = await pool.query(internalUsersSql);
-      res.json(result.rows);
-    } catch (err) {
-      console.error("Erro ao buscar usuários internos:", err);
-      res.status(500).json({ error: "Erro ao buscar usuários internos" });
-    }
-  });
-
-  router.post("/admin", checkLoggedIn, checkAdmin, async (req, res) => {
+  router.post("/admin", isLoggedIn, isAdmin, async (req, res) => {
     const {
       nome,
       email,
@@ -85,6 +65,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       setor,
       unidade,
       telefone,
+      is_vendedor,
+      gestor_id,
     } = req.body;
     const client = await pool.connect();
 
@@ -103,7 +85,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const hash = await bcrypt.hash(password, 10);
 
       const userResult = await client.query(
-        "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+        "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
         [
           nome,
           email,
@@ -114,25 +96,24 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           setor || null,
           unidade || null,
           telefone || null,
+          is_vendedor || false,
+          gestor_id || null,
         ]
       );
       const newUserId = userResult.rows[0].id;
 
-      if (role !== "licenciado" && birth_date) {
+      if ((role === "admin" || role === "colaborador") && birth_date) {
         const [_, month, day] = birth_date.split("-");
-
         const eventTitle = `Aniversário de ${nome}`;
 
         for (let i = 0; i < 10; i++) {
           const eventYear = new Date().getFullYear() + i;
-
           const eventStartDate = new Date(
             `${eventYear}-${month}-${day}T11:00:00`
           );
-
           await client.query(
             `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
               eventTitle,
               "Dia de comemorar!",
@@ -166,41 +147,20 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  router.put("/force-change-password", checkLoggedIn, async (req, res) => {
-    const { id: userId } = req.user;
-    const { password } = req.body;
-
-    if (!password || password.length < 6) {
-      return res
-        .status(400)
-        .json({ error: "A senha deve ter pelo menos 6 caracteres." });
-    }
-
-    try {
-      const newHash = await bcrypt.hash(password, 10);
-      await pool.query(
-        "UPDATE users SET password = $1, must_change_password = FALSE WHERE id = $2",
-        [newHash, userId]
-      );
-
-      logActivity(
-        userId,
-        req.user.email,
-        "FORCE_PASSWORD_RESET",
-        "Senha alterada no primeiro acesso.",
-        req.ipAddress
-      );
-      res.json({ success: true, message: "Senha alterada com sucesso!" });
-    } catch (err) {
-      console.error("Erro ao forçar mudança de senha:", err);
-      res.status(500).json({ error: "Erro no servidor" });
-    }
-  });
-
-  router.put("/admin/:id", async (req, res) => {
+  router.put("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
     const { id } = req.params;
-    const { nome, email, role, birth_date, cargo, setor, unidade, telefone } =
-      req.body;
+    const {
+      nome,
+      email,
+      role,
+      birth_date,
+      cargo,
+      setor,
+      unidade,
+      telefone,
+      is_vendedor,
+      gestor_id,
+    } = req.body;
     const client = await pool.connect();
 
     try {
@@ -218,7 +178,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const finalBirthDate = role === "colaborador" ? birth_date : null;
 
       const userResult = await client.query(
-        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8 WHERE id = $9 RETURNING *",
+        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, is_vendedor = $9, gestor_id = $10 WHERE id = $11 RETURNING *",
         [
           nome,
           email,
@@ -228,6 +188,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           setor,
           unidade || null,
           telefone,
+          is_vendedor || false,
+          gestor_id || null,
           id,
         ]
       );
@@ -302,7 +264,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  router.delete("/admin/:id", async (req, res) => {
+  router.delete("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
     const { id } = req.params;
     const client = await pool.connect();
     try {
@@ -341,113 +303,90 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  router.post("/admin/bulk-upload", upload.single("file"), async (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "Nenhum arquivo CSV enviado." });
-    }
-    const results = [];
-    const errors = [];
-    let successCount = 0;
-    const stream = Readable.from(req.file.buffer.toString());
-    stream
-      .pipe(csv({ mapHeaders: ({ header }) => header.trim() }))
-      .on("data", (data) => results.push(data))
-      .on("end", async () => {
-        for (const user of results) {
-          const { nome, email, password, role } = user;
-          if (!nome || !email || !password || !role) {
-            errors.push(
-              `Dados incompletos para o e-mail: ${email || "desconhecido"}.`
-            );
-            continue;
-          }
-          try {
-            const existingUser = await pool.query(
-              "SELECT id FROM users WHERE email = $1",
-              [email]
-            );
-            if (existingUser.rowCount > 0) {
-              errors.push(`E-mail já cadastrado: ${email}.`);
+  // --- Rotas Específicas (Bulk Upload, Gestores, Fotos Corporativas) ---
+
+  router.post(
+    "/admin/bulk-upload",
+    isLoggedIn,
+    isAdmin,
+    upload.single("file"),
+    async (req, res) => {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo CSV enviado." });
+      }
+      const results = [];
+      const errors = [];
+      let successCount = 0;
+      const stream = Readable.from(req.file.buffer.toString());
+      stream
+        .pipe(csv({ mapHeaders: ({ header }) => header.trim() }))
+        .on("data", (data) => results.push(data))
+        .on("end", async () => {
+          for (const user of results) {
+            const { nome, email, password, role } = user;
+            if (!nome || !email || !password || !role) {
+              errors.push(
+                `Dados incompletos para o e-mail: ${email || "desconhecido"}.`
+              );
               continue;
             }
-            const hash = await bcrypt.hash(password, 10);
-            await pool.query(
-              "INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4)",
-              [nome, email, hash, role]
-            );
-            logActivity(
-              null,
-              email,
-              "BULK_CREATE_USER",
-              `Usuário ${email} criado via importação em massa.`,
-              req.ipAddress
-            );
-            successCount++;
-          } catch (dbError) {
-            console.error(`Erro ao inserir usuário ${email}:`, dbError);
-            errors.push(`Erro de banco de dados para o e-mail: ${email}.`);
+            try {
+              const existingUser = await pool.query(
+                "SELECT id FROM users WHERE email = $1",
+                [email]
+              );
+              if (existingUser.rowCount > 0) {
+                errors.push(`E-mail já cadastrado: ${email}.`);
+                continue;
+              }
+              const hash = await bcrypt.hash(password, 10);
+              await pool.query(
+                "INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4)",
+                [nome, email, hash, role]
+              );
+              logActivity(
+                null,
+                email,
+                "BULK_CREATE_USER",
+                `Usuário ${email} criado via importação em massa.`,
+                req.ipAddress
+              );
+              successCount++;
+            } catch (dbError) {
+              console.error(`Erro ao inserir usuário ${email}:`, dbError);
+              errors.push(`Erro de banco de dados para o e-mail: ${email}.`);
+            }
           }
-        }
-        res.json({
-          message: "Processamento do CSV finalizado.",
-          successCount,
-          errorCount: errors.length,
-          errors,
+          res.json({
+            message: "Processamento do CSV finalizado.",
+            successCount,
+            errorCount: errors.length,
+            errors,
+          });
         });
-      });
-  });
+    }
+  );
 
-  // --- Rotas de Perfil do Usuário Logado ---
-
-  router.post("/:id/avatar", upload.single("avatar"), async (req, res) => {
-    const { id } = req.params;
-    if (!req.file)
-      return res.status(400).json({ error: "Nenhum arquivo enviado." });
+  router.get("/managers", isLoggedIn, async (req, res) => {
     try {
-      const userResult = await pool.query(
-        "SELECT avatar_url FROM users WHERE id = $1",
-        [id]
-      );
-      const oldAvatarUrl = userResult.rows[0]?.avatar_url;
-      if (oldAvatarUrl) {
-        const publicId = oldAvatarUrl.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(publicId);
-      }
-      const uploadResult = await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream({ resource_type: "image" }, (error, result) => {
-            if (error) reject(error);
-            resolve(result);
-          })
-          .end(req.file.buffer);
-      });
-      const newAvatarUrl = uploadResult.secure_url;
-      const updateResult = await pool.query(
-        "UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url",
-        [newAvatarUrl, id]
-      );
-      logActivity(
-        id,
-        null,
-        "UPDATE_AVATAR",
-        "Foto de perfil atualizada.",
-        req.ipAddress
-      );
-      res.json({
-        success: true,
-        avatarUrl: updateResult.rows[0].avatar_url,
-      });
+      const query = `
+      SELECT id, nome 
+      FROM users 
+      WHERE is_vendedor = TRUE
+      ORDER BY nome ASC
+    `;
+      const result = await pool.query(query);
+      res.json(result.rows);
     } catch (err) {
-      console.error("Erro no upload de avatar:", err);
-      res.status(500).json({ error: "Erro no servidor durante o upload." });
+      console.error("Erro ao buscar gestores:", err);
+      res.status(500).json({ error: "Erro ao buscar gestores." });
     }
   });
 
-  // backend/routes/users.js
-
-  // ROTA PARA ADMIN FAZER UPLOAD DA FOTO CORPORATIVA
   router.put(
     "/admin/:id/corporate-photo",
+    isLoggedIn,
+    isAdmin,
     upload.single("corporate_photo"),
     async (req, res) => {
       const { id } = req.params;
@@ -473,7 +412,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           });
         }
 
-        // Faz o upload da nova foto
+        // Faz o upload da nova foto para o Cloudinary
         const uploadResult = await new Promise((resolve, reject) => {
           cloudinary.uploader
             .upload_stream({ resource_type: "image" }, (error, result) => {
@@ -506,138 +445,151 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
-  router.delete("/admin/:id/corporate-photo", async (req, res) => {
-    const { id } = req.params;
-    const client = await pool.connect();
+  router.delete(
+    "/admin/:id/corporate-photo",
+    isLoggedIn,
+    isAdmin,
+    async (req, res) => {
+      const { id } = req.params;
+      const client = await pool.connect();
 
-    try {
-      await client.query("BEGIN");
+      try {
+        await client.query("BEGIN");
 
-      const userResult = await client.query(
-        "SELECT corporate_photo_url FROM users WHERE id = $1",
-        [id]
-      );
-      const oldPhotoUrl = userResult.rows[0]?.corporate_photo_url;
+        const userResult = await client.query(
+          "SELECT corporate_photo_url FROM users WHERE id = $1",
+          [id]
+        );
+        const oldPhotoUrl = userResult.rows[0]?.corporate_photo_url;
 
-      if (oldPhotoUrl) {
-        const publicId = oldPhotoUrl.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+        if (oldPhotoUrl) {
+          const publicId = oldPhotoUrl.split("/").pop().split(".")[0];
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "image",
+          });
+        }
+
+        const updateResult = await client.query(
+          "UPDATE users SET corporate_photo_url = NULL WHERE id = $1 RETURNING *",
+          [id]
+        );
+
+        await client.query("COMMIT");
+
+        const updatedUser = updateResult.rows[0];
+        delete updatedUser.password;
+
+        res.json({ success: true, user: updatedUser });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Erro ao remover foto corporativa:", err);
+        res.status(500).json({ error: "Erro no servidor ao remover a foto." });
+      } finally {
+        client.release();
       }
+    }
+  );
 
-      const updateResult = await client.query(
-        "UPDATE users SET corporate_photo_url = NULL WHERE id = $1 RETURNING *",
-        [id]
-      );
+  // --- Rotas Públicas ou de Utilizador Logado ---
 
-      await client.query("COMMIT");
+  router.get("/internal", isLoggedIn, async (req, res) => {
+    try {
+      const internalUsersSql = `
+      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone, birth_date 
+      FROM users 
+      WHERE role IN ('admin', 'colaborador') 
+      ORDER BY nome ASC
+    `;
 
-      const updatedUser = updateResult.rows[0];
-      delete updatedUser.password;
-
-      res.json({ success: true, user: updatedUser });
+      const result = await pool.query(internalUsersSql);
+      res.json(result.rows);
     } catch (err) {
-      await client.query("ROLLBACK");
-      console.error("Erro ao remover foto corporativa:", err);
-      res.status(500).json({ error: "Erro no servidor ao remover a foto." });
-    } finally {
-      client.release();
+      console.error("Erro ao buscar usuários internos:", err);
+      res.status(500).json({ error: "Erro ao buscar usuários internos" });
     }
   });
 
-  router.get("/admin", async (req, res) => {
-    const { search, page = 1, limit = 10 } = req.query;
-    try {
-      const offset = (page - 1) * limit;
-      let whereClause = "";
-      const params = [];
-      if (search) {
-        params.push(`%${search}%`);
-        whereClause = `WHERE nome ILIKE $1 OR email ILIKE $1`;
-      }
-      const countSql = `SELECT COUNT(*) FROM users ${whereClause}`;
+  router.put("/force-change-password", isLoggedIn, async (req, res) => {
+    const { id: userId } = req.user;
+    const { password } = req.body;
 
-      const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone FROM users ${whereClause} ORDER BY nome ASC LIMIT $${
-        params.length + 1
-      } OFFSET $${params.length + 2}`;
-
-      const [countResult, usersResult] = await Promise.all([
-        pool.query(countSql, params),
-        pool.query(usersSql, [...params, limit, offset]),
-      ]);
-      const totalCount = parseInt(countResult.rows[0].count, 10);
-      res.json({
-        users: usersResult.rows,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-      });
-    } catch (err) {
-      console.error("Erro ao buscar usuários:", err);
-      res.status(500).json({ error: "Erro ao buscar usuários" });
+    if (!password || password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "A senha deve ter pelo menos 6 caracteres." });
     }
-  });
 
-  router.put("/:id/profile", async (req, res) => {
-    const { id } = req.params;
-    const { nome, bio } = req.body;
     try {
-      const result = await pool.query(
-        "UPDATE users SET nome = $1, bio = $2 WHERE id = $3 RETURNING *",
-        [nome, bio, id]
+      const newHash = await bcrypt.hash(password, 10);
+      await pool.query(
+        "UPDATE users SET password = $1, must_change_password = FALSE WHERE id = $2",
+        [newHash, userId]
       );
-      if (result.rowCount === 0)
-        return res.status(404).json({ error: "Usuário não encontrado." });
-      const updatedUser = result.rows[0];
-      delete updatedUser.password;
-      delete updatedUser.reset_token;
-      delete updatedUser.reset_token_expires;
+
       logActivity(
-        id,
-        null,
-        "UPDATE_PROFILE",
-        "Nome do perfil atualizado.",
+        userId,
+        req.user.email,
+        "FORCE_PASSWORD_RESET",
+        "Senha alterada no primeiro acesso.",
         req.ipAddress
       );
-      res.json({ success: true, user: updatedUser });
+      res.json({ success: true, message: "Senha alterada com sucesso!" });
     } catch (err) {
-      console.error("Erro ao atualizar perfil:", err);
+      console.error("Erro ao forçar mudança de senha:", err);
       res.status(500).json({ error: "Erro no servidor" });
     }
   });
 
-  router.put("/:id/change-password", async (req, res) => {
-    const { id } = req.params;
-    const { currentPassword, newPassword } = req.body;
-    try {
-      const userResult = await pool.query(
-        "SELECT password FROM users WHERE id = $1",
-        [id]
-      );
-      if (userResult.rowCount === 0)
-        return res.status(404).json({ error: "Usuário não encontrado." });
-      const storedHash = userResult.rows[0].password;
-      if (!(await bcrypt.compare(currentPassword, storedHash))) {
-        return res.status(401).json({ error: "A senha atual está incorreta." });
+  router.post(
+    "/:id/avatar",
+    isLoggedIn,
+    upload.single("avatar"),
+    async (req, res) => {
+      const { id } = req.params;
+      if (!req.file)
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      try {
+        const userResult = await pool.query(
+          "SELECT avatar_url FROM users WHERE id = $1",
+          [id]
+        );
+        const oldAvatarUrl = userResult.rows[0]?.avatar_url;
+        if (oldAvatarUrl) {
+          const publicId = oldAvatarUrl.split("/").pop().split(".")[0];
+          await cloudinary.uploader.destroy(publicId);
+        }
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream({ resource_type: "image" }, (error, result) => {
+              if (error) reject(error);
+              resolve(result);
+            })
+            .end(req.file.buffer);
+        });
+        const newAvatarUrl = uploadResult.secure_url;
+        const updateResult = await pool.query(
+          "UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url",
+          [newAvatarUrl, id]
+        );
+        logActivity(
+          id,
+          null,
+          "UPDATE_AVATAR",
+          "Foto de perfil atualizada.",
+          req.ipAddress
+        );
+        res.json({
+          success: true,
+          avatarUrl: updateResult.rows[0].avatar_url,
+        });
+      } catch (err) {
+        console.error("Erro no upload de avatar:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
       }
-      const newHash = await bcrypt.hash(newPassword, 10);
-      await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
-        newHash,
-        id,
-      ]);
-      logActivity(
-        id,
-        null,
-        "CHANGE_PASSWORD",
-        "Senha alterada com sucesso.",
-        req.ipAddress
-      );
-      res.json({ success: true, message: "Senha alterada com sucesso." });
-    } catch (err) {
-      console.error("Erro ao alterar senha:", err);
-      res.status(500).json({ error: "Erro no servidor" });
     }
-  });
+  );
 
-  router.delete("/:id/avatar", async (req, res) => {
+  router.delete("/:id/avatar", isLoggedIn, async (req, res) => {
     const { id } = req.params;
     try {
       const userResult = await pool.query(
@@ -667,6 +619,39 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       res.json({ success: true, user: updatedUser });
     } catch (err) {
       console.error("Erro ao remover avatar:", err);
+      res.status(500).json({ error: "Erro no servidor" });
+    }
+  });
+
+  router.put("/:id/change-password", isLoggedIn, async (req, res) => {
+    const { id } = req.params;
+    const { currentPassword, newPassword } = req.body;
+    try {
+      const userResult = await pool.query(
+        "SELECT password FROM users WHERE id = $1",
+        [id]
+      );
+      if (userResult.rowCount === 0)
+        return res.status(404).json({ error: "Usuário não encontrado." });
+      const storedHash = userResult.rows[0].password;
+      if (!(await bcrypt.compare(currentPassword, storedHash))) {
+        return res.status(401).json({ error: "A senha atual está incorreta." });
+      }
+      const newHash = await bcrypt.hash(newPassword, 10);
+      await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
+        newHash,
+        id,
+      ]);
+      logActivity(
+        id,
+        null,
+        "CHANGE_PASSWORD",
+        "Senha alterada com sucesso.",
+        req.ipAddress
+      );
+      res.json({ success: true, message: "Senha alterada com sucesso." });
+    } catch (err) {
+      console.error("Erro ao alterar senha:", err);
       res.status(500).json({ error: "Erro no servidor" });
     }
   });

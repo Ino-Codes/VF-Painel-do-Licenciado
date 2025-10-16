@@ -1,12 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn } = require("../middleware/auth.js");
+const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool) {
-  const checkLoggedIn = isLoggedIn(pool);
-
   // Rota para buscar todas as perguntas de forma aleatória
-  router.get("/questions", checkLoggedIn, async (req, res) => {
+  router.get("/questions", isLoggedIn, async (req, res) => {
     try {
       const result = await pool.query(
         "SELECT id, statement_a, type_a, statement_b, type_b FROM enneagram_questions ORDER BY RANDOM()"
@@ -18,7 +16,7 @@ module.exports = function (pool) {
   });
 
   // Rota para buscar o resultado de um utilizador
-  router.get("/results", checkLoggedIn, async (req, res) => {
+  router.get("/results", isLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
     try {
       const result = await pool.query(
@@ -31,7 +29,7 @@ module.exports = function (pool) {
     }
   });
 
-  router.get("/types", checkLoggedIn, async (req, res) => {
+  router.get("/types", isLoggedIn, async (req, res) => {
     try {
       const result = await pool.query(
         "SELECT * FROM enneagram_types ORDER BY id"
@@ -43,7 +41,7 @@ module.exports = function (pool) {
   });
 
   // Rota para submeter as respostas e calcular o resultado
-  router.post("/submit", checkLoggedIn, async (req, res) => {
+  router.post("/submit", isLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
     const { answers } = req.body;
 

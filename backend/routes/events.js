@@ -1,13 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
+const { isAdmin, isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
-  const checkAdmin = isAdmin(pool);
-  const checkLoggedIn = isLoggedIn(pool);
-
   // ROTA PÚBLICA PARA O DASHBOARD
-  router.get("/current-month", checkLoggedIn, async (req, res) => {
+  router.get("/current-month", isLoggedIn, async (req, res) => {
     try {
       const now = new Date();
       const year = now.getFullYear();
@@ -34,8 +31,8 @@ module.exports = function (pool, cloudinary, upload) {
   // ROTA PARA BUSCAR USUÁRIOS (para o modal)
   router.get(
     "/users-for-notification",
-    checkLoggedIn,
-    checkAdmin,
+    isLoggedIn,
+    isAdmin,
     async (req, res) => {
       try {
         const result = await pool.query(
@@ -49,23 +46,18 @@ module.exports = function (pool, cloudinary, upload) {
   );
 
   // ROTA PARA BUSCAR NOTIFICADOS DE UM EVENTO ESPECÍFICO
-  router.get(
-    "/:id/notified-users",
-    checkLoggedIn,
-    checkAdmin,
-    async (req, res) => {
-      const { id } = req.params;
-      try {
-        const result = await pool.query(
-          "SELECT user_id FROM event_notifications WHERE event_id = $1",
-          [id]
-        );
-        res.json(result.rows.map((row) => row.user_id));
-      } catch (err) {
-        res.status(500).json({ error: "Erro ao buscar usuários notificados." });
-      }
+  router.get("/:id/notified-users", isLoggedIn, isAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const result = await pool.query(
+        "SELECT user_id FROM event_notifications WHERE event_id = $1",
+        [id]
+      );
+      res.json(result.rows.map((row) => row.user_id));
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao buscar usuários notificados." });
     }
-  );
+  });
 
   // ROTAS DE ADMINISTRAÇÃO
 
@@ -83,7 +75,7 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // Rota para BUSCAR as categorias
-  router.get("/categories", checkLoggedIn, checkAdmin, async (req, res) => {
+  router.get("/categories", isLoggedIn, isAdmin, async (req, res) => {
     try {
       const result = await pool.query(
         "SELECT DISTINCT category FROM events WHERE category IS NOT NULL AND category != '' ORDER BY category ASC"
@@ -95,7 +87,7 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // Rota para CRIAR um novo evento
-  router.post("/", checkLoggedIn, checkAdmin, async (req, res) => {
+  router.post("/", isLoggedIn, isAdmin, async (req, res) => {
     const {
       title,
       description,
@@ -133,7 +125,7 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // Rota para ATUALIZAR um evento existente
-  router.put("/:id", checkLoggedIn, checkAdmin, async (req, res) => {
+  router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
     const { id } = req.params;
     const {
       title,

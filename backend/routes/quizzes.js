@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { isAdmin, isLoggedIn } = require("../middleware/auth.js");
+const { isAdmin, isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -11,9 +11,6 @@ function shuffleArray(array) {
 }
 
 module.exports = function (pool) {
-  const checkAdmin = isAdmin(pool);
-  const checkLoggedIn = isLoggedIn(pool);
-
   // Rotas de aluno
   router.get("/course/:courseId", async (req, res) => {
     const { courseId } = req.params;
@@ -51,7 +48,7 @@ module.exports = function (pool) {
   });
 
   // Rota para submeter as respostas do quiz
-  router.post("/:quizId/submit", checkLoggedIn, async (req, res) => {
+  router.post("/:quizId/submit", isLoggedIn, async (req, res) => {
     const { quizId } = req.params;
     const { userId, answers } = req.body;
 
@@ -117,29 +114,24 @@ module.exports = function (pool) {
   // --- ROTAS DE ADMINISTRAÇÃO ---
 
   // PERGUNTAS
-  router.post(
-    "/:quizId/questions",
-    checkLoggedIn,
-    checkAdmin,
-    async (req, res) => {
-      const { quizId } = req.params;
-      const { question_text } = req.body;
-      try {
-        const result = await pool.query(
-          "INSERT INTO questions (quiz_id, question_text) VALUES ($1, $2) RETURNING *",
-          [quizId, question_text]
-        );
-        res.status(201).json(result.rows[0]);
-      } catch (err) {
-        res.status(500).json({ error: "Erro ao criar pergunta." });
-      }
+  router.post("/:quizId/questions", isLoggedIn, isAdmin, async (req, res) => {
+    const { quizId } = req.params;
+    const { question_text } = req.body;
+    try {
+      const result = await pool.query(
+        "INSERT INTO questions (quiz_id, question_text) VALUES ($1, $2) RETURNING *",
+        [quizId, question_text]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao criar pergunta." });
     }
-  );
+  });
 
   router.delete(
     "/questions/:questionId",
-    checkLoggedIn,
-    checkAdmin,
+    isLoggedIn,
+    isAdmin,
     async (req, res) => {
       const { questionId } = req.params;
       try {
@@ -154,8 +146,8 @@ module.exports = function (pool) {
   // OPÇÕES
   router.post(
     "/questions/:questionId/options",
-    checkLoggedIn,
-    checkAdmin,
+    isLoggedIn,
+    isAdmin,
     async (req, res) => {
       const { questionId } = req.params;
       const { option_text } = req.body;
@@ -173,8 +165,8 @@ module.exports = function (pool) {
 
   router.put(
     "/options/:optionId/correct",
-    checkLoggedIn,
-    checkAdmin,
+    isLoggedIn,
+    isAdmin,
     async (req, res) => {
       const { optionId } = req.params;
       const client = await pool.connect();
@@ -204,20 +196,15 @@ module.exports = function (pool) {
     }
   );
 
-  router.delete(
-    "/options/:optionId",
-    checkLoggedIn,
-    checkAdmin,
-    async (req, res) => {
-      const { optionId } = req.params;
-      try {
-        await pool.query("DELETE FROM options WHERE id = $1", [optionId]);
-        res.status(204).send();
-      } catch (err) {
-        res.status(500).json({ error: "Erro ao apagar opção." });
-      }
+  router.delete("/options/:optionId", isLoggedIn, isAdmin, async (req, res) => {
+    const { optionId } = req.params;
+    try {
+      await pool.query("DELETE FROM options WHERE id = $1", [optionId]);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao apagar opção." });
     }
-  );
+  });
 
   return router;
 };

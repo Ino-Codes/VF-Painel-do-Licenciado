@@ -19,8 +19,8 @@
 
   --bg-accent-color: #ff99000d;
   --bg-event-color: #24ff000d;
-  --bg-result-green: #24ff000d;
-  --bg-result-red: #ff00000d;
+  --bg-result-green: #37ff161a;
+  --bg-result-red: #ff24242b;
 
   --bg-calendar-non-bussiness: #e6e6e6;
 
@@ -62,8 +62,8 @@ body.dark-theme {
   --border-color: #333333;
   --border-strong: #555555;
   --bg-event-color: #24ff000d;
-  --bg-result-green: #24ff000d;
-  --bg-result-red: #ff00000d;
+  --bg-result-green: #37ff161a;
+  --bg-result-red: #ff24242b;
 
   --bg-calendar-non-bussiness: #2d2d2d;
 

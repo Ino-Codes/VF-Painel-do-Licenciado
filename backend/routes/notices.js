@@ -1,58 +1,60 @@
 const express = require("express");
 const router = express.Router();
-const { JSDOM } = require("jsdom");
-const createDOMPurify = require("dompurify");
-const window = new JSDOM("").window;
-const DOMPurify = createDOMPurify(window);
 
-module.exports = function ({ pool, checkLoggedIn, checkAdmin }) {
-  router.get("/", checkLoggedIn, async (req, res) => {
+const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+
+module.exports = function (pool) {
+  router.get("/", isLoggedIn, async (req, res) => {
     const { role } = req.user;
     try {
       let query = "SELECT * FROM notices";
+      let params = [];
 
-      if (role === "admin") {
-      } else if (role === "licenciado") {
-        query += " WHERE visibility = 'licenciados' OR visibility = 'todos'";
-      } else {
-        query += " WHERE visibility = 'internos' OR visibility = 'todos'";
+      if (role !== "admin") {
+        if (role === "licenciado") {
+          query += " WHERE visibility = 'todos' OR visibility = 'licenciados'";
+        } else if (role === "colaborador") {
+          query += " WHERE visibility = 'todos' OR visibility = 'internos'";
+        } else {
+          query += " WHERE visibility = 'todos'";
+        }
       }
 
       query += " ORDER BY created_at DESC";
-      const result = await pool.query(query);
+
+      const result = await pool.query(query, params);
       res.json(result.rows);
     } catch (err) {
       console.error("Erro ao buscar avisos:", err);
-      res.status(500).json({ error: "Erro ao buscar avisos." });
+      res.status(500).json({ error: "Erro ao buscar avisos" });
     }
   });
 
-  router.post("/admin", checkLoggedIn, checkAdmin, async (req, res) => {
+  router.post("/", isLoggedIn, isAdmin, async (req, res) => {
     const { message, visibility } = req.body;
     try {
-      const clean_message = DOMPurify.sanitize(message);
-      await pool.query(
-        "INSERT INTO notices (message, visibility) VALUES ($1, $2)",
-        [clean_message, visibility]
+      const result = await pool.query(
+        "INSERT INTO notices (message, visibility) VALUES ($1, $2) RETURNING *",
+        [message, visibility]
       );
-      res.status(201).json({ success: true });
+      res.status(201).json(result.rows[0]);
     } catch (err) {
-      console.error("Erro ao criar aviso:", err);
-      res.status(500).json({ error: "Erro ao criar aviso." });
+      console.error("Erro ao postar aviso:", err);
+      res.status(500).json({ error: "Erro ao postar aviso" });
     }
   });
 
-  router.put("/admin/:id", checkLoggedIn, checkAdmin, async (req, res) => {
+  router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
     const { id } = req.params;
     const { message, visibility } = req.body;
     try {
-      const clean_message = DOMPurify.sanitize(message);
       const result = await pool.query(
         "UPDATE notices SET message = $1, visibility = $2 WHERE id = $3 RETURNING *",
-        [clean_message, visibility, id]
+        [message, visibility, id]
       );
-      if (result.rowCount === 0)
+      if (result.rowCount === 0) {
         return res.status(404).json({ error: "Aviso não encontrado." });
+      }
       res.json(result.rows[0]);
     } catch (err) {
       console.error("Erro ao editar aviso:", err);
@@ -60,14 +62,10 @@ module.exports = function ({ pool, checkLoggedIn, checkAdmin }) {
     }
   });
 
-  router.delete("/admin/:id", async (req, res) => {
+  router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
     const { id } = req.params;
     try {
-      const result = await pool.query("DELETE FROM notices WHERE id = $1", [
-        id,
-      ]);
-      if (result.rowCount === 0)
-        return res.status(404).json({ error: "Aviso não encontrado." });
+      await pool.query("DELETE FROM notices WHERE id = $1", [id]);
       res.json({ success: true, message: "Aviso excluído com sucesso." });
     } catch (err) {
       console.error("Erro ao excluir aviso:", err);

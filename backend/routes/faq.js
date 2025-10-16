@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
+const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
-  router.get("/", async (req, res) => {
+  router.get("/", isLoggedIn, async (req, res) => {
     const { category, search, page = 1, limit = 15 } = req.query;
     const userRole = req.user ? req.user.role : null; // Pega a role do usuário logado
 
@@ -119,47 +120,56 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.post("/admin", upload.single("document"), async (req, res) => {
-    const { category, question, answer, visibility = "todos" } = req.body;
-    let document_url = null;
-    let document_originalname = null;
+  router.post(
+    "/admin",
+    isLoggedIn,
+    isAdmin,
+    upload.single("document"),
+    async (req, res) => {
+      const { category, question, answer, visibility = "todos" } = req.body;
+      let document_url = null;
+      let document_originalname = null;
 
-    try {
-      if (req.file) {
-        const resourceType = req.file.mimetype.startsWith("image")
-          ? "image"
-          : "raw";
-        const uploadResult = await new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ resource_type: resourceType }, (error, result) => {
-              if (error) reject(error);
-              resolve(result);
-            })
-            .end(req.file.buffer);
-        });
-        document_url = uploadResult.secure_url;
-        document_originalname = req.file.originalname;
+      try {
+        if (req.file) {
+          const resourceType = req.file.mimetype.startsWith("image")
+            ? "image"
+            : "raw";
+          const uploadResult = await new Promise((resolve, reject) => {
+            cloudinary.uploader
+              .upload_stream(
+                { resource_type: resourceType },
+                (error, result) => {
+                  if (error) reject(error);
+                  resolve(result);
+                }
+              )
+              .end(req.file.buffer);
+          });
+          document_url = uploadResult.secure_url;
+          document_originalname = req.file.originalname;
+        }
+
+        const result = await pool.query(
+          "INSERT INTO faq (category, question, answer, document_url, document_originalname, visibility) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+          [
+            category,
+            question,
+            answer,
+            document_url,
+            document_originalname,
+            visibility,
+          ]
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao criar FAQ:", err);
+        res.status(500).json({ error: "Erro ao criar FAQ." });
       }
-
-      const result = await pool.query(
-        "INSERT INTO faq (category, question, answer, document_url, document_originalname, visibility) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-        [
-          category,
-          question,
-          answer,
-          document_url,
-          document_originalname,
-          visibility,
-        ]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro ao criar FAQ:", err);
-      res.status(500).json({ error: "Erro ao criar FAQ." });
     }
-  });
+  );
 
-  router.delete("/admin/:id", async (req, res) => {
+  router.delete("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
     const { id } = req.params;
     try {
       const faqResult = await pool.query(

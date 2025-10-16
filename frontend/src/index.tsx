@@ -24,6 +24,8 @@ import AdminCalendar from "./pages/admin/AdminCalendar.tsx";
 import EnneagramPage from "./pages/profile/EnneagramPage.tsx";
 import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
 import Empresa from "./pages/company/Empresa.tsx";
+import Oportunidades from "./pages/opportunities/Oportunidades.tsx";
+import GestaoFerias from "./pages/admin/GestaoFerias.tsx";
 
 import "./styles/1-global.css";
 import "./styles/2-components.css";
@@ -35,6 +37,7 @@ import "./styles/7-AdminPages.css";
 import "./styles/8-Profile.css";
 import "./styles/9-Assesments.css";
 import "./styles/10-Company.css";
+import "./styles/11-Opportunities.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
@@ -76,6 +79,7 @@ const AppRouter: React.FC = () => {
             element={<EnneagramResultsPage />}
           />
           <Route path="/empresa" element={<Empresa />} />
+          <Route path="/oportunidades" element={<Oportunidades />} />
           {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
@@ -84,6 +88,7 @@ const AppRouter: React.FC = () => {
             element={<AdminCourseEditor />}
           />
           <Route path="/admin/calendar" element={<AdminCalendar />} />
+          <Route path="/admin/ferias" element={<GestaoFerias />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />

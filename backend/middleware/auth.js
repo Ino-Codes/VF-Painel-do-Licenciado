@@ -1,15 +1,11 @@
-// backend/middleware/auth.js
-
 const jwt = require("jsonwebtoken");
 
-const isLoggedIn = (pool) => (req, res, next) => {
+const isLoggedIn = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Autenticação necessária." });
   }
-
   const token = authHeader.split(" ")[1];
-
   jwt.verify(token, process.env.JWT_SECRET, (err, decodedUser) => {
     if (err) {
       return res.status(403).json({ error: "Token inválido ou expirado." });
@@ -19,20 +15,18 @@ const isLoggedIn = (pool) => (req, res, next) => {
   });
 };
 
-const isAdmin = (pool) => (req, res, next) => {
-  // --- ADICIONE ESTA LINHA PARA DEPURAÇÃO ---
-  console.log(
-    "Verificando permissão de Admin. Conteúdo de req.user:",
-    req.user
-  );
-  // --- FIM DA LINHA DE DEPURAÇÃO ---
-
-  if (req.user && req.user.role === "admin") {
-    return next();
-  }
-  return res
-    .status(403)
-    .json({ error: "Acesso negado. Recurso para administradores." });
+const checkRole = (allowedRoles) => {
+  return (req, res, next) => {
+    if (req.user && allowedRoles.includes(req.user.role)) {
+      return next(); // Permite o acesso
+    }
+    return res.status(403).json({
+      error: "Acesso negado. Você não tem permissão para este recurso.",
+    });
+  };
 };
 
-module.exports = { isLoggedIn, isAdmin };
+// A função isAdmin agora é apenas um caso específico do checkRole
+const isAdmin = checkRole(["admin"]);
+
+module.exports = { isLoggedIn, isAdmin, checkRole };
