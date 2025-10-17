@@ -92,12 +92,14 @@ const TabContent: React.FC<{
             <button
               onClick={() => handlePageChange(tab, state.currentPage - 1)}
               disabled={state.currentPage === 1}
+              className="list-button"
             >
               Anterior
             </button>
             <button
               onClick={() => handlePageChange(tab, state.currentPage + 1)}
               disabled={state.currentPage === state.totalPages}
+              className="list-button"
             >
               Próxima
             </button>
