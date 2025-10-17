@@ -1,0 +1,158 @@
+/* --- Layout da Página de Férias --- */
+.page-header {
+  padding-bottom: 20px;
+}
+
+.admin-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+/* Container principal para o layout de duas colunas */
+.admin-section-main-columns {
+  display: flex;
+  flex-direction: row;
+  gap: 25px;
+  align-items: flex-start;
+}
+
+/* Cada secção dentro das colunas */
+.admin-section-main-columns > .admin-section {
+  flex: 1; /* Faz com que cada coluna ocupe metade do espaço */
+  margin-top: 0;
+  min-width: 0;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+/* Centraliza o calendário e o botão */
+.date-picker-container {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+/* --- Estilos para a Lista de Histórico --- */
+.vacation-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px; /* Altura máxima com scroll */
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.vacation-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: var(--bg-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.vacation-history-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.vacation-history-item-info strong {
+  color: var(--text-primary);
+}
+
+.vacation-history-item-info small {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* --- Ajuste Responsivo para Telas Menores --- */
+@media (max-width: 900px) {
+  .admin-section-main-columns {
+    flex-direction: column; /* As colunas ficam uma em cima da outra */
+  }
+}
+
+.react-datepicker {
+  font-size: 0.8rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  display: inline-block;
+  position: relative;
+  line-height: initial;
+}
+
+.react-datepicker__header {
+  background-color: var(--bg-secondary);
+}
+
+.react-datepicker__header h2 {
+  color: var(--text-primary);
+}
+
+.table {
+  background-color: var(--bg-primary);
+}
+
+.react-datepicker__day {
+  color: var(--text-primary);
+}
+
+.react-datepicker__day-names span {
+  color: var(--text-primary);
+}
+
+.react-datepicker__day--outside-month {
+  color: var(--text-secondary);
+}
+
+.react-datepicker__day--selected:not([aria-disabled="true"]):hover,
+.react-datepicker__day--in-selecting-range:not([aria-disabled="true"]):hover,
+.react-datepicker__day--in-range:not([aria-disabled="true"]):hover {
+  background-color: var(--accent-color);
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: var(--accent-color);
+}
+
+.react-datepicker__day--in-selecting-range:not(
+    .react-datepicker__day--in-range
+  ) {
+  background-color: var(--bg-accent-color);
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--bg-primary);
+}
+
+.react-datepicker__day:not([aria-disable="true"]):hover {
+  background-color: var(--bg-secondary);
+}
+
+.react-datepicker__month-container {
+  min-width: 250px;
+  width: 280px;
+}
+
+.react-datepicker__day--highlighted-pending {
+  background-color: var(--bg-graph-bar);
+  border-radius: 8px;
+}
+
+.react-datepicker__day--highlighted-approved {
+  background-color: var(--bg-graph-column);
+  border-radius: 8px;
+}
+
+.react-datepicker__day--in-selecting-range.react-datepicker__day--highlighted-pending,
+.react-datepicker__day--in-selecting-range.react-datepicker__day--highlighted-approved,
+.react-datepicker__day--in-range.react-datepicker__day--highlighted-pending,
+.react-datepicker__day--in-range.react-datepicker__day--highlighted-approved {
+  background-color: var(--accent-color);
+  color: #fff; /* Texto branco na seleção */
+}

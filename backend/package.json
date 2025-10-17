@@ -28,6 +28,7 @@
     "render": "^0.1.4"
   },
   "devDependencies": {
+    "@types/node-cron": "^3.0.11",
     "dotenv": "^17.2.3"
   }
 }

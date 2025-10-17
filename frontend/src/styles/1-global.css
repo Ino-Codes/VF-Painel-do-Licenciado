@@ -17,7 +17,7 @@
   --border-color: #e9ecef; /* Bordas de cards e divisórias */
   --border-strong: #ccc; /* Bordas de inputs */
 
-  --bg-accent-color: #ff99000d;
+  --bg-accent-color: #ffae003a;
   --bg-event-color: #24ff000d;
   --bg-result-green: #37ff161a;
   --bg-result-red: #ff24242b;
@@ -33,7 +33,7 @@
   --bg-graph: rgba(221, 177, 65, 0.6);
   --border-graph: rgba(221, 177, 65, 1);
 
-  --bg-graph-column: rgba(4, 161, 70, 0.6);
+  --bg-graph-column: rgba(34, 164, 29, 0.516);
   --border-graph-column: rgba(4, 161, 70, 1);
 
   --bg-graph-radar: rgba(25, 99, 209, 0.6);

@@ -7,6 +7,7 @@ const path = require("path");
 const { Pool } = require("pg");
 const cloudinary = require("cloudinary").v2;
 const sgMail = require("@sendgrid/mail");
+const cron = require("node-cron");
 
 const app = express();
 
@@ -71,7 +72,8 @@ const userRoutes = require("./routes/users.js")(
   upload,
   logActivity
 );
-const noticeRoutes = require("./routes/notices.js")(pool); // Simplificado
+const cronFunctions = require("./cron.js");
+const noticeRoutes = require("./routes/notices.js")(pool);
 const fileRoutes = require("./routes/files.js")(pool, cloudinary, upload, path);
 const videoRoutes = require("./routes/videos.js")(pool);
 const faqRoutes = require("./routes/faq.js")(pool, cloudinary, upload);
@@ -84,6 +86,7 @@ const enneagramRoutes = require("./routes/enneagram.js")(pool);
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(pool);
 const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
 const opportunitiesRoutes = require("./routes/opportunities.js")(pool);
+const vacationRoutes = require("./routes/vacations.js")(pool);
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes);
@@ -102,6 +105,7 @@ app.use("/api/enneagram", enneagramRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/cron", cronTriggerRoutes);
 app.use("/api/opportunities", opportunitiesRoutes);
+app.use("/api/vacations", vacationRoutes);
 
 const createTables = async () => {
   const userTable = `
@@ -286,6 +290,18 @@ const createTables = async () => {
     console.error("Erro ao criar tabelas:", err);
   }
 };
+
+cron.schedule(
+  "*/60 * * * *", // Roda a cada 60 minutos
+  () => {
+    console.log("CRON: Executando a tarefa agendada updateVacationBalance...");
+    cronFunctions.updateVacationBalance(pool);
+  },
+  {
+    scheduled: true,
+    timezone: "America/Sao_Paulo",
+  }
+);
 
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);

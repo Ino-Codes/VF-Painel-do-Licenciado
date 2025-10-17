@@ -8,6 +8,68 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+// Evento periódico de cálculo do saldo de férias de cada colaborador
+const updateVacationBalance = async () => {
+  console.log("CRON: Iniciando verificação de aniversário de admissão...");
+  const client = await pool.connect();
+  try {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1; // Mês atual (1-12)
+    const currentDay = today.getDate(); // Dia atual
+
+    // Seleciona utilizadores (não licenciados) que fazem aniversário de admissão HOJE
+    // e que foram admitidos há pelo menos 11 meses (para garantir o primeiro ano)
+    const query = `
+      SELECT id, nome, data_admissao, saldo_ferias 
+      FROM users 
+      WHERE role != 'licenciado' 
+        AND EXTRACT(MONTH FROM data_admissao) = $1 
+        AND EXTRACT(DAY FROM data_admissao) = $2
+        AND data_admissao <= NOW() - INTERVAL '11 months'; 
+    `;
+
+    const result = await client.query(query, [currentMonth, currentDay]);
+    const usersToUpdate = result.rows;
+
+    if (usersToUpdate.length === 0) {
+      console.log("CRON: Nenhum colaborador completando ano de casa hoje.");
+      return;
+    }
+
+    console.log(
+      `CRON: Encontrados ${usersToUpdate.length} colaboradores para atualizar saldo de férias.`
+    );
+
+    await client.query("BEGIN");
+    for (const user of usersToUpdate) {
+      // Calcula quantos anos de casa completos
+      const yearsSinceAdmission =
+        today.getFullYear() - new Date(user.data_admissao).getFullYear();
+
+      // Adiciona 30 dias ao saldo atual
+      // IMPORTANTE: Esta lógica simples adiciona 30 dias a cada ano.
+      // Ajustes podem ser necessários para regras mais complexas de saldo acumulado.
+      const newBalance = (user.saldo_ferias || 0) + 30;
+
+      await client.query("UPDATE users SET saldo_ferias = $1 WHERE id = $2", [
+        newBalance,
+        user.id,
+      ]);
+      console.log(
+        `CRON: Saldo de férias atualizado para ${user.nome} (ID: ${user.id}). Novo saldo: ${newBalance}`
+      );
+    }
+    await client.query("COMMIT");
+    console.log("CRON: Atualização de saldos de férias concluída.");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("CRON: Erro ao atualizar saldo de férias:", err);
+  } finally {
+    client.release();
+  }
+};
+
+// Envio de email de eventos do dia
 const sendEventNotifications = async () => {
   console.log("SEND NOTIFICATIONS: Verificando eventos para hoje...");
   const now = new Date();
@@ -155,4 +217,4 @@ const sendEventNotifications = async () => {
 };
 
 // Apenas exportamos a função, sem agendamento
-module.exports = { sendEventNotifications };
+module.exports = { sendEventNotifications, updateVacationBalance };

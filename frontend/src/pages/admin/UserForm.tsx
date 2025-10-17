@@ -15,6 +15,7 @@ interface User {
   corporate_photo_url?: string;
   is_vendedor?: boolean;
   gestor_id?: number | null;
+  data_admissao?: string | null;
 }
 
 const Unidades = ["Matriz", "Filial SC", "Filial SP"];
@@ -39,6 +40,7 @@ const UserForm: React.FC<{
         cargo: "",
         setor: "",
         birth_date: "",
+        data_admissao: "",
         role: formType === "licenciado" ? "licenciado" : "operacional",
       });
     }
@@ -200,6 +202,22 @@ const UserForm: React.FC<{
               name="birth_date"
               value={
                 formData.birth_date ? formData.birth_date.substring(0, 10) : ""
+              }
+              onChange={handleChange}
+              type="date"
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-row">
+            <label className="label-birth-day">Data de Admissão</label>
+            <input
+              name="data_admissao"
+              value={
+                formData.data_admissao
+                  ? formData.data_admissao.substring(0, 10)
+                  : ""
               }
               onChange={handleChange}
               type="date"

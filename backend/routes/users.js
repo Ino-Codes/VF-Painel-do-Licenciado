@@ -67,16 +67,20 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       telefone,
       is_vendedor,
       gestor_id,
+      data_admissao,
     } = req.body;
     const client = await pool.connect();
 
     try {
-      if (
-        (role === "admin" || role === "colaborador") &&
-        (!unidade || !unidade.trim())
-      ) {
+      if (role !== "licenciado" && (!unidade || !unidade.trim())) {
         return res.status(400).json({
-          error: "O campo Unidade é obrigatório para Admins e Colaboradores.",
+          error: "O campo Unidade é obrigatório para Colaboradores.",
+        });
+      }
+
+      if (role !== "licenciado" && !data_admissao) {
+        return res.status(400).json({
+          error: "A Data de Admissão é obrigatória para colaboradores.",
         });
       }
 
@@ -85,7 +89,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const hash = await bcrypt.hash(password, 10);
 
       const userResult = await client.query(
-        "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
+        "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id, data_admissao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
         [
           nome,
           email,
@@ -98,11 +102,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           telefone || null,
           is_vendedor || false,
           gestor_id || null,
+          role === "licenciado" ? null : data_admissao,
         ]
       );
       const newUserId = userResult.rows[0].id;
 
-      if ((role === "admin" || role === "colaborador") && birth_date) {
+      if (role !== "licenciado" && birth_date) {
         const [_, month, day] = birth_date.split("-");
         const eventTitle = `Aniversário de ${nome}`;
 
@@ -160,25 +165,35 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       telefone,
       is_vendedor,
       gestor_id,
+      data_admissao,
     } = req.body;
     const client = await pool.connect();
 
     try {
-      if (
-        (role === "admin" || role === "colaborador") &&
-        (!unidade || !unidade.trim())
-      ) {
+      if (role !== "licenciado" && (!unidade || !unidade.trim())) {
         return res.status(400).json({
-          error: "O campo Unidade é obrigatório para Admins e Colaboradores.",
+          error: "O campo Unidade é obrigatório para Colaboradores.",
+        });
+      }
+
+      if (role !== "licenciado" && !data_admissao) {
+        return res.status(400).json({
+          error: "A Data de Admissão é obrigatória para Colaboradores.",
         });
       }
 
       await client.query("BEGIN");
 
-      const finalBirthDate = role === "colaborador" ? birth_date : null;
+      const finalBirthDate =
+        role === "admin" ||
+        role === "rh" ||
+        role === "comercial" ||
+        role === "operacional"
+          ? birth_date
+          : null;
 
       const userResult = await client.query(
-        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, is_vendedor = $9, gestor_id = $10 WHERE id = $11 RETURNING *",
+        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, is_vendedor = $9, gestor_id = $10, data_admissao = $11 WHERE id = $12 RETURNING *",
         [
           nome,
           email,
@@ -190,6 +205,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           telefone,
           is_vendedor || false,
           gestor_id || null,
+          role === "licenciado" ? null : data_admissao,
           id,
         ]
       );
@@ -205,9 +221,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         [id]
       );
 
-      if (role === "colaborador" && finalBirthDate) {
+      if (role !== "licenciado" && finalBirthDate) {
         const birthDate = new Date(finalBirthDate);
-        const eventTitle = `Aniversário - ${nome}`;
+        const eventTitle = `Aniversário de ${nome}`;
 
         for (let i = 0; i < 10; i++) {
           const eventYear = new Date().getFullYear() + i;
@@ -497,7 +513,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const internalUsersSql = `
       SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone, birth_date 
       FROM users 
-      WHERE role IN ('admin', 'colaborador') 
+      WHERE role IN ('admin', 'rh', 'comercial', 'operacional') 
       ORDER BY nome ASC
     `;
 

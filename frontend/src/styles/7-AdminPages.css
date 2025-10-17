@@ -277,6 +277,14 @@
   border: 1px solid var(--border-strong);
 }
 
+.fc-theme-standard .fc-scrollgrid {
+  border: 1px solid var(--border-strong);
+}
+
+.fc .fc-scrollgrid-section-sticky > * {
+  background: none;
+}
+
 .color-palette {
   display: flex;
   gap: 10px;
@@ -445,11 +453,15 @@
 }
 
 .time-picker-option:hover {
-  background-color: var(--bg-secundary);
+  background-color: var(--bg-secondary);
 }
 
 .label-birth-day {
   align-self: center;
+}
+
+.fc-daygrid-event-harness.fc-daygrid-event-harness-abs:hover {
+  cursor: pointer;
 }
 
 /* --- RESPONSIVO (ADMIN) --- */
