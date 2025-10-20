@@ -25,6 +25,7 @@
 .identidade-item {
   flex: 1;
   max-width: 380px;
+  min-width: 200px;
   padding: 20px;
 }
 
@@ -372,6 +373,15 @@
 @media (max-width: 768px) {
   .user-detail-layout {
     flex-direction: column;
+  }
+
+  .timeline-container::before {
+    background-color: transparent;
+  }
+
+  .timeline-container {
+    min-width: 200px;
+    flex: 1 1;
   }
 }
 

@@ -1,4 +1,3 @@
-// frontend/src/pages/admin/TabContent.tsx
 import React, { useState } from "react";
 import BulkUserImport from "./BulkUserImport.tsx";
 
