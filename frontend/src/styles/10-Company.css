@@ -380,6 +380,10 @@
   }
 
   .timeline-container {
+    flex-wrap: wrap;
+  }
+
+  .timeline-item {
     min-width: 200px;
     flex: 1 1;
   }
