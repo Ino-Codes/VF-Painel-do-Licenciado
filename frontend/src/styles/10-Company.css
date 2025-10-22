@@ -331,7 +331,7 @@
     var(--bg-primary) 80%
   );
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   color: var(--text-inverted);
 }
@@ -340,6 +340,7 @@
   width: 100%;
   height: auto;
   object-fit: cover;
+  display: block;
 }
 
 .user-detail-name {
