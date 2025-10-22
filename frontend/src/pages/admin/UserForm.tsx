@@ -13,7 +13,6 @@ interface User {
   setor?: string;
   unidade?: string;
   corporate_photo_url?: string;
-  gestor_id?: number | null;
   data_admissao?: string | null;
 }
 
@@ -91,27 +90,6 @@ const UserForm: React.FC<{
           className="form-input"
         />
       </div>
-
-      {formType === "licenciado" && (
-        <div className="form-row">
-          <select
-            name="gestor_id"
-            value={formData.gestor_id || ""}
-            onChange={handleChange}
-            required
-            className="form-select"
-          >
-            <option value="" disabled>
-              Selecione o Gestor Responsável
-            </option>
-            {managers.map((manager) => (
-              <option key={manager.id} value={manager.id}>
-                {manager.nome}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {!userToEdit && (
         <div className="form-row">
