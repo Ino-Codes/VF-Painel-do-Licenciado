@@ -85,7 +85,6 @@ const eventRoutes = require("./routes/events.js")(pool);
 const enneagramRoutes = require("./routes/enneagram.js")(pool);
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(pool);
 const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
-const opportunitiesRoutes = require("./routes/opportunities.js")(pool);
 const vacationRoutes = require("./routes/vacations.js")(pool);
 
 // --- USO DAS ROTAS ---
@@ -104,7 +103,6 @@ app.use("/api/events", eventRoutes);
 app.use("/api/enneagram", enneagramRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/cron", cronTriggerRoutes);
-app.use("/api/opportunities", opportunitiesRoutes);
 app.use("/api/vacations", vacationRoutes);
 
 const createTables = async () => {
