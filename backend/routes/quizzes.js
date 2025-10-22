@@ -114,24 +114,29 @@ module.exports = function (pool) {
   // --- ROTAS DE ADMINISTRAÇÃO ---
 
   // PERGUNTAS
-  router.post("/:quizId/questions", isLoggedIn, isAdmin, async (req, res) => {
-    const { quizId } = req.params;
-    const { question_text } = req.body;
-    try {
-      const result = await pool.query(
-        "INSERT INTO questions (quiz_id, question_text) VALUES ($1, $2) RETURNING *",
-        [quizId, question_text]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      res.status(500).json({ error: "Erro ao criar pergunta." });
+  router.post(
+    "/:quizId/questions",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { quizId } = req.params;
+      const { question_text } = req.body;
+      try {
+        const result = await pool.query(
+          "INSERT INTO questions (quiz_id, question_text) VALUES ($1, $2) RETURNING *",
+          [quizId, question_text]
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao criar pergunta." });
+      }
     }
-  });
+  );
 
   router.delete(
     "/questions/:questionId",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     async (req, res) => {
       const { questionId } = req.params;
       try {
@@ -147,7 +152,7 @@ module.exports = function (pool) {
   router.post(
     "/questions/:questionId/options",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     async (req, res) => {
       const { questionId } = req.params;
       const { option_text } = req.body;
@@ -166,7 +171,7 @@ module.exports = function (pool) {
   router.put(
     "/options/:optionId/correct",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     async (req, res) => {
       const { optionId } = req.params;
       const client = await pool.connect();
@@ -196,15 +201,20 @@ module.exports = function (pool) {
     }
   );
 
-  router.delete("/options/:optionId", isLoggedIn, isAdmin, async (req, res) => {
-    const { optionId } = req.params;
-    try {
-      await pool.query("DELETE FROM options WHERE id = $1", [optionId]);
-      res.status(204).send();
-    } catch (err) {
-      res.status(500).json({ error: "Erro ao apagar opção." });
+  router.delete(
+    "/options/:optionId",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { optionId } = req.params;
+      try {
+        await pool.query("DELETE FROM options WHERE id = $1", [optionId]);
+        res.status(204).send();
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao apagar opção." });
+      }
     }
-  });
+  );
 
   return router;
 };

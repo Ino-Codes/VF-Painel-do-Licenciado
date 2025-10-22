@@ -167,7 +167,7 @@ const AdminCourses: React.FC = () => {
     }
   };
 
-  if (loading || !user || user.role !== "admin") {
+  if (loading || !user || (user.role !== "admin" && user.role !== "rh")) {
     return <LoadingSpinner />;
   }
 

@@ -123,7 +123,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/admin",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     upload.single("document"),
     async (req, res) => {
       const { category, question, answer, visibility = "todos" } = req.body;
@@ -169,37 +169,42 @@ module.exports = function (pool, cloudinary, upload) {
     }
   );
 
-  router.delete("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    try {
-      const faqResult = await pool.query(
-        "SELECT document_url FROM faq WHERE id = $1",
-        [id]
-      );
-      if (faqResult.rowCount === 0) {
-        return res.status(404).json({ error: "FAQ não encontrado." });
-      }
-
-      const docUrl = faqResult.rows[0].document_url;
-      if (docUrl) {
-        const resourceType = docUrl.includes("/image/") ? "image" : "raw";
-        const publicIdMatch = docUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
-        const publicId = publicIdMatch ? publicIdMatch[1] : null;
-
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId, {
-            resource_type: resourceType,
-          });
+  router.delete(
+    "/admin/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const faqResult = await pool.query(
+          "SELECT document_url FROM faq WHERE id = $1",
+          [id]
+        );
+        if (faqResult.rowCount === 0) {
+          return res.status(404).json({ error: "FAQ não encontrado." });
         }
-      }
 
-      await pool.query("DELETE FROM faq WHERE id = $1", [id]);
-      res.json({ success: true, message: "FAQ excluído com sucesso." });
-    } catch (err) {
-      console.error("Erro ao excluir FAQ:", err);
-      res.status(500).json({ error: "Erro ao excluir FAQ." });
+        const docUrl = faqResult.rows[0].document_url;
+        if (docUrl) {
+          const resourceType = docUrl.includes("/image/") ? "image" : "raw";
+          const publicIdMatch = docUrl.match(/\/v\d+\/(.+)\.[^/.]+$/);
+          const publicId = publicIdMatch ? publicIdMatch[1] : null;
+
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: resourceType,
+            });
+          }
+        }
+
+        await pool.query("DELETE FROM faq WHERE id = $1", [id]);
+        res.json({ success: true, message: "FAQ excluído com sucesso." });
+      } catch (err) {
+        console.error("Erro ao excluir FAQ:", err);
+        res.status(500).json({ error: "Erro ao excluir FAQ." });
+      }
     }
-  });
+  );
 
   return router;
 };

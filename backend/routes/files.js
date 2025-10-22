@@ -62,7 +62,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     upload.single("file"),
     async (req, res) => {
       const { originalname, category, folder, visibility } = req.body;
@@ -103,22 +103,27 @@ module.exports = function (pool, cloudinary, upload) {
     }
   );
 
-  router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    const { originalname, category, folder, visibility } = req.body;
-    try {
-      const result = await pool.query(
-        "UPDATE files SET originalname = $1, category = $2, folder = $3, visibility = $4 WHERE id = $5 RETURNING *",
-        [originalname, category, folder, visibility, id]
-      );
-      if (result.rowCount === 0)
-        return res.status(404).json({ error: "Arquivo não encontrado." });
-      res.json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro ao editar arquivo:", err);
-      res.status(500).json({ error: "Erro ao editar arquivo." });
+  router.put(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const { originalname, category, folder, visibility } = req.body;
+      try {
+        const result = await pool.query(
+          "UPDATE files SET originalname = $1, category = $2, folder = $3, visibility = $4 WHERE id = $5 RETURNING *",
+          [originalname, category, folder, visibility, id]
+        );
+        if (result.rowCount === 0)
+          return res.status(404).json({ error: "Arquivo não encontrado." });
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao editar arquivo:", err);
+        res.status(500).json({ error: "Erro ao editar arquivo." });
+      }
     }
-  });
+  );
 
   router.get("/download/:id", async (req, res) => {
     try {
@@ -164,35 +169,40 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    try {
-      const fileResult = await pool.query(
-        "SELECT public_id, filename FROM files WHERE id = $1",
-        [id]
-      );
-      if (fileResult.rowCount === 0) {
-        return res.status(404).json({ error: "Arquivo não encontrado." });
+  router.delete(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const fileResult = await pool.query(
+          "SELECT public_id, filename FROM files WHERE id = $1",
+          [id]
+        );
+        if (fileResult.rowCount === 0) {
+          return res.status(404).json({ error: "Arquivo não encontrado." });
+        }
+
+        const { public_id: publicId, filename: fileUrl } = fileResult.rows[0];
+
+        if (publicId) {
+          const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: resourceType,
+          });
+        }
+
+        await pool.query("DELETE FROM files WHERE id = $1", [id]);
+        res.json({ success: true, message: "Arquivo excluído com sucesso." });
+      } catch (err) {
+        console.error("Erro ao excluir arquivo:", err);
+        res
+          .status(500)
+          .json({ error: "Erro no servidor ao tentar excluir o arquivo." });
       }
-
-      const { public_id: publicId, filename: fileUrl } = fileResult.rows[0];
-
-      if (publicId) {
-        const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
-        await cloudinary.uploader.destroy(publicId, {
-          resource_type: resourceType,
-        });
-      }
-
-      await pool.query("DELETE FROM files WHERE id = $1", [id]);
-      res.json({ success: true, message: "Arquivo excluído com sucesso." });
-    } catch (err) {
-      console.error("Erro ao excluir arquivo:", err);
-      res
-        .status(500)
-        .json({ error: "Erro no servidor ao tentar excluir o arquivo." });
     }
-  });
+  );
 
   router.get("/categories", async (req, res) => {
     const { role } = req.query;

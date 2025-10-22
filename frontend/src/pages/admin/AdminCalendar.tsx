@@ -28,7 +28,7 @@ const AdminCalendar: React.FC = () => {
   }, [user, loading, navigate]);
 
   const fetchCategories = useCallback(async () => {
-    if (!user || user.role !== "admin") return;
+    if (!user || (user.role !== "admin" && user.role !== "rh")) return;
     try {
       const res = await api.get("/api/admin/events/categories");
       setCategories(res.data);
@@ -118,7 +118,7 @@ const AdminCalendar: React.FC = () => {
     fetchCategories();
   };
 
-  if (loading || !user || user.role !== "admin") {
+  if (loading || !user || (user.role !== "admin" && user.role !== "rh")) {
     return <div className="tela-loading">Carregando...</div>;
   }
 

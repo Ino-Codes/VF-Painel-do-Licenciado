@@ -9,322 +9,342 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   // --- Rotas de Admin (Listar, Criar, Editar, Excluir) ---
 
-  router.get("/admin", isLoggedIn, isAdmin, async (req, res) => {
-    const { search, page = 1, limit = 10, roles } = req.query;
-    try {
-      const offset = (page - 1) * limit;
-      let whereClauses = [];
-      const params = [];
+  router.get(
+    "/admin",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { search, page = 1, limit = 10, roles } = req.query;
+      try {
+        const offset = (page - 1) * limit;
+        let whereClauses = [];
+        const params = [];
 
-      if (roles) {
-        const roleList = roles.split(",");
-        params.push(roleList);
-        whereClauses.push(`role = ANY($${params.length})`);
+        if (roles) {
+          const roleList = roles.split(",");
+          params.push(roleList);
+          whereClauses.push(`role = ANY($${params.length})`);
+        }
+
+        if (search) {
+          params.push(`%${search}%`);
+          whereClauses.push(
+            `(nome ILIKE $${params.length} OR email ILIKE $${params.length})`
+          );
+        }
+
+        const whereString =
+          whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+        const countSql = `SELECT COUNT(*) FROM users ${whereString}`;
+        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id FROM users ${whereString} ORDER BY nome ASC LIMIT $${
+          params.length + 1
+        } OFFSET $${params.length + 2}`;
+
+        const [countResult, usersResult] = await Promise.all([
+          pool.query(countSql, params),
+          pool.query(usersSql, [...params, limit, offset]),
+        ]);
+
+        const totalCount = parseInt(countResult.rows[0].count, 10);
+        res.json({
+          users: usersResult.rows,
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+        });
+      } catch (err) {
+        console.error("Erro ao buscar usuários:", err);
+        res.status(500).json({ error: "Erro ao buscar usuários" });
       }
+    }
+  );
 
-      if (search) {
-        params.push(`%${search}%`);
-        whereClauses.push(
-          `(nome ILIKE $${params.length} OR email ILIKE $${params.length})`
+  router.post(
+    "/admin",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const {
+        nome,
+        email,
+        password,
+        role,
+        birth_date,
+        cargo,
+        setor,
+        unidade,
+        telefone,
+        is_vendedor,
+        gestor_id,
+        data_admissao,
+      } = req.body;
+      const client = await pool.connect();
+
+      try {
+        if (role !== "licenciado" && (!unidade || !unidade.trim())) {
+          return res.status(400).json({
+            error: "O campo Unidade é obrigatório para Colaboradores.",
+          });
+        }
+
+        if (role !== "licenciado" && !data_admissao) {
+          return res.status(400).json({
+            error: "A Data de Admissão é obrigatória para colaboradores.",
+          });
+        }
+
+        await client.query("BEGIN");
+
+        const hash = await bcrypt.hash(password, 10);
+
+        const userResult = await client.query(
+          "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id, data_admissao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
+          [
+            nome,
+            email,
+            hash,
+            role,
+            birth_date || null,
+            cargo || null,
+            setor || null,
+            unidade || null,
+            telefone || null,
+            is_vendedor || false,
+            gestor_id || null,
+            role === "licenciado" ? null : data_admissao,
+          ]
         );
-      }
+        const newUserId = userResult.rows[0].id;
 
-      const whereString =
-        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+        if (role !== "licenciado" && birth_date) {
+          const [_, month, day] = birth_date.split("-");
+          const eventTitle = `Aniversário de ${nome}`;
 
-      const countSql = `SELECT COUNT(*) FROM users ${whereString}`;
-      const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id FROM users ${whereString} ORDER BY nome ASC LIMIT $${
-        params.length + 1
-      } OFFSET $${params.length + 2}`;
-
-      const [countResult, usersResult] = await Promise.all([
-        pool.query(countSql, params),
-        pool.query(usersSql, [...params, limit, offset]),
-      ]);
-
-      const totalCount = parseInt(countResult.rows[0].count, 10);
-      res.json({
-        users: usersResult.rows,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-      });
-    } catch (err) {
-      console.error("Erro ao buscar usuários:", err);
-      res.status(500).json({ error: "Erro ao buscar usuários" });
-    }
-  });
-
-  router.post("/admin", isLoggedIn, isAdmin, async (req, res) => {
-    const {
-      nome,
-      email,
-      password,
-      role,
-      birth_date,
-      cargo,
-      setor,
-      unidade,
-      telefone,
-      is_vendedor,
-      gestor_id,
-      data_admissao,
-    } = req.body;
-    const client = await pool.connect();
-
-    try {
-      if (role !== "licenciado" && (!unidade || !unidade.trim())) {
-        return res.status(400).json({
-          error: "O campo Unidade é obrigatório para Colaboradores.",
-        });
-      }
-
-      if (role !== "licenciado" && !data_admissao) {
-        return res.status(400).json({
-          error: "A Data de Admissão é obrigatória para colaboradores.",
-        });
-      }
-
-      await client.query("BEGIN");
-
-      const hash = await bcrypt.hash(password, 10);
-
-      const userResult = await client.query(
-        "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id, data_admissao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
-        [
-          nome,
-          email,
-          hash,
-          role,
-          birth_date || null,
-          cargo || null,
-          setor || null,
-          unidade || null,
-          telefone || null,
-          is_vendedor || false,
-          gestor_id || null,
-          role === "licenciado" ? null : data_admissao,
-        ]
-      );
-      const newUserId = userResult.rows[0].id;
-
-      if (role !== "licenciado" && birth_date) {
-        const [_, month, day] = birth_date.split("-");
-        const eventTitle = `Aniversário de ${nome}`;
-
-        for (let i = 0; i < 10; i++) {
-          const eventYear = new Date().getFullYear() + i;
-          const eventStartDate = new Date(
-            `${eventYear}-${month}-${day}T11:00:00`
-          );
-          await client.query(
-            `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
+          for (let i = 0; i < 10; i++) {
+            const eventYear = new Date().getFullYear() + i;
+            const eventStartDate = new Date(
+              `${eventYear}-${month}-${day}T11:00:00`
+            );
+            await client.query(
+              `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [
-              eventTitle,
-              "Dia de comemorar!",
-              eventStartDate,
-              eventStartDate,
-              "Aniversário",
-              "#81e18c",
-              newUserId,
-            ]
-          );
+              [
+                eventTitle,
+                "Dia de comemorar!",
+                eventStartDate,
+                eventStartDate,
+                "Aniversário",
+                "#81e18c",
+                newUserId,
+              ]
+            );
+          }
         }
-      }
 
-      await client.query("COMMIT");
+        await client.query("COMMIT");
 
-      logActivity(
-        newUserId,
-        email,
-        "CREATE_USER",
-        `Usuário ${email} (${role}) foi criado.`,
-        req.ipAddress
-      );
-
-      res.status(201).json({ success: true, id: newUserId });
-    } catch (err) {
-      await client.query("ROLLBACK");
-      console.error("Erro ao criar usuário:", err);
-      res.status(500).json({ error: "Erro ao criar usuário" });
-    } finally {
-      client.release();
-    }
-  });
-
-  router.put("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    const {
-      nome,
-      email,
-      role,
-      birth_date,
-      cargo,
-      setor,
-      unidade,
-      telefone,
-      is_vendedor,
-      gestor_id,
-      data_admissao,
-    } = req.body;
-    const client = await pool.connect();
-
-    try {
-      if (role !== "licenciado" && (!unidade || !unidade.trim())) {
-        return res.status(400).json({
-          error: "O campo Unidade é obrigatório para Colaboradores.",
-        });
-      }
-
-      if (role !== "licenciado" && !data_admissao) {
-        return res.status(400).json({
-          error: "A Data de Admissão é obrigatória para Colaboradores.",
-        });
-      }
-
-      await client.query("BEGIN");
-
-      const finalBirthDate =
-        role === "admin" ||
-        role === "rh" ||
-        role === "comercial" ||
-        role === "operacional"
-          ? birth_date
-          : null;
-
-      const userResult = await client.query(
-        "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, is_vendedor = $9, gestor_id = $10, data_admissao = $11 WHERE id = $12 RETURNING *",
-        [
-          nome,
+        logActivity(
+          newUserId,
           email,
-          role,
-          finalBirthDate,
-          cargo,
-          setor,
-          unidade || null,
-          telefone,
-          is_vendedor || false,
-          gestor_id || null,
-          role === "licenciado" ? null : data_admissao,
-          id,
-        ]
-      );
+          "CREATE_USER",
+          `Usuário ${email} (${role}) foi criado.`,
+          req.ipAddress
+        );
 
-      if (userResult.rowCount === 0) {
+        res.status(201).json({ success: true, id: newUserId });
+      } catch (err) {
         await client.query("ROLLBACK");
+        console.error("Erro ao criar usuário:", err);
+        res.status(500).json({ error: "Erro ao criar usuário" });
+      } finally {
         client.release();
-        return res.status(404).json({ error: "Usuário não encontrado." });
       }
+    }
+  );
 
-      await client.query(
-        "DELETE FROM events WHERE created_by_user_id = $1 AND category = 'Aniversário'",
-        [id]
-      );
-
-      if (role !== "licenciado" && finalBirthDate) {
-        const birthDate = new Date(finalBirthDate);
-        const eventTitle = `Aniversário de ${nome}`;
-
-        for (let i = 0; i < 10; i++) {
-          const eventYear = new Date().getFullYear() + i;
-          const eventStartDate = new Date(
-            Date.UTC(
-              eventYear,
-              birthDate.getUTCMonth(),
-              birthDate.getUTCDate(),
-              8
-            )
-          );
-
-          await client.query(
-            `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [
-              eventTitle,
-              "Dia de comemorar!",
-              eventStartDate,
-              eventStartDate,
-              "Aniversário",
-              "#81e18c",
-              id,
-            ]
-          );
-        }
-      }
-
-      await client.query("COMMIT");
-
-      logActivity(
-        id,
+  router.put(
+    "/admin/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const {
+        nome,
         email,
-        "UPDATE_USER_ADMIN",
-        `Dados do usuário ID ${id} foram atualizados.`,
-        req.ipAddress
-      );
+        role,
+        birth_date,
+        cargo,
+        setor,
+        unidade,
+        telefone,
+        is_vendedor,
+        gestor_id,
+        data_admissao,
+      } = req.body;
+      const client = await pool.connect();
 
-      const updatedUser = userResult.rows[0];
-      delete updatedUser.password;
+      try {
+        if (role !== "licenciado" && (!unidade || !unidade.trim())) {
+          return res.status(400).json({
+            error: "O campo Unidade é obrigatório para Colaboradores.",
+          });
+        }
 
-      res.json({ success: true, user: updatedUser });
-    } catch (err) {
-      await client.query("ROLLBACK");
-      console.error("Erro ao atualizar usuário:", err);
-      if (err.code === "23505" && err.constraint === "users_email_key") {
-        return res
-          .status(409)
-          .json({ error: "Este e-mail já está em uso por outro usuário." });
-      }
-      res.status(500).json({ error: "Erro no servidor" });
-    } finally {
-      client.release();
-    }
-  });
+        if (role !== "licenciado" && !data_admissao) {
+          return res.status(400).json({
+            error: "A Data de Admissão é obrigatória para Colaboradores.",
+          });
+        }
 
-  router.delete("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      const userResult = await client.query(
-        "SELECT email FROM users WHERE id = $1",
-        [id]
-      );
-      if (userResult.rowCount === 0) {
+        await client.query("BEGIN");
+
+        const finalBirthDate =
+          role === "admin" ||
+          role === "rh" ||
+          role === "comercial" ||
+          role === "operacional"
+            ? birth_date
+            : null;
+
+        const userResult = await client.query(
+          "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, is_vendedor = $9, gestor_id = $10, data_admissao = $11 WHERE id = $12 RETURNING *",
+          [
+            nome,
+            email,
+            role,
+            finalBirthDate,
+            cargo,
+            setor,
+            unidade || null,
+            telefone,
+            is_vendedor || false,
+            gestor_id || null,
+            role === "licenciado" ? null : data_admissao,
+            id,
+          ]
+        );
+
+        if (userResult.rowCount === 0) {
+          await client.query("ROLLBACK");
+          client.release();
+          return res.status(404).json({ error: "Usuário não encontrado." });
+        }
+
+        await client.query(
+          "DELETE FROM events WHERE created_by_user_id = $1 AND category = 'Aniversário'",
+          [id]
+        );
+
+        if (role !== "licenciado" && finalBirthDate) {
+          const birthDate = new Date(finalBirthDate);
+          const eventTitle = `Aniversário de ${nome}`;
+
+          for (let i = 0; i < 10; i++) {
+            const eventYear = new Date().getFullYear() + i;
+            const eventStartDate = new Date(
+              Date.UTC(
+                eventYear,
+                birthDate.getUTCMonth(),
+                birthDate.getUTCDate(),
+                8
+              )
+            );
+
+            await client.query(
+              `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+              [
+                eventTitle,
+                "Dia de comemorar!",
+                eventStartDate,
+                eventStartDate,
+                "Aniversário",
+                "#81e18c",
+                id,
+              ]
+            );
+          }
+        }
+
+        await client.query("COMMIT");
+
+        logActivity(
+          id,
+          email,
+          "UPDATE_USER_ADMIN",
+          `Dados do usuário ID ${id} foram atualizados.`,
+          req.ipAddress
+        );
+
+        const updatedUser = userResult.rows[0];
+        delete updatedUser.password;
+
+        res.json({ success: true, user: updatedUser });
+      } catch (err) {
         await client.query("ROLLBACK");
-        return res.status(404).json({ error: "Usuário não encontrado." });
+        console.error("Erro ao atualizar usuário:", err);
+        if (err.code === "23505" && err.constraint === "users_email_key") {
+          return res
+            .status(409)
+            .json({ error: "Este e-mail já está em uso por outro usuário." });
+        }
+        res.status(500).json({ error: "Erro no servidor" });
+      } finally {
+        client.release();
       }
-      const userEmail = userResult.rows[0].email;
-      await client.query(
-        "UPDATE activity_logs SET user_id = NULL WHERE user_id = $1",
-        [id]
-      );
-      await client.query("DELETE FROM users WHERE id = $1", [id]);
-      logActivity(
-        null,
-        userEmail,
-        "DELETE_USER",
-        `Usuário ${userEmail} (ID: ${id}) foi excluído.`,
-        req.ipAddress
-      );
-      await client.query("COMMIT");
-      res.json({ success: true, message: "Usuário excluído com sucesso." });
-    } catch (err) {
-      await client.query("ROLLBACK");
-      console.error("Erro ao excluir usuário:", err);
-      res
-        .status(500)
-        .json({ error: "Erro no servidor ao tentar excluir usuário." });
-    } finally {
-      client.release();
     }
-  });
+  );
+
+  router.delete(
+    "/admin/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const userResult = await client.query(
+          "SELECT email FROM users WHERE id = $1",
+          [id]
+        );
+        if (userResult.rowCount === 0) {
+          await client.query("ROLLBACK");
+          return res.status(404).json({ error: "Usuário não encontrado." });
+        }
+        const userEmail = userResult.rows[0].email;
+        await client.query(
+          "UPDATE activity_logs SET user_id = NULL WHERE user_id = $1",
+          [id]
+        );
+        await client.query("DELETE FROM users WHERE id = $1", [id]);
+        logActivity(
+          null,
+          userEmail,
+          "DELETE_USER",
+          `Usuário ${userEmail} (ID: ${id}) foi excluído.`,
+          req.ipAddress
+        );
+        await client.query("COMMIT");
+        res.json({ success: true, message: "Usuário excluído com sucesso." });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Erro ao excluir usuário:", err);
+        res
+          .status(500)
+          .json({ error: "Erro no servidor ao tentar excluir usuário." });
+      } finally {
+        client.release();
+      }
+    }
+  );
 
   // --- Rotas Específicas (Bulk Upload, Gestores, Fotos Corporativas) ---
 
   router.post(
     "/admin/bulk-upload",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     upload.single("file"),
     async (req, res) => {
       if (!req.file) {
@@ -402,7 +422,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.put(
     "/admin/:id/corporate-photo",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     upload.single("corporate_photo"),
     async (req, res) => {
       const { id } = req.params;
@@ -464,7 +484,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.delete(
     "/admin/:id/corporate-photo",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     async (req, res) => {
       const { id } = req.params;
       const client = await pool.connect();

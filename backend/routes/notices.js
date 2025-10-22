@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool) {
   router.get("/", isLoggedIn, async (req, res) => {

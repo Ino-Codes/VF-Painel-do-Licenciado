@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 const puppeteer = require("puppeteer");
 const { JSDOM } = require("jsdom");
 const createDOMPurify = require("dompurify");
