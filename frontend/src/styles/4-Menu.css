@@ -137,7 +137,7 @@
   object-fit: cover;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
   .main-menu {
     flex-wrap: wrap;
     position: relative;
@@ -165,14 +165,14 @@
   }
   .menu-item {
     text-align: center;
-    padding: 15px 0;
+    padding: 8px;
   }
   .profile-text {
     display: none;
   }
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1180px) {
   .hamburger-menu {
     display: none;
   }

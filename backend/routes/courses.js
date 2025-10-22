@@ -12,8 +12,17 @@ const path = require("path");
 module.exports = function (pool, cloudinary, upload) {
   // --- ROTAS PÚBLICAS (PARA ALUNOS) ---
   router.get("/public", isLoggedIn, async (req, res) => {
-    const { id: userId } = req.user;
+    const { id: userId, role } = req.user;
     try {
+      let visibilityFilter = "";
+      if (role === "licenciado") {
+        visibilityFilter =
+          "AND (c.visibility = 'todos' OR c.visibility = 'licenciados')";
+      } else if (role !== "licenciado") {
+        visibilityFilter =
+          "AND (c.visibility = 'todos' OR c.visibility = 'internos')";
+      }
+
       const query = `
         SELECT
           c.*,
@@ -28,7 +37,7 @@ module.exports = function (pool, cloudinary, upload) {
         LEFT JOIN
           progress p ON p.lesson_id = l.id AND p.user_id = $1
         WHERE
-          c.is_active = TRUE
+          c.is_active = TRUE ${visibilityFilter}
         GROUP BY
           c.id
         ORDER BY
@@ -222,14 +231,14 @@ module.exports = function (pool, cloudinary, upload) {
   );
 
   router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
-    const { title, description } = req.body;
+    const { title, description, visibility = "todos" } = req.body;
     if (!title) {
       return res.status(400).json({ error: "O título é obrigatório." });
     }
     try {
       const result = await pool.query(
-        "INSERT INTO courses (title, description) VALUES ($1, $2) RETURNING *",
-        [title, description]
+        "INSERT INTO courses (title, description, visibility) VALUES ($1, $2, $3) RETURNING *",
+        [title, description, visibility]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -244,11 +253,11 @@ module.exports = function (pool, cloudinary, upload) {
     checkRole(["admin", "rh"]),
     async (req, res) => {
       const { id } = req.params;
-      const { title, description, is_active } = req.body;
+      const { title, description, is_active, visibility } = req.body;
       try {
         const result = await pool.query(
-          "UPDATE courses SET title = $1, description = $2, is_active = $3 WHERE id = $4 RETURNING *",
-          [title, description, is_active, id]
+          "UPDATE courses SET title = $1, description = $2, is_active = $3, visibility = $4 WHERE id = $5 RETURNING *",
+          [title, description, is_active, visibility, id]
         );
         if (result.rowCount === 0) {
           return res.status(404).json({ error: "Curso não encontrado." });

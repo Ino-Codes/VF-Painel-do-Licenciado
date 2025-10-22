@@ -14,6 +14,7 @@ interface Course {
   description: string;
   thumbnail_url: string;
   is_active: boolean;
+  visibility: "todos" | "licenciados" | "internos";
   certificate_template_url?: string;
 }
 
@@ -29,7 +30,11 @@ const AdminCourses: React.FC = () => {
   }, [user, loading, navigate]);
 
   const [courses, setCourses] = useState<Course[]>([]);
-  const [form, setForm] = useState({ title: "", description: "" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    visibility: "todos",
+  });
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -75,7 +80,7 @@ const AdminCourses: React.FC = () => {
         await api.post("/api/admin/courses", form, getAuthHeaders());
         toast.success("Curso criado com sucesso!");
       }
-      setForm({ title: "", description: "" });
+      setForm({ title: "", description: "", visibility: "" });
       setEditingCourse(null);
       fetchCourses();
     } catch (err) {
@@ -85,14 +90,18 @@ const AdminCourses: React.FC = () => {
 
   const startEdit = (course: Course) => {
     setEditingCourse(course);
-    setForm({ title: course.title, description: course.description });
+    setForm({
+      title: course.title,
+      description: course.description,
+      visibility: course.visibility || "todos",
+    });
     setThumbnailFile(null);
     setCertificateTemplateFile(null);
   };
 
   const cancelEdit = () => {
     setEditingCourse(null);
-    setForm({ title: "", description: "" });
+    setForm({ title: "", description: "", visibility: "todos" });
     setThumbnailFile(null);
     setCertificateTemplateFile(null);
   };
@@ -186,6 +195,7 @@ const AdminCourses: React.FC = () => {
               required
             />
           </div>
+
           <div className="form-row">
             <textarea
               className="form-input"
@@ -197,6 +207,26 @@ const AdminCourses: React.FC = () => {
               }
             />
           </div>
+
+          <div className="form-row">
+            <select
+              id="visibility"
+              name="visibility"
+              className="form-select"
+              value={form.visibility}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  visibility: e.target.value as Course["visibility"],
+                })
+              }
+            >
+              <option value="todos">Todos</option>
+              <option value="licenciados">Apenas Licenciados</option>
+              <option value="internos">Apenas Internos</option>
+            </select>
+          </div>
+
           <div className="form-row">
             <button className="form-button" type="submit">
               {editingCourse ? "Salvar Alterações de Texto" : "Criar Curso"}
@@ -346,10 +376,12 @@ const AdminCourses: React.FC = () => {
                   alt="Thumbnail"
                   style={{ width: "100px", borderRadius: "4px" }}
                 />
-                <div>
+                <div className="course-list-item-info">
+                  <span>Visível para {course.visibility}</span>
+                  <br />
                   <strong>{course.title}</strong>
                   <br />
-                  <span>{course.description}</span>
+                  <p>{course.description}</p>
                 </div>
               </div>
               <div className="user-actions">

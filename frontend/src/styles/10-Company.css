@@ -226,6 +226,7 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
   padding: 0;
+  justify-items: center;
 }
 
 .corp-user-card {
@@ -243,7 +244,9 @@
   overflow: hidden;
   position: relative;
   box-shadow: 0 10px 10px -10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
   width: 90%;
+  max-width: 350px;
 }
 
 .corp-user-card-photo img {
@@ -292,10 +295,6 @@
 }
 
 /* Estilo para o modal de usuário */
-
-.corp-user-card {
-  cursor: pointer;
-}
 
 .user-detail-modal-content {
   max-width: 800px;
@@ -408,5 +407,25 @@
     /* Remove a margem negativa e ajusta o espaçamento */
     margin-top: 15px;
     margin-bottom: 15px;
+  }
+
+  .equipe-layout {
+    flex-direction: column; /* Faz as colunas ficarem uma em cima da outra */
+    align-items: center; /* Centraliza o conteúdo */
+  }
+
+  .equipe-sidebar {
+    position: static; /* Remove o efeito "sticky" (flutuante) */
+    width: 100%; /* Ocupa a largura total */
+    max-width: 400px; /* Limita a largura máxima do mapa */
+    margin-top: 0; /* Remove a margem superior */
+  }
+
+  .equipe-main-content {
+    width: 100%; /* Garante que os cards ocupem toda a largura */
+  }
+
+  .equipe-local-title {
+    margin-top: 2rem; /* Adiciona espaço acima do título dos cards */
   }
 }

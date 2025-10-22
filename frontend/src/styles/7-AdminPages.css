@@ -36,6 +36,11 @@
   color: var(--text-primary);
 }
 
+.course-list-item-info span {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
 .user-list {
   list-style: none;
   padding: 0;
