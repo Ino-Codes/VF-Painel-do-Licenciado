@@ -223,54 +223,53 @@ const Menu: React.FC = () => {
           </div>
         )}
 
-        {(user && user.role === "admin") ||
-          (user.role === "rh" && (
-            <div className="dropdown-menu" ref={rhDropdownRef}>
-              <button
-                className="menu-item dropdown-trigger"
-                onClick={() => setRhDropdownOpen(!isRhDropdownOpen)}
-              >
-                <CalendarIcon />
-                RH
-              </button>
-              {isRhDropdownOpen && (
-                <div className="dropdown-content">
-                  <NavLink
-                    to="/admin/courses"
-                    className="menu-item"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setRhDropdownOpen(false);
-                    }}
-                  >
-                    Cursos
-                  </NavLink>
+        {(user.role === "admin" || user.role === "rh") && (
+          <div className="dropdown-menu" ref={rhDropdownRef}>
+            <button
+              className="menu-item dropdown-trigger"
+              onClick={() => setRhDropdownOpen(!isRhDropdownOpen)}
+            >
+              <CalendarIcon />
+              RH
+            </button>
+            {isRhDropdownOpen && (
+              <div className="dropdown-content">
+                <NavLink
+                  to="/admin/courses"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setRhDropdownOpen(false);
+                  }}
+                >
+                  Cursos
+                </NavLink>
 
-                  <NavLink
-                    to="/admin/calendar"
-                    className="menu-item"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setRhDropdownOpen(false);
-                    }}
-                  >
-                    Eventos
-                  </NavLink>
+                <NavLink
+                  to="/admin/calendar"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setRhDropdownOpen(false);
+                  }}
+                >
+                  Eventos
+                </NavLink>
 
-                  <NavLink
-                    to="/admin/ferias"
-                    className="menu-item"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setRhDropdownOpen(false);
-                    }}
-                  >
-                    Férias
-                  </NavLink>
-                </div>
-              )}
-            </div>
-          ))}
+                <NavLink
+                  to="/admin/ferias"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setRhDropdownOpen(false);
+                  }}
+                >
+                  Férias
+                </NavLink>
+              </div>
+            )}
+          </div>
+        )}
 
         {user && user.role === "admin" && (
           <div className="dropdown-menu" ref={adminDropdownRef}>
