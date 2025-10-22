@@ -13,7 +13,6 @@ interface User {
   setor?: string;
   unidade?: string;
   corporate_photo_url?: string;
-  is_vendedor?: boolean;
   gestor_id?: number | null;
   data_admissao?: string | null;
 }
@@ -177,23 +176,6 @@ const UserForm: React.FC<{
                 <option value="admin">Admin</option>
               </select>
             )}
-          </div>
-
-          <div className="form-row">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="is_vendedor"
-                checked={!!formData.is_vendedor}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    is_vendedor: e.target.checked,
-                  }))
-                }
-              />
-              Terá vínculo com licenciados?
-            </label>
           </div>
 
           <div className="form-row">
