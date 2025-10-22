@@ -193,7 +193,7 @@ const Menu: React.FC = () => {
           )}
         </div>
 
-        {/* {user && user.role !== "licenciado" && (
+        {user && user.role !== "licenciado" && (
           <div className="dropdown-menu" ref={internoDropdownRef}>
             <button
               className="menu-item dropdown-trigger"
@@ -204,7 +204,7 @@ const Menu: React.FC = () => {
             </button>
             {isInternoDropdownOpen && (
               <div className="dropdown-content">
-                <NavLink
+                {/* <NavLink
                   to="/ferias"
                   className="menu-item"
                   onClick={() => {
@@ -213,7 +213,7 @@ const Menu: React.FC = () => {
                   }}
                 >
                   Marcar Férias
-                </NavLink>
+                </NavLink> */}
 
                 <NavLink to="/empresa" className="menu-item">
                   Empresa
@@ -221,7 +221,7 @@ const Menu: React.FC = () => {
               </div>
             )}
           </div>
-        )} */}
+        )}
 
         {(user && user.role === "admin") ||
           (user.role === "rh" && (
