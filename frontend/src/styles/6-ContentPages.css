@@ -34,10 +34,6 @@
   color: var(--text-primary);
 }
 
-.folder-header:hover {
-  background-color: var(--border-color);
-}
-
 .folder-toggle {
   font-size: 24px;
   font-weight: bold;
@@ -338,15 +334,12 @@
   width: 100%;
   padding: 15px;
   background-color: var(--bg-secondary);
+  color: var(--text-primary);
   border: none;
   text-align: left;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-}
-
-.faq-question:hover {
-  background-color: var(--border-color);
 }
 
 .faq-answer {

@@ -45,9 +45,8 @@
 
 body.dark-theme {
   /* Tema Escuro */
-
-  --bg-primary: #1b1c20;
-  --bg-secondary: #25262a;
+  --bg-primary: #17181f;
+  --bg-secondary: #282933;
 
   --bg-menu: #111217;
   --bg-menu-hover: #363950;
@@ -132,7 +131,7 @@ body::before {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: var(--text-white);
+  color: var(--text-primary);
   font-weight: bold;
 }
 

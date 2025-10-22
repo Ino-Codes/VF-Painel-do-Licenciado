@@ -133,7 +133,7 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className="modal-actions">
-            <button onClick={onClose} className="list-button">
+            <button onClick={onClose} className="form-button-cancel">
               Cancelar
             </button>
 

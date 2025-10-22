@@ -104,6 +104,12 @@ const SolicitarFerias: React.FC = () => {
     Recusado: "status-declined",
   };
 
+  const borderStatusClasses = {
+    Pendente: "status-pending",
+    Aprovado: "status-approved",
+    Recusado: "status-declined",
+  };
+
   if (loading || !user)
     return <div className="tela-loading">Carregando...</div>;
 
@@ -165,7 +171,14 @@ const SolicitarFerias: React.FC = () => {
             <div className="vacation-history-list">
               {requests.length > 0 ? (
                 requests.map((req) => (
-                  <div key={req.id} className="vacation-history-item">
+                  <div
+                    key={req.id}
+                    className={`vacation-history-item ${
+                      borderStatusClasses[
+                        req.status as keyof typeof borderStatusClasses
+                      ] || ""
+                    }`}
+                  >
                     <div className="vacation-history-item-info">
                       <strong>
                         {new Date(req.start_date).toLocaleDateString("pt-BR")} a{" "}

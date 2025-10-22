@@ -103,8 +103,8 @@
   .p-1 {
     width: 90%;
     min-width: unset;
-    border: 1px solid #c8a167;
-    background-color: #1e1b1a;
+    border: 1px solid var(--accent-color);
+    background-color: var(--text-black);
   }
   .input-login {
     width: 100%;

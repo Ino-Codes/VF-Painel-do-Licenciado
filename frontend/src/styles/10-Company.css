@@ -210,7 +210,7 @@
 .map-button:hover {
   background-color: var(--accent-color);
   border-color: var(--accent-color);
-  color: #fff;
+  color: var(--text-white);
 }
 
 /* Estilo da seção de colaboradores */
@@ -369,40 +369,43 @@
   font-size: 0.9rem;
 }
 
-/* --- AJUSTE RESPONSIVO PARA TELAS MENORES --- */
-@media (max-width: 768px) {
+/* -- Responsivo para telas menores -- */
+@media (max-width: 900px) {
   .user-detail-layout {
     flex-direction: column;
   }
 
-  .timeline-container::before {
-    background-color: transparent;
+  .timeline-container {
+    flex-direction: column; /* Faz os itens ficarem um abaixo do outro */
+    align-items: center; /* Centraliza os itens na coluna */
+    margin-top: 30px;
+    padding: 0 15px; /* Adiciona um pouco de padding lateral */
   }
 
-  .timeline-container {
-    flex-wrap: wrap;
+  /* Esconde a linha horizontal em telas pequenas */
+  .timeline-container::before {
+    display: none;
   }
 
   .timeline-item {
-    min-width: 200px;
-    flex: 1 1;
-  }
-}
-
-@media (max-width: 900px) {
-  .equipe-layout {
-    flex-direction: column;
+    width: 90%; /* Faz cada item ocupar quase toda a largura */
+    max-width: 400px; /* Limita a largura máxima para melhor leitura */
+    margin-bottom: 40px; /* Adiciona espaço vertical entre os itens */
+    text-align: center; /* Garante que o texto fique centralizado */
   }
 
-  .equipe-sidebar {
-    position: static;
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-    margin-top: 2rem;
+  .timeline-item:last-child {
+    margin-bottom: 0; /* Remove a margem do último item */
   }
 
-  .equipe-main-content {
-    width: 100%;
+  .timeline-image-placeholder {
+    height: 180px; /* Pode ajustar a altura da imagem se desejar */
+    margin-bottom: 15px; /* Ajusta o espaço abaixo da imagem */
+  }
+
+  .timeline-dot {
+    /* Remove a margem negativa e ajusta o espaçamento */
+    margin-top: 15px;
+    margin-bottom: 15px;
   }
 }

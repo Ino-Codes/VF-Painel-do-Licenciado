@@ -34,6 +34,10 @@ const FeriasModal: React.FC<any> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button className="modal-close-button" onClick={onClose}>
+          &times;
+        </button>
+
         <h2>Detalhes da Solicitação</h2>
         <div className="form-row">
           <strong>Colaborador:</strong> {eventToView.extendedProps.user_name}
@@ -61,7 +65,7 @@ const FeriasModal: React.FC<any> = ({
             <button
               type="button"
               onClick={() => handleUpdateStatus("Recusado")}
-              className="form-button-cancel"
+              className="form-button-delete"
             >
               Recusar
             </button>
@@ -74,12 +78,6 @@ const FeriasModal: React.FC<any> = ({
             </button>
           </div>
         )}
-
-        <div className="modal-actions" style={{ justifyContent: "center" }}>
-          <button type="button" onClick={onClose} className="list-button">
-            Fechar
-          </button>
-        </div>
       </div>
     </div>
   );

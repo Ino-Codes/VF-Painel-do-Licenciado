@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import ThemeToggleButton from "../ui/ThemeToggleButton.tsx";
-import LoadingSpinner from "../ui/LoadingSpinner.tsx";
 import Logo from "../../img/logo-clara.png";
+import { FaUserTie } from "react-icons/fa";
 
 const LockIcon = () => (
   <svg
@@ -35,23 +35,6 @@ const FileIcon = () => (
     strokeLinejoin="round"
   >
     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-  </svg>
-);
-
-const BriefcaseIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
   </svg>
 );
 
@@ -95,8 +78,6 @@ const TeamIcon = () => (
 
 const Menu: React.FC = () => {
   const { user } = useAuth();
-  const defaultAvatar =
-    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-light_d0dd5l.png";
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isRhDropdownOpen, setRhDropdownOpen] = useState(false);
@@ -155,10 +136,6 @@ const Menu: React.FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  if (!user) {
-    return <LoadingSpinner />;
-  }
 
   return (
     <nav className="main-menu">
@@ -247,40 +224,8 @@ const Menu: React.FC = () => {
                   Marcar Férias
                 </NavLink>
 
-                {user && user.role !== "licenciado" && (
-                  <NavLink to="/empresa" className="menu-item">
-                    Empresa
-                  </NavLink>
-                )}
-              </div>
-            )}
-          </div>
-        )} */}
-
-        {/* {(user.role === "admin" ||
-          user.role === "comercial" ||
-          user.role === "licenciado") && (
-          <div className="dropdown-menu" ref={comercialDropdownRef}>
-            <button
-              className="menu-item dropdown-trigger"
-              onClick={() =>
-                setIsComercialDropdownOpen(!isComercialDropdownOpen)
-              }
-            >
-              <BriefcaseIcon />
-              Comercial
-            </button>
-            {isComercialDropdownOpen && (
-              <div className="dropdown-content">
-                <NavLink
-                  to="/oportunidades"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setIsComercialDropdownOpen(false);
-                  }}
-                >
-                  Oportunidades
+                <NavLink to="/empresa" className="menu-item">
+                  Empresa
                 </NavLink>
               </div>
             )}
@@ -393,11 +338,15 @@ const Menu: React.FC = () => {
               <span className="profile-name">{firstName}</span>
             </div>
             <div className="profile-image-container">
-              <img
-                src={user.avatar_url || defaultAvatar}
-                alt="Foto do perfil"
-                className="profile-avatar-img"
-              />
+              {user.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt="Foto do perfil"
+                  className="profile-avatar-img"
+                />
+              ) : (
+                <FaUserTie className="menu-user-icon" />
+              )}
             </div>
           </NavLink>
         )}

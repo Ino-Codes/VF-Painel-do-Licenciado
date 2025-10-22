@@ -24,7 +24,6 @@ import AdminCalendar from "./pages/admin/AdminCalendar.tsx";
 import EnneagramPage from "./pages/profile/EnneagramPage.tsx";
 import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
 import Empresa from "./pages/company/Empresa.tsx";
-import Oportunidades from "./pages/opportunities/Oportunidades.tsx";
 import GestaoFerias from "./pages/admin/GestaoFerias.tsx";
 import SolicitarFerias from "./pages/internal/SolicitarFerias.tsx";
 
@@ -39,7 +38,6 @@ import "./styles/7-AdminPages.css";
 import "./styles/8-Profile.css";
 import "./styles/9-Assesments.css";
 import "./styles/10-Company.css";
-import "./styles/11-Opportunities.css";
 import "./styles/12-Internal.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
@@ -81,8 +79,6 @@ const AppRouter: React.FC = () => {
             path="/perfil/enneagram-results"
             element={<EnneagramResultsPage />}
           />
-          {/* Rotas da Área Comercial */}
-          <Route path="/oportunidades" element={<Oportunidades />} />
           {/* Rotas da Área Interna */}
           <Route path="/ferias" element={<SolicitarFerias />} />
           <Route path="/empresa" element={<Empresa />} />

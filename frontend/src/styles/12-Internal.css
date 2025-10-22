@@ -9,7 +9,6 @@
   padding-bottom: 20px;
 }
 
-/* Container principal para o layout de duas colunas */
 .admin-section-main-columns {
   display: flex;
   flex-direction: row;
@@ -19,7 +18,7 @@
 
 /* Cada secção dentro das colunas */
 .admin-section-main-columns > .admin-section {
-  flex: 1; /* Faz com que cada coluna ocupe metade do espaço */
+  flex: 1;
   margin-top: 0;
   min-width: 0;
   padding-top: 20px;
@@ -37,7 +36,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 400px; /* Altura máxima com scroll */
+  max-height: 400px;
   overflow-y: auto;
   padding-right: 10px;
 }
@@ -46,10 +45,33 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
+  padding: 12px 12px 12px 16px;
   background-color: var(--bg-secondary);
   border-radius: 6px;
   border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.vacation-history-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+}
+
+.vacation-history-item.status-pending::before {
+  background-color: var(--accent-color);
+}
+
+.vacation-history-item.status-approved::before {
+  background-color: var(--action-primary);
+}
+
+.vacation-history-item.status-declined::before {
+  background-color: var(--action-danger);
 }
 
 .vacation-history-item-info {
@@ -154,5 +176,5 @@
 .react-datepicker__day--in-range.react-datepicker__day--highlighted-pending,
 .react-datepicker__day--in-range.react-datepicker__day--highlighted-approved {
   background-color: var(--accent-color);
-  color: #fff; /* Texto branco na seleção */
+  color: var(--text-white); /* Texto branco na seleção */
 }
