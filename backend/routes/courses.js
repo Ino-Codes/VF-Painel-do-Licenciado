@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { isAdmin, isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 const puppeteer = require("puppeteer");
 const { JSDOM } = require("jsdom");
 const createDOMPurify = require("dompurify");
@@ -145,7 +145,7 @@ module.exports = function (pool, cloudinary, upload) {
 
   // --- ROTAS DE ADMINISTRAÇÃO ---
 
-  router.get("/", isLoggedIn, isAdmin, async (req, res) => {
+  router.get("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
     try {
       const result = await pool.query(
         "SELECT * FROM courses ORDER BY created_at DESC"
@@ -157,66 +157,71 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.get("/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    try {
-      const courseResult = await pool.query(
-        "SELECT * FROM courses WHERE id = $1",
-        [id]
-      );
-      if (courseResult.rowCount === 0) {
-        return res.status(404).json({ error: "Curso não encontrado." });
-      }
-      const course = courseResult.rows[0];
-
-      // Busca Módulos e Aulas
-      const modulesResult = await pool.query(
-        "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
-        [id]
-      );
-      const modules = modulesResult.rows;
-      for (const module of modules) {
-        const lessonsResult = await pool.query(
-          "SELECT id, module_id, title, video_url, text_content, lesson_order FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
-          [module.id]
+  router.get(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const courseResult = await pool.query(
+          "SELECT * FROM courses WHERE id = $1",
+          [id]
         );
-        module.lessons = lessonsResult.rows;
-      }
-      course.modules = modules;
-
-      const quizResult = await pool.query(
-        "SELECT * FROM quizzes WHERE course_id = $1",
-        [id]
-      );
-      if (quizResult.rowCount > 0) {
-        const quiz = quizResult.rows[0];
-        const questionsResult = await pool.query(
-          "SELECT * FROM questions WHERE quiz_id = $1 ORDER BY id ASC",
-          [quiz.id]
-        );
-        const questions = questionsResult.rows;
-
-        for (const question of questions) {
-          const optionsResult = await pool.query(
-            "SELECT * FROM options WHERE question_id = $1 ORDER BY id ASC",
-            [question.id]
-          );
-          question.options = optionsResult.rows;
+        if (courseResult.rowCount === 0) {
+          return res.status(404).json({ error: "Curso não encontrado." });
         }
-        quiz.questions = questions;
-        course.quiz = quiz;
-      } else {
-        course.quiz = null;
+        const course = courseResult.rows[0];
+
+        // Busca Módulos e Aulas
+        const modulesResult = await pool.query(
+          "SELECT * FROM modules WHERE course_id = $1 ORDER BY module_order ASC",
+          [id]
+        );
+        const modules = modulesResult.rows;
+        for (const module of modules) {
+          const lessonsResult = await pool.query(
+            "SELECT id, module_id, title, video_url, text_content, lesson_order FROM lessons WHERE module_id = $1 ORDER BY lesson_order ASC",
+            [module.id]
+          );
+          module.lessons = lessonsResult.rows;
+        }
+        course.modules = modules;
+
+        const quizResult = await pool.query(
+          "SELECT * FROM quizzes WHERE course_id = $1",
+          [id]
+        );
+        if (quizResult.rowCount > 0) {
+          const quiz = quizResult.rows[0];
+          const questionsResult = await pool.query(
+            "SELECT * FROM questions WHERE quiz_id = $1 ORDER BY id ASC",
+            [quiz.id]
+          );
+          const questions = questionsResult.rows;
+
+          for (const question of questions) {
+            const optionsResult = await pool.query(
+              "SELECT * FROM options WHERE question_id = $1 ORDER BY id ASC",
+              [question.id]
+            );
+            question.options = optionsResult.rows;
+          }
+          quiz.questions = questions;
+          course.quiz = quiz;
+        } else {
+          course.quiz = null;
+        }
+
+        res.json(course);
+      } catch (err) {
+        console.error("Erro ao buscar detalhes do curso:", err);
+        res.status(500).json({ error: "Erro ao buscar detalhes do curso." });
       }
-
-      res.json(course);
-    } catch (err) {
-      console.error("Erro ao buscar detalhes do curso:", err);
-      res.status(500).json({ error: "Erro ao buscar detalhes do curso." });
     }
-  });
+  );
 
-  router.post("/", isLoggedIn, isAdmin, async (req, res) => {
+  router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
     const { title, description } = req.body;
     if (!title) {
       return res.status(400).json({ error: "O título é obrigatório." });
@@ -233,70 +238,87 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    const { title, description, is_active } = req.body;
-    try {
-      const result = await pool.query(
-        "UPDATE courses SET title = $1, description = $2, is_active = $3 WHERE id = $4 RETURNING *",
-        [title, description, is_active, id]
-      );
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Curso não encontrado." });
+  router.put(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const { title, description, is_active } = req.body;
+      try {
+        const result = await pool.query(
+          "UPDATE courses SET title = $1, description = $2, is_active = $3 WHERE id = $4 RETURNING *",
+          [title, description, is_active, id]
+        );
+        if (result.rowCount === 0) {
+          return res.status(404).json({ error: "Curso não encontrado." });
+        }
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao atualizar curso:", err);
+        res.status(500).json({ error: "Erro ao atualizar curso." });
       }
-      res.json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro ao atualizar curso:", err);
-      res.status(500).json({ error: "Erro ao atualizar curso." });
     }
-  });
+  );
 
-  router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    try {
-      const result = await pool.query("DELETE FROM courses WHERE id = $1", [
-        id,
-      ]);
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Curso não encontrado." });
+  router.delete(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query("DELETE FROM courses WHERE id = $1", [
+          id,
+        ]);
+        if (result.rowCount === 0) {
+          return res.status(404).json({ error: "Curso não encontrado." });
+        }
+        res.status(204).send();
+      } catch (err) {
+        console.error("Erro ao deletar curso:", err);
+        res.status(500).json({ error: "Erro ao deletar curso." });
       }
-      res.status(204).send();
-    } catch (err) {
-      console.error("Erro ao deletar curso:", err);
-      res.status(500).json({ error: "Erro ao deletar curso." });
     }
-  });
+  );
 
   // QUIZ
-  router.post("/:courseId/quiz", isLoggedIn, isAdmin, async (req, res) => {
-    const { courseId } = req.params;
-    const { title, passing_score } = req.body;
+  router.post(
+    "/:courseId/quiz",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { courseId } = req.params;
+      const { title, passing_score } = req.body;
 
-    try {
-      const existingQuiz = await pool.query(
-        "SELECT id FROM quizzes WHERE course_id = $1",
-        [courseId]
-      );
-      if (existingQuiz.rowCount > 0) {
-        return res.status(409).json({ error: "Este curso já possui um quiz." });
+      try {
+        const existingQuiz = await pool.query(
+          "SELECT id FROM quizzes WHERE course_id = $1",
+          [courseId]
+        );
+        if (existingQuiz.rowCount > 0) {
+          return res
+            .status(409)
+            .json({ error: "Este curso já possui um quiz." });
+        }
+
+        const result = await pool.query(
+          "INSERT INTO quizzes (course_id, title, passing_score) VALUES ($1, $2, $3) RETURNING *",
+          [courseId, title, passing_score]
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao criar quiz:", err);
+        res.status(500).json({ error: "Erro interno ao criar o quiz." });
       }
-
-      const result = await pool.query(
-        "INSERT INTO quizzes (course_id, title, passing_score) VALUES ($1, $2, $3) RETURNING *",
-        [courseId, title, passing_score]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro ao criar quiz:", err);
-      res.status(500).json({ error: "Erro interno ao criar o quiz." });
     }
-  });
+  );
 
   // THUMBNAIL
   router.post(
     "/:courseId/thumbnail",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     upload.single("thumbnail"),
     async (req, res) => {
       const { courseId } = req.params;
@@ -460,7 +482,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/:courseId/thumbnail",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     upload.single("thumbnail"),
     async (req, res) => {
       const { courseId } = req.params;
@@ -496,7 +518,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/:courseId/certificate-template",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     upload.single("template"),
     async (req, res) => {
       const { courseId } = req.params;
@@ -529,36 +551,46 @@ module.exports = function (pool, cloudinary, upload) {
   );
 
   // --- Módulos ---
-  router.post("/:courseId/modules", isLoggedIn, isAdmin, async (req, res) => {
-    const { courseId } = req.params;
-    const { title, module_order } = req.body;
-    try {
-      const result = await pool.query(
-        "INSERT INTO modules (course_id, title, module_order) VALUES ($1, $2, $3) RETURNING *",
-        [courseId, title, module_order]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro ao criar módulo:", err);
-      res.status(500).json({ error: "Erro ao criar módulo." });
+  router.post(
+    "/:courseId/modules",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { courseId } = req.params;
+      const { title, module_order } = req.body;
+      try {
+        const result = await pool.query(
+          "INSERT INTO modules (course_id, title, module_order) VALUES ($1, $2, $3) RETURNING *",
+          [courseId, title, module_order]
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao criar módulo:", err);
+        res.status(500).json({ error: "Erro ao criar módulo." });
+      }
     }
-  });
+  );
 
-  router.delete("/modules/:moduleId", isLoggedIn, isAdmin, async (req, res) => {
-    const { moduleId } = req.params;
-    try {
-      await pool.query("DELETE FROM modules WHERE id = $1", [moduleId]);
-      res.status(204).send();
-    } catch (err) {
-      console.error("Erro ao deletar módulo:", err);
-      res.status(500).json({ error: "Erro ao deletar módulo." });
+  router.delete(
+    "/modules/:moduleId",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { moduleId } = req.params;
+      try {
+        await pool.query("DELETE FROM modules WHERE id = $1", [moduleId]);
+        res.status(204).send();
+      } catch (err) {
+        console.error("Erro ao deletar módulo:", err);
+        res.status(500).json({ error: "Erro ao deletar módulo." });
+      }
     }
-  });
+  );
 
   router.put(
     "/:courseId/modules/order",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     async (req, res) => {
       const { orderedModuleIds } = req.body;
       try {
@@ -586,7 +618,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/modules/:moduleId/lessons",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     async (req, res) => {
       const { moduleId } = req.params;
       const { title, video_url, text_content, lesson_order } = req.body;
@@ -606,42 +638,52 @@ module.exports = function (pool, cloudinary, upload) {
     }
   );
 
-  router.put("/lessons/:lessonId", isLoggedIn, isAdmin, async (req, res) => {
-    const { lessonId } = req.params;
-    const { title, video_url, text_content } = req.body;
+  router.put(
+    "/lessons/:lessonId",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { lessonId } = req.params;
+      const { title, video_url, text_content } = req.body;
 
-    const clean_text_content = DOMPurify.sanitize(text_content);
+      const clean_text_content = DOMPurify.sanitize(text_content);
 
-    try {
-      const result = await pool.query(
-        "UPDATE lessons SET title = $1, video_url = $2, text_content = $3 WHERE id = $4 RETURNING *",
-        [title, video_url, clean_text_content, lessonId]
-      );
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Aula não encontrada." });
+      try {
+        const result = await pool.query(
+          "UPDATE lessons SET title = $1, video_url = $2, text_content = $3 WHERE id = $4 RETURNING *",
+          [title, video_url, clean_text_content, lessonId]
+        );
+        if (result.rowCount === 0) {
+          return res.status(404).json({ error: "Aula não encontrada." });
+        }
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao editar aula:", err);
+        res.status(500).json({ error: "Erro ao editar aula." });
       }
-      res.json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro ao editar aula:", err);
-      res.status(500).json({ error: "Erro ao editar aula." });
     }
-  });
+  );
 
-  router.delete("/lessons/:lessonId", isLoggedIn, isAdmin, async (req, res) => {
-    const { lessonId } = req.params;
-    try {
-      await pool.query("DELETE FROM lessons WHERE id = $1", [lessonId]);
-      res.status(204).send();
-    } catch (err) {
-      console.error("Erro ao deletar aula:", err);
-      res.status(500).json({ error: "Erro ao deletar aula." });
+  router.delete(
+    "/lessons/:lessonId",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { lessonId } = req.params;
+      try {
+        await pool.query("DELETE FROM lessons WHERE id = $1", [lessonId]);
+        res.status(204).send();
+      } catch (err) {
+        console.error("Erro ao deletar aula:", err);
+        res.status(500).json({ error: "Erro ao deletar aula." });
+      }
     }
-  });
+  );
 
   router.put(
     "/modules/:moduleId/lessons/order",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     async (req, res) => {
       const { orderedLessonIds } = req.body;
       try {

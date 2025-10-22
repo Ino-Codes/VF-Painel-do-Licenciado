@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool) {
   router.get("/", isLoggedIn, async (req, res) => {
@@ -30,7 +30,7 @@ module.exports = function (pool) {
     }
   });
 
-  router.post("/", isLoggedIn, isAdmin, async (req, res) => {
+  router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
     const { message, visibility } = req.body;
     try {
       const result = await pool.query(
@@ -44,34 +44,44 @@ module.exports = function (pool) {
     }
   });
 
-  router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    const { message, visibility } = req.body;
-    try {
-      const result = await pool.query(
-        "UPDATE notices SET message = $1, visibility = $2 WHERE id = $3 RETURNING *",
-        [message, visibility, id]
-      );
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Aviso não encontrado." });
+  router.put(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const { message, visibility } = req.body;
+      try {
+        const result = await pool.query(
+          "UPDATE notices SET message = $1, visibility = $2 WHERE id = $3 RETURNING *",
+          [message, visibility, id]
+        );
+        if (result.rowCount === 0) {
+          return res.status(404).json({ error: "Aviso não encontrado." });
+        }
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao editar aviso:", err);
+        res.status(500).json({ error: "Erro ao editar aviso." });
       }
-      res.json(result.rows[0]);
-    } catch (err) {
-      console.error("Erro ao editar aviso:", err);
-      res.status(500).json({ error: "Erro ao editar aviso." });
     }
-  });
+  );
 
-  router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    try {
-      await pool.query("DELETE FROM notices WHERE id = $1", [id]);
-      res.json({ success: true, message: "Aviso excluído com sucesso." });
-    } catch (err) {
-      console.error("Erro ao excluir aviso:", err);
-      res.status(500).json({ error: "Erro ao excluir aviso." });
+  router.delete(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        await pool.query("DELETE FROM notices WHERE id = $1", [id]);
+        res.json({ success: true, message: "Aviso excluído com sucesso." });
+      } catch (err) {
+        console.error("Erro ao excluir aviso:", err);
+        res.status(500).json({ error: "Erro ao excluir aviso." });
+      }
     }
-  });
+  );
 
   return router;
 };
