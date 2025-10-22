@@ -176,7 +176,7 @@ const AdminCourses: React.FC = () => {
       <Menu />
       <div className="content-area">
         <h2>{editingCourse ? "Editar Curso" : "Adicionar Novo Curso"}</h2>
-        <form onSubmit={handleSubmit} className="admin-form">
+        <form onSubmit={handleSubmit} className="on-screen-form">
           <div className="form-row">
             <input
               className="form-input"
@@ -215,7 +215,7 @@ const AdminCourses: React.FC = () => {
 
         {editingCourse && (
           <>
-            <div className="admin-form">
+            <div className="on-screen-form">
               <h3>Alterar Imagem de Capa</h3>
               <div className="form-row">
                 <div className="file-upload-wrapper">
@@ -261,7 +261,7 @@ const AdminCourses: React.FC = () => {
               )}
             </div>
 
-            <div className="admin-form">
+            <div className="on-screen-form">
               <h3>Alterar Modelo de Certificado</h3>
               <p
                 style={{

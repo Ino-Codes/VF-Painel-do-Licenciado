@@ -52,7 +52,7 @@ const BulkUserImport: React.FC<BulkUserImportProps> = ({ onImportSuccess }) => {
   };
 
   return (
-    <div className="bulk-import-section">
+    <div className="on-screen-form">
       <h3>Importar Usuários em Massa</h3>
       <p>
         Selecione um arquivo .csv com as colunas:{" "}

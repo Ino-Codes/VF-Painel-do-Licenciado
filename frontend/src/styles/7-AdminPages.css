@@ -73,14 +73,14 @@
   color: var(--text-primary);
 }
 
-.bulk-import-section {
+.on-screen-form {
   background-color: var(--bg-secondary);
   padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
 }
 
-.bulk-import-section h3 {
+.on-screen-form h3 {
   margin-top: 0;
 }
 
