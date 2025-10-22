@@ -207,16 +207,17 @@ const Dashboard: React.FC = () => {
           <div className="dashboard-elements notices-column">
             <h3>Mural de Avisos</h3>
             <div className="notice-board">
-              {user.role === "admin" && (
-                <div className="notice-form-actions">
-                  <button
-                    className="form-button"
-                    onClick={handleOpenCreateNotice}
-                  >
-                    + Adicionar Aviso
-                  </button>
-                </div>
-              )}
+              {user.role === "admin" ||
+                (user.role === "rh" && (
+                  <div className="notice-form-actions">
+                    <button
+                      className="form-button"
+                      onClick={handleOpenCreateNotice}
+                    >
+                      + Adicionar Aviso
+                    </button>
+                  </div>
+                ))}
             </div>
             <div className="notice-list">
               {notices.length > 0 ? (
@@ -240,22 +241,25 @@ const Dashboard: React.FC = () => {
                             }
                           )}
                         </small>
-                        {user.role === "admin" && (
-                          <div className="notice-actions">
-                            <button
-                              className="list-button"
-                              onClick={() => handleOpenEditNotice(notice)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              className="delete-button"
-                              onClick={() => handleDeleteNoticeClick(notice.id)}
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        )}
+                        {user.role === "admin" ||
+                          (user.role === "rh" && (
+                            <div className="notice-actions">
+                              <button
+                                className="list-button"
+                                onClick={() => handleOpenEditNotice(notice)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className="delete-button"
+                                onClick={() =>
+                                  handleDeleteNoticeClick(notice.id)
+                                }
+                              >
+                                Excluir
+                              </button>
+                            </div>
+                          ))}
                       </div>
                     </>
                   </div>
@@ -292,16 +296,17 @@ const Dashboard: React.FC = () => {
           <h3>Relatórios</h3>
 
           <div className="analytics-tabs">
-            {user.role === "admin" && (
-              <button
-                className={`analytics-tab ${
-                  activeReportTab === "eneagrama" ? "active" : ""
-                }`}
-                onClick={() => setActiveReportTab("eneagrama")}
-              >
-                Eneagrama
-              </button>
-            )}
+            {user.role === "admin" ||
+              (user.role === "rh" && (
+                <button
+                  className={`analytics-tab ${
+                    activeReportTab === "eneagrama" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveReportTab("eneagrama")}
+                >
+                  Eneagrama
+                </button>
+              ))}
 
             <button
               className={`analytics-tab ${

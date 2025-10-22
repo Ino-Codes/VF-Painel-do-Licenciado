@@ -22,7 +22,7 @@ const AdminCourses: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
+    if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
       toast.error("Acesso restrito aos administradores.");
       navigate("/dashboard");
     }

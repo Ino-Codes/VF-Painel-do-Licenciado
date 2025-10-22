@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { isAdmin, isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
   // ROTA PÚBLICA PARA O DASHBOARD
@@ -32,7 +32,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.get(
     "/users-for-notification",
     isLoggedIn,
-    isAdmin,
+    checkRole(["admin", "rh"]),
     async (req, res) => {
       try {
         const result = await pool.query(
@@ -46,18 +46,23 @@ module.exports = function (pool, cloudinary, upload) {
   );
 
   // ROTA PARA BUSCAR NOTIFICADOS DE UM EVENTO ESPECÍFICO
-  router.get("/:id/notified-users", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    try {
-      const result = await pool.query(
-        "SELECT user_id FROM event_notifications WHERE event_id = $1",
-        [id]
-      );
-      res.json(result.rows.map((row) => row.user_id));
-    } catch (err) {
-      res.status(500).json({ error: "Erro ao buscar usuários notificados." });
+  router.get(
+    "/:id/notified-users",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query(
+          "SELECT user_id FROM event_notifications WHERE event_id = $1",
+          [id]
+        );
+        res.json(result.rows.map((row) => row.user_id));
+      } catch (err) {
+        res.status(500).json({ error: "Erro ao buscar usuários notificados." });
+      }
     }
-  });
+  );
 
   // Rota para BUSCAR todos os eventos
   router.get("/", isLoggedIn, async (req, res) => {
@@ -125,19 +130,26 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // Rota para BUSCAR as categorias
-  router.get("/categories", isLoggedIn, isAdmin, async (req, res) => {
-    try {
-      const result = await pool.query(
-        "SELECT DISTINCT category FROM events WHERE category IS NOT NULL AND category != '' ORDER BY category ASC"
-      );
-      res.json(result.rows.map((row) => row.category));
-    } catch (err) {
-      res.status(500).json({ error: "Erro ao buscar categorias de eventos." });
+  router.get(
+    "/categories",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      try {
+        const result = await pool.query(
+          "SELECT DISTINCT category FROM events WHERE category IS NOT NULL AND category != '' ORDER BY category ASC"
+        );
+        res.json(result.rows.map((row) => row.category));
+      } catch (err) {
+        res
+          .status(500)
+          .json({ error: "Erro ao buscar categorias de eventos." });
+      }
     }
-  });
+  );
 
   // Rota para CRIAR um novo evento
-  router.post("/", isLoggedIn, isAdmin, async (req, res) => {
+  router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
     const {
       title,
       description,
@@ -175,47 +187,52 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // Rota para ATUALIZAR um evento existente
-  router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
-    const { id } = req.params;
-    const {
-      title,
-      description,
-      start_date,
-      end_date,
-      category,
-      color,
-      notifiedUserIds,
-    } = req.body;
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query(
-        "UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, category = $5, color = $6 WHERE id = $7",
-        [title, description, start_date, end_date, category, color, id]
-      );
+  router.put(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const {
+        title,
+        description,
+        start_date,
+        end_date,
+        category,
+        color,
+        notifiedUserIds,
+      } = req.body;
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          "UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, category = $5, color = $6 WHERE id = $7",
+          [title, description, start_date, end_date, category, color, id]
+        );
 
-      await client.query(
-        "DELETE FROM event_notifications WHERE event_id = $1",
-        [id]
-      );
+        await client.query(
+          "DELETE FROM event_notifications WHERE event_id = $1",
+          [id]
+        );
 
-      if (notifiedUserIds && notifiedUserIds.length > 0) {
-        for (const userId of notifiedUserIds) {
-          await client.query(
-            "INSERT INTO event_notifications (event_id, user_id) VALUES ($1, $2)",
-            [id, userId]
-          );
+        if (notifiedUserIds && notifiedUserIds.length > 0) {
+          for (const userId of notifiedUserIds) {
+            await client.query(
+              "INSERT INTO event_notifications (event_id, user_id) VALUES ($1, $2)",
+              [id, userId]
+            );
+          }
         }
+        await client.query("COMMIT");
+        res.json({ success: true });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        res.status(500).json({ error: "Erro ao atualizar evento." });
+      } finally {
+        client.release();
       }
-      await client.query("COMMIT");
-      res.json({ success: true });
-    } catch (err) {
-      await client.query("ROLLBACK");
-      res.status(500).json({ error: "Erro ao atualizar evento." });
-    } finally {
-      client.release();
     }
-  });
+  );
 
   // Rota para DELETAR um evento (não precisa de alterações)
   router.delete("/:id", async (req, res) => {

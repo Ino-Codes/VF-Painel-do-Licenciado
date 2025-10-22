@@ -21,8 +21,8 @@ const AdminCalendar: React.FC = () => {
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
-      toast.error("Acesso restrito a administradores.");
+    if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
+      toast.error("Acesso restrito aos administradores.");
       navigate("/dashboard");
     }
   }, [user, loading, navigate]);
