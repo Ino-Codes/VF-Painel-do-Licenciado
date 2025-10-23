@@ -5,6 +5,7 @@
 # Build output
 /build
 /dist
+yarn.lock
 
 # Environment variables
 .env
