@@ -166,6 +166,16 @@
   flex-grow: 1;
 }
 
+.course-card-content h3 {
+  margin-top: 10px;
+}
+
+.course-card-content span {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
 .course-card-thumbnail {
   position: relative;
 }

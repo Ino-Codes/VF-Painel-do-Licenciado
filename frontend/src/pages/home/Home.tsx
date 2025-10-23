@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import EventCard from "./EventCard.tsx";
-import EnneagramStats from "./EnneagramStats.tsx";
+
 import NoticeModal from "../../components/forms/NoticeModal.tsx";
 import { TiptapMenuBar } from "../../components/editor/TiptapEditor.tsx";
 
@@ -32,20 +32,7 @@ interface MonthlyEvent {
   color: string;
 }
 
-const CoursesAnalytics: React.FC = () => {
-  return (
-    <div>
-      <h4>Análise de Cursos</h4>
-      <EmptyState
-        imageKey="dashs"
-        title="Relatórios de Cursos em Desenvolvimento"
-        message="Estamos criando gráficos sobre o progresso e engajamento nos cursos. Volte em breve!"
-      />
-    </div>
-  );
-};
-
-const Dashboard: React.FC = () => {
+const Home: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [monthlyEvents, setMonthlyEvents] = useState<MonthlyEvent[]>([]);
@@ -62,10 +49,6 @@ const Dashboard: React.FC = () => {
 
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [noticeToEdit, setNoticeToEdit] = useState<Notice | null>(null);
-
-  const [activeReportTab, setActiveReportTab] = useState(
-    user?.role === "admin" ? "eneagrama" : "cursos"
-  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -175,8 +158,8 @@ const Dashboard: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <div className="dashboard-header">
-          <h2>Bem-vindo(a), {user.nome}!</h2>
+        <div className="home-header">
+          <h2>Olá, {user.nome}!</h2>
           <p>
             Este é o seu novo Painel da Valor Fiscal!
             <br />
@@ -185,9 +168,9 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="dashboard-main-columns">
+        <div className="home-main-columns">
           {user.role !== "licenciado" && (
-            <div className="dashboard-elements events-column">
+            <div className="home-elements events-column">
               <h3>Eventos do Mês</h3>
               <div className="events-grid">
                 {monthlyEvents.length > 0 ? (
@@ -204,7 +187,8 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           )}
-          <div className="dashboard-elements notices-column">
+
+          <div className="home-elements notices-column">
             <h3>Mural de Avisos</h3>
             <div className="notice-board">
               {(user.role === "admin" || user.role === "rh") && (
@@ -287,37 +271,6 @@ const Dashboard: React.FC = () => {
             />
           </div>
         )}
-
-        <div className="dashboard-elements">
-          <h3>Relatórios</h3>
-
-          <div className="analytics-tabs">
-            {(user.role === "admin" || user.role === "rh") && (
-              <button
-                className={`analytics-tab ${
-                  activeReportTab === "eneagrama" ? "active" : ""
-                }`}
-                onClick={() => setActiveReportTab("eneagrama")}
-              >
-                Eneagrama
-              </button>
-            )}
-
-            <button
-              className={`analytics-tab ${
-                activeReportTab === "cursos" ? "active" : ""
-              }`}
-              onClick={() => setActiveReportTab("cursos")}
-            >
-              Cursos
-            </button>
-          </div>
-
-          <div className="dashboard-elements-child">
-            {activeReportTab === "eneagrama" && <EnneagramStats />}
-            {activeReportTab === "cursos" && <CoursesAnalytics />}
-          </div>
-        </div>
       </div>
 
       <NoticeModal
@@ -340,4 +293,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default Home;

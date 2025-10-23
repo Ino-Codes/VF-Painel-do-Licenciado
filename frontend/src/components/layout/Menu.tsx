@@ -138,16 +138,16 @@ const Menu: React.FC = () => {
       </button>
 
       <div className={`menu-left ${isMenuOpen ? "open" : ""}`}>
-        <NavLink to="/dashboard" className="menu-logo-link">
+        <NavLink to="/home" className="menu-logo-link">
           <img src={Logo} alt="Valor Fiscal Logo" className="menu-logo" />
         </NavLink>
 
         <NavLink
-          to="/dashboard"
+          to="/home"
           className="menu-item"
           onClick={() => setIsMenuOpen(false)}
         >
-          Dashboard
+          Home
         </NavLink>
 
         <div className="dropdown-menu" ref={fileDropdownRef}>
@@ -243,6 +243,17 @@ const Menu: React.FC = () => {
                   }}
                 >
                   Cursos
+                </NavLink>
+
+                <NavLink
+                  to="/admin/dashboards"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setRhDropdownOpen(false);
+                  }}
+                >
+                  Dashboards
                 </NavLink>
 
                 <NavLink

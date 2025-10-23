@@ -33,6 +33,10 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           {isCompleted && <div className="completion-badge">✓</div>}
         </div>
         <div className="course-card-content">
+          <span className="course-lesson-count">
+            {course.total_lessons}{" "}
+            {course.total_lessons === 1 ? "aula" : "aulas"}
+          </span>
           <h3>{course.title}</h3>
           <p>{course.description}</p>
         </div>

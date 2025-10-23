@@ -5,7 +5,8 @@ import { Toaster } from "react-hot-toast";
 
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import App from "./pages/public/App.tsx";
-import Dashboard from "./pages/dashboard/Dashboard.tsx";
+import Home from "./pages/home/Home.tsx";
+import Dashboards from "./pages/admin/Dashboards.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import Perfil from "./pages/profile/Perfil.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
@@ -32,12 +33,13 @@ import "./styles/1-global.css";
 import "./styles/2-components.css";
 import "./styles/3-Login.css";
 import "./styles/4-Menu.css";
-import "./styles/5-Dashboard.css";
+import "./styles/5-Home.css";
 import "./styles/6-ContentPages.css";
 import "./styles/7-AdminPages.css";
 import "./styles/8-Profile.css";
 import "./styles/9-Assesments.css";
 import "./styles/10-Company.css";
+import "./styles/11-Dashboards.css";
 import "./styles/12-Internal.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
@@ -66,7 +68,7 @@ const AppRouter: React.FC = () => {
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/reset-password" element={<ResetPassword />} />{" "}
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/videos" element={<Videos />} />
@@ -92,6 +94,7 @@ const AppRouter: React.FC = () => {
           <Route path="/admin/calendar" element={<AdminCalendar />} />
           <Route path="/admin/ferias" element={<GestaoFerias />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/dashboards" element={<Dashboards />} />
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

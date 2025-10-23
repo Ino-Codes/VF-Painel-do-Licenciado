@@ -291,17 +291,12 @@
 .empty-state-title {
   font-size: 18px;
   font-weight: 600;
-  margin: 0 0 10px 0;
+  margin: 0;
 }
 
 .empty-state-message {
   color: var(--text-secondary);
   max-width: 400px;
-  margin-bottom: 20px;
-}
-
-.empty-state-action {
-  margin-top: 15px;
 }
 
 .main-footer {
