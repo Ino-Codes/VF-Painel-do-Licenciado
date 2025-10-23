@@ -223,7 +223,7 @@ const AdminCourseEditor: React.FC = () => {
       passing_score: 70,
     };
     try {
-      toast.loading("A criar o quiz...");
+      toast.loading("Criando o quiz...");
       await api.post(`/api/admin/courses/${courseId}/quiz`, quizData);
       toast.dismiss();
       toast.success("Quiz criado com sucesso! Agora adicione as perguntas.");
@@ -319,7 +319,7 @@ const AdminCourseEditor: React.FC = () => {
 
         <h2>Editor do Curso: {course.title}</h2>
 
-        <div className="admin-form mt-4">
+        <div className="on-screen-form mt-4">
           <h3>Adicionar Novo Módulo</h3>
           <div className="form-row">
             <input
@@ -370,7 +370,7 @@ const AdminCourseEditor: React.FC = () => {
         <div className="quiz-editor-section">
           <h2>Quiz do Curso</h2>
           {!course.quiz ? (
-            <div className="admin-form">
+            <div className="on-screen-form">
               <p>Este curso ainda não tem um quiz.</p>
               <div className="form-row">
                 <button className="form-button" onClick={handleCreateQuiz}>
@@ -443,7 +443,7 @@ const AdminCourseEditor: React.FC = () => {
                 </div>
               ))}
 
-              <div className="admin-form add-item-form">
+              <div className="on-screen-form add-item-form">
                 <input
                   className="form-input"
                   placeholder="Texto da nova pergunta"

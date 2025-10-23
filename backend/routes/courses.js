@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
+const chromium = require("@sparticuz/chromium");
 const { JSDOM } = require("jsdom");
 const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
@@ -365,6 +366,8 @@ module.exports = function (pool, cloudinary, upload) {
     const { courseId } = req.params;
     const { id: userId } = req.user;
 
+    let browser = null;
+
     try {
       const userResult = await pool.query(
         "SELECT nome FROM users WHERE id = $1",
@@ -451,10 +454,13 @@ module.exports = function (pool, cloudinary, upload) {
         </html>
       `;
 
-      const browser = await puppeteer.launch({
-        headless: "new",
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
       });
+
       const page = await browser.newPage();
       await page.setContent(htmlContent, { waitUntil: "networkidle0" });
       const pdfBytes = await page.pdf({
@@ -462,7 +468,6 @@ module.exports = function (pool, cloudinary, upload) {
         landscape: true,
         printBackground: true,
       });
-      await browser.close();
 
       const uniqueCode = crypto.randomBytes(16).toString("hex");
 
@@ -483,6 +488,10 @@ module.exports = function (pool, cloudinary, upload) {
     } catch (err) {
       console.error("Erro ao gerar certificado:", err);
       res.status(500).send("Erro ao gerar certificado.");
+    } finally {
+      if (browser !== null) {
+        await browser.close();
+      }
     }
   });
 
