@@ -91,5 +91,38 @@ module.exports = function (pool) {
     }
   );
 
+  router.get(
+    "/course-engagement",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      try {
+        const query = `
+      SELECT
+        u.nome,
+        u.avatar_url,
+        COUNT(p.id)::int AS completed_lessons_count
+      FROM
+        progress p
+      JOIN
+        users u ON p.user_id = u.id
+      WHERE
+        u.role != 'licenciado' 
+      GROUP BY
+        u.id, u.nome, u.avatar_url
+      ORDER BY
+        completed_lessons_count DESC
+      LIMIT 3;
+    `;
+
+        const result = await pool.query(query);
+        res.json(result.rows);
+      } catch (err) {
+        console.error("Erro ao buscar engajamento de cursos:", err);
+        res.status(500).json({ error: "Erro ao buscar dados de engajamento." });
+      }
+    }
+  );
+
   return router;
 };
