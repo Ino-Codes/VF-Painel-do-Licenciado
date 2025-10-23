@@ -68,48 +68,43 @@ const UserForm: React.FC<{
 
   return (
     <form onSubmit={handleSubmit} className="admin-form">
-      {/* --- FORMULÁRIO PARA COLABORADORES --- */}
+      <h3>
+        {userToEdit ? `Editando: ${userToEdit.nome}` : `Criar Novo Usuário`}
+      </h3>
+      <div className="form-row">
+        <input
+          name="nome"
+          value={formData.nome || ""}
+          onChange={handleChange}
+          placeholder="Nome Completo"
+          required
+          className="form-input"
+        />
+        <input
+          name="email"
+          value={formData.email || ""}
+          onChange={handleChange}
+          placeholder="Email"
+          type="email"
+          required
+          className="form-input"
+        />
+      </div>
+
+      {!userToEdit && (
+        <div className="form-row">
+          <input
+            name="password"
+            onChange={handleChange}
+            placeholder="Senha"
+            type="password"
+            required
+            className="form-input"
+          />
+        </div>
+      )}
       {formType === "interno" && (
         <div>
-          <h3>
-            {userToEdit
-              ? `Editando: ${userToEdit.nome}`
-              : `Cadastrar Novo Colaborador`}
-          </h3>
-
-          <div className="form-row">
-            <input
-              name="nome"
-              value={formData.nome || ""}
-              onChange={handleChange}
-              placeholder="Nome Completo"
-              required
-              className="form-input"
-            />
-            <input
-              name="email"
-              value={formData.email || ""}
-              onChange={handleChange}
-              placeholder="Email"
-              type="email"
-              required
-              className="form-input"
-            />
-          </div>
-
-          {!userToEdit && (
-            <div className="form-row">
-              <input
-                name="password"
-                onChange={handleChange}
-                placeholder="Senha"
-                type="password"
-                required
-                className="form-input"
-              />
-            </div>
-          )}
-
           <div className="form-row">
             <input
               name="cargo"
@@ -199,51 +194,6 @@ const UserForm: React.FC<{
           )}
         </div>
       )}
-
-      {/* --- FORMULÁRIO PARA LICENCIADOS --- */}
-      {formType !== "interno" && (
-        <div>
-          <h3>
-            {userToEdit
-              ? `Editando: ${userToEdit.nome}`
-              : `Cadastrar Novo Licenciado`}
-          </h3>
-
-          <div className="form-row">
-            <input
-              name="nome"
-              value={formData.nome || ""}
-              onChange={handleChange}
-              placeholder="Nome Completo"
-              required
-              className="form-input"
-            />
-            <input
-              name="email"
-              value={formData.email || ""}
-              onChange={handleChange}
-              placeholder="Email"
-              type="email"
-              required
-              className="form-input"
-            />
-          </div>
-
-          {!userToEdit && (
-            <div className="form-row">
-              <input
-                name="password"
-                onChange={handleChange}
-                placeholder="Senha"
-                type="password"
-                required
-                className="form-input"
-              />
-            </div>
-          )}
-        </div>
-      )}
-
       <div className="modal-actions">
         <button type="button" onClick={onCancel} className="form-button-cancel">
           Cancelar

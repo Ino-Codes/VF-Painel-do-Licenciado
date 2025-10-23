@@ -158,7 +158,7 @@ const Empresa: React.FC = () => {
           </div>
         </section>
 
-        <section className="info-section">
+        {/* <section className="info-section">
           <div className="page-header">
             <h2>Nossa História</h2>
           </div>
@@ -220,7 +220,7 @@ const Empresa: React.FC = () => {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         <section className="info-section">
           <div className="page-header">

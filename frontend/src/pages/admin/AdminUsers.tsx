@@ -20,6 +20,7 @@ interface User {
   unidade?: string;
   corporate_photo_url?: string;
   is_vendedor?: boolean;
+  data_admissao?: string | null;
   gestor_id?: number | null;
 }
 
