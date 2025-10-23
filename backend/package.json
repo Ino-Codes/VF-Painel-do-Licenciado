@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "postinstall": "npx @sparticuz/chromium@latest --no-sandbox"
+    "start": "node app.js"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.5",
