@@ -30,7 +30,7 @@ const App: React.FC = () => {
       if (user.must_change_password) {
         setNeedsPasswordReset(true); // Se precisar de mudar, abre o modal
       } else {
-        navigate("/dashboard"); // Se não, vai para o dashboard
+        navigate("/home"); // Se não, vai para o home
       }
     } catch (err) {
       setLoginError("Revise os dados de login e tente novamente.");
