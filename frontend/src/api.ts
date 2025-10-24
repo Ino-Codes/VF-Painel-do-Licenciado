@@ -1,8 +1,10 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3001",
-  // "https://vf-painel-do-licenciado-leba.onrender.com",
+  baseURL:
+    process.env.REACT_APP_API_URL ||
+    "http://localhost:3001" ||
+    "https://vf-painel-do-licenciado-leba.onrender.com",
 });
 
 api.interceptors.request.use(
