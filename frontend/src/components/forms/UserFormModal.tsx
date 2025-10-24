@@ -7,8 +7,7 @@ const UserFormModal: React.FC<{
   onSuccess: () => void;
   userToEdit: any | null; // Usamos 'any' para simplificar a passagem de props
   formType: "licenciado" | "interno";
-  managers: { id: number; nome: string }[];
-}> = ({ isOpen, onClose, onSuccess, userToEdit, formType, managers }) => {
+}> = ({ isOpen, onClose, onSuccess, userToEdit, formType }) => {
   if (!isOpen) return null;
 
   return (
@@ -19,7 +18,6 @@ const UserFormModal: React.FC<{
           formType={formType}
           onSuccess={onSuccess}
           onCancel={onClose}
-          managers={managers}
         />
       </div>
     </div>

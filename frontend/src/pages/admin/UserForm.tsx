@@ -23,8 +23,7 @@ const UserForm: React.FC<{
   formType: "licenciado" | "interno";
   onSuccess: () => void;
   onCancel: () => void;
-  managers: { id: number; nome: string }[];
-}> = ({ userToEdit, formType, onSuccess, onCancel, managers }) => {
+}> = ({ userToEdit, formType, onSuccess, onCancel }) => {
   const [formData, setFormData] = useState<Partial<User>>({});
 
   useEffect(() => {

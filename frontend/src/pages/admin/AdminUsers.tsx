@@ -19,9 +19,7 @@ interface User {
   setor?: string;
   unidade?: string;
   corporate_photo_url?: string;
-  is_vendedor?: boolean;
   data_admissao?: string | null;
-  gestor_id?: number | null;
 }
 
 const AdminUsers: React.FC = () => {
@@ -49,7 +47,6 @@ const AdminUsers: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [managers, setManagers] = useState<{ id: number; nome: string }[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -90,17 +87,6 @@ const AdminUsers: React.FC = () => {
     colaboradorState.currentPage,
     colaboradorState.searchQuery,
   ]);
-
-  useEffect(() => {
-    if (user) {
-      api
-        .get("/api/users/managers")
-        .then((res) => setManagers(res.data))
-        .catch((err) =>
-          toast.error("Não foi possível carregar a lista de vendedores.")
-        );
-    }
-  }, [user]);
 
   const handleSearch = (tab: "licenciados" | "colaboradores", term: string) => {
     const setState =
@@ -224,7 +210,6 @@ const AdminUsers: React.FC = () => {
         onSuccess={handleFormSuccess}
         userToEdit={editingUser}
         formType={activeTab === "licenciados" ? "licenciado" : "interno"}
-        managers={managers}
       />
 
       <ConfirmationModal
