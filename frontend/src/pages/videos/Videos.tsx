@@ -24,7 +24,7 @@ const getYoutubeEmbedUrl = (url: string): string => {
   let videoId = null;
 
   const youtubeRegex =
-    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?#]+)/;
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?#]+)/; // Parece confuso mas serve para refatorar a URL do vídeo e deixar no modelo embed correto
   const match = url.match(youtubeRegex);
 
   if (match && match[1]) {
