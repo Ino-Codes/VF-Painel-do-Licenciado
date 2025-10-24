@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
-const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
   router.get("/", isLoggedIn, async (req, res) => {
     const { category, search, page = 1, limit = 15 } = req.query;
-    const userRole = req.user ? req.user.role : null; // Pega a role do usuário logado
+    const userRole = req.user ? req.user.role : null;
 
     try {
       const offset = (page - 1) * limit;
@@ -17,11 +17,9 @@ module.exports = function (pool, cloudinary, upload) {
         whereClauses.push(
           "(visibility = 'todos' OR visibility = 'licenciados')"
         );
-      } else if (userRole === "admin" || userRole === "colaborador") {
-        whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
+      } else if (userRole === "admin") {
       } else {
-        // Para usuários não logados ou sem role definida, mostrar apenas 'todos'
-        whereClauses.push("visibility = 'todos'");
+        whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
       }
 
       if (category) {
@@ -59,11 +57,22 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.get("/categories", async (req, res) => {
+  router.get("/categories", isLoggedIn, async (req, res) => {
+    const userRole = req.user ? req.user.role : null;
     try {
-      const result = await pool.query(
-        "SELECT DISTINCT category FROM faq ORDER BY category ASC"
-      );
+      let whereClause = "";
+
+      if (userRole === "licenciado") {
+        whereClause =
+          "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
+      } else if (userRole === "admin") {
+        whereClause = "";
+      } else {
+        whereClause = "WHERE (visibility = 'todos' OR visibility = 'internos')";
+      }
+
+      const query = `SELECT DISTINCT category FROM faq ${whereClause} ORDER BY category ASC`;
+      const result = await pool.query(query);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
       console.error("Erro ao buscar categorias do FAQ:", err);

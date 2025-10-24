@@ -3,27 +3,25 @@ const path = require("path");
 const https = require("https");
 const mime = require("mime-types");
 const router = express.Router();
-const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
   router.get("/", isLoggedIn, async (req, res) => {
-    const { category, search, role } = req.query;
+    const { category, search } = req.query;
+    const { role } = req.user;
     try {
       let whereClauses = [];
       const params = [];
 
-      if (role !== "admin") {
-        if (role === "licenciado") {
-          whereClauses.push(
-            "(visibility = 'todos' OR visibility = 'licenciados')"
-          );
-        } else if (role === "colaborador") {
-          whereClauses.push(
-            "(visibility = 'todos' OR visibility = 'colaboradores')"
-          );
-        } else {
-          whereClauses.push("visibility = 'todos'");
-        }
+      if (role === "licenciado") {
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'licenciados')"
+        );
+      } else if (role === "admin") {
+      } else {
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'colaboradores')"
+        );
       }
 
       if (category) {
@@ -59,6 +57,31 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
+  router.get("/categories", isLoggedIn, async (req, res) => {
+    const { role } = req.user;
+    try {
+      let whereClause = "";
+
+      if (role === "licenciado") {
+        whereClause =
+          "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
+      } else if (role === "admin") {
+        whereClause = "";
+      } else {
+        whereClause =
+          "WHERE (visibility = 'todos' OR visibility = 'colaboradores')";
+      }
+
+      const query = `SELECT DISTINCT category FROM files ${whereClause} ORDER BY category ASC`;
+      const result = await pool.query(query);
+      res.json(result.rows.map((row) => row.category));
+    } catch (err) {
+      console.error("Erro ao buscar categorias de arquivos:", err);
+      res.status(500).json({ error: "Erro ao buscar categorias." });
+    }
+  });
+
+  // Rotas de Admin
   router.post(
     "/",
     isLoggedIn,
@@ -203,32 +226,6 @@ module.exports = function (pool, cloudinary, upload) {
       }
     }
   );
-
-  router.get("/categories", async (req, res) => {
-    const { role } = req.query;
-    try {
-      let whereClause = "";
-
-      if (role !== "admin") {
-        if (role === "licenciado") {
-          whereClause =
-            "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
-        } else if (role === "colaborador") {
-          whereClause =
-            "WHERE (visibility = 'todos' OR visibility = 'colaboradores')";
-        } else {
-          whereClause = "WHERE visibility = 'todos'";
-        }
-      }
-
-      const query = `SELECT DISTINCT category FROM files ${whereClause} ORDER BY category ASC`;
-      const result = await pool.query(query);
-      res.json(result.rows.map((row) => row.category));
-    } catch (err) {
-      console.error("Erro ao buscar categorias de arquivos:", err);
-      res.status(500).json({ error: "Erro ao buscar categorias." });
-    }
-  });
 
   return router;
 };
