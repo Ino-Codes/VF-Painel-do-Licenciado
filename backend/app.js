@@ -124,8 +124,6 @@ const createTables = async () => {
       must_change_password BOOLEAN DEFAULT TRUE,
       unidade TEXT,
       telefone TEXT,
-      is_vendedor BOOLEAN NOT NULL DEFAULT FALSE,
-      gestor_id INTEGER REFERENCES users(id),
       data_admissao DATE,
       saldo_ferias INTEGER NOT NULL DEFAULT 0,
       corporate_photo_url TEXT

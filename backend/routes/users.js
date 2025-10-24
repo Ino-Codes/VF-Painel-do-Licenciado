@@ -37,7 +37,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
         const countSql = `SELECT COUNT(*) FROM users ${whereString}`;
-        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id FROM users ${whereString} ORDER BY nome ASC LIMIT $${
+        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, data_admissao FROM users ${whereString} ORDER BY nome ASC LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 
@@ -74,8 +74,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         setor,
         unidade,
         telefone,
-        is_vendedor,
-        gestor_id,
         data_admissao,
       } = req.body;
       const client = await pool.connect();
@@ -98,7 +96,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         const hash = await bcrypt.hash(password, 10);
 
         const userResult = await client.query(
-          "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone, is_vendedor, gestor_id, data_admissao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
+          "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone, data_admissao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
           [
             nome,
             email,
@@ -109,8 +107,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             setor || null,
             unidade || null,
             telefone || null,
-            is_vendedor || false,
-            gestor_id || null,
             role === "licenciado" ? null : data_admissao,
           ]
         );
@@ -177,8 +173,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         setor,
         unidade,
         telefone,
-        is_vendedor,
-        gestor_id,
         data_admissao,
       } = req.body;
       const client = await pool.connect();
@@ -207,7 +201,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             : null;
 
         const userResult = await client.query(
-          "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, is_vendedor = $9, gestor_id = $10, data_admissao = $11 WHERE id = $12 RETURNING *",
+          "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, data_admissao = $9 WHERE id = $10 RETURNING *",
           [
             nome,
             email,
@@ -217,8 +211,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             setor,
             unidade || null,
             telefone,
-            is_vendedor || false,
-            gestor_id || null,
             role === "licenciado" ? null : data_admissao,
             id,
           ]
@@ -402,22 +394,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         });
     }
   );
-
-  router.get("/managers", isLoggedIn, async (req, res) => {
-    try {
-      const query = `
-      SELECT id, nome 
-      FROM users 
-      WHERE is_vendedor = TRUE
-      ORDER BY nome ASC
-    `;
-      const result = await pool.query(query);
-      res.json(result.rows);
-    } catch (err) {
-      console.error("Erro ao buscar gestores:", err);
-      res.status(500).json({ error: "Erro ao buscar gestores." });
-    }
-  });
 
   router.put(
     "/admin/:id/corporate-photo",
