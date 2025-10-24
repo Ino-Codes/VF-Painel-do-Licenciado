@@ -22,6 +22,11 @@ interface User {
   data_admissao?: string | null;
 }
 
+type SortConfig = {
+  key: string;
+  order: "ASC" | "DESC";
+};
+
 const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -35,12 +40,14 @@ const AdminUsers: React.FC = () => {
     searchQuery: "",
     currentPage: 1,
     totalPages: 0,
+    sortConfig: { key: "nome", order: "ASC" } as SortConfig,
   });
   const [colaboradorState, setColaboradorState] = useState({
     users: [],
     searchQuery: "",
     currentPage: 1,
     totalPages: 0,
+    sortConfig: { key: "nome", order: "ASC" } as SortConfig,
   });
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -62,6 +69,8 @@ const AdminUsers: React.FC = () => {
       limit: 10,
       roles,
       search: state.searchQuery,
+      sortBy: state.sortConfig.key,
+      sortOrder: state.sortConfig.order,
     };
 
     api
@@ -84,9 +93,27 @@ const AdminUsers: React.FC = () => {
     activeTab,
     licenciadoState.currentPage,
     licenciadoState.searchQuery,
+    licenciadoState.sortConfig,
     colaboradorState.currentPage,
     colaboradorState.searchQuery,
+    colaboradorState.sortConfig,
   ]);
+
+  const handleSort = (tab: "licenciados" | "interno", key: string) => {
+    const setState =
+      tab === "licenciados" ? setLicenciadoState : setColaboradorState;
+
+    setState((prevState) => {
+      let order: "ASC" | "DESC" = "ASC";
+      if (
+        prevState.sortConfig.key === key &&
+        prevState.sortConfig.order === "ASC"
+      ) {
+        order = "DESC";
+      }
+      return { ...prevState, sortConfig: { key, order } };
+    });
+  };
 
   const handleSearch = (tab: "licenciados" | "colaboradores", term: string) => {
     const setState =
@@ -187,6 +214,7 @@ const AdminUsers: React.FC = () => {
             handleSearch={handleSearch}
             handlePageChange={handlePageChange}
             handleDeleteClick={handleDeleteClick}
+            handleSort={handleSort}
           />
         ) : (
           <TabContent
@@ -199,6 +227,7 @@ const AdminUsers: React.FC = () => {
             handleSearch={handleSearch}
             handlePageChange={handlePageChange}
             handleDeleteClick={handleDeleteClick}
+            handleSort={handleSort}
           />
         )}
       </div>

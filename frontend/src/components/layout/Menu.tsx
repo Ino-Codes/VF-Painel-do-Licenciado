@@ -1,9 +1,11 @@
+import api from "../../api.ts";
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import ThemeToggleButton from "../ui/ThemeToggleButton.tsx";
 import Logo from "../../img/logo-clara.png";
-import { FaUserTie } from "react-icons/fa";
+import NotificationModal from "../ui/NotificationModal.tsx";
+import { FaUserTie, FaBell } from "react-icons/fa";
 
 const LockIcon = () => (
   <svg
@@ -76,6 +78,14 @@ const TeamIcon = () => (
   </svg>
 );
 
+interface Notification {
+  id: number;
+  message: string;
+  is_read: boolean;
+  link_to?: string;
+  created_at: string;
+}
+
 const Menu: React.FC = () => {
   const { user } = useAuth();
 
@@ -85,10 +95,15 @@ const Menu: React.FC = () => {
   const [isFileDropdownOpen, setFileDropdownOpen] = useState(false);
   const [isInternoDropdownOpen, setIsInternoDropdownOpen] = useState(false);
 
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const rhDropdownRef = useRef<HTMLDivElement>(null);
   const adminDropdownRef = useRef<HTMLDivElement>(null);
   const fileDropdownRef = useRef<HTMLDivElement>(null);
   const internoDropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   const firstName = user?.nome?.split(" ")[0] || "";
 
@@ -121,12 +136,50 @@ const Menu: React.FC = () => {
       ) {
         setIsInternoDropdownOpen(false);
       }
+
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setIsNotificationOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    api
+      .get("/api/notifications")
+      .then((res) => {
+        setNotifications(res.data);
+        setUnreadCount(res.data.filter((n: Notification) => !n.is_read).length);
+      })
+      .catch((err) => console.error("Erro ao buscar notificações."));
+  }, [user]);
+
+  const handleOpenNotifications = () => {
+    setIsNotificationOpen(true);
+    if (unreadCount > 0) {
+      api
+        .post("/api/notifications/mark-read")
+        .then(() => {
+          setUnreadCount(0);
+          setNotifications((prev) =>
+            prev.map((n) => ({ ...n, is_read: true }))
+          );
+        })
+        .catch((err) => console.error("Erro ao marcar como lido.", err));
+    }
+  };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <nav className="main-menu">
@@ -330,6 +383,19 @@ const Menu: React.FC = () => {
 
       <div className="menu-right">
         <ThemeToggleButton />
+
+        <div className="notification-bell" ref={notificationRef}>
+          <button className="icon-button" onClick={handleOpenNotifications}>
+            <FaBell />
+            {unreadCount > 0 && (
+              <span className="notification-badge">{unreadCount}</span>
+            )}
+          </button>
+          <NotificationModal
+            isOpen={isNotificationOpen}
+            notifications={notifications}
+          />
+        </div>
 
         {user && (
           <NavLink to="/perfil" className="profile-info-container">

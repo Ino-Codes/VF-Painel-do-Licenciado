@@ -1,17 +1,31 @@
 import React, { useState } from "react";
 import BulkUserImport from "./BulkUserImport.tsx";
 
-const TabContent: React.FC<{
+interface User {
+  id: number;
+  nome: string;
+  email: string;
+  role: string;
+  unidade?: string;
+}
+
+interface TabContentProps {
   tab: "licenciados" | "colaboradores";
-  state: { users: any[]; totalPages: number; currentPage: number };
-  currentUser: any;
+  state: { users: User[]; totalPages: number; currentPage: number };
+  currentUser: User;
   onAddClick: () => void;
-  handleSearch: (tab: any, term: string) => void;
-  setEditingUser: (user: any) => void;
+  handleSearch: (tab: "licenciados" | "colaboradores", term: string) => void;
+  setEditingUser: (user: User) => void;
   handleDeleteClick: (id: number) => void;
-  handlePageChange: (tab: any, page: number) => void;
-  fetchUsers: (tab: any) => void;
-}> = ({
+  handlePageChange: (
+    tab: "licenciados" | "colaboradores",
+    page: number
+  ) => void;
+  fetchUsers: (tab: "licenciados" | "colaboradores") => void;
+  handleSort: (tab: "licenciados" | "interno", key: string) => void;
+}
+
+const TabContent: React.FC<TabContentProps> = ({
   tab,
   state,
   currentUser,
@@ -20,16 +34,24 @@ const TabContent: React.FC<{
   setEditingUser,
   handleDeleteClick,
   handlePageChange,
-  fetchUsers,
+  handleSort,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const isLicenciadoTab = tab === "licenciados";
+
+  const getSortIcon = (key: string) => {
+    if (state.sortConfig.key !== key) return null;
+    if (state.sortConfig.order === "ASC") return " ↑";
+    return " ↓";
+  };
 
   return (
     <div>
       <div className="page-header" style={{ marginBottom: "20px" }}>
         <h3>
-          {isLicenciadoTab ? "Cadastrar Licenciado" : "Cadastrar Colaborador"}
+          {isLicenciadoTab
+            ? "Cadastrar ou Importar Licenciados"
+            : "Cadastrar Colaborador"}
         </h3>
         <button className="form-button" onClick={onAddClick}>
           + Adicionar Novo
@@ -58,30 +80,74 @@ const TabContent: React.FC<{
           Pesquisar
         </button>
       </div>
-      <ul className="user-list">
-        {state.users.map((u) => (
-          <li key={u.id} className="user-list-item">
-            <div className="user-info">
-              <strong>{u.nome}</strong>
-              <span>
-                {u.email} ({u.role}) {u.unidade && `- ${u.unidade}`}
-              </span>
-            </div>
-            <div className="user-actions">
-              <button className="list-button" onClick={() => setEditingUser(u)}>
-                Editar
-              </button>
-              <button
-                className="delete-button"
-                onClick={() => handleDeleteClick(u.id)}
-                disabled={currentUser.id === u.id}
+
+      <div className="table-container">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th
+                onClick={() => handleSort(tab, "nome")}
+                className="sortable-header"
               >
-                Excluir
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+                Nome {getSortIcon("nome")}
+              </th>
+              <th
+                onClick={() => handleSort(tab, "email")}
+                className="sortable-header"
+              >
+                Email {getSortIcon("email")}
+              </th>
+              <th
+                onClick={() => handleSort(tab, "role")}
+                className="sortable-header"
+              >
+                Tipo {getSortIcon("role")}
+              </th>
+              {!isLicenciadoTab && (
+                <th
+                  onClick={() => handleSort(tab, "unidade")}
+                  className="sortable-header"
+                >
+                  Unidade {getSortIcon("unidade")}
+                </th>
+              )}
+              <th style={{ width: "150px" }}>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {state.users.map((u) => (
+              <tr key={u.id}>
+                <td data-label="Nome">{u.nome}</td>
+                <td data-label="Email">{u.email}</td>
+                <td data-label="Tipo" style={{ textTransform: "capitalize" }}>
+                  {u.role}
+                </td>
+                {!isLicenciadoTab && (
+                  <td data-label="Unidade">{u.unidade || "N/A"}</td>
+                )}
+                <td data-label="Ações">
+                  <div className="user-actions">
+                    <button
+                      className="list-button"
+                      onClick={() => setEditingUser(u)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDeleteClick(u.id)}
+                      disabled={currentUser.id === u.id}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       {state.totalPages > 1 && (
         <div className="pagination-controls">
           <span>

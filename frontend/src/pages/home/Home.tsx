@@ -116,7 +116,7 @@ const Home: React.FC = () => {
   const handleConfirmDeleteNotice = async () => {
     if (noticeToDelete === null) return;
     try {
-      await api.delete(`/api/notices/admin/${noticeToDelete}`);
+      await api.delete(`/api/notices/${noticeToDelete}`);
       toast.success("Aviso excluído com sucesso!");
       fetchNotices();
     } catch (err) {

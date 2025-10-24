@@ -1,4 +1,15 @@
 /* --- Layout da Página de Férias --- */
+.info-link {
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--text-primary);
+  font-weight: 500;
+}
+
+.info-link:hover {
+  color: var(--accent-color);
+  border-bottom: 1px solid var(--accent-color);
+}
+
 .page-header {
   padding-bottom: 20px;
 }

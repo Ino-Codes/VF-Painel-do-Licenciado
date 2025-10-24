@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { addDays, isWithinInterval, parseISO } from "date-fns";
 import toast from "react-hot-toast";
+import InfoModal from "../../components/ui/InfoModal.tsx";
 
 registerLocale("pt-BR", ptBR);
 
@@ -29,6 +30,8 @@ const SolicitarFerias: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -121,9 +124,19 @@ const SolicitarFerias: React.FC = () => {
           <h2>Solicitar Férias</h2>
           <p>
             Nesta tela você poderá solicitar o agendamento das suas férias.
-            Atente-se que para solicitar as férias é necessário ter saldo
-            disponível.
+            Atente-se ao regulamento de solicitação de férias de acordo com a
+            legislação CLT.
           </p>
+          <a
+            href="#"
+            className="info-link"
+            onClick={(e) => {
+              e.preventDefault();
+              setIsInfoModalOpen(true);
+            }}
+          >
+            Consultar regulamento
+          </a>
         </div>
 
         <div className="admin-section">
@@ -203,6 +216,10 @@ const SolicitarFerias: React.FC = () => {
         </div>
       </div>
       <Footer />
+      <InfoModal
+        isOpen={isInfoModalOpen}
+        onClose={() => setIsInfoModalOpen(false)}
+      ></InfoModal>
     </div>
   );
 };

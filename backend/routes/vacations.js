@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
-module.exports = function (pool) {
-  // Rota para o colaborador buscar seu próprio saldo e histórico
+// 1. Receba a função createNotification
+module.exports = function (pool, createNotification) {
+  // Rota para o colaborador buscar seu próprio saldo e histórico (sem alterações)
   router.get("/me", isLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
     try {
@@ -94,14 +95,35 @@ module.exports = function (pool) {
       }
 
       // Se todas as validações passaram, insere o pedido
-      await pool.query(
-        "INSERT INTO vacation_requests (user_id, start_date, end_date, dias_solicitados) VALUES ($1, $2, $3, $4)",
+      const requestResult = await pool.query(
+        "INSERT INTO vacation_requests (user_id, start_date, end_date, dias_solicitados) VALUES ($1, $2, $3, $4) RETURNING *",
         [userId, start_date, end_date, diasSolicitados]
       );
 
-      res
-        .status(201)
-        .json({ message: "Pedido de férias enviado com sucesso!" });
+      // --- 2. LÓGICA DE NOTIFICAÇÃO (CRIAR PEDIDO) ---
+      try {
+        const requester = await pool.query(
+          "SELECT nome FROM users WHERE id = $1",
+          [userId]
+        );
+        const requesterName = requester.rows[0].nome;
+        const message = `${requesterName} registrou um novo pedido de férias.`;
+
+        // Encontra todos os Admins e RHs para notificar
+        const adminsAndHR = await pool.query(
+          "SELECT id FROM users WHERE role = 'admin' OR role = 'rh'"
+        );
+
+        for (const admin of adminsAndHR.rows) {
+          // Cria uma notificação para cada admin/RH, linkando para a página de gestão
+          createNotification(admin.id, message, "/admin/ferias");
+        }
+      } catch (notifyErr) {
+        console.error("Erro ao criar notificações de novo pedido:", notifyErr);
+      }
+      // --- FIM DA LÓGICA DE NOTIFICAÇÃO ---
+
+      res.status(201).json(requestResult.rows[0]); // Retorna o pedido criado
     } catch (err) {
       console.error("Erro ao criar pedido de férias:", err);
       res
@@ -110,7 +132,7 @@ module.exports = function (pool) {
     }
   });
 
-  // Rota para o RH/Admin buscar TODOS os pedidos para o calendário
+  // Rota para o RH/Admin buscar TODOS os pedidos para o calendário (sem alterações)
   router.get("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
     try {
       const query = `
@@ -183,11 +205,46 @@ module.exports = function (pool) {
             [dias_solicitados, user_id]
           );
         }
-
         await client.query(
           "UPDATE vacation_requests SET status = $1, observacao = $2, approver_id = $3, approved_at = NOW() WHERE id = $4",
           [status, observacao, approverId, id]
         );
+
+        // Atualiza o status do pedido
+        await client.query(
+          "UPDATE vacation_requests SET status = $1, observacao = $2, approver_id = $3, approved_at = NOW() WHERE id = $4",
+          [status, observacao, approverId, id]
+        );
+
+        // --- 3. LÓGICA DE NOTIFICAÇÃO (APROVAR/RECUSAR) ---
+        try {
+          const periodResult = await client.query(
+            "SELECT start_date, end_date FROM vacation_requests WHERE id = $1",
+            [id]
+          );
+          const { start_date, end_date } = periodResult.rows[0];
+          const period = `${new Date(start_date).toLocaleDateString(
+            "pt-BR"
+          )} a ${new Date(end_date).toLocaleDateString("pt-BR")}`;
+
+          let message = "";
+          if (status === "Aprovado") {
+            message = `Boas notícias! O seu pedido de férias para ${period} foi APROVADO.`;
+          } else if (status === "Recusado") {
+            message = `O seu pedido de férias para ${period} foi RECUSADO.`;
+          }
+
+          if (message) {
+            // Cria uma notificação para o utilizador que fez o pedido, linkando para a sua página de férias
+            createNotification(user_id, message, "/ferias");
+          }
+        } catch (notifyErr) {
+          console.error(
+            "Erro ao criar notificação de status de férias:",
+            notifyErr
+          );
+        }
+        // --- FIM DA LÓGICA DE NOTIFICAÇÃO ---
 
         await client.query("COMMIT");
         res.json({ success: true, message: "Status do pedido atualizado." });

@@ -469,6 +469,59 @@
   cursor: pointer;
 }
 
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table thead {
+  background-color: var(--bg-secondary);
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.admin-table th {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+.admin-table td .user-actions {
+  gap: 8px;
+  min-width: 130px;
+}
+
+.admin-table th.sortable-header {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-table th.sortable-header:hover {
+  background-color: var(--border-color);
+}
+
 /* --- RESPONSIVO (ADMIN) --- */
 @media (max-width: 900px) {
   .user-list-item {
@@ -486,5 +539,51 @@
   .form-input,
   .form-select {
     width: 100%;
+  }
+
+  .admin-table {
+    border: 0;
+  }
+
+  .admin-table thead {
+    border: none;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+  }
+
+  .admin-table tr {
+    display: block;
+    margin-bottom: 0.625em;
+    border-bottom: 2px solid var(--border-strong);
+  }
+
+  .admin-table td {
+    display: block;
+    text-align: right;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .admin-table td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+  }
+
+  .admin-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-table td .user-actions {
+    min-width: auto;
+    width: 100%;
+    justify-content: flex-end;
   }
 }

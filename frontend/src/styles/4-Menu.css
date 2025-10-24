@@ -9,11 +9,16 @@
   border-bottom: solid 1px var(--border-color);
 }
 
-.menu-left,
-.menu-right {
+.menu-left {
+  gap: 25px;
   display: flex;
   align-items: center;
-  gap: 25px;
+}
+
+.menu-right {
+  gap: 15px;
+  display: flex;
+  align-items: center;
 }
 
 .menu-item {
@@ -135,6 +140,120 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Botão de Ícone Genérico (para o Tema e o Sino) */
+.icon-button {
+  background: none;
+  border: none;
+  color: var(--text-white);
+  font-size: 20px;
+  cursor: pointer;
+  position: relative;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+  display: flex; /* Para centralizar o ícone */
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  transition: transform 0.2s ease;
+}
+.icon-button:hover {
+  background-color: var(--bg-menu-hover);
+  transform: scale(1.1);
+}
+
+/* Container do Sino de Notificação */
+.notification-bell {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background-color: var(--action-danger);
+  color: var(--text-white);
+  font-size: 10px;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-menu);
+}
+
+/* Modal de Notificações */
+.notification-modal {
+  position: absolute;
+  top: calc(100% + 15px); /* Abaixo do menu */
+  right: 0;
+  width: 380px;
+  max-height: 450px;
+  overflow-y: auto;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  color: var(--text-primary);
+}
+
+.notification-header {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.notification-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-item {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: background-color 0.2s;
+  display: block; /* Garante que o link ocupe todo o espaço */
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+.notification-item.unread {
+  background-color: var(--bg-accent-color);
+}
+
+.notification-item.empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 20px;
+}
+
+.notification-item p {
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
+}
+
+.notification-item small {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 1180px) {

@@ -45,7 +45,7 @@ const ThemeToggleButton: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
 
   const buttonStyle: React.CSSProperties = {
-    background: "var(--bg-menu-hover)",
+    background: "var(--bg-menu)",
     color: "var(--text-white)",
     border: "none",
     width: "40px",
@@ -63,8 +63,14 @@ const ThemeToggleButton: React.FC = () => {
       onClick={toggleTheme}
       style={buttonStyle}
       title={`Mudar para tema ${theme === "light" ? "escuro" : "claro"}`}
-      onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-      onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      onMouseOver={(e) => (
+        (e.currentTarget.style.transform = "scale(1.1)"),
+        (e.currentTarget.style.background = "var(--bg-menu-hover)")
+      )}
+      onMouseOut={(e) => (
+        (e.currentTarget.style.transform = "scale(1)"),
+        (e.currentTarget.style.background = "var(--bg-menu)")
+      )}
     >
       {theme === "light" ? <MoonIcon /> : <SunIcon />}
     </button>

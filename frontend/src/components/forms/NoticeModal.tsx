@@ -102,10 +102,10 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     const payload = { message, visibility };
     try {
       if (noticeToEdit) {
-        await api.put(`/api/notices/admin/${noticeToEdit.id}`, payload);
+        await api.put(`/api/notices/${noticeToEdit.id}`, payload);
         toast.success("Aviso atualizado com sucesso!");
       } else {
-        await api.post("/api/notices/admin", payload);
+        await api.post("/api/notices/", payload);
         toast.success("Aviso postado com sucesso!");
       }
       onSuccess();

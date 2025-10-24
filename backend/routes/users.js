@@ -14,7 +14,14 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     isLoggedIn,
     checkRole(["admin", "rh"]),
     async (req, res) => {
-      const { search, page = 1, limit = 10, roles } = req.query;
+      const {
+        search,
+        page = 1,
+        limit = 10,
+        roles,
+        sortBy,
+        sortOrder,
+      } = req.query;
       try {
         const offset = (page - 1) * limit;
         let whereClauses = [];
@@ -37,7 +44,22 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
         const countSql = `SELECT COUNT(*) FROM users ${whereString}`;
-        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, data_admissao FROM users ${whereString} ORDER BY nome ASC LIMIT $${
+
+        // --- CORREÇÃO DA LÓGICA DE ORDENAÇÃO ---
+        const allowedSortBy = ["nome", "email", "role", "unidade"];
+        let orderByClause = "ORDER BY nome ASC"; // Padrão
+
+        // Verificamos se o sortBy está na nossa lista segura
+        if (
+          allowedSortBy.includes(sortBy) &&
+          ["ASC", "DESC"].includes(sortOrder?.toUpperCase())
+        ) {
+          // Como 'sortBy' foi validado, é seguro concatenar
+          orderByClause = `ORDER BY "${sortBy}" ${sortOrder.toUpperCase()}`;
+        }
+        // --- FIM DA CORREÇÃO ---
+
+        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone FROM users ${whereString} ${orderByClause} LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 

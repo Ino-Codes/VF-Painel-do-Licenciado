@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 
-module.exports = function (pool) {
+module.exports = function (pool, createNotification) {
   router.get("/", isLoggedIn, async (req, res) => {
     const { role } = req.user;
     try {
@@ -13,7 +13,7 @@ module.exports = function (pool) {
       if (role !== "admin") {
         if (role === "licenciado") {
           query += " WHERE visibility = 'todos' OR visibility = 'licenciados'";
-        } else if (role === "colaborador") {
+        } else if (role !== "licenciado") {
           query += " WHERE visibility = 'todos' OR visibility = 'internos'";
         } else {
           query += " WHERE visibility = 'todos'";
@@ -32,11 +32,40 @@ module.exports = function (pool) {
 
   router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
     const { message, visibility } = req.body;
+    const creatorId = req.user.id;
+
     try {
       const result = await pool.query(
         "INSERT INTO notices (message, visibility) VALUES ($1, $2) RETURNING *",
         [message, visibility]
       );
+
+      try {
+        let targetUsersQuery = "";
+        const params = [creatorId];
+
+        if (visibility === "todos") {
+          targetUsersQuery = "SELECT id FROM users WHERE id != $1";
+        } else if (visibility === "licenciados") {
+          targetUsersQuery =
+            "SELECT id FROM users WHERE role = 'licenciado' AND id != $1";
+        } else if (visibility === "internos") {
+          targetUsersQuery =
+            "SELECT id FROM users WHERE role IN ('admin', 'rh', 'comercial', 'operacional') AND id != $1";
+        }
+
+        if (targetUsersQuery) {
+          const targetUsers = await pool.query(targetUsersQuery, params);
+          const notificationMessage = "Um novo aviso foi postado no mural.";
+
+          for (const user of targetUsers.rows) {
+            createNotification(user.id, notificationMessage, "/home");
+          }
+        }
+      } catch (notifyErr) {
+        console.error("Erro ao criar notificações de aviso:", notifyErr);
+      }
+
       res.status(201).json(result.rows[0]);
     } catch (err) {
       console.error("Erro ao postar aviso:", err);

@@ -64,6 +64,15 @@ const logActivity = async (userId, userEmail, action, details, ipAddress) => {
   }
 };
 
+const createNotification = async (userId, message, linkTo) => {
+  try {
+    const sql = `INSERT INTO notifications (user_id, message, link_to) VALUES ($1, $2, $3)`;
+    await pool.query(sql, [userId, message, linkTo || null]);
+  } catch (err) {
+    console.error(`Falha ao criar notificação para user_id ${userId}:`, err);
+  }
+};
+
 // --- IMPORTAÇÃO DAS ROTAS ---
 const authRoutes = require("./routes/auth.js")(pool, sgMail, logActivity);
 const userRoutes = require("./routes/users.js")(
@@ -73,7 +82,7 @@ const userRoutes = require("./routes/users.js")(
   logActivity
 );
 const cronFunctions = require("./cron.js");
-const noticeRoutes = require("./routes/notices.js")(pool);
+const noticeRoutes = require("./routes/notices.js")(pool, createNotification);
 const fileRoutes = require("./routes/files.js")(pool, cloudinary, upload, path);
 const videoRoutes = require("./routes/videos.js")(pool);
 const faqRoutes = require("./routes/faq.js")(pool, cloudinary, upload);
@@ -85,7 +94,11 @@ const eventRoutes = require("./routes/events.js")(pool);
 const enneagramRoutes = require("./routes/enneagram.js")(pool);
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(pool);
 const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
-const vacationRoutes = require("./routes/vacations.js")(pool);
+const vacationRoutes = require("./routes/vacations.js")(
+  pool,
+  createNotification
+);
+const notificationRoutes = require("./routes/notifications.js")(pool);
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes);
@@ -104,6 +117,7 @@ app.use("/api/enneagram", enneagramRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/cron", cronTriggerRoutes);
 app.use("/api/vacations", vacationRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // --- CRIAÇÃO DAS TABELAS ---
 
