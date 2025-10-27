@@ -190,9 +190,9 @@
 /* Modal de Notificações */
 .notification-modal {
   position: absolute;
-  top: calc(100% + 15px); /* Abaixo do menu */
-  right: 0;
-  width: 380px;
+  top: calc(100% + 20px); /* Abaixo do menu */
+  right: -80px;
+  width: 400px;
   max-height: 450px;
   overflow-y: auto;
   background-color: var(--bg-primary);
@@ -289,6 +289,9 @@
   }
   .profile-text {
     display: none;
+  }
+  .notification-modal {
+    width: 340px;
   }
 }
 

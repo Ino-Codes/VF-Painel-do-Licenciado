@@ -175,7 +175,7 @@
 }
 
 .edit-profile-button:hover {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-primary);
 }
 
 .profile-info-grid {

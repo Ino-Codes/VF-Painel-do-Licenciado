@@ -10,7 +10,7 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import AvatarModal from "../../components/forms/AvatarModal.tsx";
-import { FaUserTie } from "react-icons/fa";
+import { HiOutlineUserCircle } from "react-icons/hi";
 
 interface CertificateData {
   certificate_id: number;
@@ -292,7 +292,7 @@ const Perfil: React.FC = () => {
                 className="profile-avatar-main"
               />
             ) : (
-              <FaUserTie className="profile-user-icon" />
+              <HiOutlineUserCircle className="profile-user-icon" />
             )}
             <button
               className="edit-profile-button"
