@@ -50,9 +50,7 @@ const Documentos: React.FC = () => {
   const fetchCategories = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get("/api/files/categories", {
-        params: { role: user.role },
-      });
+      const res = await api.get("/api/files/categories");
       setCategories(res.data);
       if (!category && res.data.length > 0) {
         setCategory(res.data[0]);
@@ -76,7 +74,7 @@ const Documentos: React.FC = () => {
       return;
     }
     try {
-      const params: any = { category, role: user.role };
+      const params: any = { category };
       if (searchQuery) {
         params.search = searchQuery;
       }
@@ -90,6 +88,24 @@ const Documentos: React.FC = () => {
   useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
+
+  const handleDownload = async (fileId: number, originalname: string) => {
+    toast.loading("Iniciando download...");
+    try {
+      // 1. Pede ao backend para gerar uma URL de download segura
+      const response = await api.get(`/api/files/download/${fileId}`);
+      const { downloadUrl } = response.data;
+
+      toast.dismiss();
+
+      // 2. Abre a URL em uma nova aba. O navegador cuidará do download.
+      window.open(downloadUrl, "_blank");
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Erro ao baixar o arquivo. Verifique suas permissões.");
+      console.error(err);
+    }
+  };
 
   const toggleFolder = (folderName: string) => {
     setActiveFolder(activeFolder === folderName ? null : folderName);
@@ -146,8 +162,6 @@ const Documentos: React.FC = () => {
   if (!user) {
     return null;
   }
-
-  const baseURL = api.defaults.baseURL;
 
   return (
     <div className="p-2">
@@ -207,15 +221,14 @@ const Documentos: React.FC = () => {
                       <div key={file.id} className="file-item">
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
-                          <a
-                            href={`${baseURL}/api/files/download/${file.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            className="list-button download"
+                            onClick={() =>
+                              handleDownload(file.id, file.originalname)
+                            }
                           >
-                            <button className="list-button download">
-                              Baixar
-                            </button>
-                          </a>
+                            Baixar
+                          </button>
 
                           {user?.role === "admin" && (
                             <>
