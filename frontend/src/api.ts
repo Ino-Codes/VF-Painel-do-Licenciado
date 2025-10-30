@@ -4,7 +4,7 @@ const api = axios.create({
   baseURL:
     process.env.REACT_APP_API_URL ||
     "http://localhost:3001" ||
-    "vfpainelcontainer-f0ctbpbhardkf9ga.brazilsouth-01.azurewebsites.net",
+    "https://vf-painel-do-licenciado.onrender.com",
 });
 
 api.interceptors.request.use(
