@@ -429,18 +429,17 @@ module.exports = function (pool, cloudinary, upload) {
                 margin: 0;
                 padding: 20px;
                 background-image: url("${backgroundImageUrl}");
-                background-size: cover; background-position: center;
+                background-size: cover;
+                background-position: center;
                 background-repeat: no-repeat;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                min-height: 100vh;
                 text-align: center;
             }
 
             .certificate-container {
                 background: none;
-                padding: 25px 40px;
                 max-width: 1124px;
                 width: 100%;
                 height: 100%;
@@ -473,7 +472,8 @@ module.exports = function (pool, cloudinary, upload) {
             }
 
             .student-name {
-                font-family: Snell Roundhand, cursive;
+                font-family: cursive;
+                font-style: italic;
                 font-size: 4em;
                 color: #252525;
                 margin: 20px 0;
@@ -485,31 +485,31 @@ module.exports = function (pool, cloudinary, upload) {
                 font-size: 1.5em;
                 color: #252525;
                 font-weight: bold;
-                margin-top: 20px;
-                margin-bottom: 30px;
+                margin-top: 15px;
+                margin-bottom: 15px;
                 text-transform: uppercase;
             }
 
             .signature-line {
                 width: 250px;
                 border-bottom: 1px solid #252525;
-                margin: 60px auto 10px auto;
+                margin: 70px auto 10px auto;
             }
 
             .signature-text {
                 font-size: 1.1em;
                 color: #252525;
-                margin-bottom: 60px;
+                margin-bottom: 40px;
             }
 
             .date {
                 font-size: 1.1em;
                 color: #252525;
-                margin-bottom: 30px;
+                margin-bottom: 10px;
             }
 
             .logo-container {
-                margin-top: 20px;
+                margin-top: 10px;
             }
           </style>
         </head>
@@ -530,7 +530,7 @@ module.exports = function (pool, cloudinary, upload) {
               <p class="date">${completionDate}</p>
 
               <div class="logo-container">
-                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-escura_acorgj.png" alt="Logo Valor Fiscal" width="150" />
+                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-escura_acorgj.png" alt="Logo Valor Fiscal" width="180" />
               </div>
             </div>
           </body>
