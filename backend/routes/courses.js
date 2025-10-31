@@ -499,7 +499,7 @@ module.exports = function (pool, cloudinary, upload) {
             .signature-text {
                 font-size: 1.1em;
                 color: #252525;
-                margin-bottom: 40px;
+                margin-bottom: 70px;
             }
 
             .date {
