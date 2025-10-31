@@ -490,7 +490,7 @@ module.exports = function (pool, cloudinary, upload) {
             .signature-line {
                 width: 250px;
                 border-bottom: 1px solid #252525;
-                margin: 100px auto 10px auto;
+                margin: 90px auto 10px auto;
             }
 
             .signature-text {
