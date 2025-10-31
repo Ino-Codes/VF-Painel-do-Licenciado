@@ -427,25 +427,21 @@ module.exports = function (pool, cloudinary, upload) {
             body {
                 font-family: 'Montserrat', sans-serif;
                 margin: 0;
-                padding: 20px;
-                background-image: url("${backgroundImageUrl}");
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                max-width: 1123px;
-                max-height: 793px;
+                padding: 0;
             }
 
             .certificate-container {
                 background: none;
-                
-                width: 100%;
-                height: 100%;
-                position: relative;
+                width: 1123px;
+                height: 793px;
+                background-image: url("${backgroundImageUrl}");
+                background-size: cover;
+                background-position: center;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                box-sizing: border-box; 
             }
 
             .title {
