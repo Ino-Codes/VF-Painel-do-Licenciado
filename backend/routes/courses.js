@@ -461,7 +461,7 @@ module.exports = function (pool, cloudinary, upload) {
                 font-style: semibold;
                 color: #252525;
                 margin-top: 5px;
-                margin-bottom: 40px;
+                margin-bottom: 80px;
             }
 
             .body-text {
@@ -472,7 +472,7 @@ module.exports = function (pool, cloudinary, upload) {
             }
 
             .student-name {
-                font-family: cursive;
+                font-family: 'Snell Roundhand', cursive;
                 font-style: italic;
                 font-size: 4em;
                 color: #252525;
