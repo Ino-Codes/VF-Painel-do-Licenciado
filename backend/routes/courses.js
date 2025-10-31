@@ -441,8 +441,6 @@ module.exports = function (pool, cloudinary, upload) {
             .certificate-container {
                 background: none;
                 padding: 25px 40px;
-                border: 1px solid #e0e0e0;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
                 max-width: 1124px;
                 width: 100%;
                 height: 100%;
