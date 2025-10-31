@@ -21,7 +21,7 @@ const Unidades = ["Matriz", "Filial SC", "Filial SP"];
 const UserForm: React.FC<{
   userToEdit: User | null;
   formType: "licenciado" | "interno";
-  onSuccess: () => void;
+  onSuccess: (updatedUser?: User) => void;
   onCancel: () => void;
 }> = ({ userToEdit, formType, onSuccess, onCancel }) => {
   const [formData, setFormData] = useState<Partial<User>>({});
@@ -53,13 +53,17 @@ const UserForm: React.FC<{
     e.preventDefault();
     try {
       if (userToEdit) {
-        await api.put(`/api/users/admin/${userToEdit.id}`, formData);
+        const response = await api.put(
+          `/api/users/admin/${userToEdit.id}`,
+          formData
+        );
         toast.success("Usuário atualizado com sucesso!");
+        onSuccess(response.data.user); // Passa o usuário atualizado para o componente pai
       } else {
         await api.post("/api/users/admin", formData);
         toast.success("Usuário criado com sucesso!");
+        onSuccess(); // Para criação, apenas aciona a atualização da lista
       }
-      onSuccess();
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Ocorreu um erro.");
     }

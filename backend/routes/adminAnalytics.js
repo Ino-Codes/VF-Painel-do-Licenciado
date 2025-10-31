@@ -4,7 +4,7 @@ const router = express.Router();
 const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 const { sendEventNotifications } = require("../cron.js");
 
-module.exports = function (pool) {
+module.exports = function (pool, resend) {
   router.get(
     "/enneagram-stats",
     isLoggedIn,
@@ -75,7 +75,7 @@ module.exports = function (pool) {
         "ROTA DE TESTE: Disparando manualmente o envio de emails de eventos..."
       );
       try {
-        await sendEventNotifications();
+        await sendEventNotifications(resend);
         res
           .status(200)
           .send(

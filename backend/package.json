@@ -14,19 +14,21 @@
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "dompurify": "^3.2.6",
-    "dotenv": "^10.9.3",
     "express": "^4.18.2",
     "express-session": "^1.18.2",
+    "googleapis": "^164.1.0",
     "jsdom": "^26.1.0",
     "jsonwebtoken": "^9.0.2",
     "mime-types": "^3.0.1",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.10",
     "pg": "^8.16.3",
     "puppeteer-core": "^24.26.1",
     "react-router-dom": "^7.7.1",
-    "render": "^0.1.4"
+    "render": "^0.1.4",
+    "resend": "^6.4.0"
   },
   "devDependencies": {
     "@types/node-cron": "^3.0.11",

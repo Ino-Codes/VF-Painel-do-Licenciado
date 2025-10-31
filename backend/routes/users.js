@@ -59,7 +59,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         }
         // --- FIM DA CORREÇÃO ---
 
-        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone FROM users ${whereString} ${orderByClause} LIMIT $${
+        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 
@@ -214,15 +214,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         await client.query("BEGIN");
 
-        const finalBirthDate =
-          role === "admin" ||
-          role === "rh" ||
-          role === "comercial" ||
-          role === "operacional"
-            ? birth_date
-            : null;
+        const finalBirthDate = role !== "licenciado" ? birth_date : null;
 
-        const userResult = await client.query(
+        await client.query(
           "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, data_admissao = $9 WHERE id = $10 RETURNING *",
           [
             nome,
@@ -238,12 +232,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           ]
         );
 
-        if (userResult.rowCount === 0) {
+        const updatedUserResult = await client.query(
+          "SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, data_admissao FROM users WHERE id = $1",
+          [id]
+        );
+
+        if (updatedUserResult.rowCount === 0) {
           await client.query("ROLLBACK");
           client.release();
           return res.status(404).json({ error: "Usuário não encontrado." });
         }
 
+        // Apaga eventos de aniversário antigos para recriá-los
         await client.query(
           "DELETE FROM events WHERE created_by_user_id = $1 AND category = 'Aniversário'",
           [id]
@@ -290,7 +290,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           req.ipAddress
         );
 
-        const updatedUser = userResult.rows[0];
+        const updatedUser = updatedUserResult.rows[0];
         delete updatedUser.password;
 
         res.json({ success: true, user: updatedUser });
@@ -529,7 +529,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.get("/internal", isLoggedIn, async (req, res) => {
     try {
       const internalUsersSql = `
-      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone, birth_date 
+      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone, birth_date, data_admissao 
       FROM users 
       WHERE role IN ('admin', 'rh', 'comercial', 'operacional') 
       ORDER BY nome ASC

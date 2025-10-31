@@ -115,7 +115,7 @@ const AdminUsers: React.FC = () => {
     });
   };
 
-  const handleSearch = (tab: "licenciados" | "colaboradores", term: string) => {
+  const handleSearch = (tab: "licenciados" | "interno", term: string) => {
     const setState =
       tab === "licenciados" ? setLicenciadoState : setColaboradorState;
     setState((prev) => ({ ...prev, searchQuery: term, currentPage: 1 }));
@@ -149,11 +149,26 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (updatedUser?: User) => {
     setIsFormModalOpen(false);
-    const setState =
-      activeTab === "licenciados" ? setLicenciadoState : setColaboradorState;
-    setState((prev) => ({ ...prev, currentPage: 1, searchQuery: "" }));
+    setEditingUser(null);
+
+    if (updatedUser) {
+      // Se um usuário foi editado, atualiza ele na lista existente
+      const setState =
+        activeTab === "licenciados" ? setLicenciadoState : setColaboradorState;
+      setState((prev) => ({
+        ...prev,
+        users: prev.users.map((u) =>
+          u.id === updatedUser.id ? updatedUser : u
+        ),
+      }));
+    } else {
+      // Se um novo usuário foi criado, reseta a busca para recarregar a lista
+      const setState =
+        activeTab === "licenciados" ? setLicenciadoState : setColaboradorState;
+      setState((prev) => ({ ...prev, currentPage: 1, searchQuery: "" }));
+    }
   };
 
   const handleDeleteClick = (id: number) => {
@@ -194,16 +209,14 @@ const AdminUsers: React.FC = () => {
           </button>
 
           <button
-            className={`tab-item ${
-              activeTab === "colaboradores" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("colaboradores")}
+            className={`tab-item ${activeTab === "interno" ? "active" : ""}`}
+            onClick={() => setActiveTab("interno")}
           >
             Colaboradores
           </button>
         </div>
 
-        {activeTab === "licenciados" ? (
+        {activeTab === "licenciados" && (
           <TabContent
             key="licenciados"
             tab="licenciados"
@@ -216,10 +229,11 @@ const AdminUsers: React.FC = () => {
             handleDeleteClick={handleDeleteClick}
             handleSort={handleSort}
           />
-        ) : (
+        )}
+        {activeTab === "interno" && (
           <TabContent
-            key="colaboradores"
-            tab="colaboradores"
+            key="interno"
+            tab="interno"
             state={colaboradorState}
             currentUser={user}
             setEditingUser={handleOpenEditModal}

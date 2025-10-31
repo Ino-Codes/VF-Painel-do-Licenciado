@@ -1,11 +1,13 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const { Pool } = require("pg");
 const cloudinary = require("cloudinary").v2;
-const sgMail = require("@sendgrid/mail");
 const cron = require("node-cron");
+const { Resend } = require("resend");
 
 const app = express();
 
@@ -28,7 +30,8 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
@@ -72,7 +75,7 @@ const createNotification = async (userId, message, linkTo) => {
 };
 
 // --- IMPORTAÇÃO DAS ROTAS ---
-const authRoutes = require("./routes/auth.js")(pool, sgMail, logActivity);
+const authRoutes = require("./routes/auth.js")(pool, resend, logActivity);
 const userRoutes = require("./routes/users.js")(
   pool,
   cloudinary,
@@ -80,6 +83,7 @@ const userRoutes = require("./routes/users.js")(
   logActivity
 );
 const cronFunctions = require("./cron.js");
+cronFunctions.initializeCron(pool, resend); // Passa o resend para o cron
 const noticeRoutes = require("./routes/notices.js")(pool, createNotification);
 const fileRoutes = require("./routes/files.js")(pool, cloudinary, upload, path);
 const videoRoutes = require("./routes/videos.js")(pool);
@@ -90,7 +94,10 @@ const certificatesRoutes = require("./routes/certificates.js")(pool);
 const quizzesRoutes = require("./routes/quizzes.js")(pool);
 const eventRoutes = require("./routes/events.js")(pool);
 const enneagramRoutes = require("./routes/enneagram.js")(pool);
-const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(pool);
+const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(
+  pool,
+  resend
+);
 const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
 const vacationRoutes = require("./routes/vacations.js")(
   pool,
@@ -359,6 +366,16 @@ const createTables = async () => {
         observacao TEXT
     );`;
 
+  const notificationsTable = `
+    CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        message TEXT NOT NULL,
+        is_read BOOLEAN NOT NULL DEFAULT FALSE,
+        link_to TEXT,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -382,6 +399,7 @@ const createTables = async () => {
     await pool.query(enneagramTypesTable);
     await pool.query(eventNotificationsTable);
     await pool.query(vacationRequestsTable);
+    await pool.query(notificationsTable);
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
@@ -393,7 +411,7 @@ cron.schedule(
   "*/60 * * * *", // Roda a cada 60 minutos
   () => {
     console.log("CRON: Executando a tarefa agendada updateVacationBalance...");
-    cronFunctions.updateVacationBalance(pool);
+    cronFunctions.updateVacationBalance();
   },
   {
     scheduled: true,

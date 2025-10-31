@@ -1,15 +1,16 @@
 const { Pool } = require("pg");
-const sgMail = require("@sendgrid/mail");
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+let pool; // Será inicializado depois
+let resend;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
+const initializeCron = (dbPool, resendInstance) => {
+  pool = dbPool;
+  resend = resendInstance;
+};
 
 // Evento periódico de cálculo do saldo de férias de cada colaborador
 const updateVacationBalance = async () => {
+  if (!pool) return console.error("CRON: Pool de conexão não inicializado.");
   console.log("CRON: Iniciando verificação de aniversário de admissão...");
   const client = await pool.connect();
   try {
@@ -70,7 +71,11 @@ const updateVacationBalance = async () => {
 };
 
 // Envio de email de eventos do dia
-const sendEventNotifications = async () => {
+const sendEventNotifications = async (resend) => {
+  if (!pool)
+    return console.error(
+      "SEND NOTIFICATIONS: Pool de conexão não inicializado."
+    );
   console.log("SEND NOTIFICATIONS: Verificando eventos para hoje...");
   const now = new Date();
   const spDate = new Date(
@@ -195,14 +200,13 @@ const sendEventNotifications = async () => {
               </html>
             `;
 
-      const msg = {
-        to: user.email,
-        from: process.env.EMAIL_FROM,
-        subject: `Lembrete: Você tem ${user.events.length} evento(s) hoje no Painel VF!`,
-        html: html,
-      };
+      await resend.emails.send({
+        from: `Painel Valor Fiscal <${process.env.EMAIL_FROM}>`,
+        to: user.email, // Endereço do destinatário
+        subject: `Lembrete: Você tem ${user.events.length} evento(s) hoje no Painel VF!`, // Assunto
+        html: html, // Corpo do e-mail em HTML
+      });
 
-      await sgMail.send(msg);
       console.log(
         `SEND NOTIFICATIONS: Email de resumo estilizado enviado para ${user.email} com ${user.events.length} evento(s).`
       );
@@ -217,4 +221,8 @@ const sendEventNotifications = async () => {
 };
 
 // Apenas exportamos a função, sem agendamento
-module.exports = { sendEventNotifications, updateVacationBalance };
+module.exports = {
+  initializeCron,
+  sendEventNotifications,
+  updateVacationBalance,
+};

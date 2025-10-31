@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 
-module.exports = function (pool, sgMail, logActivity) {
+module.exports = function (pool, resend, logActivity) {
   router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -136,20 +136,22 @@ module.exports = function (pool, sgMail, logActivity) {
         </html>
       `;
 
-      const msg = {
+      await resend.emails.send({
+        from: `Painel Valor Fiscal <${process.env.EMAIL_FROM}>`,
         to: user.email,
-        from: process.env.EMAIL_FROM,
         subject: "Redefinição de Senha - Painel Valor Fiscal",
         html: html,
-      };
-      await sgMail.send(msg);
+      });
 
       res.json({
         message:
           "Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.",
       });
     } catch (err) {
-      console.error("Erro ao solicitar redefinição de senha:", err);
+      console.error(
+        "Erro ao solicitar redefinição de senha:",
+        err.response ? err.response.data : err
+      );
       res.status(500).send({ error: "Erro no servidor" });
     }
   });
