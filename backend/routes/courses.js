@@ -427,7 +427,7 @@ module.exports = function (pool, cloudinary, upload) {
             body {
                 font-family: 'Montserrat', sans-serif;
                 margin: 0;
-                padding: 20px;
+                padding: 0;
                 background-image: url("${backgroundImageUrl}");
                 background-size: cover;
                 background-position: center;
@@ -495,7 +495,7 @@ module.exports = function (pool, cloudinary, upload) {
             .signature-line {
                 width: 250px;
                 border-bottom: 1px solid #252525;
-                margin: 92px auto 10px auto;
+                margin: 91px auto 10px auto;
             }
 
             .signature-text {
