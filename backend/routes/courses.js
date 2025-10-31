@@ -436,14 +436,15 @@ module.exports = function (pool, cloudinary, upload) {
                 justify-content: center;
                 align-items: center;
                 text-align: center;
+                max-width: 1123px;
+                max-height: 793px;
             }
 
             .certificate-container {
                 background: none;
-                max-width: 1124px;
+                
                 width: 100%;
                 height: 100%;
-                max-height: 794px;
                 position: relative;
             }
 
@@ -493,7 +494,7 @@ module.exports = function (pool, cloudinary, upload) {
             .signature-line {
                 width: 250px;
                 border-bottom: 1px solid #252525;
-                margin: 70px auto 10px auto;
+                margin: 100px auto 10px auto;
             }
 
             .signature-text {
