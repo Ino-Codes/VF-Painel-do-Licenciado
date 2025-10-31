@@ -430,6 +430,7 @@ module.exports = function (pool, cloudinary, upload) {
                 padding: 20px;
                 background-image: url("${backgroundImageUrl}");
                 background-size: cover; background-position: center;
+                background-repeat: no-repeat;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -438,19 +439,21 @@ module.exports = function (pool, cloudinary, upload) {
             }
 
             .certificate-container {
-                background-color: #ffffff;
-                padding: 50px 80px;
+                background: none;
+                padding: 25px 40px;
                 border: 1px solid #e0e0e0;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-                max-width: 900px;
+                max-width: 1124px;
                 width: 100%;
+                height: 100%;
+                max-height: 794px;
                 position: relative;
             }
 
             .title {
                 font-family: 'Playfair Display', serif;
                 font-size: 4em;
-                color: #b8860b; /* Ouro */
+                color: #cda93f;
                 margin-bottom: 0;
                 line-height: 1;
             }
@@ -458,21 +461,23 @@ module.exports = function (pool, cloudinary, upload) {
             .subtitle {
                 font-family: 'Montserrat', sans-serif;
                 font-size: 1.5em;
-                color: #555555;
+                font-style: semibold;
+                color: #252525;
                 margin-top: 5px;
                 margin-bottom: 40px;
             }
 
             .body-text {
+                font-family: 'Montserrat', sans-serif;
                 font-size: 1.2em;
-                color: #444444;
+                color: #252525;
                 margin-bottom: 10px;
             }
 
             .student-name {
-                font-family: 'Great Vibes', cursive;
+                font-family: Snell Roundhand, cursive;
                 font-size: 4em;
-                color: #333333;
+                color: #252525;
                 margin: 20px 0;
                 line-height: 1.2;
             }
@@ -480,7 +485,7 @@ module.exports = function (pool, cloudinary, upload) {
             .course-name {
                 font-family: 'Montserrat', sans-serif;
                 font-size: 1.5em;
-                color: #333333;
+                color: #252525;
                 font-weight: bold;
                 margin-top: 20px;
                 margin-bottom: 30px;
@@ -489,51 +494,24 @@ module.exports = function (pool, cloudinary, upload) {
 
             .signature-line {
                 width: 250px;
-                border-bottom: 1px solid #666666;
+                border-bottom: 1px solid #252525;
                 margin: 60px auto 10px auto;
             }
 
             .signature-text {
                 font-size: 1.1em;
-                color: #555555;
+                color: #252525;
                 margin-bottom: 60px;
             }
 
             .date {
                 font-size: 1.1em;
-                color: #555555;
+                color: #252525;
                 margin-bottom: 30px;
             }
 
             .logo-container {
                 margin-top: 20px;
-            }
-
-            .logo-text-valor {
-                font-family: 'Playfair Display', serif;
-                font-size: 1.8em;
-                color: #b8860b; /* Ouro */
-                display: inline-block;
-                vertical-align: middle;
-                margin-right: 5px;
-                font-weight: 700;
-            }
-
-            .logo-text-fiscal {
-                font-family: 'Montserrat', sans-serif;
-                font-size: 1.8em;
-                color: #555555;
-                display: inline-block;
-                vertical-align: middle;
-                font-weight: 700;
-            }
-
-            .logo-tagline {
-                font-family: 'Montserrat', sans-serif;
-                font-size: 0.7em;
-                color: #888888;
-                display: block;
-                margin-top: -5px;
             }
           </style>
         </head>
@@ -554,7 +532,7 @@ module.exports = function (pool, cloudinary, upload) {
               <p class="date">${completionDate}</p>
 
               <div class="logo-container">
-                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-escura_acorgj.png" alt="Logo Valor Fiscal" width="120" />
+                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-escura_acorgj.png" alt="Logo Valor Fiscal" width="150" />
               </div>
             </div>
           </body>
