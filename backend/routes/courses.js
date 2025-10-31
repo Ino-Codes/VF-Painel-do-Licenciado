@@ -404,7 +404,7 @@ module.exports = function (pool, cloudinary, upload) {
 
       let backgroundImageUrl = course.certificate_template_url
         ? course.certificate_template_url
-        : "https://res.cloudinary.com/dsgbgrll5/image/upload/v1755866406/de_Conclusa%CC%83o_efsbh3.png";
+        : "https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934436/background_yltyhg.png";
 
       if (backgroundImageUrl.toLowerCase().endsWith(".pdf")) {
         backgroundImageUrl = backgroundImageUrl
@@ -422,35 +422,142 @@ module.exports = function (pool, cloudinary, upload) {
         <!DOCTYPE html>
         <html>
         <head>
+
           <style>
-            body { font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; }
-            .certificate-wrapper { 
-                width: 1123px; height: 794px;
+            body {
+                font-family: 'Montserrat', sans-serif;
+                margin: 0;
+                padding: 20px;
                 background-image: url("${backgroundImageUrl}");
                 background-size: cover; background-position: center;
-                display: flex; justify-content: center; align-items: center;
-                box-sizing: border-box; 
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                text-align: center;
             }
-            .certificate-content { text-align: center; color: #0D0D0D; }
-             h1 { font-family: 'Playfair Display', serif; font-size: 48px; color: #2D2C2B; margin-bottom: 40px; }
-            .course-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 32px; color: #daa520; }
-            p { font-size: 18px; line-height: 1.2; margin: 20px 0; }
-            .footer { margin-top: 150px; font-size: 14px; color: #2d2d2d; }
+
+            .certificate-container {
+                background-color: #ffffff;
+                padding: 50px 80px;
+                border: 1px solid #e0e0e0;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+                max-width: 900px;
+                width: 100%;
+                position: relative;
+            }
+
+            .title {
+                font-family: 'Playfair Display', serif;
+                font-size: 4em;
+                color: #b8860b; /* Ouro */
+                margin-bottom: 0;
+                line-height: 1;
+            }
+
+            .subtitle {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 1.5em;
+                color: #555555;
+                margin-top: 5px;
+                margin-bottom: 40px;
+            }
+
+            .body-text {
+                font-size: 1.2em;
+                color: #444444;
+                margin-bottom: 10px;
+            }
+
+            .student-name {
+                font-family: 'Great Vibes', cursive;
+                font-size: 4em;
+                color: #333333;
+                margin: 20px 0;
+                line-height: 1.2;
+            }
+
+            .course-name {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 1.5em;
+                color: #333333;
+                font-weight: bold;
+                margin-top: 20px;
+                margin-bottom: 30px;
+                text-transform: uppercase;
+            }
+
+            .signature-line {
+                width: 250px;
+                border-bottom: 1px solid #666666;
+                margin: 60px auto 10px auto;
+            }
+
+            .signature-text {
+                font-size: 1.1em;
+                color: #555555;
+                margin-bottom: 60px;
+            }
+
+            .date {
+                font-size: 1.1em;
+                color: #555555;
+                margin-bottom: 30px;
+            }
+
+            .logo-container {
+                margin-top: 20px;
+            }
+
+            .logo-text-valor {
+                font-family: 'Playfair Display', serif;
+                font-size: 1.8em;
+                color: #b8860b; /* Ouro */
+                display: inline-block;
+                vertical-align: middle;
+                margin-right: 5px;
+                font-weight: 700;
+            }
+
+            .logo-text-fiscal {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 1.8em;
+                color: #555555;
+                display: inline-block;
+                vertical-align: middle;
+                font-weight: 700;
+            }
+
+            .logo-tagline {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 0.7em;
+                color: #888888;
+                display: block;
+                margin-top: -5px;
+            }
           </style>
         </head>
-        <body>
-          <div class="certificate-wrapper">
-            <div class="certificate-content">
-                <h1>Certificado de Conclusão</h1>
-                <p>Certificamos que <strong>${userName}</strong> concluiu com êxito o curso</p>
-                <p class="course-name">${course.title}</p>
-                <div class="footer">
-                  <p>Concluído em ${completionDate}</p>
-                  <p>Emitido por Valor Fiscal Inteligência Tributária</p>
-                </div>
+          <body>
+            <div class="certificate-container">
+              <h1 class="title">CERTIFICADO</h1>
+              <p class="subtitle">de conclusão</p>
+
+              <p class="body-text">A Valor Fiscal certifica que</p>
+              <p class="student-name">${userName}</p>
+              <p class="body-text">concluiu com êxito o treinamento</p>
+              <p class="course-name">${course.title}</p>
+              <p class="body-text">realizado pela empresa.</p>
+
+              <div class="signature-line"></div>
+              <p class="signature-text">Assinatura</p>
+
+              <p class="date">${completionDate}</p>
+
+              <div class="logo-container">
+                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-escura_acorgj.png" alt="Logo Valor Fiscal" width="120" />
+              </div>
             </div>
-          </div>
-        </body>
+          </body>
         </html>
       `;
 

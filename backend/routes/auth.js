@@ -99,7 +99,7 @@ module.exports = function (pool, resend, logActivity) {
                   
                   <tr>
                     <td align="center" style="background-color: #111217; padding: 20px 0;">
-                      <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png" alt="Valor Fiscal Logo" style="width: 200px; height: auto;">
+                      <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="Valor Fiscal Logo" style="width: 200px; height: auto;">
                     </td>
                   </tr>
 
