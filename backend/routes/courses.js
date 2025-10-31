@@ -444,8 +444,8 @@ module.exports = function (pool, cloudinary, upload) {
                 min-width: 1124px;
                 width: 100%;
                 height: 100%;
-                max-height: 780px;
-                min-height: 780px;
+                max-height: 783px;
+                min-height: 783px;
                 position: relative;
             }
 
