@@ -330,3 +330,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       res.status(500).send("Erro interno ao processar o acesso ao arquivo.");
     }
   });
+
+  return router;
+};
