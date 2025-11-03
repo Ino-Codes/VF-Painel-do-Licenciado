@@ -1,4 +1,4 @@
-// require("dotenv").config();
+// require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -85,7 +85,13 @@ const userRoutes = require("./routes/users.js")(
 const cronFunctions = require("./cron.js");
 cronFunctions.initializeCron(pool, resend); // Passa o resend para o cron
 const noticeRoutes = require("./routes/notices.js")(pool, createNotification);
-const fileRoutes = require("./routes/files.js")(pool, cloudinary, upload, path);
+const filesRoutes = require("./routes/files")(
+  pool,
+  cloudinary,
+  upload,
+  logActivity
+);
+
 const videoRoutes = require("./routes/videos.js")(pool);
 const faqRoutes = require("./routes/faq.js")(pool, cloudinary, upload);
 const logRoutes = require("./routes/logs.js")(pool);
@@ -109,7 +115,7 @@ const notificationRoutes = require("./routes/notifications.js")(pool);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notices", noticeRoutes);
-app.use("/api/files", fileRoutes);
+app.use("/api/files", filesRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/faq", faqRoutes);
 app.use("/api/admin/logs", logRoutes);
