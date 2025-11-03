@@ -96,10 +96,25 @@ const Documentos: React.FC = () => {
       const response = await api.get(`/api/files/download/${fileId}`);
       const { downloadUrl } = response.data;
 
-      toast.dismiss();
+      // Detecta se é um dispositivo móvel
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      // 2. Abre a URL em uma nova aba. O navegador cuidará do download.
-      window.open(downloadUrl, "_blank");
+      if (isMobile) {
+        // Solução para Mobile: Cria um link e simula o clique
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.setAttribute("download", originalname); // Força o download com o nome original
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.dismiss();
+        toast.success("Download iniciado!");
+      } else {
+        // Solução para Desktop (comportamento original mantido)
+        toast.dismiss();
+        // Abre a URL em uma nova aba. O navegador cuidará do download.
+        window.open(downloadUrl, "_blank");
+      }
     } catch (err) {
       toast.dismiss();
       toast.error("Erro ao baixar o arquivo. Verifique suas permissões.");
