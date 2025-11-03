@@ -88,13 +88,24 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
 
       try {
+        const resourceType = "image";
         const uploadResult = await new Promise((resolve, reject) => {
+          // Para raw, o public_id DEVE incluir a extensão completa
+          const publicIdWithExtension =
+            resourceType === "raw" &&
+            originalname.toLowerCase().endsWith(".pdf")
+              ? originalname // Use o nome completo COM .pdf
+              : undefined;
+
           cloudinary.uploader
             .upload_stream(
               {
-                resource_type: "auto",
+                resource_type: resourceType,
                 folder: category,
                 tags: [category, folder],
+                ...(publicIdWithExtension && {
+                  public_id: publicIdWithExtension,
+                }),
               },
               (error, result) => {
                 if (error) reject(error);
@@ -221,37 +232,84 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
-  // 📥 Download
+  // Rota de download segura, que envia o arquivo em vez de redirecionar
   router.get("/download/:id", isLoggedIn, async (req, res) => {
     try {
+      // 1. Verifica se o arquivo existe e se o usuário tem permissão para acessá-lo
       const fileResult = await pool.query(
         "SELECT public_id, originalname, filename, visibility FROM files WHERE id = $1",
         [req.params.id]
       );
 
-      if (fileResult.rowCount === 0)
+      if (fileResult.rowCount === 0) {
         return res.status(404).send("Arquivo não encontrado.");
+      }
 
       const file = fileResult.rows[0];
       const { role } = req.user;
 
+      // 2. Lógica de autorização (consistente com a rota de listagem)
       const isAllowed =
         role === "admin" ||
         file.visibility === "todos" ||
         (role === "licenciado" && file.visibility === "licenciados") ||
         (role !== "licenciado" && file.visibility === "colaboradores");
 
-      if (!isAllowed)
-        return res.status(403).send("Você não tem permissão para baixar.");
+      if (!isAllowed) {
+        return res
+          .status(403)
+          .send("Você não tem permissão para baixar este arquivo.");
+      }
+
+      if (!file.filename) {
+        return res
+          .status(500)
+          .send("URL do arquivo não encontrada no banco de dados.");
+      }
+
+      // 3. Gera uma URL assinada do Cloudinary que força o download com o nome correto
+      const resourceType =
+        file.filename.includes("/image/") &&
+        !file.originalname.toLowerCase().endsWith(".pdf")
+          ? "image"
+          : "raw";
+
+      // Lógica unificada para forçar o download com o nome correto para TODOS os tipos de arquivo.
+      let sanitizedFilename = file.originalname.replace(
+        /[^a-zA-Z0-9._-]/g,
+        "_"
+      );
+
+      // Para PDFs raw, garante que o nome tenha a extensão .pdf
+      if (
+        resourceType === "raw" &&
+        file.originalname.toLowerCase().endsWith(".pdf")
+      ) {
+        if (!sanitizedFilename.toLowerCase().endsWith(".pdf")) {
+          sanitizedFilename = sanitizedFilename + ".pdf";
+        }
+      }
 
       const options = {
-        resource_type: "auto",
-        flags: `attachment:${file.originalname}`,
+        resource_type: resourceType,
+        flags: `attachment:${sanitizedFilename}`,
         sign_url: true,
         expires_at: Math.floor(Date.now() / 1000) + 300,
       };
 
-      const signedUrl = cloudinary.url(file.public_id, options);
+      let publicIdToUse = file.public_id;
+
+      if (
+        resourceType === "raw" &&
+        file.originalname.toLowerCase().endsWith(".pdf")
+      ) {
+        publicIdToUse = file.public_id.endsWith(".pdf")
+          ? file.public_id
+          : `${file.public_id}.pdf`;
+      }
+
+      // Use publicIdToUse aqui, não file.public_id
+      const signedUrl = cloudinary.url(publicIdToUse, options);
 
       try {
         await logActivity(
@@ -265,12 +323,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         console.warn("Falha ao registrar log de download:", e);
       }
 
+      // 4. Envia a URL segura para o frontend
       res.json({ downloadUrl: signedUrl });
     } catch (err) {
-      console.error("Erro ao gerar link de download:", err);
-      res.status(500).send("Erro interno ao processar o download.");
+      console.error("Erro ao gerar link de acesso ao arquivo:", err);
+      res.status(500).send("Erro interno ao processar o acesso ao arquivo.");
     }
   });
-
-  return router;
-};
