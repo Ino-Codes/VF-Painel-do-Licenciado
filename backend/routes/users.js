@@ -163,7 +163,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         logActivity(
           newUserId,
-          email,
+          re.user.email,
           "CREATE_USER",
           `Usuário ${email} (${role}) foi criado.`,
           req.ipAddress
