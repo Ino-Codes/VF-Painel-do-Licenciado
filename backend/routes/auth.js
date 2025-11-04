@@ -18,7 +18,7 @@ module.exports = function (pool, resend, logActivity) {
         logActivity(
           null,
           email,
-          "LOGIN_FAIL",
+          "Falha no Login",
           "Tentativa de login falhou.",
           req.ipAddress
         );
@@ -39,7 +39,7 @@ module.exports = function (pool, resend, logActivity) {
       logActivity(
         user.id,
         user.email,
-        "LOGIN_SUCCESS",
+        "Login Bem-Sucedido",
         "Usuário logado com sucesso.",
         req.ipAddress
       );
@@ -189,7 +189,7 @@ module.exports = function (pool, resend, logActivity) {
       logActivity(
         user.id,
         user.email,
-        "PASSWORD_RESET",
+        "Senha Redefinida",
         "Senha redefinida com sucesso através do link.",
         req.ipAddress
       );

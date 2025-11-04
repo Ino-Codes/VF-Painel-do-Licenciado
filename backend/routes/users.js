@@ -164,7 +164,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         logActivity(
           newUserId,
           re.user.email,
-          "CREATE_USER",
+          "Usuário Criado",
           `Usuário ${email} (${role}) foi criado.`,
           req.ipAddress
         );
@@ -284,9 +284,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         logActivity(
           id,
-          email,
-          "UPDATE_USER_ADMIN",
-          `Dados do usuário ID ${id} foram atualizados.`,
+          req.user.email,
+          "Usuário Editado",
+          `Dados do usuário ${email} foram atualizados.`,
           req.ipAddress
         );
 
@@ -335,7 +335,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         logActivity(
           null,
           userEmail,
-          "DELETE_USER",
+          "Usuário Excluído",
           `Usuário ${userEmail} (ID: ${id}) foi excluído.`,
           req.ipAddress
         );
@@ -396,8 +396,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
               );
               logActivity(
                 null,
-                email,
-                "BULK_CREATE_USER",
+                req.user.email,
+                "Usuários Criados em Massa",
                 `Usuário ${email} criado via importação em massa.`,
                 req.ipAddress
               );
@@ -563,7 +563,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       logActivity(
         userId,
         req.user.email,
-        "FORCE_PASSWORD_RESET",
+        "Alteração de Senha Forçada",
         "Senha alterada no primeiro acesso.",
         req.ipAddress
       );
@@ -608,7 +608,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         logActivity(
           id,
           null,
-          "UPDATE_AVATAR",
+          "Avatar Editado",
           "Foto de perfil atualizada.",
           req.ipAddress
         );
@@ -646,7 +646,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       logActivity(
         id,
         null,
-        "REMOVE_AVATAR",
+        "Avatar Excluído",
         "Foto de perfil removida.",
         req.ipAddress
       );
@@ -679,7 +679,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       logActivity(
         id,
         null,
-        "CHANGE_PASSWORD",
+        "Alteração de Senha",
         "Senha alterada com sucesso.",
         req.ipAddress
       );

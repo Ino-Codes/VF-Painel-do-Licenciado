@@ -70,8 +70,8 @@ module.exports = function (pool, createNotification, logActivity) {
         await logActivity(
           req.user?.id || null,
           req.user?.email || "desconhecido",
-          "CREATE_NOTICE",
-          `Usuário ${req.user?.nome || "desconhecido"} postou um novo aviso.`,
+          "Aviso Criada",
+          `Foi postado o aviso ID ${id}.`,
           req.ipAddress
         );
       } catch (e) {
@@ -106,8 +106,8 @@ module.exports = function (pool, createNotification, logActivity) {
           await logActivity(
             req.user?.id || null,
             req.user?.email || "desconhecido",
-            "EDIT_NOTICE",
-            `Usuário ${req.user?.nome || "desconhecido"} editou um aviso.`,
+            "Aviso Editado",
+            `Foi editado o aviso ID ${id}.`,
             req.ipAddress
           );
         } catch (e) {
@@ -134,8 +134,8 @@ module.exports = function (pool, createNotification, logActivity) {
           await logActivity(
             req.user?.id || null,
             req.user?.email || "desconhecido",
-            "CREATE_NOTICE",
-            `Usuário ${req.user?.nome || "desconhecido"} excluiu um aviso.`,
+            "Aviso Excluído",
+            `Foi excluído o aviso ID ${id}.`,
             req.ipAddress
           );
         } catch (e) {
