@@ -76,7 +76,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // 📤 Upload
+  // Upload
   router.post(
     "/",
     isLoggedIn,
@@ -144,7 +144,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
-  // ✏️ Atualizar metadados
+  // Editar
   router.put(
     "/:id",
     isLoggedIn,
@@ -180,7 +180,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
-  // 🗑️ Excluir
+  // Excluir
   router.delete(
     "/:id",
     isLoggedIn,

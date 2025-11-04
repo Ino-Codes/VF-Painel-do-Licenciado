@@ -84,7 +84,11 @@ const userRoutes = require("./routes/users.js")(
 );
 const cronFunctions = require("./cron.js");
 cronFunctions.initializeCron(pool, resend); // Passa o resend para o cron
-const noticeRoutes = require("./routes/notices.js")(pool, createNotification);
+const noticeRoutes = require("./routes/notices.js")(
+  pool,
+  createNotification,
+  logActivity
+);
 const filesRoutes = require("./routes/files")(
   pool,
   cloudinary,

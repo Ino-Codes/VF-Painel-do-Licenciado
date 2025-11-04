@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 
-module.exports = function (pool, createNotification) {
+module.exports = function (pool, createNotification, logActivity) {
   router.get("/", isLoggedIn, async (req, res) => {
     const { role } = req.user;
     try {
@@ -66,6 +66,18 @@ module.exports = function (pool, createNotification) {
         console.error("Erro ao criar notificações de aviso:", notifyErr);
       }
 
+      try {
+        await logActivity(
+          req.user?.id || null,
+          req.user?.email || "desconhecido",
+          "CREATE_NOTICE",
+          `Usuário ${req.user?.nome || "desconhecido"} postou um novo aviso.`,
+          req.ipAddress
+        );
+      } catch (e) {
+        console.warn("Falha ao registrar log de postagem:", e);
+      }
+
       res.status(201).json(result.rows[0]);
     } catch (err) {
       console.error("Erro ao postar aviso:", err);
@@ -89,6 +101,18 @@ module.exports = function (pool, createNotification) {
           return res.status(404).json({ error: "Aviso não encontrado." });
         }
         res.json(result.rows[0]);
+
+        try {
+          await logActivity(
+            req.user?.id || null,
+            req.user?.email || "desconhecido",
+            "EDIT_NOTICE",
+            `Usuário ${req.user?.nome || "desconhecido"} editou um aviso.`,
+            req.ipAddress
+          );
+        } catch (e) {
+          console.warn("Falha ao registrar log de edição:", e);
+        }
       } catch (err) {
         console.error("Erro ao editar aviso:", err);
         res.status(500).json({ error: "Erro ao editar aviso." });
@@ -105,6 +129,18 @@ module.exports = function (pool, createNotification) {
       try {
         await pool.query("DELETE FROM notices WHERE id = $1", [id]);
         res.json({ success: true, message: "Aviso excluído com sucesso." });
+
+        try {
+          await logActivity(
+            req.user?.id || null,
+            req.user?.email || "desconhecido",
+            "CREATE_NOTICE",
+            `Usuário ${req.user?.nome || "desconhecido"} excluiu um aviso.`,
+            req.ipAddress
+          );
+        } catch (e) {
+          console.warn("Falha ao registrar log de exclusão:", e);
+        }
       } catch (err) {
         console.error("Erro ao excluir aviso:", err);
         res.status(500).json({ error: "Erro ao excluir aviso." });
