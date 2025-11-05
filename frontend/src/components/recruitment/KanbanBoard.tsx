@@ -1,6 +1,6 @@
 import React from "react";
-import KanbanColumn from "./KanbanColumn";
-import { Candidate, Stage } from "../../types/recruitment";
+import KanbanColumn from "./KanbanColumn.tsx";
+import { Candidate, Stage } from "../../types/recruitment.ts";
 
 interface KanbanBoardProps {
   stages: Stage[];

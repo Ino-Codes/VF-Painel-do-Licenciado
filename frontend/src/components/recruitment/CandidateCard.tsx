@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useDrag } from "react-dnd";
-import { Task } from "../../types/recruitment";
+import { Task } from "../../types/recruitment.ts";
 import type { Identifier, XYCoord } from "dnd-core";
 
 interface CandidateCardProps {

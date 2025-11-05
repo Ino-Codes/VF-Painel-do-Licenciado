@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { useDrop } from "react-dnd";
 import CandidateCard from "./CandidateCard.tsx";
-import { Candidate } from "../../types/recruitment";
+import { Candidate } from "../../types/recruitment.ts";
 import type { Identifier } from "dnd-core";
 
 interface KanbanColumnProps {
