@@ -42,6 +42,7 @@ import "./styles/9-Assesments.css";
 import "./styles/10-Company.css";
 import "./styles/11-Dashboards.css";
 import "./styles/12-Internal.css";
+import "./styles/13-Recruitment.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
