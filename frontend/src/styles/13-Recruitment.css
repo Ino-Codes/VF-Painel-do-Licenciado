@@ -1,0 +1,331 @@
+/* --- KANBAN BOARD --- */
+.kanban-container {
+  padding: 20px;
+  overflow-x: auto;
+  min-height: calc(100vh - 200px);
+}
+
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  min-width: min-content;
+}
+
+.kanban-column {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  min-width: 300px;
+  max-width: 300px;
+  height: fit-content;
+}
+
+.kanban-column-header {
+  padding: 15px;
+  border-bottom: 2px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kanban-column-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.kanban-column-count {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.kanban-cards {
+  padding: 15px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* --- CANDIDATE CARD --- */
+.candidate-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.candidate-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.candidate-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.candidate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.candidate-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.candidate-role {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.candidate-tasks {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.task-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.progress-bar {
+  flex-grow: 1;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 0.3s ease;
+}
+
+/* --- CANDIDATE MODAL --- */
+.candidate-modal-content {
+  width: 90%;
+  max-width: 700px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.candidate-info-section {
+  margin-bottom: 25px;
+}
+
+.candidate-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.candidate-info-main h2 {
+  margin: 0;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.candidate-info-details {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.candidate-status {
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.candidate-status.active {
+  background-color: var(--action-primary);
+  color: white;
+}
+
+.candidate-status.inactive {
+  background-color: var(--action-secondary);
+  color: white;
+}
+
+/* --- CHECKLIST SECTION --- */
+.checklist-section {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.checklist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.checklist-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.checklist-checkbox {
+  margin-right: 12px;
+}
+
+.checklist-item-content {
+  flex-grow: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.checklist-text {
+  font-size: 14px;
+}
+
+.checklist-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.checklist-due-date {
+  white-space: nowrap;
+}
+
+.checklist-responsible {
+  white-space: nowrap;
+}
+
+/* --- ADD TASK FORM --- */
+.add-task-form {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* --- DRAG AND DROP STYLES --- */
+.drag-over {
+  background-color: var(--bg-accent-color);
+  transition: background-color 0.2s ease;
+}
+
+/* --- RECRUITMENT HEADER --- */
+.recruitment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.recruitment-title {
+  margin: 0;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.recruitment-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.recruitment-filters {
+  display: flex;
+  gap: 15px;
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
+
+.filter-group {
+  flex: 1;
+  max-width: 250px;
+}
+
+/* --- RESPONSIVO --- */
+@media (max-width: 768px) {
+  .kanban-column {
+    min-width: 280px;
+  }
+
+  .recruitment-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .recruitment-filters {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .filter-group {
+    max-width: none;
+  }
+
+  .candidate-info-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .checklist-item-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .checklist-meta {
+    margin-top: 5px;
+    flex-wrap: wrap;
+  }
+}
