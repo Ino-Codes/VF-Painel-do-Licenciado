@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { useApi } from "../../hooks/useApi";
+import { useApi } from "../../hooks/useApi.ts";
 import KanbanBoard from "../../components/recruitment/KanbanBoard.tsx";
 import CandidateModal from "../../components/recruitment/CandidateModal.tsx";
 import RecruitmentHeader from "../../components/recruitment/RecruitmentHeader.tsx";
