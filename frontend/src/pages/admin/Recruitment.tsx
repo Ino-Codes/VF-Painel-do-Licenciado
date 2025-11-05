@@ -7,6 +7,9 @@ import CandidateModal from "../../components/recruitment/CandidateModal.tsx";
 import RecruitmentHeader from "../../components/recruitment/RecruitmentHeader.tsx";
 import RecruitmentFilters from "../../components/recruitment/RecruitmentFilters.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import Menu from "../../components/layout/Menu.tsx";
+import Footer from "../../components/layout/Footer.tsx";
+import toast from "react-hot-toast";
 
 interface Stage {
   id: number;
@@ -117,31 +120,36 @@ const Recruitment: React.FC = () => {
   }
 
   return (
-    <div className="content-area">
-      <RecruitmentHeader onRefresh={loadData} />
+    <div className="p-2">
+      <Menu />
+      <div className="content-area">
+        <RecruitmentHeader onRefresh={loadData} />
 
-      <RecruitmentFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        stages={stages}
-      />
-
-      <DndProvider backend={HTML5Backend}>
-        <KanbanBoard
+        <RecruitmentFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
           stages={stages}
-          candidates={candidates}
-          onDragEnd={handleDragEnd}
-          onCandidateClick={handleCandidateClick}
         />
-      </DndProvider>
 
-      {selectedCandidate && (
-        <CandidateModal
-          candidate={selectedCandidate}
-          onClose={handleCloseModal}
-          onUpdate={loadData}
-        />
-      )}
+        <DndProvider backend={HTML5Backend}>
+          <KanbanBoard
+            stages={stages}
+            candidates={candidates}
+            onDragEnd={handleDragEnd}
+            onCandidateClick={handleCandidateClick}
+          />
+        </DndProvider>
+
+        {selectedCandidate && (
+          <CandidateModal
+            candidate={selectedCandidate}
+            onClose={handleCloseModal}
+            onUpdate={loadData}
+          />
+        )}
+      </div>
+
+      <Footer />
     </div>
   );
 };
