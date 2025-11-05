@@ -115,10 +115,6 @@ const vacationRoutes = require("./routes/vacations.js")(
   createNotification
 );
 const notificationRoutes = require("./routes/notifications.js")(pool);
-const recruitmentRoutes = require("./routes/recruitment.js")(
-  pool,
-  createNotification
-);
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes);
@@ -138,7 +134,6 @@ app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/cron", cronTriggerRoutes);
 app.use("/api/vacations", vacationRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/recruitment", recruitmentRoutes);
 
 // --- CRIAÇÃO DAS TABELAS ---
 
