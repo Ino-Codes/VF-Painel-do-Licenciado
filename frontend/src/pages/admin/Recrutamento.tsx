@@ -17,12 +17,16 @@ import Footer from "../../components/layout/Footer.tsx";
 import KanbanStage, { Stage } from "./KanbanStage.tsx";
 import { Candidate } from "./CandidateCard.tsx";
 
+type PipelineType = "Recrutamento" | "Onboarding";
 const Recrutamento: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [stages, setStages] = useState<Stage[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [currentPipeline, setCurrentPipeline] =
+    useState<PipelineType>("Recrutamento");
 
   // 🔒 Restrição de acesso
   useEffect(() => {
@@ -34,24 +38,25 @@ const Recrutamento: React.FC = () => {
 
   // 🔄 Buscar dados
   const fetchData = useCallback(async () => {
+    if (!user) return;
     setRefreshing(true);
     try {
       const [stagesRes, candidatesRes] = await Promise.all([
-        api.get("/api/recruitment/stages"),
-        api.get("/api/recruitment/candidates"),
+        api.get(`/api/recruitment/stages?pipeline_type=${currentPipeline}`),
+        api.get(`/api/recruitment/candidates?pipeline_type=${currentPipeline}`),
       ]);
       setStages(stagesRes.data);
       setCandidates(candidatesRes.data);
     } catch (err) {
-      toast.error("Erro ao carregar dados do quadro.");
+      toast.error(`Erro ao carregar dados de ${currentPipeline}.`);
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [currentPipeline, user]);
 
   useEffect(() => {
-    if (!loading && user) fetchData();
-  }, [user, loading, fetchData]);
+    fetchData();
+  }, [currentPipeline, fetchData]);
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -102,14 +107,41 @@ const Recrutamento: React.FC = () => {
           <div>
             <h2>Recrutamento e Onboarding</h2>
             <p>Arraste os candidatos entre as etapas do funil.</p>
+
+            <div className="pipeline-selector">
+              <label>
+                <input
+                  type="radio"
+                  name="pipeline"
+                  value="Recrutamento"
+                  checked={currentPipeline === "Recrutamento"}
+                  onChange={() => setCurrentPipeline("Recrutamento")}
+                />
+                Recrutamento
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="pipeline"
+                  value="Onboarding"
+                  checked={currentPipeline === "Onboarding"}
+                  onChange={() => setCurrentPipeline("Onboarding")}
+                />
+                Onboarding
+              </label>
+            </div>
           </div>
-          <button
-            className="list-button"
-            onClick={fetchData}
-            disabled={refreshing}
-          >
-            {refreshing ? "Atualizando..." : "🔄 Atualizar Quadro"}
-          </button>
+          <div className="page-header-actions">
+            <button className="form-button">➕ Adicionar Candidato</button>
+            <button className="form-button-secondary">Nova Etapa</button>
+            <button
+              className="list-button"
+              onClick={fetchData}
+              disabled={refreshing}
+            >
+              {refreshing ? "Atualizando..." : "🔄"}
+            </button>
+          </div>
         </div>
 
         {stages.length === 0 ? (
@@ -119,9 +151,11 @@ const Recrutamento: React.FC = () => {
               alt="Sem etapas"
               className="empty-state-image"
             />
-            <h3 className="empty-state-title">Nenhuma etapa cadastrada</h3>
+            <h3 className="empty-state-title">
+              Nenhuma etapa para "{currentPipeline}"
+            </h3>
             <p className="empty-state-message">
-              Crie etapas no painel administrativo para começar.
+              Use o botão "Nova Etapa" para começar a organizar seu processo.
             </p>
           </div>
         ) : (
