@@ -69,15 +69,28 @@ const StagesModal: React.FC<StagesModalProps> = ({ onClose, onSave }) => {
     )
       return;
 
-    const newOrder =
-      direction === "up"
-        ? stages[stageIndex - 1].stage_order
-        : stages[stageIndex + 1].stage_order;
-
     try {
-      await api.put(`/recruitment/stages/${stageId}/order`, {
-        stage_order: newOrder,
+      // Reordena localmente primeiro
+      const newStages = [...stages];
+      const swapIndex = direction === "up" ? stageIndex - 1 : stageIndex + 1;
+
+      // Troca as posições
+      [newStages[stageIndex], newStages[swapIndex]] = [
+        newStages[swapIndex],
+        newStages[stageIndex],
+      ];
+
+      // Atualiza as ordens
+      const updatedStages = newStages.map((stage, index) => ({
+        id: stage.id,
+        stage_order: index + 1,
+      }));
+
+      // Envia para a API
+      await api.put("/api/recruitment/stages/reorder", {
+        stages: updatedStages,
       });
+
       loadStages();
       onSave();
     } catch (error) {

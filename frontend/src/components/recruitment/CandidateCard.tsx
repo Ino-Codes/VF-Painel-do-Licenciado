@@ -33,8 +33,9 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
 
   dragRef(ref);
 
-  const completedTasks = tasks.filter((task) => task.is_completed).length;
-  const totalTasks = tasks.length;
+  const taskArray = tasks || [];
+  const completedTasks = taskArray.filter((task) => task?.is_completed).length;
+  const totalTasks = taskArray.length;
   const progressPercentage =
     totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 

@@ -70,8 +70,15 @@ const Recruitment: React.FC = () => {
         api.get("/api/recruitment/candidates", { params: filters }),
       ]);
 
-      setStages(stagesResponse.data);
-      setCandidates(candidatesResponse.data.candidates);
+      // Garante que temos arrays válidos mesmo se a resposta for vazia
+      const loadedStages = stagesResponse.data || [];
+      const loadedCandidates = candidatesResponse.data?.candidates || [];
+
+      console.log("Stages:", loadedStages);
+      console.log("Candidates:", loadedCandidates);
+
+      setStages(loadedStages);
+      setCandidates(loadedCandidates);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
