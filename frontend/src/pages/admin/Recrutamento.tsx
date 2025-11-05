@@ -16,6 +16,8 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import KanbanStage, { Stage } from "./KanbanStage.tsx";
 import { Candidate } from "./CandidateCard.tsx";
+import CandidateModal from "../../components/forms/CandidateModal.tsx";
+import StageModal from "../../components/forms/StageModal.tsx";
 
 type PipelineType = "Recrutamento" | "Onboarding";
 const Recrutamento: React.FC = () => {
@@ -27,6 +29,9 @@ const Recrutamento: React.FC = () => {
 
   const [currentPipeline, setCurrentPipeline] =
     useState<PipelineType>("Recrutamento");
+
+  const [isCandidateModalOpen, setIsCandidateModalOpen] = useState(false);
+  const [isStageModalOpen, setIsStageModalOpen] = useState(false);
 
   // 🔒 Restrição de acesso
   useEffect(() => {
@@ -87,6 +92,11 @@ const Recrutamento: React.FC = () => {
       });
   };
 
+  const handleModalSuccess = () => {
+    setIsCandidateModalOpen(false);
+    setIsStageModalOpen(false);
+    fetchData(); // Re-busca os dados para atualizar a tela
+  };
   if (loading || !user) {
     return <div className="tela-loading">Carregando...</div>;
   }
@@ -132,8 +142,18 @@ const Recrutamento: React.FC = () => {
             </div>
           </div>
           <div className="page-header-actions">
-            <button className="form-button">➕ Adicionar Candidato</button>
-            <button className="form-button-secondary">Nova Etapa</button>
+            <button
+              className="form-button"
+              onClick={() => setIsCandidateModalOpen(true)}
+            >
+              ➕ Adicionar Candidato
+            </button>
+            <button
+              className="form-button-secondary"
+              onClick={() => setIsStageModalOpen(true)}
+            >
+              Nova Etapa
+            </button>
             <button
               className="list-button"
               onClick={fetchData}
@@ -187,6 +207,20 @@ const Recrutamento: React.FC = () => {
       </div>
 
       <Footer />
+
+      <CandidateModal
+        isOpen={isCandidateModalOpen}
+        onClose={() => setIsCandidateModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        pipelineType={currentPipeline}
+      />
+
+      <StageModal
+        isOpen={isStageModalOpen}
+        onClose={() => setIsStageModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        pipelineType={currentPipeline}
+      />
     </div>
   );
 };
