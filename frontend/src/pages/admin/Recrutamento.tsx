@@ -37,7 +37,9 @@ const Recrutamento: React.FC = () => {
     setRefreshing(true);
     try {
       const [stagesRes, candidatesRes] = await Promise.all([
-        api.get("/tpi/api/recruitmd
+        api.get("/api/recruitment/stages"),
+        api.get("/api/recruitment/candidates"),
+      ]);
       setStages(stagesRes.data);
       setCandidates(candidatesRes.data);
     } catch (err) {
@@ -71,7 +73,8 @@ const Recrutamento: React.FC = () => {
     // Persiste no backend
     api
       .put(`/api/recruitment/candidate/${active.id}/move`, {
-      
+        new_stage_id: newStageId,
+      })
       .then(() => toast.success("Candidato movido!"))
       .catch(() => {
         toast.error("Erro ao mover candidato. Revertendo...");
