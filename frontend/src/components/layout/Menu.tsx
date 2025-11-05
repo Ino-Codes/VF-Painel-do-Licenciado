@@ -267,7 +267,7 @@ const Menu: React.FC = () => {
                   Férias
                 </NavLink>
 
-                <NavLink
+                {/* <NavLink
                   to="/admin/recrutamento"
                   className="menu-item"
                   onClick={() => {
@@ -276,7 +276,7 @@ const Menu: React.FC = () => {
                   }}
                 >
                   Recrutamento
-                </NavLink>
+                </NavLink> */}
               </div>
             )}
           </div>
