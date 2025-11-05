@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import api from "../api";
+import api from "../api.ts";
 import { AxiosRequestConfig } from "axios";
 
 export const useApi = () => {
