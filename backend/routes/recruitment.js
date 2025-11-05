@@ -241,10 +241,188 @@ module.exports = function (pool, createNotification) {
     }
   });
 
-  router.use((req, res, next) => {
-    console.log("REQ USER:", req.user);
-    next();
+  // Stages
+  router.get("/", isLoggedIn, async (req, res) => {
+    try {
+      const [stages] = await db.query(
+        "SELECT * FROM recruitment_stages ORDER BY stage_order ASC"
+      );
+      res.json(stages);
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao buscar etapas." });
+    }
   });
+
+  // ➕ POST - criar nova etapa
+  router.post("/", isLoggedIn, async (req, res) => {
+    const { name } = req.body;
+
+    if (!name)
+      return res.status(400).json({ error: "Nome da etapa é obrigatório." });
+
+    try {
+      const [maxOrder] = await db.query(
+        "SELECT COALESCE(MAX(stage_order), 0) AS max_order FROM recruitment_stages"
+      );
+      const newOrder = maxOrder[0].max_order + 1;
+
+      const [result] = await db.query(
+        "INSERT INTO recruitment_stages (name, stage_order) VALUES (?, ?)",
+        [name, newOrder]
+      );
+
+      res.status(201).json({
+        id: result.insertId,
+        name,
+        stage_order: newOrder,
+      });
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao criar etapa." });
+    }
+  });
+
+  // ✏️ PUT - atualizar nome da etapa
+  router.put("/:id", isLoggedIn, async (req, res) => {
+    const { name } = req.body;
+    const { id } = req.params;
+
+    if (!name)
+      return res.status(400).json({ error: "Nome da etapa é obrigatório." });
+
+    try {
+      await db.query("UPDATE recruitment_stages SET name = ? WHERE id = ?", [
+        name,
+        id,
+      ]);
+      res.json({ message: "Etapa atualizada com sucesso." });
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao atualizar etapa." });
+    }
+  });
+
+  // 🔄 PUT - atualizar ordem das etapas
+  router.put("/reorder", isLoggedIn, async (req, res) => {
+    const { order } = req.body;
+    // order = [{ id: 1, stage_order: 1 }, { id: 2, stage_order: 2 }]
+
+    try {
+      const promises = order.map((s) =>
+        db.query("UPDATE recruitment_stages SET stage_order = ? WHERE id = ?", [
+          s.stage_order,
+          s.id,
+        ])
+      );
+      await Promise.all(promises);
+      res.json({ message: "Ordem atualizada com sucesso." });
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao atualizar ordem das etapas." });
+    }
+  });
+
+  // ❌ DELETE - excluir etapa
+  router.delete("/:id", isLoggedIn, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      await db.query("DELETE FROM recruitment_stages WHERE id = ?", [id]);
+      res.json({ message: "Etapa excluída com sucesso." });
+    } catch (err) {
+      res.status(500).json({ error: "Erro ao excluir etapa." });
+    }
+  });
+
+  // Candidates
+  // 📍 Listar todos os candidatos
+  router.get("/api/recruitment/candidates", isLoggedIn, async (req, res) => {
+    try {
+      const [rows] = await pool.query(
+        "SELECT * FROM recruitment_candidates ORDER BY created_at DESC"
+      );
+      res.json(rows);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao carregar candidatos." });
+    }
+  });
+
+  // 📍 Criar novo candidato
+  router.post("/api/recruitment/candidates", isAdmin, async (req, res) => {
+    const { name, email, role_applied_for, stage_id } = req.body;
+    if (!name || !stage_id) {
+      return res.status(400).json({ error: "Nome e etapa são obrigatórios." });
+    }
+
+    try {
+      await pool.query(
+        "INSERT INTO recruitment_candidates (name, email, role_applied_for, stage_id, created_at) VALUES (?, ?, ?, ?, NOW())",
+        [name, email || "", role_applied_for || "", stage_id]
+      );
+      res.json({ message: "Candidato criado com sucesso." });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao criar candidato." });
+    }
+  });
+
+  // 📍 Atualizar candidato
+  router.put("/api/recruitment/candidates/:id", isAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { name, email, role_applied_for, stage_id } = req.body;
+
+    try {
+      await pool.query(
+        "UPDATE recruitment_candidates SET name = ?, email = ?, role_applied_for = ?, stage_id = ? WHERE id = ?",
+        [name, email, role_applied_for, stage_id, id]
+      );
+      res.json({ message: "Candidato atualizado." });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao atualizar candidato." });
+    }
+  });
+
+  // 📍 Excluir candidato
+  router.delete(
+    "/api/recruitment/candidates/:id",
+    isAdmin,
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        await pool.query("DELETE FROM recruitment_candidates WHERE id = ?", [
+          id,
+        ]);
+        res.json({ message: "Candidato excluído." });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Erro ao excluir candidato." });
+      }
+    }
+  );
+
+  // 📍 Mover candidato entre etapas
+  router.put(
+    "/api/recruitment/candidate/:id/move",
+    isLoggedIn,
+    async (req, res) => {
+      const { id } = req.params;
+      const { new_stage_id } = req.body;
+
+      if (!new_stage_id) {
+        return res.status(400).json({ error: "Nova etapa não informada." });
+      }
+
+      try {
+        await pool.query(
+          "UPDATE recruitment_candidates SET stage_id = ? WHERE id = ?",
+          [new_stage_id, id]
+        );
+        res.json({ message: "Candidato movido de etapa." });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Erro ao mover candidato." });
+      }
+    }
+  );
 
   return router;
 };

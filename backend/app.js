@@ -119,10 +119,6 @@ const recruitmentRoutes = require("./routes/recruitment.js")(
   pool,
   createNotification
 );
-const recruitmentStages = require("./routes/recruitmentStages.js")(pool);
-const recruitmentCandidates = require("./routes/recruitmentCandidates.js")(
-  pool
-);
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes);
@@ -142,8 +138,6 @@ app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/cron", cronTriggerRoutes);
 app.use("/api/vacations", vacationRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/recruitment/stages", recruitmentStages);
-app.use("/api/recruitment/candidates", recruitmentCandidates);
 app.use("/api/recruitment", recruitmentRoutes);
 
 // --- CRIAÇÃO DAS TABELAS ---
