@@ -293,6 +293,69 @@
   max-width: 250px;
 }
 
+/* --- STAGES MODAL --- */
+.stages-modal {
+  max-width: 500px;
+}
+
+.stages-list {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.stage-name {
+  font-weight: 500;
+}
+
+.stage-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: 4px;
+}
+
+.icon-button:hover {
+  background: var(--bg-accent-color);
+}
+
+.icon-button.delete {
+  color: var(--error-color);
+}
+
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-stage-form {
+  display: flex;
+  gap: 10px;
+}
+
+.add-stage-form .form-group {
+  flex-grow: 1;
+  margin: 0;
+}
+
 /* --- RESPONSIVO --- */
 @media (max-width: 768px) {
   .kanban-column {
