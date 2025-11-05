@@ -27,7 +27,6 @@ import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
 import Empresa from "./pages/company/Empresa.tsx";
 import GestaoFerias from "./pages/admin/GestaoFerias.tsx";
 import SolicitarFerias from "./pages/internal/SolicitarFerias.tsx";
-import Recrutamento from "./pages/admin/Recrutamento.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -42,7 +41,6 @@ import "./styles/9-Assesments.css";
 import "./styles/10-Company.css";
 import "./styles/11-Dashboards.css";
 import "./styles/12-Internal.css";
-import "./styles/13-Recrutamento.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
@@ -93,7 +91,6 @@ const AppRouter: React.FC = () => {
             path="/admin/courses/:courseId"
             element={<AdminCourseEditor />}
           />
-          <Route path="/admin/recrutamento" element={<Recrutamento />} />
           <Route path="/admin/calendar" element={<AdminCalendar />} />
           <Route path="/admin/ferias" element={<GestaoFerias />} />
           <Route path="/admin/users" element={<AdminUsers />} />
