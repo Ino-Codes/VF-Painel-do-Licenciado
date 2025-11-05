@@ -1,4 +1,4 @@
-// require("dotenv").config();
+// require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -119,6 +119,10 @@ const recruitmentRoutes = require("./routes/recruitment.js")(
   pool,
   createNotification
 );
+const recruitmentStages = require("./routes/recruitmentStages.js")(pool);
+const recruitmentCandidates = require("./routes/recruitmentCandidates.js")(
+  pool
+);
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes);
@@ -139,6 +143,8 @@ app.use("/api/cron", cronTriggerRoutes);
 app.use("/api/vacations", vacationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/recruitment", recruitmentRoutes);
+app.use("/api/recruitment/stages", recruitmentStages);
+app.use("/api/recruitment/candidates", recruitmentCandidates);
 
 // --- CRIAÇÃO DAS TABELAS ---
 

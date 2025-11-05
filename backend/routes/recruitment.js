@@ -11,8 +11,6 @@ module.exports = function (pool, createNotification) {
   // ROTAS DE GESTÃO DAS "COLUNAS" (Stages)
   // ===============================================
 
-  console.log("✅ Rotas de recrutamento carregadas");
-
   // Criar uma nova coluna no Kanban
   router.post(
     "/stage",

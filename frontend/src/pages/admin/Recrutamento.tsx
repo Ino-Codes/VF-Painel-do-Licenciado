@@ -1,16 +1,17 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   DndContext,
+  DragEndEvent,
   closestCorners,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from "@dnd-kit/core";
-import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext.tsx";
+import { arrayMove } from "@dnd-kit/sortable";
 import api from "../../api.ts";
+import toast from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext.tsx";
+import { useNavigate } from "react-router-dom";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import KanbanStage, { Stage } from "./KanbanStage.tsx";
@@ -21,9 +22,9 @@ const Recrutamento: React.FC = () => {
   const navigate = useNavigate();
   const [stages, setStages] = useState<Stage[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Proteção de rota
+  // 🔒 Restrição de acesso
   useEffect(() => {
     if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
       toast.error("Acesso restrito.");
@@ -31,20 +32,20 @@ const Recrutamento: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
+  // 🔄 Buscar dados
   const fetchData = useCallback(async () => {
+    setRefreshing(true);
     try {
-      setIsLoading(true);
       const [stagesRes, candidatesRes] = await Promise.all([
-        api.get("/api/recruitment/stages"),
-        api.get("/api/recruitment/candidates"),
+        api.get("/recruitment/stages"),
+        api.get("/recruitment/candidates"),
       ]);
       setStages(stagesRes.data);
       setCandidates(candidatesRes.data);
     } catch (err) {
-      console.error(err);
-      toast.error("Erro ao carregar dados do recrutamento.");
+      toast.error("Erro ao carregar dados do quadro.");
     } finally {
-      setIsLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -52,71 +53,105 @@ const Recrutamento: React.FC = () => {
     if (!loading && user) fetchData();
   }, [user, loading, fetchData]);
 
-  // Configuração do drag-and-drop
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  // 🧩 Quando soltar um candidato em nova etapa
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
 
-    const candidateId = active.id;
+    const activeCandidate = candidates.find((c) => c.id === active.id);
     const newStageId = Number(over.id);
-    const candidate = candidates.find((c) => c.id === candidateId);
 
-    if (!candidate || candidate.stage_id === newStageId) return;
+    if (!activeCandidate || activeCandidate.stage_id === newStageId) return;
 
-    // Atualização otimista
+    // Atualiza localmente
     setCandidates((prev) =>
-      prev.map((c) =>
-        c.id === candidateId ? { ...c, stage_id: newStageId } : c
-      )
+      prev.map((c) => (c.id === active.id ? { ...c, stage_id: newStageId } : c))
     );
 
-    try {
-      await api.put(`/api/recruitment/candidate/${candidateId}/move`, {
+    // Persiste no backend
+    api
+      .put(`/recruitment/candidate/${active.id}/move`, {
         new_stage_id: newStageId,
+      })
+      .then(() => toast.success("Candidato movido!"))
+      .catch(() => {
+        toast.error("Erro ao mover candidato. Revertendo...");
+        fetchData();
       });
-      toast.success("Candidato movido com sucesso!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao mover candidato. Atualizando dados...");
-      fetchData(); // Recarrega o estado do servidor
-    }
   };
 
-  if (isLoading || loading) {
-    return (
-      <div className="tela-loading">
-        <p>Carregando recrutamento...</p>
-      </div>
-    );
+  if (loading || !user) {
+    return <div className="tela-loading">Carregando...</div>;
   }
 
   return (
     <div className="p-2">
       <Menu />
+
       <div className="content-area">
-        <div className="page-header">
-          <h2>Recrutamento e Onboarding</h2>
-          <p>Arraste os candidatos entre as etapas do funil.</p>
+        <div
+          className="page-header"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <h2>Recrutamento e Onboarding</h2>
+            <p>Arraste os candidatos entre as etapas do funil.</p>
+          </div>
+          <button
+            className="list-button"
+            onClick={fetchData}
+            disabled={refreshing}
+          >
+            {refreshing ? "Atualizando..." : "🔄 Atualizar Quadro"}
+          </button>
         </div>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="kanban-board">
-            {stages.map((stage) => (
-              <KanbanStage
-                key={stage.id}
-                stage={stage}
-                candidates={candidates.filter((c) => c.stage_id === stage.id)}
-              />
-            ))}
+        {stages.length === 0 ? (
+          <div className="empty-state-container">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/4076/4076505.png"
+              alt="Sem etapas"
+              className="empty-state-image"
+            />
+            <h3 className="empty-state-title">Nenhuma etapa cadastrada</h3>
+            <p className="empty-state-message">
+              Crie etapas no painel administrativo para começar.
+            </p>
           </div>
-        </DndContext>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragEnd={handleDragEnd}
+          >
+            <div
+              className="kanban-board"
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${stages.length}, 1fr)`,
+                gap: "20px",
+                overflowX: "auto",
+                paddingBottom: "20px",
+              }}
+            >
+              {stages.map((stage) => (
+                <KanbanStage
+                  key={stage.id}
+                  stage={stage}
+                  candidates={candidates.filter((c) => c.stage_id === stage.id)}
+                />
+              ))}
+            </div>
+          </DndContext>
+        )}
       </div>
+
       <Footer />
     </div>
   );
