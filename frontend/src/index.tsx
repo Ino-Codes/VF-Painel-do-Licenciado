@@ -27,6 +27,7 @@ import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
 import Empresa from "./pages/company/Empresa.tsx";
 import GestaoFerias from "./pages/admin/GestaoFerias.tsx";
 import SolicitarFerias from "./pages/internal/SolicitarFerias.tsx";
+import Recruitment from "./pages/admin/Recruitment.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -95,6 +96,7 @@ const AppRouter: React.FC = () => {
           <Route path="/admin/ferias" element={<GestaoFerias />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/dashboards" element={<Dashboards />} />
+          <Route path="/admin/recrutamento" element={<Recruitment />} />
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
