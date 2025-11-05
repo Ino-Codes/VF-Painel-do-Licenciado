@@ -122,10 +122,6 @@ const Recruitment: React.FC = () => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
   return (
     <div className="p-2">
       <Menu />
