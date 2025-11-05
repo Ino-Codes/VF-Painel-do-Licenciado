@@ -66,8 +66,8 @@ const Recruitment: React.FC = () => {
     try {
       setLoading(true);
       const [stagesResponse, candidatesResponse] = await Promise.all([
-        api.get("/recruitment/stages"),
-        api.get("/recruitment/candidates", { params: filters }),
+        api.get("/api/recruitment/stages"),
+        api.get("/api/recruitment/candidates", { params: filters }),
       ]);
 
       setStages(stagesResponse.data);
@@ -85,7 +85,7 @@ const Recruitment: React.FC = () => {
 
   const handleDragEnd = async (candidateId: number, newStageId: number) => {
     try {
-      await api.put(`/recruitment/candidates/${candidateId}/move`, {
+      await api.put(`/api/recruitment/candidates/${candidateId}/move`, {
         stage_id: newStageId,
       });
 

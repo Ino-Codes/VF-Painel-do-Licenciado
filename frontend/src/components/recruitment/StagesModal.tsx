@@ -20,7 +20,7 @@ const StagesModal: React.FC<StagesModalProps> = ({ onClose, onSave }) => {
 
   const loadStages = async () => {
     try {
-      const response = await api.get("/recruitment/stages");
+      const response = await api.get("/api/recruitment/stages");
       setStages(response.data);
     } catch (error) {
       console.error("Erro ao carregar etapas:", error);
@@ -33,9 +33,10 @@ const StagesModal: React.FC<StagesModalProps> = ({ onClose, onSave }) => {
     if (!newStageName.trim()) return;
 
     try {
-      await api.post("/recruitment/stages", {
+      await api.post("/api/recruitment/stages", {
         name: newStageName,
         stage_order: stages.length + 1,
+        pipeline_type: "Recrutamento",
       });
 
       toast.success("Etapa adicionada com sucesso!");

@@ -324,28 +324,6 @@
   gap: 5px;
 }
 
-.icon-button {
-  background: none;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  border-radius: 4px;
-}
-
-.icon-button:hover {
-  background: var(--bg-accent-color);
-}
-
-.icon-button.delete {
-  color: var(--error-color);
-}
-
-.icon-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .add-stage-form {
   display: flex;
   gap: 10px;

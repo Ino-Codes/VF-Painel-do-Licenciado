@@ -26,7 +26,22 @@ const NewCandidateModal: React.FC<NewCandidateModalProps> = ({
     e.preventDefault();
 
     try {
-      await api.post("/recruitment/candidates", formData);
+      // Pega a primeira etapa para o candidato
+      const stagesResponse = await api.get("/api/recruitment/stages");
+      const stages = stagesResponse.data;
+      const firstStage = stages.length > 0 ? stages[0] : null;
+
+      if (!firstStage) {
+        toast.error("É necessário criar uma etapa primeiro");
+        return;
+      }
+
+      await api.post("/api/recruitment/candidates", {
+        ...formData,
+        stage_id: firstStage.id,
+        user_id: null, // será definido no backend
+      });
+
       toast.success("Candidato adicionado com sucesso!");
       onSave();
       onClose();
