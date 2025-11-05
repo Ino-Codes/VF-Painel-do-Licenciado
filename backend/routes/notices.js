@@ -70,7 +70,7 @@ module.exports = function (pool, createNotification, logActivity) {
         await logActivity(
           req.user?.id || null,
           req.user?.email || "desconhecido",
-          "Aviso Criada",
+          "Aviso Criado",
           `Foi postado um novo aviso.`,
           req.ipAddress
         );

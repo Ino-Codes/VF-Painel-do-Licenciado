@@ -1,0 +1,59 @@
+.kanban-board {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+  padding-bottom: 20px;
+  /* Permite scroll horizontal do quadro */
+  overflow-x: auto;
+}
+
+.kanban-stage {
+  flex: 0 0 300px; /* Largura fixa para cada coluna */
+  min-width: 300px;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.kanban-stage h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 15px;
+  margin: 0;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.kanban-stage-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  min-height: 200px; /* Altura mínima para a área de "droppable" */
+}
+
+.kanban-card {
+  background-color: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  cursor: grab;
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-card h4 {
+  font-size: 0.9rem;
+  margin: 0 0 5px 0;
+  color: var(--text-primary);
+}
+
+.kanban-card p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}

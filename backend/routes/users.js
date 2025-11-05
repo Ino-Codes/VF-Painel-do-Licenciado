@@ -605,13 +605,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           "UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url",
           [newAvatarUrl, id]
         );
-        logActivity(
-          id,
-          null,
-          "Avatar Editado",
-          "Foto de perfil atualizada.",
-          req.ipAddress
-        );
         res.json({
           success: true,
           avatarUrl: updateResult.rows[0].avatar_url,
@@ -643,13 +636,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       delete updatedUser.password;
       delete updatedUser.reset_token;
       delete updatedUser.reset_token_expires;
-      logActivity(
-        id,
-        null,
-        "Avatar Excluído",
-        "Foto de perfil removida.",
-        req.ipAddress
-      );
+
       res.json({ success: true, user: updatedUser });
     } catch (err) {
       console.error("Erro ao remover avatar:", err);

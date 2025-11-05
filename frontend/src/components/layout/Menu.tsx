@@ -266,6 +266,17 @@ const Menu: React.FC = () => {
                 >
                   Férias
                 </NavLink>
+
+                <NavLink
+                  to="/admin/recrutamento"
+                  className="menu-item"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setRhDropdownOpen(false);
+                  }}
+                >
+                  Recrutamento
+                </NavLink>
               </div>
             )}
           </div>

@@ -114,6 +114,10 @@ const vacationRoutes = require("./routes/vacations.js")(
   createNotification
 );
 const notificationRoutes = require("./routes/notifications.js")(pool);
+const recruitmentRoutes = require("./routes/recruitment.js")(
+  pool,
+  createNotification
+);
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes);
@@ -133,6 +137,7 @@ app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/cron", cronTriggerRoutes);
 app.use("/api/vacations", vacationRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/recuitment", recruitmentRoutes);
 
 // --- CRIAÇÃO DAS TABELAS ---
 
@@ -386,6 +391,36 @@ const createTables = async () => {
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );`;
 
+  const recruitmentStagesTable = `
+    CREATE TABLE IF NOT EXISTS recruitment_stages (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        stage_order INTEGER NOT NULL,
+        pipeline_type TEXT NOT NULL DEFAULT 'Recrutamento'
+    );`;
+
+  const candidatesTable = `
+  CREATE TABLE IF NOT EXISTS candidates (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      role_applied_for TEXT,
+      status TEXT NOT NULL DEFAULT 'Ativo',
+      stage_id INTEGER NOT NULL REFERENCES recruitment_stages(id),
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL, 
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  );`;
+  const candidateTasksTable = `
+  CREATE TABLE IF NOT EXISTS candidate_tasks (
+      id SERIAL PRIMARY KEY,
+      candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+      task_name TEXT NOT NULL,
+      is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+      responsible_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL, 
+      due_date DATE
+  );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -410,6 +445,9 @@ const createTables = async () => {
     await pool.query(eventNotificationsTable);
     await pool.query(vacationRequestsTable);
     await pool.query(notificationsTable);
+    await pool.query(recruitmentStagesTable);
+    await pool.query(candidatesTable);
+    await pool.query(candidateTasksTable);
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {
