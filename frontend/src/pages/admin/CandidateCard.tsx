@@ -1,4 +1,3 @@
-// frontend/src/pages/admin/CandidateCard.tsx
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -8,7 +7,8 @@ export interface Candidate {
   name: string;
   role_applied_for: string;
   stage_id: number;
-  // Adicione outros campos se necessário
+  email?: string;
+  phone?: string;
 }
 
 interface Props {
@@ -32,8 +32,12 @@ const CandidateCard: React.FC<Props> = ({ candidate }) => {
       {...listeners}
       className="kanban-card"
     >
-      <h4>{candidate.name}</h4>
-      <p>{candidate.role_applied_for}</p>
+      <div className="kanban-card-header">
+        <h4>{candidate.name}</h4>
+        <p>{candidate.role_applied_for}</p>
+      </div>
+      {candidate.email && <p className="kanban-card-sub">{candidate.email}</p>}
+      {candidate.phone && <p className="kanban-card-sub">{candidate.phone}</p>}
     </div>
   );
 };

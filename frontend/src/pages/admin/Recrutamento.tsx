@@ -1,18 +1,16 @@
-// frontend/src/pages/admin/Recrutamento.tsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   DndContext,
-  DragEndEvent,
   closestCorners,
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
-import api from "../../api.ts";
 import toast from "react-hot-toast";
-import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext.tsx";
+import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import KanbanStage, { Stage } from "./KanbanStage.tsx";
@@ -23,7 +21,9 @@ const Recrutamento: React.FC = () => {
   const navigate = useNavigate();
   const [stages, setStages] = useState<Stage[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Proteção de rota
   useEffect(() => {
     if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
       toast.error("Acesso restrito.");
@@ -33,6 +33,7 @@ const Recrutamento: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
+      setIsLoading(true);
       const [stagesRes, candidatesRes] = await Promise.all([
         api.get("/api/recruitment/stages"),
         api.get("/api/recruitment/candidates"),
@@ -40,49 +41,55 @@ const Recrutamento: React.FC = () => {
       setStages(stagesRes.data);
       setCandidates(candidatesRes.data);
     } catch (err) {
-      toast.error("Erro ao carregar dados do quadro.");
+      console.error(err);
+      toast.error("Erro ao carregar dados do recrutamento.");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (user) fetchData();
-  }, [user, fetchData]);
+    if (!loading && user) fetchData();
+  }, [user, loading, fetchData]);
 
+  // Configuração do drag-and-drop
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    if (!over) return;
 
-    if (!over) return; // Se largar fora de uma coluna
+    const candidateId = active.id;
+    const newStageId = Number(over.id);
+    const candidate = candidates.find((c) => c.id === candidateId);
 
-    const activeStageId = candidates.find((c) => c.id === active.id)?.stage_id;
-    const overStageId = over.id;
+    if (!candidate || candidate.stage_id === newStageId) return;
 
-    if (activeStageId !== overStageId) {
-      // Otimisticamente atualiza o estado local
-      setCandidates((prev) =>
-        prev.map((c) =>
-          c.id === active.id ? { ...c, stage_id: Number(overStageId) } : c
-        )
-      );
+    // Atualização otimista
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.id === candidateId ? { ...c, stage_id: newStageId } : c
+      )
+    );
 
-      // Envia a alteração para a API
-      api
-        .put(`/api/recruitment/candidate/${active.id}/move`, {
-          new_stage_id: overStageId,
-        })
-        .then(() => {
-          toast.success("Candidato movido!");
-        })
-        .catch((err) => {
-          toast.error("Erro ao mover candidato. Revertendo.");
-          fetchData(); // Reverte para o estado do servidor
-        });
+    try {
+      await api.put(`/api/recruitment/candidate/${candidateId}/move`, {
+        new_stage_id: newStageId,
+      });
+      toast.success("Candidato movido com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao mover candidato. Atualizando dados...");
+      fetchData(); // Recarrega o estado do servidor
     }
   };
 
-  if (loading || !user) {
-    return <div className="tela-loading">Carregando...</div>;
+  if (isLoading || loading) {
+    return (
+      <div className="tela-loading">
+        <p>Carregando recrutamento...</p>
+      </div>
+    );
   }
 
   return (

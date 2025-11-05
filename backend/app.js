@@ -1,4 +1,4 @@
-// require("dotenv").config();
+// require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -17,6 +17,7 @@ const port = process.env.PORT || 3001;
 const allowedOrigins = [
   "https://painel.valorfiscal.com",
   "http://localhost:3000",
+  "https://vf-painel-do-licenciado.onrender.com",
 ];
 const corsOptions = {
   origin: function (origin, callback) {
@@ -137,7 +138,7 @@ app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/cron", cronTriggerRoutes);
 app.use("/api/vacations", vacationRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/recuitment", recruitmentRoutes);
+app.use("/api/recruitment", recruitmentRoutes);
 
 // --- CRIAÇÃO DAS TABELAS ---
 

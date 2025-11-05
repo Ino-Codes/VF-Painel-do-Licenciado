@@ -11,6 +11,8 @@ module.exports = function (pool, createNotification) {
   // ROTAS DE GESTÃO DAS "COLUNAS" (Stages)
   // ===============================================
 
+  console.log("✅ Rotas de recrutamento carregadas");
+
   // Criar uma nova coluna no Kanban
   router.post(
     "/stage",
@@ -239,6 +241,11 @@ module.exports = function (pool, createNotification) {
       console.error("Erro ao atualizar tarefa:", err);
       res.status(500).json({ error: "Erro ao atualizar tarefa." });
     }
+  });
+
+  router.use((req, res, next) => {
+    console.log("REQ USER:", req.user);
+    next();
   });
 
   return router;

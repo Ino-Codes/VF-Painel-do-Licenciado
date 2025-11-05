@@ -1,4 +1,3 @@
-// frontend/src/pages/admin/KanbanStage.tsx
 import React from "react";
 import {
   SortableContext,
@@ -22,18 +21,25 @@ const KanbanStage: React.FC<Props> = ({ stage, candidates }) => {
 
   return (
     <div className="kanban-stage">
-      <h3>
-        {stage.name} ({candidates.length})
-      </h3>
+      <div className="kanban-stage-header">
+        <h3>
+          {stage.name} <span>({candidates.length})</span>
+        </h3>
+      </div>
+
       <SortableContext
         id={String(stage.id)}
         items={candidates.map((c) => c.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div ref={setNodeRef} className="kanban-stage-tasks">
-          {candidates.map((candidate) => (
-            <CandidateCard key={candidate.id} candidate={candidate} />
-          ))}
+        <div ref={setNodeRef} className="kanban-stage-body">
+          {candidates.length > 0 ? (
+            candidates.map((candidate) => (
+              <CandidateCard key={candidate.id} candidate={candidate} />
+            ))
+          ) : (
+            <p className="kanban-empty">Nenhum candidato</p>
+          )}
         </div>
       </SortableContext>
     </div>

@@ -5,7 +5,7 @@ interface User {
   id: number;
   email: string;
   nome: string;
-  role: "admin" | "licenciado" | "gestor";
+  role: "admin" | "licenciado" | "rh";
   avatar_url?: string;
   must_change_password?: boolean;
 }
