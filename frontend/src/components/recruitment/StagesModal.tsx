@@ -119,20 +119,20 @@ const StagesModal: React.FC<StagesModalProps> = ({ onClose, onSave }) => {
                 <button
                   onClick={() => handleMoveStage(stage.id, "up")}
                   disabled={index === 0}
-                  className="icon-button"
+                  className="stage-icon-button"
                 >
                   ↑
                 </button>
                 <button
                   onClick={() => handleMoveStage(stage.id, "down")}
                   disabled={index === stages.length - 1}
-                  className="icon-button"
+                  className="stage-icon-button"
                 >
                   ↓
                 </button>
                 <button
                   onClick={() => handleDeleteStage(stage.id)}
-                  className="icon-button delete"
+                  className="stage-icon-button delete"
                 >
                   ×
                 </button>

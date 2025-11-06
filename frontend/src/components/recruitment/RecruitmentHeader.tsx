@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { MdFormatListBulleted } from "react-icons/md";
 import NewCandidateModal from "./NewCandidateModal.tsx";
 import StagesModal from "./StagesModal.tsx";
 
@@ -7,6 +9,7 @@ interface RecruitmentHeaderProps {
 }
 
 const RecruitmentHeader: React.FC<RecruitmentHeaderProps> = ({ onRefresh }) => {
+  const navigate = useNavigate();
   const [isNewCandidateModalOpen, setIsNewCandidateModalOpen] = useState(false);
   const [isStagesModalOpen, setIsStagesModalOpen] = useState(false);
 
@@ -25,6 +28,14 @@ const RecruitmentHeader: React.FC<RecruitmentHeaderProps> = ({ onRefresh }) => {
           onClick={() => setIsStagesModalOpen(true)}
         >
           Gerenciar Etapas
+        </button>
+        <button
+          className="form-button"
+          onClick={() => navigate("/admin/checklist-templates")}
+          style={{ display: "flex", alignItems: "center", gap: "6px" }}
+        >
+          <MdFormatListBulleted size={20} />
+          Gerenciar Tarefas
         </button>
       </div>
 

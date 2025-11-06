@@ -429,6 +429,24 @@ const createTables = async () => {
       due_date DATE
   );`;
 
+  const checklistTemplatesTable = `
+      CREATE TABLE IF NOT EXISTS checklist_templates (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        is_default BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+  const checklistTemplateItemsTable = `
+      CREATE TABLE IF NOT EXISTS checklist_template_items (
+        id SERIAL PRIMARY KEY,
+        template_id INTEGER NOT NULL REFERENCES checklist_templates(id) ON DELETE CASCADE,
+        task_name TEXT NOT NULL,
+        due_days INTEGER DEFAULT NULL
+      );
+    `;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -475,6 +493,20 @@ const createTables = async () => {
     );
     await pool.query(candidatesTable);
     await pool.query(candidateTasksTable);
+    await pool.query(checklistTemplatesTable);
+    await pool.query(checklistTemplateItemsTable);
+    // seed a default checklist template if not exists
+    await pool.query(
+      "INSERT INTO checklist_templates (name, is_default) SELECT 'Template Padrão' , true WHERE NOT EXISTS (SELECT 1 FROM checklist_templates WHERE is_default = true)"
+    );
+    // seed some template items if template exists and items empty
+    await pool.query(
+      `INSERT INTO checklist_template_items (template_id, task_name)
+         SELECT t.id, v.task FROM (SELECT id FROM checklist_templates WHERE is_default = true LIMIT 1) t
+         CROSS JOIN (VALUES ('Contato inicial'), ('Enviar teste técnico'), ('Agendar entrevista')) v(task)
+         WHERE NOT EXISTS (SELECT 1 FROM checklist_template_items it JOIN checklist_templates tt ON it.template_id = tt.id WHERE tt.is_default = true)
+        `
+    );
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
   } catch (err) {

@@ -28,6 +28,7 @@
   --accent-color-hover: #b78a19;
   --action-primary: #04a146; /* Verde para botões de sucesso */
   --action-secondary: #778088; /* Cinza para botões secundários */
+  --action-edit: #2365c8; /* Azul para botões de editar */
   --action-danger: #c82333; /* Vermelho para botões de excluir */
 
   --bg-graph: rgba(221, 177, 65, 0.6);
@@ -70,6 +71,7 @@ body.dark-theme {
   --accent-color-hover: #b78a19;
   --action-primary: #04a146;
   --action-secondary: #555;
+  --action-edit: #2a62e2;
   --action-danger: #c82333;
 
   --bg-graph: rgba(221, 177, 65, 0.8);

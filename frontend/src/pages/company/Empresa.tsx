@@ -9,60 +9,8 @@ import { useNavigate } from "react-router-dom";
 import MapaEscritorios from "./MapaEscritorios.tsx";
 import UserDetailModal from "./UserDetailModal.tsx";
 
-// Ícones SVG
-const IconeMissao = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10"></circle>
-    <circle cx="12" cy="12" r="6"></circle>
-    <circle cx="12" cy="12" r="2"></circle>
-  </svg>
-);
-const IconeVisao = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
-  </svg>
-);
-const IconeValores = () => (
-  <svg
-    width="48"
-    height="48"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.0"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polygon
-      class="st0"
-      points=".67 9.04 12 21.36 23.33 9.04 19.39 2.64 4.61 2.64 .67 9.04"
-    />
-    <path class="st0" d="M.67,9.04h22.66H.67Z" />
-    <polygon
-      class="st0"
-      points="8.89 2.64 7.07 8.79 12 20.61 16.93 8.79 15.09 2.64 8.89 2.64"
-    />
-  </svg>
-);
+import { FiTarget, FiEye } from "react-icons/fi";
+import { RiVipDiamondLine } from "react-icons/ri";
 
 const Empresa: React.FC = () => {
   const { user, loading } = useAuth();
@@ -125,7 +73,7 @@ const Empresa: React.FC = () => {
           </div>
           <div className="identidade-container">
             <div className="identidade-item">
-              <IconeMissao />
+              <FiTarget />
               <h3>Missão</h3>
               <p>
                 Somos uma empresa de inteligência tributária que une
@@ -138,7 +86,7 @@ const Empresa: React.FC = () => {
               </p>
             </div>
             <div className="identidade-item">
-              <IconeVisao />
+              <FiEye />
               <h3>Visão</h3>
               <p>
                 Ser referência nacional em nosso segmento, por meio de um
@@ -149,7 +97,7 @@ const Empresa: React.FC = () => {
               </p>
             </div>
             <div className="identidade-item">
-              <IconeValores />
+              <RiVipDiamondLine />
               <h3>Valores</h3>
               <p>
                 Somos uma empresa comprometida com a ética, integridade e

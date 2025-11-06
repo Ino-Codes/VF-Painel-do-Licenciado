@@ -28,6 +28,7 @@ import Empresa from "./pages/company/Empresa.tsx";
 import GestaoFerias from "./pages/admin/GestaoFerias.tsx";
 import SolicitarFerias from "./pages/internal/SolicitarFerias.tsx";
 import Recruitment from "./pages/admin/Recruitment.tsx";
+import ChecklistTemplatesAdmin from "./pages/admin/ChecklistTemplatesAdmin.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -98,6 +99,10 @@ const AppRouter: React.FC = () => {
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/dashboards" element={<Dashboards />} />
           <Route path="/admin/recrutamento" element={<Recruitment />} />
+          <Route
+            path="/admin/checklist-templates"
+            element={<ChecklistTemplatesAdmin />}
+          />
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

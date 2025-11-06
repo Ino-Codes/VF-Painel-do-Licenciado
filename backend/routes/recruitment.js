@@ -232,7 +232,7 @@ module.exports = function (pool, logActivity) {
 
         const newCandidate = candidateResult.rows[0];
 
-        // Insere as tarefas do checklist, se houver
+        // Insere as tarefas do checklist
         if (tasks && tasks.length > 0) {
           for (const task of tasks) {
             await client.query(
@@ -246,6 +246,29 @@ module.exports = function (pool, logActivity) {
                 task.due_date,
               ]
             );
+          }
+        } else {
+          // If no tasks provided, apply default checklist template items
+          try {
+            const templateRes = await client.query(
+              "SELECT id FROM checklist_templates WHERE is_default = true LIMIT 1"
+            );
+            if (templateRes.rowCount > 0) {
+              const templateId = templateRes.rows[0].id;
+              const itemsRes = await client.query(
+                "SELECT task_name, due_days FROM checklist_template_items WHERE template_id = $1 ORDER BY id",
+                [templateId]
+              );
+              for (const item of itemsRes.rows) {
+                // due_days can be used to set a due_date relative to now if needed
+                await client.query(
+                  `INSERT INTO candidate_tasks (candidate_id, task_name, responsible_user_id, due_date) VALUES ($1, $2, $3, $4)`,
+                  [newCandidate.id, item.task_name, null, null]
+                );
+              }
+            }
+          } catch (err) {
+            console.error("Erro ao aplicar template de checklist:", err);
           }
         }
 
@@ -461,6 +484,266 @@ module.exports = function (pool, logActivity) {
       } catch (err) {
         console.error("Erro ao atualizar tarefa:", err);
         res.status(500).json({ error: "Erro ao atualizar tarefa" });
+      }
+    }
+  );
+
+  // Rota para deletar uma tarefa do candidato
+  router.delete(
+    "/tasks/:taskId",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { taskId } = req.params;
+      try {
+        const result = await pool.query(
+          "DELETE FROM candidate_tasks WHERE id = $1 RETURNING *",
+          [taskId]
+        );
+
+        if (result.rowCount === 0) {
+          return res.status(404).json({ error: "Tarefa não encontrada" });
+        }
+
+        res.json({ success: true, deleted: result.rows[0] });
+      } catch (err) {
+        console.error("Erro ao deletar tarefa:", err);
+        res.status(500).json({ error: "Erro ao deletar tarefa" });
+      }
+    }
+  );
+
+  // --- Checklist templates management (admin RH) ---
+
+  // List templates
+  router.get(
+    "/checklist-templates",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      try {
+        const result = await pool.query(
+          "SELECT id, name, is_default, created_at FROM checklist_templates ORDER BY id"
+        );
+        res.json(result.rows);
+      } catch (err) {
+        console.error("Erro ao buscar templates:", err);
+        res.status(500).json({ error: "Erro ao buscar templates" });
+      }
+    }
+  );
+
+  // Create template
+  router.post(
+    "/checklist-templates",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { name, is_default } = req.body;
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        if (is_default) {
+          await client.query(
+            "UPDATE checklist_templates SET is_default = false WHERE is_default = true"
+          );
+        }
+        const result = await client.query(
+          "INSERT INTO checklist_templates (name, is_default) VALUES ($1, $2) RETURNING *",
+          [name, !!is_default]
+        );
+        await client.query("COMMIT");
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Template Criado",
+          `Template de checklist '${name}' criado`,
+          req.ipAddress
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Erro ao criar template:", err);
+        res.status(500).json({ error: "Erro ao criar template" });
+      } finally {
+        client.release();
+      }
+    }
+  );
+
+  // Update template
+  router.put(
+    "/checklist-templates/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const { name, is_default } = req.body;
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        if (is_default) {
+          await client.query(
+            "UPDATE checklist_templates SET is_default = false WHERE is_default = true"
+          );
+        }
+        const result = await client.query(
+          "UPDATE checklist_templates SET name = $1, is_default = $2 WHERE id = $3 RETURNING *",
+          [name, !!is_default, id]
+        );
+        if (result.rowCount === 0) {
+          await client.query("ROLLBACK");
+          client.release();
+          return res.status(404).json({ error: "Template não encontrado" });
+        }
+        await client.query("COMMIT");
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Template Editado",
+          `Template de checklist '${name}' atualizado`,
+          req.ipAddress
+        );
+        res.json(result.rows[0]);
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Erro ao atualizar template:", err);
+        res.status(500).json({ error: "Erro ao atualizar template" });
+      } finally {
+        client.release();
+      }
+    }
+  );
+
+  // Delete template
+  router.delete(
+    "/checklist-templates/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query(
+          "DELETE FROM checklist_templates WHERE id = $1 RETURNING *",
+          [id]
+        );
+        if (result.rowCount === 0)
+          return res.status(404).json({ error: "Template não encontrado" });
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Template Excluído",
+          `Template ID ${id} excluído`,
+          req.ipAddress
+        );
+        res.json({ success: true });
+      } catch (err) {
+        console.error("Erro ao deletar template:", err);
+        res.status(500).json({ error: "Erro ao deletar template" });
+      }
+    }
+  );
+
+  // Items: list/create/update/delete for template items
+  router.get(
+    "/checklist-templates/:id/items",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query(
+          "SELECT id, task_name, due_days FROM checklist_template_items WHERE template_id = $1 ORDER BY id",
+          [id]
+        );
+        res.json(result.rows);
+      } catch (err) {
+        console.error("Erro ao buscar items:", err);
+        res.status(500).json({ error: "Erro ao buscar items" });
+      }
+    }
+  );
+
+  router.post(
+    "/checklist-templates/:id/items",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const { task_name, due_days } = req.body;
+      try {
+        const result = await pool.query(
+          "INSERT INTO checklist_template_items (template_id, task_name, due_days) VALUES ($1, $2, $3) RETURNING *",
+          [id, task_name, due_days || null]
+        );
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Item do Template Criado",
+          `Item '${task_name}' criado no template ${id}`,
+          req.ipAddress
+        );
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao criar item:", err);
+        res.status(500).json({ error: "Erro ao criar item" });
+      }
+    }
+  );
+
+  router.put(
+    "/checklist-templates/items/:itemId",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { itemId } = req.params;
+      const { task_name, due_days } = req.body;
+      try {
+        const result = await pool.query(
+          "UPDATE checklist_template_items SET task_name = $1, due_days = $2 WHERE id = $3 RETURNING *",
+          [task_name, due_days || null, itemId]
+        );
+        if (result.rowCount === 0)
+          return res.status(404).json({ error: "Item não encontrado" });
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Item do Template Editado",
+          `Item '${task_name}' atualizado`,
+          req.ipAddress
+        );
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao atualizar item:", err);
+        res.status(500).json({ error: "Erro ao atualizar item" });
+      }
+    }
+  );
+
+  router.delete(
+    "/checklist-templates/items/:itemId",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { itemId } = req.params;
+      try {
+        const result = await pool.query(
+          "DELETE FROM checklist_template_items WHERE id = $1 RETURNING *",
+          [itemId]
+        );
+        if (result.rowCount === 0)
+          return res.status(404).json({ error: "Item não encontrado" });
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Item do Template Excluído",
+          `Item ID ${itemId} excluído`,
+          req.ipAddress
+        );
+        res.json({ success: true });
+      } catch (err) {
+        console.error("Erro ao deletar item:", err);
+        res.status(500).json({ error: "Erro ao deletar item" });
       }
     }
   );

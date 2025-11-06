@@ -3,6 +3,8 @@ import { useApi } from "../../hooks/useApi.ts";
 import toast from "react-hot-toast";
 import { Candidate, Unit } from "../../types/recruitment.ts";
 import { useEffect } from "react";
+import { IMaskInput } from "react-imask";
+import { IoCloseSharp } from "react-icons/io5";
 
 interface NewCandidateModalProps {
   onClose: () => void;
@@ -40,11 +42,14 @@ const NewCandidateModal: React.FC<NewCandidateModalProps> = ({
         return;
       }
 
-      await api.post("/api/recruitment/candidates", {
+      const payload = {
         ...formData,
+        phone: formData.phone ? formData.phone.replace(/\D/g, "") : null,
         stage_id: firstStage.id,
         user_id: null, // será definido no backend
-      });
+      };
+
+      await api.post("/api/recruitment/candidates", payload);
 
       toast.success("Candidato adicionado com sucesso!");
       onSave();
@@ -76,7 +81,7 @@ const NewCandidateModal: React.FC<NewCandidateModalProps> = ({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close-button" onClick={onClose}>
-          &times;
+          <IoCloseSharp />
         </button>
 
         <h2 className="modal-title">Novo Candidato</h2>
@@ -112,13 +117,15 @@ const NewCandidateModal: React.FC<NewCandidateModalProps> = ({
 
           <div className="form-group">
             <label htmlFor="phone">Telefone</label>
-            <input
-              type="tel"
+            <IMaskInput
+              mask="(00) 00000-0000"
               id="phone"
               value={formData.phone}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, phone: e.target.value }))
+              onAccept={(value: any) =>
+                setFormData((prev) => ({ ...prev, phone: value }))
               }
+              unmask={false}
+              type="tel"
               className="form-input"
               required
             />

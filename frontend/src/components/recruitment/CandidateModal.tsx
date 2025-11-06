@@ -3,7 +3,10 @@ import { useApi } from "../../hooks/useApi.ts";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
-import { IoCloseSharp, IoTrashBinOutline } from "react-icons/io5";
+import CandidateEditModal from "./CandidateEditModal.tsx";
+import ChecklistEditModal from "./ChecklistEditModal.tsx";
+import { IoCloseSharp } from "react-icons/io5";
+import { FiTrash2, FiEdit } from "react-icons/fi";
 
 interface Task {
   id: number;
@@ -41,7 +44,21 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
   onUpdate,
 }) => {
   const [tasks, setTasks] = useState(candidate.tasks || []);
+
+  const formatPhone = (telefone?: string) => {
+    if (!telefone) return "Não informado";
+    const digitos = telefone.replace(/\D/g, "");
+    if (digitos.length === 11) {
+      return `(${digitos.substring(0, 2)}) ${digitos.substring(
+        2,
+        7
+      )}-${digitos.substring(7)}`;
+    }
+    return telefone;
+  };
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [newTask, setNewTask] = useState({
     task_name: "",
     responsible_user_id: candidate.user_id || "",
@@ -117,7 +134,13 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
           <IoCloseSharp />
         </button>
         <button className="modal-delete-button" onClick={handleDeleteClick}>
-          <IoTrashBinOutline />
+          <FiTrash2 />
+        </button>
+        <button
+          className="modal-edit-button"
+          onClick={() => setIsEditModalOpen(true)}
+        >
+          <FiEdit />
         </button>
 
         <div className="candidate-info-section">
@@ -130,19 +153,13 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
               </span>
               <h2>{candidate.name}</h2>
               <div className="candidate-info-details">
-                <p>
-                  {candidate.role_applied_for} · {candidate.stage_name}
-                </p>
                 {candidate.unit_name && (
-                  <p className="candidate-unit">
-                    Unidade: {candidate.unit_name}
+                  <p>
+                    {candidate.role_applied_for} · {candidate.unit_name}
                   </p>
                 )}
-                <p>
-                  {candidate.email}
-                  <br />
-                  {candidate.phone}
-                </p>
+                <p>{candidate.email}</p>
+                <p>{formatPhone(candidate.phone)}</p>
               </div>
             </div>
           </div>
@@ -151,6 +168,14 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
         <div className="checklist-section">
           <div className="checklist-header">
             <h3 className="checklist-title">Checklist de Ações</h3>
+            <div style={{ marginLeft: 12 }}>
+              <button
+                className="list-button"
+                onClick={() => setIsChecklistOpen(true)}
+              >
+                Editar Checklist
+              </button>
+            </div>
           </div>
 
           <div className="checklist-items">
@@ -175,42 +200,6 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
               </div>
             ))}
           </div>
-
-          <form onSubmit={handleAddTask} className="add-task-form">
-            <div className="form-group">
-              <input
-                type="text"
-                placeholder="Nova tarefa..."
-                value={newTask.task_name}
-                onChange={(e) =>
-                  setNewTask((prev) => ({ ...prev, task_name: e.target.value }))
-                }
-                className="form-input"
-                required
-              />
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <input
-                  type="date"
-                  value={newTask.due_date}
-                  onChange={(e) =>
-                    setNewTask((prev) => ({
-                      ...prev,
-                      due_date: e.target.value,
-                    }))
-                  }
-                  className="form-input"
-                  required
-                />
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button type="submit" className="form-button">
-                Adicionar Tarefa
-              </button>
-            </div>
-          </form>
         </div>
       </div>
       <ConfirmationModal
@@ -219,6 +208,22 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
         onConfirm={handleDeleteConfirm}
         title={`Excluir Candidato ${candidate.name}`}
         message="Tem certeza que deseja excluir este candidato? Esta ação não pode ser desfeita."
+      />
+      <CandidateEditModal
+        candidate={candidate}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={() => {
+          setIsEditModalOpen(false);
+          onUpdate();
+        }}
+      />
+      <ChecklistEditModal
+        candidateId={candidate.id}
+        tasks={tasks}
+        isOpen={isChecklistOpen}
+        onClose={() => setIsChecklistOpen(false)}
+        onChange={(updated) => setTasks(updated)}
       />
     </div>
   );
