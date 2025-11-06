@@ -127,7 +127,7 @@ const TabContent: React.FC<TabContentProps> = ({
                 </td>
                 {!isLicenciadoTab && (
                   <td data-label="Unidade">
-                    {getUnitNameById(u.unit_id) || u.unidade || "N/A"}
+                    {getUnitNameById(u.unit_id) || u.unidade}
                   </td>
                 )}
                 <td data-label="Ações">

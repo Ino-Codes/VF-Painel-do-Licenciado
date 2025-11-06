@@ -388,6 +388,56 @@ module.exports = function (pool, logActivity) {
     }
   );
 
+  // Rota para excluir um candidato
+  router.delete(
+    "/candidates/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const client = await pool.connect();
+
+      try {
+        await client.query("BEGIN");
+
+        // Primeiro, excluir todas as tarefas relacionadas ao candidato
+        await client.query(
+          "DELETE FROM candidate_tasks WHERE candidate_id = $1",
+          [id]
+        );
+
+        // Depois, excluir o candidato
+        const result = await client.query(
+          "DELETE FROM candidates WHERE id = $1 RETURNING name",
+          [id]
+        );
+
+        if (result.rowCount === 0) {
+          await client.query("ROLLBACK");
+          return res.status(404).json({ error: "Candidato não encontrado" });
+        }
+
+        await client.query("COMMIT");
+
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Candidato Excluído",
+          `Candidato "${result.rows[0].name}" foi excluído do sistema`,
+          req.ipAddress
+        );
+
+        res.json({ success: true, message: "Candidato excluído com sucesso" });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Erro ao excluir candidato:", err);
+        res.status(500).json({ error: "Erro ao excluir candidato" });
+      } finally {
+        client.release();
+      }
+    }
+  );
+
   // Rota para atualizar status de uma tarefa
   router.put(
     "/tasks/:taskId",

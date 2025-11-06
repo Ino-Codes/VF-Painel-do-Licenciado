@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useApi } from "../../hooks/useApi.ts";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
+import { IoCloseSharp, IoTrashBinOutline } from "react-icons/io5";
 
 interface Task {
   id: number;
@@ -45,6 +47,26 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
   });
 
   const api = useApi();
+
+  const handleDeleteClick = async (candidateId: number) => {
+    if (
+      !confirm(
+        "Tem certeza que deseja excluir este candidato? Esta ação não pode ser desfeita."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await api.delete(`/api/recruitment/candidates/${candidateId}`);
+      toast.success("Candidato excluído com sucesso!");
+      onClose();
+      onUpdate();
+    } catch (error) {
+      console.error("Erro ao excluir candidato:", error);
+      toast.error("Erro ao excluir o candidato. Tente novamente.");
+    }
+  };
 
   const handleTaskToggle = async (taskId: number, currentStatus: boolean) => {
     try {
@@ -93,7 +115,13 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <button className="modal-close-button" onClick={onClose}>
-          &times;
+          <IoCloseSharp />
+        </button>
+        <button
+          className="modal-delete-button"
+          onClick={() => handleDeleteClick(candidate.id)}
+        >
+          <IoTrashBinOutline />
         </button>
 
         <div className="candidate-info-section">
