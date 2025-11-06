@@ -151,27 +151,13 @@
 }
 
 .candidate-status {
-  padding: 6px 12px;
-  border-radius: 15px;
   font-size: 13px;
-  font-weight: 600;
-}
-
-.candidate-status.active {
-  background-color: var(--action-primary);
-  color: white;
-}
-
-.candidate-status.inactive {
-  background-color: var(--action-secondary);
-  color: white;
 }
 
 /* --- CHECKLIST SECTION --- */
 .checklist-section {
   background: var(--bg-secondary);
   border-radius: 8px;
-  padding: 20px;
   margin-top: 20px;
 }
 
@@ -289,7 +275,6 @@
 }
 
 .filter-group {
-  flex: 1;
   max-width: 280px;
 }
 

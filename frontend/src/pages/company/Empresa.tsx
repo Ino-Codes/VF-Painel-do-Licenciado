@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
+import { useUnits } from "../../hooks/useUnits.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import UserCard from "./UserCard.tsx";
@@ -65,6 +66,7 @@ const IconeValores = () => (
 
 const Empresa: React.FC = () => {
   const { user, loading } = useAuth();
+  const { units, getUnitIdByName, getUnitNameById } = useUnits();
   const navigate = useNavigate();
   const [internalUsers, setInternalUsers] = useState<any[]>([]);
   const [selectedState, setSelectedState] = useState<
@@ -92,7 +94,8 @@ const Empresa: React.FC = () => {
 
   const filteredUsers = internalUsers.filter((user) => {
     if (selectedState === "todos") return true;
-    return user.unidade === unitMap[selectedState];
+    const unitName = getUnitNameById(user.unit_id) || user.unidade;
+    return unitName === unitMap[selectedState];
   });
 
   const stateNames = {

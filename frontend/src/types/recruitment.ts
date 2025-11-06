@@ -15,6 +15,8 @@ export interface Candidate {
   status: string;
   stage_id: number;
   user_id: number;
+  unit_id?: number;
+  unit_name?: string;
   stage_name?: string;
   responsible_name?: string;
   tasks?: Task[];
@@ -24,4 +26,9 @@ export interface Stage {
   id: number;
   name: string;
   stage_order: number;
+}
+
+export interface Unit {
+  id: number;
+  name: string;
 }

@@ -51,7 +51,7 @@ const StagesModal: React.FC<StagesModalProps> = ({ onClose, onSave }) => {
 
   const handleDeleteStage = async (stageId: number) => {
     try {
-      await api.delete(`/recruitment/stages/${stageId}`);
+      await api.delete(`/api/recruitment/stages/${stageId}`);
       toast.success("Etapa removida com sucesso!");
       loadStages();
       onSave();

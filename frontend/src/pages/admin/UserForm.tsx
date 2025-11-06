@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import CorporatePhotoUploader from "./CorporatePhotoUploader.tsx";
+import { useUnits } from "../../hooks/useUnits.ts";
+import { Unit } from "../../types/recruitment.ts";
 
 interface User {
   id: number;
@@ -12,11 +14,10 @@ interface User {
   cargo?: string;
   setor?: string;
   unidade?: string;
+  unidade_id?: number | null;
   corporate_photo_url?: string;
   data_admissao?: string | null;
 }
-
-const Unidades = ["Matriz", "Filial SC", "Filial SP"];
 
 const UserForm: React.FC<{
   userToEdit: User | null;
@@ -25,6 +26,7 @@ const UserForm: React.FC<{
   onCancel: () => void;
 }> = ({ userToEdit, formType, onSuccess, onCancel }) => {
   const [formData, setFormData] = useState<Partial<User>>({});
+  const { units, loading } = useUnits();
 
   useEffect(() => {
     if (userToEdit) {
@@ -34,6 +36,7 @@ const UserForm: React.FC<{
         nome: "",
         email: "",
         unidade: "",
+        unidade_id: null,
         cargo: "",
         setor: "",
         birth_date: "",
@@ -43,10 +46,33 @@ const UserForm: React.FC<{
     }
   }, [userToEdit, formType]);
 
+  // If the form has unidade (text) but not unidade_id, try to map it after units load
+  useEffect(() => {
+    if (units.length === 0) return;
+    if (formData.unidade_id) return;
+    if (!formData.unidade) return;
+
+    const match = units.find((u) => u.name === formData.unidade);
+    if (match) {
+      setFormData((prev) => ({ ...prev, unidade_id: match.id }));
+    }
+  }, [units]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    const id = val ? Number(val) : null;
+    const selected = units.find((u) => u.id === id);
+    setFormData((prev) => ({
+      ...prev,
+      unidade_id: id,
+      unidade: selected ? selected.name : "",
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,20 +160,22 @@ const UserForm: React.FC<{
 
           <div className="form-row">
             <select
-              name="unidade"
-              value={formData.unidade || ""}
-              onChange={handleChange}
+              name="unidade_id"
+              value={formData.unidade_id ?? ""}
+              onChange={handleUnitChange}
               required
               className="form-select"
+              disabled={loading}
             >
-              <option value="" disabled>
-                Selecione a Unidade
+              <option value="">
+                {loading ? "Carregando..." : "Selecione a Unidade"}
               </option>
-              {Unidades.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
+              {!loading &&
+                units.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </option>
+                ))}
             </select>
             {userToEdit?.role !== "licenciado" && (
               <select

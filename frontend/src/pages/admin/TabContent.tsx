@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import BulkUserImport from "./BulkUserImport.tsx";
+import { useUnits } from "../../hooks/useUnits.ts";
 
 interface User {
   id: number;
   nome: string;
   email: string;
   role: string;
-  unidade?: string;
+  unit_id?: number;
+  unidade?: string; // legacy support
 }
 
 interface TabContentProps {
@@ -36,6 +38,7 @@ const TabContent: React.FC<TabContentProps> = ({
   handlePageChange,
   handleSort,
 }) => {
+  const { getUnitNameById } = useUnits();
   const [searchTerm, setSearchTerm] = useState("");
   const isLicenciadoTab = tab === "licenciados";
 
@@ -123,7 +126,9 @@ const TabContent: React.FC<TabContentProps> = ({
                   {u.role}
                 </td>
                 {!isLicenciadoTab && (
-                  <td data-label="Unidade">{u.unidade || "N/A"}</td>
+                  <td data-label="Unidade">
+                    {getUnitNameById(u.unit_id) || u.unidade || "N/A"}
+                  </td>
                 )}
                 <td data-label="Ações">
                   <div className="user-actions">

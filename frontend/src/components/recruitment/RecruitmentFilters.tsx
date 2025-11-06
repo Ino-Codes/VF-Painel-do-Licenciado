@@ -36,6 +36,16 @@ const RecruitmentFilters: React.FC<RecruitmentFiltersProps> = ({
       </div>
 
       <div className="filter-group">
+        <input
+          type="text"
+          placeholder="Filtrar por cargo..."
+          value={filters.role_applied_for}
+          onChange={(e) => onFilterChange({ role_applied_for: e.target.value })}
+          className="form-input"
+        />
+      </div>
+
+      <div className="filter-group">
         <select
           value={filters.stage_id}
           onChange={(e) => onFilterChange({ stage_id: e.target.value })}
@@ -48,16 +58,6 @@ const RecruitmentFilters: React.FC<RecruitmentFiltersProps> = ({
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="filter-group">
-        <input
-          type="text"
-          placeholder="Filtrar por cargo..."
-          value={filters.role_applied_for}
-          onChange={(e) => onFilterChange({ role_applied_for: e.target.value })}
-          className="form-input"
-        />
       </div>
 
       <div className="filter-group">

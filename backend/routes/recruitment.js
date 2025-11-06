@@ -154,11 +154,12 @@ module.exports = function (pool, logActivity) {
             `;
 
         const candidatesQuery = `
-                SELECT 
-                    c.*,
-                    rs.name as stage_name,
-                    rs.stage_order,
-                    u.nome as responsible_name,
+        SELECT 
+          c.*,
+          rs.name as stage_name,
+          rs.stage_order,
+          u.nome as responsible_name,
+          un.name as unit_name,
                     (
                         SELECT json_agg(json_build_object(
                             'id', ct.id,
@@ -170,9 +171,10 @@ module.exports = function (pool, logActivity) {
                         FROM candidate_tasks ct
                         WHERE ct.candidate_id = c.id
                     ) as tasks
-                FROM candidates c
-                LEFT JOIN recruitment_stages rs ON c.stage_id = rs.id
-                LEFT JOIN users u ON c.user_id = u.id
+        FROM candidates c
+        LEFT JOIN recruitment_stages rs ON c.stage_id = rs.id
+        LEFT JOIN users u ON c.user_id = u.id
+        LEFT JOIN units un ON c.unit_id = un.id
                 ${whereClause}
                 ORDER BY c.created_at DESC
                 LIMIT $${paramCount} OFFSET $${paramCount + 1}
@@ -206,7 +208,6 @@ module.exports = function (pool, logActivity) {
     async (req, res) => {
       const { name, email, phone, role_applied_for, stage_id, user_id, tasks } =
         req.body;
-
       const client = await pool.connect();
 
       try {
@@ -215,10 +216,18 @@ module.exports = function (pool, logActivity) {
         // Insere o candidato
         const candidateResult = await client.query(
           `INSERT INTO candidates 
-                    (name, email, phone, role_applied_for, stage_id, user_id) 
-                VALUES ($1, $2, $3, $4, $5, $6) 
-                RETURNING *`,
-          [name, email, phone, role_applied_for, stage_id, user_id]
+                      (name, email, phone, role_applied_for, stage_id, unit_id, user_id) 
+                  VALUES ($1, $2, $3, $4, $5, $6, $7) 
+                  RETURNING *`,
+          [
+            name,
+            email,
+            phone,
+            role_applied_for,
+            stage_id,
+            req.body.unit_id || null,
+            user_id,
+          ]
         );
 
         const newCandidate = candidateResult.rows[0];
@@ -275,16 +284,27 @@ module.exports = function (pool, logActivity) {
         stage_id,
         status,
         user_id,
+        unit_id,
       } = req.body;
 
       try {
         const result = await pool.query(
           `UPDATE candidates 
                 SET name = $1, email = $2, phone = $3, role_applied_for = $4, 
-                    stage_id = $5, status = $6, user_id = $7 
-                WHERE id = $8 
+                    stage_id = $5, status = $6, user_id = $7, unit_id = $8 
+                WHERE id = $9 
                 RETURNING *`,
-          [name, email, phone, role_applied_for, stage_id, status, user_id, id]
+          [
+            name,
+            email,
+            phone,
+            role_applied_for,
+            stage_id,
+            status,
+            user_id,
+            unit_id || null,
+            id,
+          ]
         );
 
         if (result.rowCount === 0) {

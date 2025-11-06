@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useApi } from "../../hooks/useApi.ts";
 import toast from "react-hot-toast";
-import { Candidate } from "../../types/recruitment.ts";
+import { Candidate, Unit } from "../../types/recruitment.ts";
+import { useEffect } from "react";
 
 interface NewCandidateModalProps {
   onClose: () => void;
@@ -18,7 +19,10 @@ const NewCandidateModal: React.FC<NewCandidateModalProps> = ({
     phone: "",
     role_applied_for: "",
     status: "EM_PROCESSO",
+    unit_id: null as number | null,
   });
+
+  const [units, setUnits] = useState<Unit[]>([]);
 
   const api = useApi();
 
@@ -50,6 +54,23 @@ const NewCandidateModal: React.FC<NewCandidateModalProps> = ({
       toast.error("Erro ao adicionar candidato");
     }
   };
+
+  useEffect(() => {
+    const loadUnits = async () => {
+      try {
+        const res = await api.get("/api/units");
+        setUnits(res.data || []);
+        // se houver unidades e não foi selecionada, define a primeira
+        if ((res.data || []).length > 0 && !formData.unit_id) {
+          setFormData((prev) => ({ ...prev, unit_id: res.data[0].id }));
+        }
+      } catch (err) {
+        console.error("Erro ao carregar unidades:", err);
+      }
+    };
+
+    loadUnits();
+  }, []);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -118,6 +139,29 @@ const NewCandidateModal: React.FC<NewCandidateModalProps> = ({
               className="form-input"
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="unit">Unidade</label>
+            <select
+              id="unit"
+              value={formData.unit_id ?? ""}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  unit_id: e.target.value ? Number(e.target.value) : null,
+                }))
+              }
+              className="form-input"
+              required
+            >
+              <option value="">Selecione a unidade</option>
+              {units.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="modal-actions">

@@ -1,9 +1,12 @@
 import React from "react";
+import { useUnits } from "../../hooks/useUnits.ts";
+import { Unit } from "../../types.ts";
 
 interface User {
   nome: string;
   corporate_photo_url?: string;
-  unidade?: string;
+  unit_id?: number;
+  unidade?: string; // legacy support
   setor?: string;
   cargo?: string;
   email?: string;
@@ -34,6 +37,8 @@ const formatarAniversario = (data?: string): string => {
 };
 
 const UserDetailModal: React.FC<ModalProps> = ({ isOpen, onClose, user }) => {
+  const { getUnitNameById } = useUnits();
+
   if (!isOpen || !user) {
     return null;
   }
@@ -62,7 +67,8 @@ const UserDetailModal: React.FC<ModalProps> = ({ isOpen, onClose, user }) => {
           <div className="user-detail-info">
             <h3 className="user-detail-name">{user.nome}</h3>
             <p>
-              <span>Unidade:</span> {user.unidade || "Não informado"}
+              <span>Unidade:</span>{" "}
+              {getUnitNameById(user.unit_id) || user.unidade || "Não informado"}
             </p>
             <p>
               <span>Setor:</span> {user.setor || "Não informado"}

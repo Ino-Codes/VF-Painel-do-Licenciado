@@ -17,3 +17,9 @@ export interface Course {
   title: string;
   modules: Module[];
 }
+
+export interface Unit {
+  id: number;
+  name: string;
+  created_at?: string;
+}

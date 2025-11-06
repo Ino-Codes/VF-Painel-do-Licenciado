@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { IMaskInput } from "react-imask";
 import { useAuth } from "../../context/AuthContext.tsx";
+import { useUnits } from "../../hooks/useUnits.ts";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
@@ -27,11 +28,10 @@ interface User {
   avatar_url?: string;
   cargo?: string;
   setor?: string;
-  unidade?: string;
+  unit_id?: number;
+  unidade?: string; // legacy support
   telefone?: string;
 }
-
-const Unidades = ["Matriz", "Filial SC", "Filial SP"];
 
 const EditIcon = () => (
   <svg
@@ -69,6 +69,7 @@ const formatarTelefone = (telefone?: string | null): string => {
 
 const Perfil: React.FC = () => {
   const { user, login, logout, loading } = useAuth();
+  const { units, getUnitNameById, getUnitIdByName } = useUnits();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"info" | "certificates">("info");
@@ -173,6 +174,7 @@ const Perfil: React.FC = () => {
     const payload = { ...user };
 
     const telefoneLimpo = editForm.telefone.replace(/\D/g, "");
+    const unitId = getUnitIdByName(editForm.unidade);
 
     if (user.role === "licenciado") {
       payload.nome = nomeAtualizado;
@@ -180,7 +182,8 @@ const Perfil: React.FC = () => {
       payload.nome = nomeAtualizado;
       payload.cargo = editForm.cargo;
       payload.setor = editForm.setor;
-      payload.unidade = editForm.unidade;
+      payload.unit_id = unitId;
+      payload.unidade = editForm.unidade; // for backward compatibility
       payload.telefone = telefoneLimpo;
     }
 
@@ -368,7 +371,11 @@ const Perfil: React.FC = () => {
                     </div>
                     <div className="info-item">
                       <span>Unidade</span>
-                      <p>{user.unidade || "Não informado"}</p>
+                      <p>
+                        {getUnitNameById(user.unit_id) ||
+                          user.unidade ||
+                          "Não informado"}
+                      </p>
                     </div>
                     <div className="info-item">
                       <span>Telefone</span>
@@ -433,9 +440,9 @@ const Perfil: React.FC = () => {
                           <option value="" disabled>
                             Selecione a Unidade
                           </option>
-                          {Unidades.map((unidade) => (
-                            <option key={unidade} value={unidade}>
-                              {unidade}
+                          {units.map((unit) => (
+                            <option key={unit.id} value={unit.name}>
+                              {unit.name}
                             </option>
                           ))}
                         </select>

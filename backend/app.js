@@ -116,6 +116,7 @@ const vacationRoutes = require("./routes/vacations.js")(
 );
 const notificationRoutes = require("./routes/notifications.js")(pool);
 const recruitmentRoutes = require("./routes/recruitment.js")(pool, logActivity);
+const unitsRoutes = require("./routes/units.js")(pool);
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes);
@@ -136,6 +137,7 @@ app.use("/api/cron", cronTriggerRoutes);
 app.use("/api/vacations", vacationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/recruitment", recruitmentRoutes);
+app.use("/api/units", unitsRoutes);
 
 // --- CRIAÇÃO DAS TABELAS ---
 
@@ -397,6 +399,13 @@ const createTables = async () => {
         pipeline_type TEXT NOT NULL DEFAULT 'Recrutamento'
     );`;
 
+  const unitsTable = `
+    CREATE TABLE IF NOT EXISTS units (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+
   const candidatesTable = `
   CREATE TABLE IF NOT EXISTS candidates (
       id SERIAL PRIMARY KEY,
@@ -405,7 +414,8 @@ const createTables = async () => {
       phone TEXT,
       role_applied_for TEXT,
       status TEXT NOT NULL DEFAULT 'Ativo',
-      stage_id INTEGER NOT NULL REFERENCES recruitment_stages(id),
+    stage_id INTEGER NOT NULL REFERENCES recruitment_stages(id),
+    unit_id INTEGER REFERENCES units(id) ON DELETE SET NULL,
       user_id INTEGER REFERENCES users(id) ON DELETE SET NULL, 
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
   );`;
@@ -443,7 +453,26 @@ const createTables = async () => {
     await pool.query(eventNotificationsTable);
     await pool.query(vacationRequestsTable);
     await pool.query(notificationsTable);
+    await pool.query(unitsTable);
+    // ensure users has unidade_id column to link to units (backwards-compatible)
+    await pool.query(
+      "ALTER TABLE users ADD COLUMN IF NOT EXISTS unidade_id INTEGER;"
+    );
+    // seed default units if not exists
+    await pool.query(
+      "INSERT INTO units (name) SELECT 'Matriz' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Matriz')"
+    );
+    await pool.query(
+      "INSERT INTO units (name) SELECT 'Filial SC' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Filial SC')"
+    );
+    await pool.query(
+      "INSERT INTO units (name) SELECT 'Filial SP' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Filial SP')"
+    );
     await pool.query(recruitmentStagesTable);
+    // Ensure candidates table has unit_id column for new linkage
+    await pool.query(
+      "ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unit_id INTEGER;"
+    );
     await pool.query(candidatesTable);
     await pool.query(candidateTasksTable);
 

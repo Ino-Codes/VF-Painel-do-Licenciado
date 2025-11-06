@@ -26,9 +26,6 @@ const RecruitmentHeader: React.FC<RecruitmentHeaderProps> = ({ onRefresh }) => {
         >
           Gerenciar Etapas
         </button>
-        <button className="form-button" onClick={onRefresh}>
-          Atualizar
-        </button>
       </div>
 
       {isNewCandidateModalOpen && (

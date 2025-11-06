@@ -59,7 +59,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         }
         // --- FIM DA CORREÇÃO ---
 
-        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
+        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 
@@ -95,15 +95,21 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         cargo,
         setor,
         unidade,
+        unidade_id,
         telefone,
         data_admissao,
       } = req.body;
       const client = await pool.connect();
 
       try {
-        if (role !== "licenciado" && (!unidade || !unidade.trim())) {
+        if (
+          role !== "licenciado" &&
+          !unidade_id &&
+          (!unidade || !unidade.trim())
+        ) {
           return res.status(400).json({
-            error: "O campo Unidade é obrigatório para Colaboradores.",
+            error:
+              "O campo Unidade (ou unidade_id) é obrigatório para Colaboradores.",
           });
         }
 
@@ -118,7 +124,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         const hash = await bcrypt.hash(password, 10);
 
         const userResult = await client.query(
-          "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, telefone, data_admissao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+          "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
           [
             nome,
             email,
@@ -128,6 +134,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             cargo || null,
             setor || null,
             unidade || null,
+            unidade_id || null,
             telefone || null,
             role === "licenciado" ? null : data_admissao,
           ]
@@ -217,7 +224,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         const finalBirthDate = role !== "licenciado" ? birth_date : null;
 
         await client.query(
-          "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, telefone = $8, data_admissao = $9 WHERE id = $10 RETURNING *",
+          "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, unidade_id = $8, telefone = $9, data_admissao = $10 WHERE id = $11 RETURNING *",
           [
             nome,
             email,
@@ -226,6 +233,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             cargo,
             setor,
             unidade || null,
+            req.body.unidade_id || null,
             telefone,
             role === "licenciado" ? null : data_admissao,
             id,
@@ -529,11 +537,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.get("/internal", isLoggedIn, async (req, res) => {
     try {
       const internalUsersSql = `
-      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, telefone, birth_date, data_admissao 
+      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, unidade_id, telefone, birth_date, data_admissao 
       FROM users 
       WHERE role IN ('admin', 'rh', 'comercial', 'operacional') 
       ORDER BY nome ASC
     `;
+      // include unidade_id for clients that use id-based unit linking
 
       const result = await pool.query(internalUsersSql);
       res.json(result.rows);

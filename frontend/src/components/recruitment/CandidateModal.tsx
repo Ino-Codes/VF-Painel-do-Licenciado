@@ -19,6 +19,8 @@ interface Candidate {
   status: string;
   stage_id: number;
   user_id: number;
+  unit_id?: number;
+  unit_name?: string;
   stage_name?: string;
   responsible_name?: string;
   tasks?: Task[];
@@ -46,7 +48,7 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
 
   const handleTaskToggle = async (taskId: number, currentStatus: boolean) => {
     try {
-      await api.put(`/recruitment/tasks/${taskId}`, {
+      await api.put(`/api/recruitment/tasks/${taskId}`, {
         is_completed: !currentStatus,
       });
 
@@ -67,7 +69,7 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
 
     try {
       const response = await api.post(
-        `/recruitment/candidates/${candidate.id}/tasks`,
+        `/api/recruitment/candidates/${candidate.id}/tasks`,
         newTask
       );
 
@@ -97,19 +99,28 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
         <div className="candidate-info-section">
           <div className="candidate-info-header">
             <div className="candidate-info-main">
+              <span
+                className={`candidate-status ${candidate.status.toLowerCase()}`}
+              >
+                {candidate.status}
+              </span>
               <h2>{candidate.name}</h2>
               <div className="candidate-info-details">
-                <p>{candidate.role_applied_for}</p>
                 <p>
-                  {candidate.email} • {candidate.phone}
+                  {candidate.role_applied_for} · {candidate.stage_name}
+                </p>
+                {candidate.unit_name && (
+                  <p className="candidate-unit">
+                    Unidade: {candidate.unit_name}
+                  </p>
+                )}
+                <p>
+                  {candidate.email}
+                  <br />
+                  {candidate.phone}
                 </p>
               </div>
             </div>
-            <span
-              className={`candidate-status ${candidate.status.toLowerCase()}`}
-            >
-              {candidate.status}
-            </span>
           </div>
         </div>
 
