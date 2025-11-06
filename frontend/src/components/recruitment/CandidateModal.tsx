@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useApi } from "../../hooks/useApi.ts";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import { IoCloseSharp, IoTrashBinOutline } from "react-icons/io5";
 
 interface Task {
@@ -40,6 +41,7 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
   onUpdate,
 }) => {
   const [tasks, setTasks] = useState(candidate.tasks || []);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [newTask, setNewTask] = useState({
     task_name: "",
     responsible_user_id: candidate.user_id || "",
@@ -48,24 +50,21 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
 
   const api = useApi();
 
-  const handleDeleteClick = async (candidateId: number) => {
-    if (
-      !confirm(
-        "Tem certeza que deseja excluir este candidato? Esta ação não pode ser desfeita."
-      )
-    ) {
-      return;
-    }
-
+  const handleDeleteConfirm = async () => {
     try {
-      await api.delete(`/api/recruitment/candidates/${candidateId}`);
+      await api.delete(`/api/recruitment/candidates/${candidate.id}`);
       toast.success("Candidato excluído com sucesso!");
+      setIsDeleteModalOpen(false);
       onClose();
       onUpdate();
     } catch (error) {
       console.error("Erro ao excluir candidato:", error);
       toast.error("Erro ao excluir o candidato. Tente novamente.");
     }
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteModalOpen(true);
   };
 
   const handleTaskToggle = async (taskId: number, currentStatus: boolean) => {
@@ -117,10 +116,7 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
         <button className="modal-close-button" onClick={onClose}>
           <IoCloseSharp />
         </button>
-        <button
-          className="modal-delete-button"
-          onClick={() => handleDeleteClick(candidate.id)}
-        >
+        <button className="modal-delete-button" onClick={handleDeleteClick}>
           <IoTrashBinOutline />
         </button>
 
@@ -217,6 +213,13 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
           </form>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title={`Excluir Candidato ${candidate.name}`}
+        message="Tem certeza que deseja excluir este candidato? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 };
