@@ -1,4 +1,4 @@
-// require("dotenv").config();
+require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -492,6 +492,10 @@ const createTables = async () => {
       "ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unit_id INTEGER;"
     );
     await pool.query(candidatesTable);
+    // ensure candidates has is_approved_for_kanban column
+    await pool.query(
+      "ALTER TABLE candidates ADD COLUMN IF NOT EXISTS is_approved_for_kanban BOOLEAN DEFAULT FALSE;"
+    );
     await pool.query(candidateTasksTable);
     await pool.query(checklistTemplatesTable);
     await pool.query(checklistTemplateItemsTable);

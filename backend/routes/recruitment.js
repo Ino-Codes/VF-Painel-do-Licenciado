@@ -186,6 +186,7 @@ module.exports = function (pool, logActivity) {
         status,
         page = 1,
         limit = 10,
+        only_approved,
       } = req.query;
 
       try {
@@ -217,6 +218,17 @@ module.exports = function (pool, logActivity) {
         if (status) {
           params.push(status);
           whereClauses.push(`c.status = $${paramCount}`);
+          paramCount++;
+        }
+
+        if (
+          only_approved &&
+          (only_approved === "true" ||
+            only_approved === "1" ||
+            only_approved === true)
+        ) {
+          params.push(true);
+          whereClauses.push(`c.is_approved_for_kanban = $${paramCount}`);
           paramCount++;
         }
 
@@ -820,6 +832,74 @@ module.exports = function (pool, logActivity) {
       } catch (err) {
         console.error("Erro ao deletar item:", err);
         res.status(500).json({ error: "Erro ao deletar item" });
+      }
+    }
+  );
+
+  // --- Recruitment interviews (calendar) CRUD ---
+
+  // List interviews (optionally filter by date range and candidate/interviewer/stage)
+  router.get(
+    "/interviews",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      try {
+        const { start, end, candidate_id, interviewer_id, stage_id } =
+          req.query;
+
+        let whereClauses = [];
+        const params = [];
+        let idx = 1;
+
+        if (start) {
+          whereClauses.push(`start_at >= $${idx}`);
+          params.push(start);
+          idx++;
+        }
+
+        if (end) {
+          whereClauses.push(`start_at <= $${idx}`);
+          params.push(end);
+          idx++;
+        }
+
+        if (candidate_id) {
+          whereClauses.push(`candidate_id = $${idx}`);
+          params.push(candidate_id);
+          idx++;
+        }
+
+        if (interviewer_id) {
+          whereClauses.push(`interviewer_id = $${idx}`);
+          params.push(interviewer_id);
+          idx++;
+        }
+
+        if (stage_id) {
+          whereClauses.push(`stage_id = $${idx}`);
+          params.push(stage_id);
+          idx++;
+        }
+
+        const where =
+          whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+        const query = `
+          SELECT ri.*, c.name as candidate_name, u.nome as interviewer_name, rs.name as stage_name
+          FROM recruitment_interviews ri
+          LEFT JOIN candidates c ON ri.candidate_id = c.id
+          LEFT JOIN users u ON ri.interviewer_id = u.id
+          LEFT JOIN recruitment_stages rs ON ri.stage_id = rs.id
+          ${where}
+          ORDER BY ri.start_at ASC
+        `;
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+      } catch (err) {
+        console.error("Erro ao buscar entrevistas:", err);
+        res.status(500).json({ error: "Erro ao buscar entrevistas" });
       }
     }
   );

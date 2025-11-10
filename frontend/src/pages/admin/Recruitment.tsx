@@ -6,7 +6,6 @@ import KanbanBoard from "../../components/recruitment/KanbanBoard.tsx";
 import CandidateModal from "../../components/recruitment/CandidateModal.tsx";
 import RecruitmentHeader from "../../components/recruitment/RecruitmentHeader.tsx";
 import RecruitmentFilters from "../../components/recruitment/RecruitmentFilters.tsx";
-import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
@@ -44,6 +43,7 @@ interface Filter {
   stage_id: string;
   role_applied_for: string;
   status: string;
+  only_approved?: string;
 }
 
 const Recruitment: React.FC = () => {
@@ -58,6 +58,7 @@ const Recruitment: React.FC = () => {
     stage_id: "",
     role_applied_for: "",
     status: "",
+    only_approved: "true",
   });
 
   const api = useApi();
