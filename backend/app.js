@@ -1,4 +1,4 @@
-// require("dotenv").config();
+require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -416,7 +416,8 @@ const createTables = async () => {
       status TEXT NOT NULL DEFAULT 'Ativo',
     stage_id INTEGER NOT NULL REFERENCES recruitment_stages(id),
     unit_id INTEGER REFERENCES units(id) ON DELETE SET NULL,
-      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL, 
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      is_approved BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
   );`;
   const candidateTasksTable = `
@@ -487,15 +488,37 @@ const createTables = async () => {
       "INSERT INTO units (name) SELECT 'Filial SP' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Filial SP')"
     );
     await pool.query(recruitmentStagesTable);
+    // Seed an "Entrevista" stage used for scheduled interviews (pre-kanban)
+    await pool.query(
+      "INSERT INTO recruitment_stages (name, stage_order, pipeline_type) SELECT 'Entrevista', 0, 'Recrutamento' WHERE NOT EXISTS (SELECT 1 FROM recruitment_stages WHERE name ILIKE 'entrevista')"
+    );
+
+    const recruitmentInterviewsTable = `
+      CREATE TABLE IF NOT EXISTS recruitment_interviews (
+        id SERIAL PRIMARY KEY,
+        candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+        interviewer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        stage_id INTEGER REFERENCES recruitment_stages(id) ON DELETE SET NULL,
+        title TEXT,
+        description TEXT,
+        start_at TIMESTAMPTZ NOT NULL,
+        end_at TIMESTAMPTZ,
+        is_virtual BOOLEAN DEFAULT FALSE,
+        meeting_link TEXT,
+        location TEXT,
+        status TEXT DEFAULT 'scheduled',
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    await pool.query(recruitmentInterviewsTable);
     // Ensure candidates table has unit_id column for new linkage
     await pool.query(
       "ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unit_id INTEGER;"
     );
     await pool.query(candidatesTable);
-    // ensure candidates has is_approved_for_kanban column
-    await pool.query(
-      "ALTER TABLE candidates ADD COLUMN IF NOT EXISTS is_approved_for_kanban BOOLEAN DEFAULT FALSE;"
-    );
     await pool.query(candidateTasksTable);
     await pool.query(checklistTemplatesTable);
     await pool.query(checklistTemplateItemsTable);

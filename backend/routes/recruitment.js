@@ -186,7 +186,6 @@ module.exports = function (pool, logActivity) {
         status,
         page = 1,
         limit = 10,
-        only_approved,
       } = req.query;
 
       try {
@@ -218,17 +217,6 @@ module.exports = function (pool, logActivity) {
         if (status) {
           params.push(status);
           whereClauses.push(`c.status = $${paramCount}`);
-          paramCount++;
-        }
-
-        if (
-          only_approved &&
-          (only_approved === "true" ||
-            only_approved === "1" ||
-            only_approved === true)
-        ) {
-          params.push(true);
-          whereClauses.push(`c.is_approved_for_kanban = $${paramCount}`);
           paramCount++;
         }
 
@@ -937,9 +925,12 @@ module.exports = function (pool, logActivity) {
     isLoggedIn,
     checkRole(["admin", "rh"]),
     async (req, res) => {
-      // Allow creating a candidate inline when scheduling an interview.
-      let {
+      // Accept either candidate_id or candidate details to create a candidate on the fly
+      const {
         candidate_id,
+        candidate_name,
+        candidate_email,
+        candidate_phone,
         interviewer_id,
         stage_id,
         title,
@@ -950,41 +941,65 @@ module.exports = function (pool, logActivity) {
         meeting_link,
         location,
         status,
+        unit_id,
+        role_applied_for,
       } = req.body;
 
+      const client = await pool.connect();
       try {
-        // If caller provided a candidate object (not candidate_id), create the candidate first
-        if (!candidate_id && req.body.candidate) {
-          const { name, email, phone, role_applied_for, unit_id } =
-            req.body.candidate;
-          // pick a default stage if none provided
-          const stageRes = await pool.query(
-            "SELECT id FROM recruitment_stages ORDER BY stage_order ASC LIMIT 1"
-          );
-          const defaultStage = stageRes.rowCount ? stageRes.rows[0].id : null;
+        await client.query("BEGIN");
 
-          const candRes = await pool.query(
-            `INSERT INTO candidates (name, email, phone, role_applied_for, stage_id, unit_id, created_at)
-             VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING *`,
+        let finalCandidateId = candidate_id || null;
+
+        if (!finalCandidateId) {
+          // Need to create candidate. Find interview stage if exists
+          let stageRes = await client.query(
+            "SELECT id FROM recruitment_stages WHERE name ILIKE 'entrevista' LIMIT 1"
+          );
+
+          let interviewStageId = null;
+          if (stageRes.rowCount > 0) interviewStageId = stageRes.rows[0].id;
+          else {
+            // fallback to first stage
+            const firstStage = await client.query(
+              "SELECT id FROM recruitment_stages ORDER BY stage_order LIMIT 1"
+            );
+            interviewStageId =
+              firstStage.rowCount > 0 ? firstStage.rows[0].id : null;
+          }
+
+          const insertCandidateRes = await client.query(
+            `INSERT INTO candidates (name, email, phone, role_applied_for, stage_id, unit_id, user_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
             [
-              name,
-              email || null,
-              phone || null,
+              candidate_name || "(Sem nome)",
+              candidate_email || null,
+              candidate_phone || null,
               role_applied_for || null,
-              stage_id || defaultStage,
+              interviewStageId,
               unit_id || null,
+              null,
             ]
           );
-          candidate_id = candRes.rows[0].id;
+
+          finalCandidateId = insertCandidateRes.rows[0].id;
+
+          logActivity(
+            req.user.id,
+            req.user.email,
+            "Candidato Criado via Entrevista",
+            `Candidato ID ${finalCandidateId} criado ao agendar entrevista`,
+            req.ipAddress
+          );
         }
 
-        const result = await pool.query(
+        const insertInterviewRes = await client.query(
           `INSERT INTO recruitment_interviews
             (candidate_id, interviewer_id, stage_id, title, description, start_at, end_at, is_virtual, meeting_link, location, status, created_by)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
            RETURNING *`,
           [
-            candidate_id || null,
+            finalCandidateId,
             interviewer_id || null,
             stage_id || null,
             title || null,
@@ -999,23 +1014,28 @@ module.exports = function (pool, logActivity) {
           ]
         );
 
+        await client.query("COMMIT");
+
         logActivity(
           req.user.id,
           req.user.email,
           "Entrevista Agendada",
-          `Entrevista agendada para candidato ID ${candidate_id} em ${start_at}`,
+          `Entrevista agendada para candidato ID ${finalCandidateId} em ${start_at}`,
           req.ipAddress
         );
 
-        res.status(201).json(result.rows[0]);
+        res.status(201).json(insertInterviewRes.rows[0]);
       } catch (err) {
+        await client.query("ROLLBACK");
         console.error("Erro ao criar entrevista:", err);
         res.status(500).json({ error: "Erro ao criar entrevista" });
+      } finally {
+        client.release();
       }
     }
   );
 
-  // Approve candidate from interview -> mark candidate as approved for kanban
+  // Approve candidate from interview to move into Kanban
   router.post(
     "/interviews/:id/approve",
     isLoggedIn,
@@ -1025,27 +1045,36 @@ module.exports = function (pool, logActivity) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
+
         const interviewRes = await client.query(
           "SELECT candidate_id FROM recruitment_interviews WHERE id = $1",
           [id]
         );
         if (interviewRes.rowCount === 0) {
           await client.query("ROLLBACK");
+          client.release();
           return res.status(404).json({ error: "Entrevista não encontrada" });
         }
 
         const candidateId = interviewRes.rows[0].candidate_id;
-        if (!candidateId) {
-          await client.query("ROLLBACK");
-          return res
-            .status(400)
-            .json({ error: "Entrevista não vinculada a um candidato" });
-        }
+
+        // Choose the first stage that is not the 'Entrevista' stage
+        const targetStageRes = await client.query(
+          "SELECT id FROM recruitment_stages WHERE name NOT ILIKE '%entrevista%' ORDER BY stage_order LIMIT 1"
+        );
+
+        const targetStageId =
+          targetStageRes.rowCount > 0 ? targetStageRes.rows[0].id : null;
 
         const updateRes = await client.query(
-          "UPDATE candidates SET is_approved_for_kanban = true WHERE id = $1 RETURNING *",
-          [candidateId]
+          "UPDATE candidates SET is_approved = true, stage_id = $1 WHERE id = $2 RETURNING *",
+          [targetStageId, candidateId]
         );
+
+        if (updateRes.rowCount === 0) {
+          await client.query("ROLLBACK");
+          return res.status(404).json({ error: "Candidato não encontrado" });
+        }
 
         await client.query("COMMIT");
 
@@ -1053,11 +1082,11 @@ module.exports = function (pool, logActivity) {
           req.user.id,
           req.user.email,
           "Candidato Aprovado",
-          `Candidato ID ${candidateId} aprovado para o Kanban a partir da entrevista ID ${id}`,
+          `Candidato ID ${candidateId} aprovado para o Kanban via entrevista ID ${id}`,
           req.ipAddress
         );
 
-        res.json({ success: true, candidate: updateRes.rows[0] });
+        res.json(updateRes.rows[0]);
       } catch (err) {
         await client.query("ROLLBACK");
         console.error("Erro ao aprovar candidato:", err);

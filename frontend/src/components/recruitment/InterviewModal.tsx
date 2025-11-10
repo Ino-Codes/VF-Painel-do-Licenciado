@@ -24,7 +24,6 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
   const [stages, setStages] = useState<any[]>([]);
 
   const [candidateId, setCandidateId] = useState<number | null>(null);
-  const [createNewCandidate, setCreateNewCandidate] = useState(false);
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [candidatePhone, setCandidatePhone] = useState("");
@@ -98,11 +97,6 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
       setEventDate(startDateObj.toISOString().split("T")[0]);
       setStartTime(startDateObj.getHours().toString().padStart(2, "0") + ":00");
       setEndTime(endDateObj.getHours().toString().padStart(2, "0") + ":30");
-      // reset candidate creation fields
-      setCreateNewCandidate(false);
-      setCandidateName("");
-      setCandidateEmail("");
-      setCandidatePhone("");
     }
   }, [interviewToEdit, selectedDate]);
 
@@ -110,12 +104,17 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!createNewCandidate && !candidateId) || !startTime || !eventDate) {
-      toast.error("Preencha candidato e data/hora de início.");
+
+    if ((!candidateId && !candidateName) || !startTime || !eventDate) {
+      toast.error("Preencha candidato (ou crie novo) e data/hora de início.");
       return;
     }
 
     const payload: any = {
+      candidate_id: candidateId,
+      candidate_name: candidateId ? undefined : candidateName,
+      candidate_email: candidateId ? undefined : candidateEmail,
+      candidate_phone: candidateId ? undefined : candidatePhone,
       interviewer_id: interviewerId,
       stage_id: stageId,
       title,
@@ -129,16 +128,6 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
       location,
       status,
     };
-
-    if (createNewCandidate) {
-      payload.candidate = {
-        name: candidateName,
-        email: candidateEmail || null,
-        phone: candidatePhone || null,
-      };
-    } else {
-      payload.candidate_id = candidateId;
-    }
 
     try {
       if (interviewToEdit) {
@@ -173,7 +162,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
   };
 
   const handleApprove = async () => {
-    if (!interviewToEdit || !interviewToEdit.id) return;
+    if (!interviewToEdit) return;
     try {
       await api.post(
         `/api/recruitment/interviews/${interviewToEdit.id}/approve`
@@ -192,17 +181,25 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
         <h2>{interviewToEdit ? "Editar Entrevista" : "Agendar Entrevista"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
-            <label>
-              <input
-                type="checkbox"
-                checked={createNewCandidate}
-                onChange={(e) => setCreateNewCandidate(e.target.checked)}
-              />{" "}
-              Criar novo candidato ao agendar
-            </label>
+            <label>Candidato (selecione ou preencha dados para criar)</label>
+            <select
+              value={candidateId ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCandidateId(val ? Number(val) : null);
+              }}
+              className="form-input"
+            >
+              <option value="">(Criar novo candidato)</option>
+              {candidates.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name || c.nome || c.email}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {createNewCandidate ? (
+          {!candidateId && (
             <>
               <div className="form-row">
                 <input
@@ -211,13 +208,13 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
                   value={candidateName}
                   onChange={(e) => setCandidateName(e.target.value)}
                   className="form-input"
-                  required
+                  required={!candidateId}
                 />
               </div>
               <div className="form-row">
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder="Email do candidato (opcional)"
                   value={candidateEmail}
                   onChange={(e) => setCandidateEmail(e.target.value)}
                   className="form-input"
@@ -225,31 +222,14 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
               </div>
               <div className="form-row">
                 <input
-                  type="text"
-                  placeholder="Telefone"
+                  type="tel"
+                  placeholder="Telefone do candidato (opcional)"
                   value={candidatePhone}
                   onChange={(e) => setCandidatePhone(e.target.value)}
                   className="form-input"
                 />
               </div>
             </>
-          ) : (
-            <div className="form-row">
-              <label>Candidato</label>
-              <select
-                value={candidateId ?? ""}
-                onChange={(e) => setCandidateId(Number(e.target.value) || null)}
-                className="form-input"
-                required
-              >
-                <option value="">Selecione o candidato...</option>
-                {candidates.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name || c.nome || c.email}
-                  </option>
-                ))}
-              </select>
-            </div>
           )}
 
           <div className="form-row">
@@ -358,28 +338,23 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
 
           <div className="modal-actions">
             {interviewToEdit && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="form-button delete"
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Excluindo..." : "Excluir"}
-              </button>
-            )}
-            {interviewToEdit && interviewToEdit.candidate_id && (
-              <button
-                type="button"
-                onClick={handleApprove}
-                className="form-button"
-                style={{
-                  marginLeft: 8,
-                  backgroundColor: "#04a146",
-                  color: "#fff",
-                }}
-              >
-                Aprovar para o Kanban
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="form-button delete"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Excluindo..." : "Excluir"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApprove}
+                  className="form-button"
+                >
+                  Aprovar para Kanban
+                </button>
+              </>
             )}
             <button
               type="button"

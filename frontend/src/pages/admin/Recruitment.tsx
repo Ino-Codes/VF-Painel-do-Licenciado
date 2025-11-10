@@ -43,7 +43,6 @@ interface Filter {
   stage_id: string;
   role_applied_for: string;
   status: string;
-  only_approved?: string;
 }
 
 const Recruitment: React.FC = () => {
@@ -58,7 +57,6 @@ const Recruitment: React.FC = () => {
     stage_id: "",
     role_applied_for: "",
     status: "",
-    only_approved: "true",
   });
 
   const api = useApi();
