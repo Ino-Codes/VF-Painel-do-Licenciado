@@ -7,6 +7,7 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import { FaArrowLeftLong } from "react-icons/fa6";
+import { FaCheckCircle } from "react-icons/fa";
 
 interface Template {
   id: number;
@@ -159,9 +160,9 @@ const ChecklistTemplatesAdmin: React.FC = () => {
             </thead>
             <tbody>
               {templates.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.id}</td>
-                  <td>
+                <tr key={t.id} className={t.is_default ? "correct-option" : ""}>
+                  <td data-label="ID">{t.id}</td>
+                  <td data-label="Nome">
                     {editingTemplate && editingTemplate.id === t.id ? (
                       <input
                         className="form-input"
@@ -177,9 +178,19 @@ const ChecklistTemplatesAdmin: React.FC = () => {
                       t.name
                     )}
                   </td>
-                  <td>{t.is_default ? "Sim" : "Não"}</td>
-                  <td>{new Date(t.created_at).toLocaleString()}</td>
-                  <td style={{ display: "flex", gap: 8 }}>
+                  <td data-label="Padrão" className="template-default-cell">
+                    {t.is_default ? (
+                      <span className="default-badge">
+                        <FaCheckCircle /> Padrão
+                      </span>
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
+                  <td data-label="Criado em">
+                    {new Date(t.created_at).toLocaleString()}
+                  </td>
+                  <td data-label="Ações" className="actions-cell">
                     {editingTemplate && editingTemplate.id === t.id ? (
                       <>
                         <button className="form-button" onClick={saveEdit}>
@@ -195,22 +206,16 @@ const ChecklistTemplatesAdmin: React.FC = () => {
                     ) : (
                       <>
                         <button
-                          className="form-button"
-                          onClick={() => handleEdit(t)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          className="list-button"
-                          onClick={() => setItemsModalTemplateId(t.id)}
-                        >
-                          Itens
-                        </button>
-                        <button
-                          className="form-button"
+                          className="save-button"
                           onClick={() => handleSetDefault(t)}
                         >
                           Definir Padrão
+                        </button>
+                        <button
+                          className="edit-button"
+                          onClick={() => setItemsModalTemplateId(t.id)}
+                        >
+                          Edição
                         </button>
                         <button
                           className="delete-button"
@@ -229,7 +234,10 @@ const ChecklistTemplatesAdmin: React.FC = () => {
 
         {itemsModalTemplateId && (
           <TemplateItemsModal
-            templateId={itemsModalTemplateId}
+            templateId={itemsModalTemplateId!}
+            templateName={
+              templates.find((x) => x.id === itemsModalTemplateId)?.name
+            }
             onClose={() => setItemsModalTemplateId(null)}
             onSaved={() => load()}
           />

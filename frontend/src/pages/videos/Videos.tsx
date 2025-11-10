@@ -222,7 +222,7 @@ const Videos: React.FC = () => {
                         {user.role === "admin" && (
                           <div className="video-actions">
                             <button
-                              className="list-button"
+                              className="edit-button"
                               onClick={() => openModalForEdit(video)}
                             >
                               Editar

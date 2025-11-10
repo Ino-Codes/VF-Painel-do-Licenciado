@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useApi } from "../../hooks/useApi.ts";
 import toast from "react-hot-toast";
 import { Stage } from "../../types/recruitment.ts";
+import { FiTrash2, FiArrowDown, FiArrowUp } from "react-icons/fi";
 
 interface StagesModalProps {
   onClose: () => void;
@@ -51,7 +52,22 @@ const StagesModal: React.FC<StagesModalProps> = ({ onClose, onSave }) => {
 
   const handleDeleteStage = async (stageId: number) => {
     try {
-      await api.delete(`/api/recruitment/stages/${stageId}`);
+      await api.delete(`/api/recruitment/stage/${stageId}`);
+
+      // Reordena as etapas restantes
+      const updatedStages = stages
+        .filter((s) => s.id !== stageId)
+        .map((stage, index) => ({
+          id: stage.id,
+          stage_order: index + 1,
+        }));
+
+      if (updatedStages.length > 0) {
+        await api.put("/api/recruitment/stages/reorder", {
+          stages: updatedStages,
+        });
+      }
+
       toast.success("Etapa removida com sucesso!");
       loadStages();
       onSave();
@@ -121,20 +137,20 @@ const StagesModal: React.FC<StagesModalProps> = ({ onClose, onSave }) => {
                   disabled={index === 0}
                   className="stage-icon-button"
                 >
-                  ↑
+                  <FiArrowUp />
                 </button>
                 <button
                   onClick={() => handleMoveStage(stage.id, "down")}
                   disabled={index === stages.length - 1}
                   className="stage-icon-button"
                 >
-                  ↓
+                  <FiArrowDown />
                 </button>
                 <button
                   onClick={() => handleDeleteStage(stage.id)}
                   className="stage-icon-button delete"
                 >
-                  ×
+                  <FiTrash2 />
                 </button>
               </div>
             </div>

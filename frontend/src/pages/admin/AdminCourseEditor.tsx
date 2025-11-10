@@ -24,6 +24,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { FaArrowLeftLong } from "react-icons/fa6";
+import { FiTrash2 } from "react-icons/fi";
 
 const AdminCourseEditor: React.FC = () => {
   const { user, loading } = useAuth();
@@ -386,7 +387,7 @@ const AdminCourseEditor: React.FC = () => {
                         <span>{option.option_text}</span>
                         <div className="option-actions">
                           <button
-                            className="list-button"
+                            className="save-button"
                             onClick={() => handleSetCorrectOption(option.id)}
                             disabled={option.is_correct}
                           >
@@ -395,10 +396,10 @@ const AdminCourseEditor: React.FC = () => {
                               : "Marcar como Correta"}
                           </button>
                           <button
-                            className="delete-button"
+                            className="form-icon-delete inverted"
                             onClick={() => handleDeleteOption(option.id)}
                           >
-                            Excluir
+                            <FiTrash2 />
                           </button>
                         </div>
                       </li>

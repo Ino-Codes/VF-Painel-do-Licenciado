@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import BulkUserImport from "./BulkUserImport.tsx";
 import { useUnits } from "../../hooks/useUnits.ts";
+import { FiTrash2, FiEdit } from "react-icons/fi";
 
 interface User {
   id: number;
@@ -133,17 +134,18 @@ const TabContent: React.FC<TabContentProps> = ({
                 <td data-label="Ações">
                   <div className="user-actions">
                     <button
-                      className="list-button"
+                      className="form-icon-edit"
                       onClick={() => setEditingUser(u)}
                     >
-                      Editar
+                      <FiEdit />
                     </button>
+
                     <button
-                      className="delete-button"
+                      className="form-icon-delete"
                       onClick={() => handleDeleteClick(u.id)}
                       disabled={currentUser.id === u.id}
                     >
-                      Excluir
+                      <FiTrash2 />
                     </button>
                   </div>
                 </td>

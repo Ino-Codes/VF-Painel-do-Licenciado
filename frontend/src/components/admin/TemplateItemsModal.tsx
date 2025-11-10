@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useApi } from "../../hooks/useApi.ts";
 import toast from "react-hot-toast";
 import { IoCloseSharp } from "react-icons/io5";
+import { FiTrash2, FiSave, FiPlus } from "react-icons/fi";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 
 interface Item {
@@ -12,12 +13,14 @@ interface Item {
 
 interface Props {
   templateId: number;
+  templateName?: string;
   onClose: () => void;
   onSaved?: () => void;
 }
 
 const TemplateItemsModal: React.FC<Props> = ({
   templateId,
+  templateName,
   onClose,
   onSaved,
 }) => {
@@ -26,6 +29,8 @@ const TemplateItemsModal: React.FC<Props> = ({
   const [newName, setNewName] = useState("");
   const [newDueDays, setNewDueDays] = useState<string>("");
   const [deleteItem, setDeleteItem] = useState<Item | null>(null);
+  const [nameEditing, setNameEditing] = useState<string>(templateName || "");
+  const [isSavingName, setIsSavingName] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -42,6 +47,32 @@ const TemplateItemsModal: React.FC<Props> = ({
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId]);
+
+  // sync nameEditing when templateName prop changes
+  React.useEffect(() => {
+    setNameEditing(templateName || "");
+  }, [templateName]);
+
+  const saveTemplateName = async () => {
+    if (!nameEditing.trim()) return;
+    setIsSavingName(true);
+    try {
+      const res = await api.put(
+        `/api/recruitment/checklist-templates/${templateId}`,
+        {
+          name: nameEditing,
+          is_default: false,
+        }
+      );
+      toast.success("Nome do template atualizado");
+      onSaved && onSaved();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao salvar nome do template");
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   const handleAdd = async () => {
     if (!newName.trim()) return;
@@ -114,84 +145,61 @@ const TemplateItemsModal: React.FC<Props> = ({
         <button className="modal-close-button" onClick={onClose}>
           <IoCloseSharp />
         </button>
-        <h3>Itens do Template</h3>
+        <div className="admin-form">
+          <h3>Edição do Template</h3>
 
-        <div style={{ maxHeight: 300, overflowY: "auto" }}>
-          {items.map((it) => (
-            <div
-              key={it.id}
-              style={{
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                marginBottom: 8,
-              }}
+          <div className="form-row">
+            <input
+              className="form-input"
+              value={nameEditing}
+              onChange={(e) => setNameEditing(e.target.value)}
+              placeholder="Nome do template"
+              style={{ flex: 1 }}
+            />
+            <button
+              className="form-button"
+              onClick={saveTemplateName}
+              disabled={isSavingName}
             >
-              <input
-                className="form-input"
-                value={it.task_name}
-                onChange={(e) =>
-                  setItems((p) =>
-                    p.map((x) =>
-                      x.id === it.id ? { ...x, task_name: e.target.value } : x
-                    )
-                  )
-                }
-                style={{ flex: 1 }}
-              />
-              <input
-                className="form-input"
-                value={it.due_days == null ? "" : String(it.due_days)}
-                onChange={(e) =>
-                  setItems((p) =>
-                    p.map((x) =>
-                      x.id === it.id
-                        ? {
-                            ...x,
-                            due_days: e.target.value
-                              ? parseInt(e.target.value, 10)
-                              : null,
-                          }
-                        : x
-                    )
-                  )
-                }
-                placeholder="Prazo (dias)"
-                style={{ width: 120 }}
-              />
+              Salvar
+            </button>
+          </div>
+
+          <div className="form-row-divisor"></div>
+
+          {items.map((it) => (
+            <div className="form-row">
+              <span className="form-span">{it.task_name}</span>
+              <span className="form-span">{it.due_days}</span>
+
               <button
-                className="form-button"
-                onClick={() => handleUpdate(it.id, it.task_name, it.due_days)}
-              >
-                Salvar
-              </button>
-              <button
-                className="delete-button"
+                className="form-icon-delete"
                 onClick={() => handleDelete(it)}
               >
-                Excluir
+                <FiTrash2 />
               </button>
             </div>
           ))}
-        </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <input
-            className="form-input"
-            placeholder="Nome do item"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-          />
-          <input
-            className="form-input"
-            placeholder="Prazo (dias)"
-            value={newDueDays}
-            onChange={(e) => setNewDueDays(e.target.value)}
-            style={{ width: 120 }}
-          />
-          <button className="form-button" onClick={handleAdd}>
-            Adicionar
-          </button>
+          <div className="form-row">
+            <input
+              className="form-input"
+              placeholder="Nome da tarefa"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <input
+              className="form-input"
+              placeholder="Prazo (dias)"
+              value={newDueDays}
+              onChange={(e) => setNewDueDays(e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <button className="form-icon-save" onClick={handleAdd}>
+              <FiPlus />
+            </button>
+          </div>
         </div>
       </div>
 

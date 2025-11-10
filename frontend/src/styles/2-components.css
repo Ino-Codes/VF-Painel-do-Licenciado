@@ -55,6 +55,62 @@ input[type="checkbox"]:checked {
   opacity: 0.85;
 }
 
+.form-icon-delete {
+  border: none;
+  padding: 10px 12px;
+  color: var(--text-white);
+  background-color: var(--action-danger);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.form-icon-delete:hover {
+  opacity: 0.85;
+}
+
+.form-icon-delete.inverted {
+  color: var(--action-danger);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--action-danger);
+}
+
+.form-icon-delete.inverted:hover {
+  color: var(--text-white);
+  background-color: var(--action-danger);
+}
+
+.form-icon-save {
+  border: none;
+  padding: 10px 12px;
+  color: var(--text-white);
+  background-color: var(--action-primary);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.form-icon-save:hover {
+  opacity: 0.85;
+}
+
+.form-icon-edit {
+  border: none;
+  padding: 10px 12px;
+  color: var(--text-white);
+  background-color: var(--action-edit);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.form-icon-edit:hover {
+  opacity: 0.85;
+}
+
 .list-button {
   background-color: initial;
   border: 1px solid var(--text-primary);
@@ -70,6 +126,42 @@ input[type="checkbox"]:checked {
   opacity: 0.85;
   background-color: var(--action-secondary);
   border: 1px solid var(--action-secondary);
+  color: var(--text-white);
+}
+
+.save-button {
+  background-color: initial;
+  border: 1px solid var(--action-primary);
+  border-radius: 6px;
+  color: var(--action-primary);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 5px 10px;
+  transition: all 0.2s;
+}
+
+.save-button:hover {
+  opacity: 0.85;
+  background-color: var(--action-primary);
+  border: 1px solid var(--action-primary);
+  color: var(--text-white);
+}
+
+.edit-button {
+  background-color: initial;
+  border: 1px solid var(--action-edit);
+  border-radius: 6px;
+  color: var(--action-edit);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 5px 10px;
+  transition: all 0.2s;
+}
+
+.edit-button:hover {
+  opacity: 0.85;
+  background-color: var(--action-edit);
+  border: 1px solid var(--action-edit);
   color: var(--text-white);
 }
 
@@ -278,9 +370,14 @@ input[type="checkbox"]:checked {
   height: 40px;
   transition: transform 0.2s ease;
 }
+
 .stage-icon-button:hover {
   background-color: var(--bg-secondary);
   transform: scale(1.1);
+}
+
+.stage-icon-button.delete:hover {
+  color: var(--action-danger);
 }
 
 .search-bar {
@@ -491,4 +588,100 @@ input[type="radio"]:checked {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* --- TABLE STYLES (Admin lists) --- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.table thead th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.table tbody td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* row highlight for default template (reuse quiz correct style) */
+.correct-option {
+  background: linear-gradient(90deg, var(--bg-result-green), transparent);
+}
+
+.template-default-cell .default-badge {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--action-primary);
+  color: var(--text-white);
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.template-default-cell .muted {
+  color: var(--text-secondary);
+}
+
+.table .actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* smaller buttons in table rows */
+.table .form-button,
+.table .list-button,
+.table .delete-button {
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+@media (max-width: 900px) {
+  .table thead {
+    display: none;
+  }
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+  .table tr {
+    margin-bottom: 12px;
+  }
+  .table td {
+    padding-left: 50%;
+    position: relative;
+  }
+  .table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 16px;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
 }

@@ -63,6 +63,82 @@ module.exports = function (pool, logActivity) {
     }
   );
 
+  // Rota para deletar uma etapa
+  router.delete(
+    "/stage/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const client = await pool.connect();
+
+      try {
+        await client.query("BEGIN");
+
+        // Verifica se existem candidatos nessa etapa
+        const candidatesCheck = await client.query(
+          "SELECT COUNT(*) FROM candidates WHERE stage_id = $1",
+          [id]
+        );
+
+        if (parseInt(candidatesCheck.rows[0].count) > 0) {
+          throw new Error(
+            "Não é possível excluir uma etapa que contém candidatos"
+          );
+        }
+
+        // Busca informações da etapa antes de excluir
+        const stageInfo = await client.query(
+          "SELECT name, stage_order FROM recruitment_stages WHERE id = $1",
+          [id]
+        );
+
+        if (stageInfo.rowCount === 0) {
+          throw new Error("Etapa não encontrada");
+        }
+
+        // Exclui a etapa
+        await client.query("DELETE FROM recruitment_stages WHERE id = $1", [
+          id,
+        ]);
+
+        // Reordena as etapas restantes
+        await client.query(
+          "UPDATE recruitment_stages SET stage_order = stage_order - 1 WHERE stage_order > $1",
+          [stageInfo.rows[0].stage_order]
+        );
+
+        await client.query("COMMIT");
+
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Etapa Excluída",
+          `Etapa "${stageInfo.rows[0].name}" foi excluída do pipeline`,
+          req.ipAddress
+        );
+
+        res.json({ success: true, message: "Etapa excluída com sucesso" });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Erro ao excluir etapa:", err);
+
+        if (
+          err.message ===
+          "Não é possível excluir uma etapa que contém candidatos"
+        ) {
+          res.status(400).json({ error: err.message });
+        } else if (err.message === "Etapa não encontrada") {
+          res.status(404).json({ error: err.message });
+        } else {
+          res.status(500).json({ error: "Erro ao excluir etapa" });
+        }
+      } finally {
+        client.release();
+      }
+    }
+  );
+
   // Rota para atualizar ordem das etapas (drag-and-drop)
   router.put(
     "/stages/reorder",

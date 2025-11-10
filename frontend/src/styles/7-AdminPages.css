@@ -10,10 +10,28 @@
   margin-top: 0;
 }
 
+.form-row-divisor {
+  display: flex;
+  flex: 1;
+  margin-bottom: 15px;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
 .form-row {
   display: flex;
   gap: 15px;
   margin-bottom: 15px;
+}
+
+.form-span {
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  font-family: "Montserrat", sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
 }
 
 .form-input {

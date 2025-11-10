@@ -237,7 +237,7 @@ const Documentos: React.FC = () => {
                         <span className="file-name">{file.originalname}</span>
                         <div className="file-actions">
                           <button
-                            className="list-button download"
+                            className="save-button"
                             onClick={() =>
                               handleDownload(file.id, file.originalname)
                             }

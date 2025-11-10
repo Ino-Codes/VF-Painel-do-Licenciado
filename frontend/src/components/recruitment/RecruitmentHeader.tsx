@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MdFormatListBulleted } from "react-icons/md";
+import { FaTasks } from "react-icons/fa";
+import { FaUserPlus, FaTableColumns } from "react-icons/fa6";
 import NewCandidateModal from "./NewCandidateModal.tsx";
 import StagesModal from "./StagesModal.tsx";
 
@@ -20,13 +21,17 @@ const RecruitmentHeader: React.FC<RecruitmentHeaderProps> = ({ onRefresh }) => {
         <button
           className="form-button"
           onClick={() => setIsNewCandidateModalOpen(true)}
+          style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
+          <FaUserPlus size={20} />
           Novo Candidato
         </button>
         <button
           className="form-button"
           onClick={() => setIsStagesModalOpen(true)}
+          style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
+          <FaTableColumns size={20} />
           Gerenciar Etapas
         </button>
         <button
@@ -34,7 +39,7 @@ const RecruitmentHeader: React.FC<RecruitmentHeaderProps> = ({ onRefresh }) => {
           onClick={() => navigate("/admin/checklist-templates")}
           style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
-          <MdFormatListBulleted size={20} />
+          <FaTasks size={20} />
           Gerenciar Tarefas
         </button>
       </div>
