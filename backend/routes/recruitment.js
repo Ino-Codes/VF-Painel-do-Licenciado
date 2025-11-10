@@ -904,5 +904,271 @@ module.exports = function (pool, logActivity) {
     }
   );
 
+  // Get single interview
+  router.get(
+    "/interviews/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query(
+          `SELECT ri.*, c.name as candidate_name, u.nome as interviewer_name, rs.name as stage_name
+           FROM recruitment_interviews ri
+           LEFT JOIN candidates c ON ri.candidate_id = c.id
+           LEFT JOIN users u ON ri.interviewer_id = u.id
+           LEFT JOIN recruitment_stages rs ON ri.stage_id = rs.id
+           WHERE ri.id = $1`,
+          [id]
+        );
+        if (result.rowCount === 0)
+          return res.status(404).json({ error: "Entrevista não encontrada" });
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao buscar entrevista:", err);
+        res.status(500).json({ error: "Erro ao buscar entrevista" });
+      }
+    }
+  );
+
+  // Create interview
+  router.post(
+    "/interviews",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      // Allow creating a candidate inline when scheduling an interview.
+      let {
+        candidate_id,
+        interviewer_id,
+        stage_id,
+        title,
+        description,
+        start_at,
+        end_at,
+        is_virtual,
+        meeting_link,
+        location,
+        status,
+      } = req.body;
+
+      try {
+        // If caller provided a candidate object (not candidate_id), create the candidate first
+        if (!candidate_id && req.body.candidate) {
+          const { name, email, phone, role_applied_for, unit_id } =
+            req.body.candidate;
+          // pick a default stage if none provided
+          const stageRes = await pool.query(
+            "SELECT id FROM recruitment_stages ORDER BY stage_order ASC LIMIT 1"
+          );
+          const defaultStage = stageRes.rowCount ? stageRes.rows[0].id : null;
+
+          const candRes = await pool.query(
+            `INSERT INTO candidates (name, email, phone, role_applied_for, stage_id, unit_id, created_at)
+             VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING *`,
+            [
+              name,
+              email || null,
+              phone || null,
+              role_applied_for || null,
+              stage_id || defaultStage,
+              unit_id || null,
+            ]
+          );
+          candidate_id = candRes.rows[0].id;
+        }
+
+        const result = await pool.query(
+          `INSERT INTO recruitment_interviews
+            (candidate_id, interviewer_id, stage_id, title, description, start_at, end_at, is_virtual, meeting_link, location, status, created_by)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+           RETURNING *`,
+          [
+            candidate_id || null,
+            interviewer_id || null,
+            stage_id || null,
+            title || null,
+            description || null,
+            start_at,
+            end_at || null,
+            !!is_virtual,
+            meeting_link || null,
+            location || null,
+            status || "scheduled",
+            req.user.id || null,
+          ]
+        );
+
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Entrevista Agendada",
+          `Entrevista agendada para candidato ID ${candidate_id} em ${start_at}`,
+          req.ipAddress
+        );
+
+        res.status(201).json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao criar entrevista:", err);
+        res.status(500).json({ error: "Erro ao criar entrevista" });
+      }
+    }
+  );
+
+  // Approve candidate from interview -> mark candidate as approved for kanban
+  router.post(
+    "/interviews/:id/approve",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const interviewRes = await client.query(
+          "SELECT candidate_id FROM recruitment_interviews WHERE id = $1",
+          [id]
+        );
+        if (interviewRes.rowCount === 0) {
+          await client.query("ROLLBACK");
+          return res.status(404).json({ error: "Entrevista não encontrada" });
+        }
+
+        const candidateId = interviewRes.rows[0].candidate_id;
+        if (!candidateId) {
+          await client.query("ROLLBACK");
+          return res
+            .status(400)
+            .json({ error: "Entrevista não vinculada a um candidato" });
+        }
+
+        const updateRes = await client.query(
+          "UPDATE candidates SET is_approved_for_kanban = true WHERE id = $1 RETURNING *",
+          [candidateId]
+        );
+
+        await client.query("COMMIT");
+
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Candidato Aprovado",
+          `Candidato ID ${candidateId} aprovado para o Kanban a partir da entrevista ID ${id}`,
+          req.ipAddress
+        );
+
+        res.json({ success: true, candidate: updateRes.rows[0] });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Erro ao aprovar candidato:", err);
+        res.status(500).json({ error: "Erro ao aprovar candidato" });
+      } finally {
+        client.release();
+      }
+    }
+  );
+
+  // Update interview
+  router.put(
+    "/interviews/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const {
+        candidate_id,
+        interviewer_id,
+        stage_id,
+        title,
+        description,
+        start_at,
+        end_at,
+        is_virtual,
+        meeting_link,
+        location,
+        status,
+      } = req.body;
+
+      try {
+        const result = await pool.query(
+          `UPDATE recruitment_interviews SET
+            candidate_id = $1,
+            interviewer_id = $2,
+            stage_id = $3,
+            title = $4,
+            description = $5,
+            start_at = $6,
+            end_at = $7,
+            is_virtual = $8,
+            meeting_link = $9,
+            location = $10,
+            status = $11
+           WHERE id = $12 RETURNING *`,
+          [
+            candidate_id,
+            interviewer_id || null,
+            stage_id || null,
+            title || null,
+            description || null,
+            start_at,
+            end_at || null,
+            !!is_virtual,
+            meeting_link || null,
+            location || null,
+            status || "scheduled",
+            id,
+          ]
+        );
+
+        if (result.rowCount === 0)
+          return res.status(404).json({ error: "Entrevista não encontrada" });
+
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Entrevista Atualizada",
+          `Entrevista ID ${id} atualizada`,
+          req.ipAddress
+        );
+
+        res.json(result.rows[0]);
+      } catch (err) {
+        console.error("Erro ao atualizar entrevista:", err);
+        res.status(500).json({ error: "Erro ao atualizar entrevista" });
+      }
+    }
+  );
+
+  // Delete interview
+  router.delete(
+    "/interviews/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query(
+          "DELETE FROM recruitment_interviews WHERE id = $1 RETURNING *",
+          [id]
+        );
+        if (result.rowCount === 0)
+          return res.status(404).json({ error: "Entrevista não encontrada" });
+
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Entrevista Excluída",
+          `Entrevista ID ${id} excluída`,
+          req.ipAddress
+        );
+
+        res.json({ success: true });
+      } catch (err) {
+        console.error("Erro ao excluir entrevista:", err);
+        res.status(500).json({ error: "Erro ao excluir entrevista" });
+      }
+    }
+  );
+
   return router;
 };
