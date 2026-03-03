@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import CorporatePhotoUploader from "./CorporatePhotoUploader.tsx";
 import { useUnits } from "../../hooks/useUnits.ts";
 import { Unit } from "../../types/recruitment.ts";
+import DatePicker from "../../components/forms/DatePicker.tsx";
 
 interface User {
   id: number;
@@ -41,7 +42,8 @@ const UserForm: React.FC<{
         setor: "",
         birth_date: "",
         data_admissao: "",
-        role: formType === "licenciado" ? "licenciado" : "operacional",
+        role:
+          formType === "licenciado" ? "licenciado" : "Selecione a Permissão",
       });
     }
   }, [userToEdit, formType]);
@@ -59,7 +61,7 @@ const UserForm: React.FC<{
   }, [units]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -81,7 +83,7 @@ const UserForm: React.FC<{
       if (userToEdit) {
         const response = await api.put(
           `/api/users/admin/${userToEdit.id}`,
-          formData
+          formData,
         );
         toast.success("Usuário atualizado com sucesso!");
         onSuccess(response.data.user); // Passa o usuário atualizado para o componente pai
@@ -184,6 +186,9 @@ const UserForm: React.FC<{
                 onChange={handleChange}
                 className="form-select"
               >
+                <option value="">
+                  {loading ? "Carregando..." : "Selecione a Permissão"}
+                </option>
                 <option value="comercial">Comercial</option>
                 <option value="rh">RH</option>
                 <option value="operacional">Operacional</option>
@@ -193,33 +198,37 @@ const UserForm: React.FC<{
           </div>
 
           <div className="form-row">
-            <label className="label-birth-day">Data de Nascimento</label>
-            <input
-              name="birth_date"
-              value={
-                formData.birth_date ? formData.birth_date.substring(0, 10) : ""
-              }
-              onChange={handleChange}
-              type="date"
-              required
-              className="form-input"
-            />
-          </div>
+            <div className="form-group">
+              <label>Data de Nascimento</label>
+              {/* ATUALIZADO AQUI: includeWeekends={true} */}
+              <DatePicker
+                value={
+                  formData.birth_date
+                    ? formData.birth_date.substring(0, 10)
+                    : ""
+                }
+                onChange={(date) =>
+                  setFormData((prev) => ({ ...prev, birth_date: date }))
+                }
+                includeWeekends={true}
+              />
+            </div>
 
-          <div className="form-row">
-            <label className="label-birth-day">Data de Admissão</label>
-            <input
-              name="data_admissao"
-              value={
-                formData.data_admissao
-                  ? formData.data_admissao.substring(0, 10)
-                  : ""
-              }
-              onChange={handleChange}
-              type="date"
-              required
-              className="form-input"
-            />
+            <div className="form-group">
+              <label>Data de Admissão</label>
+              {/* ATUALIZADO AQUI: includeWeekends={true} */}
+              <DatePicker
+                value={
+                  formData.data_admissao
+                    ? formData.data_admissao.substring(0, 10)
+                    : ""
+                }
+                onChange={(date) =>
+                  setFormData((prev) => ({ ...prev, data_admissao: date }))
+                }
+                includeWeekends={true}
+              />
+            </div>
           </div>
 
           {userToEdit && (

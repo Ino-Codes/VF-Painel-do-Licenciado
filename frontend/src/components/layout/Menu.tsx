@@ -1,18 +1,42 @@
 import api from "../../api.ts";
 import React, { useState, useEffect, useRef } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
+import { useTheme } from "../../context/ThemeContext.tsx";
 import ThemeToggleButton from "../ui/ThemeToggleButton.tsx";
-import Logo from "../../img/logo-clara.png";
+// Logos
+import LogoValorCorpClara from "../../img/logo-clara.png";
+import LogoValorCorpEscura from "../../img/logo-escura.png";
+// import LogoValorFiscal from "../../img/valor-fiscal.png";
+// import LogoValorBanking from "../../img/valor-banking.png";
+
 import NotificationModal from "../ui/NotificationModal.tsx";
-import {
-  HiOutlineFolder,
-  HiOutlineUserGroup,
-  HiOutlineCalendar,
-  HiOutlineLockClosed,
-  HiOutlineUserCircle,
-  HiOutlineBell,
-} from "react-icons/hi";
+import { CompanySlug } from "../../types.ts";
+
+import { HiOutlineUserCircle, HiOutlineBell } from "react-icons/hi";
+import { FaPeopleGroup, FaLock } from "react-icons/fa6";
+
+// Configuração das Empresas
+const COMPANIES_CONFIG = [
+  {
+    name: "Valor Banking",
+    slug: "valor-banking" as CompanySlug,
+    color: "var(--valor-banking)", // Azul
+    logo: "LogoValorBanking",
+  },
+  // {
+  //   name: "Valor Business",
+  //   slug: "valor-business" as CompanySlug,
+  //   color: "var(--valor-business)", // Verde
+  //   logo: "LogoValorBusiness",
+  // },
+  {
+    name: "Valor Fiscal",
+    slug: "valor-fiscal" as CompanySlug,
+    color: "var(--valor-fiscal)", // Dourado
+    logo: "LogoValorFiscal",
+  },
+];
 
 interface Notification {
   id: number;
@@ -23,56 +47,25 @@ interface Notification {
 }
 
 const Menu: React.FC = () => {
-  const { user } = useAuth();
+  const { user, switchCompany } = useAuth();
+  const { theme } = useTheme();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const currentCompanySlug = searchParams.get("company");
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isRhDropdownOpen, setRhDropdownOpen] = useState(false);
-  const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
-  const [isFileDropdownOpen, setFileDropdownOpen] = useState(false);
-  const [isInternoDropdownOpen, setIsInternoDropdownOpen] = useState(false);
-
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const rhDropdownRef = useRef<HTMLDivElement>(null);
-  const adminDropdownRef = useRef<HTMLDivElement>(null);
-  const fileDropdownRef = useRef<HTMLDivElement>(null);
-  const internoDropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
-
   const firstName = user?.nome?.split(" ")[0] || "";
+
+  const currentLogoValorCorp =
+    theme === "light" ? LogoValorCorpEscura : LogoValorCorpClara;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        rhDropdownRef.current &&
-        !rhDropdownRef.current.contains(event.target as Node)
-      ) {
-        setRhDropdownOpen(false);
-      }
-
-      if (
-        adminDropdownRef.current &&
-        !adminDropdownRef.current.contains(event.target as Node)
-      ) {
-        setAdminDropdownOpen(false);
-      }
-
-      if (
-        fileDropdownRef.current &&
-        !fileDropdownRef.current.contains(event.target as Node)
-      ) {
-        setFileDropdownOpen(false);
-      }
-
-      if (
-        internoDropdownRef.current &&
-        !internoDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsInternoDropdownOpen(false);
-      }
-
       if (
         notificationRef.current &&
         !notificationRef.current.contains(event.target as Node)
@@ -88,7 +81,6 @@ const Menu: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-
     api
       .get("/api/notifications")
       .then((res) => {
@@ -106,11 +98,20 @@ const Menu: React.FC = () => {
         .then(() => {
           setUnreadCount(0);
           setNotifications((prev) =>
-            prev.map((n) => ({ ...n, is_read: true }))
+            prev.map((n) => ({ ...n, is_read: true })),
           );
         })
         .catch((err) => console.error("Erro ao marcar como lido.", err));
     }
+  };
+
+  const handleCompanyClick = (slug: CompanySlug) => {
+    switchCompany(slug);
+    setIsMenuOpen(false);
+  };
+
+  const isCompanyActive = (slug: string) => {
+    return currentCompanySlug === slug;
   };
 
   if (!user) {
@@ -127,9 +128,11 @@ const Menu: React.FC = () => {
       </button>
 
       <div className={`menu-left ${isMenuOpen ? "open" : ""}`}>
-        <NavLink to="/home" className="menu-logo-link">
-          <img src={Logo} alt="Valor Fiscal Logo" className="menu-logo" />
-        </NavLink>
+        <img
+          src={currentLogoValorCorp}
+          alt="Valor Corp Logo"
+          className="menu-logo"
+        />
 
         <NavLink
           to="/home"
@@ -139,193 +142,67 @@ const Menu: React.FC = () => {
           Home
         </NavLink>
 
-        <div className="dropdown-menu" ref={fileDropdownRef}>
-          <button
-            className="menu-item dropdown-trigger"
-            onClick={() => setFileDropdownOpen(!isFileDropdownOpen)}
-          >
-            <HiOutlineFolder />
-            Conteúdos
-          </button>
-          {isFileDropdownOpen && (
-            <div className="dropdown-content">
+        {COMPANIES_CONFIG.map((company) => {
+          const active = isCompanyActive(company.slug);
+
+          return (
+            <Link
+              key={company.slug}
+              to={`/content/content-gestao?company=${company.slug}`}
+              className="menu-item dropdown-trigger"
+              onClick={() => {
+                switchCompany(company.slug);
+                setIsMenuOpen(false);
+              }}
+            >
+              {company.name}
+              {/* --- LOGO DAS EMPRESAS REMOVIDA TEMPORARIAMENTE ---
+              <img
+                src={
+                  company.logo === "LogoValorFiscal"
+                    ? LogoValorFiscal
+                    : LogoValorBanking
+                }
+                alt={`${company.name} Logo`}
+                className="menu-logo"
+              />
+              */}
+            </Link>
+          );
+        })}
+
+        {/* SEÇÃO ADMINISTRATIVA (RH e Admin Global) */}
+        {(user.role === "admin" || user.role === "rh") && (
+          <>
+            <NavLink
+              to="/admin/rh-gestao"
+              className="menu-item dropdown-trigger"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <FaPeopleGroup />
+              RH
+            </NavLink>
+
+            {user.role === "admin" && (
               <NavLink
-                to="/courses"
-                className="menu-item"
+                to="/admin/admin-gestao"
+                className="menu-item dropdown-trigger"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Cursos
+                <FaLock />
+                Admin
               </NavLink>
-
-              <NavLink
-                to="/documentos"
-                className="menu-item"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  setFileDropdownOpen(false);
-                }}
-              >
-                Documentos
-              </NavLink>
-
-              <NavLink
-                to="/videos"
-                className="menu-item"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  setFileDropdownOpen(false);
-                }}
-              >
-                Vídeos
-              </NavLink>
-            </div>
-          )}
-        </div>
-
-        {user && user.role !== "licenciado" && (
-          <div className="dropdown-menu" ref={internoDropdownRef}>
-            <button
-              className="menu-item dropdown-trigger"
-              onClick={() => setIsInternoDropdownOpen(!isInternoDropdownOpen)}
-            >
-              <HiOutlineUserGroup />
-              Área Interna
-            </button>
-            {isInternoDropdownOpen && (
-              <div className="dropdown-content">
-                {/* <NavLink
-                  to="/ferias"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setIsInternoDropdownOpen(false);
-                  }}
-                >
-                  Marcar Férias
-                </NavLink> */}
-
-                <NavLink to="/empresa" className="menu-item">
-                  Empresa
-                </NavLink>
-              </div>
             )}
-          </div>
+          </>
         )}
 
-        {(user.role === "admin" || user.role === "rh") && (
-          <div className="dropdown-menu" ref={rhDropdownRef}>
-            <button
-              className="menu-item dropdown-trigger"
-              onClick={() => setRhDropdownOpen(!isRhDropdownOpen)}
-            >
-              <HiOutlineCalendar />
-              RH
-            </button>
-            {isRhDropdownOpen && (
-              <div className="dropdown-content">
-                <NavLink
-                  to="/admin/courses"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setRhDropdownOpen(false);
-                  }}
-                >
-                  Cursos
-                </NavLink>
-
-                <NavLink
-                  to="/admin/dashboards"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setRhDropdownOpen(false);
-                  }}
-                >
-                  Dashboards
-                </NavLink>
-
-                <NavLink
-                  to="/admin/calendar"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setRhDropdownOpen(false);
-                  }}
-                >
-                  Eventos
-                </NavLink>
-
-                <NavLink
-                  to="/admin/ferias"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setRhDropdownOpen(false);
-                  }}
-                >
-                  Férias
-                </NavLink>
-
-                <NavLink
-                  to="/admin/recrutamento"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setRhDropdownOpen(false);
-                  }}
-                >
-                  Recrutamento
-                </NavLink>
-              </div>
-            )}
-          </div>
-        )}
-
-        {user && user.role === "admin" && (
-          <div className="dropdown-menu" ref={adminDropdownRef}>
-            <button
-              className="menu-item dropdown-trigger"
-              onClick={() => setAdminDropdownOpen(!isAdminDropdownOpen)}
-            >
-              <HiOutlineLockClosed />
-              Admin
-            </button>
-            {isAdminDropdownOpen && (
-              <div className="dropdown-content">
-                <NavLink
-                  to="/admin/logs"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setAdminDropdownOpen(false);
-                  }}
-                >
-                  Logs
-                </NavLink>
-
-                <NavLink
-                  to="/admin/users"
-                  className="menu-item"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setAdminDropdownOpen(false);
-                  }}
-                >
-                  Usuários
-                </NavLink>
-              </div>
-            )}
-          </div>
-        )}
-
-        <NavLink
+        {/* <NavLink
           to="/faq"
           className="menu-item"
           onClick={() => setIsMenuOpen(false)}
         >
           FAQ
-        </NavLink>
+        </NavLink> */}
       </div>
 
       <div className="menu-right">
@@ -350,7 +227,7 @@ const Menu: React.FC = () => {
               <span className="profile-role">
                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>
-              <span className="profile-name">{firstName}</span>
+              <span className="profile-name">{user.nickname || firstName}</span>
             </div>
             <div className="profile-image-container">
               {user.avatar_url ? (

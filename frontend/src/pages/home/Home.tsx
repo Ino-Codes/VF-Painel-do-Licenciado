@@ -10,12 +10,11 @@ import EmptyState from "../../components/ui/EmptyState.tsx";
 import EventCard from "./EventCard.tsx";
 
 import NoticeModal from "../../components/forms/NoticeModal.tsx";
-import { TiptapMenuBar } from "../../components/editor/TiptapEditor.tsx";
-
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import { Editor } from "@tiptap/react";
 
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+
+import { FiTrash2, FiEdit } from "react-icons/fi";
 
 interface Notice {
   id: number;
@@ -35,6 +34,7 @@ interface MonthlyEvent {
 const Home: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const firstName = user?.nome?.split(" ")[0] || "";
   const [monthlyEvents, setMonthlyEvents] = useState<MonthlyEvent[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
@@ -159,9 +159,9 @@ const Home: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="home-header">
-          <h2>Olá, {user.nome}!</h2>
+          <h2>Olá, {user.nickname || firstName}!</h2>
           <p>
-            Este é o seu novo Painel da Valor Fiscal!
+            Este é o seu novo Painel da Valor Corp!
             <br />
             Aqui você encontra os principais documentos e treinamentos para
             atuar conosco.
@@ -181,7 +181,7 @@ const Home: React.FC = () => {
                   <EmptyState
                     imageKey="eventos"
                     title="Nenhum Evento Agendado"
-                    message="Não há eventos agendados para este mês no momento. Verifique novamente mais tarde."
+                    message="Continue acompanhando para não perder os próximos eventos!"
                   />
                 )}
               </div>
@@ -221,7 +221,7 @@ const Home: React.FC = () => {
                               year: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
-                            }
+                            },
                           )}
                         </small>
                         {(user.role === "admin" || user.role === "rh") && (

@@ -1,5 +1,8 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.fontSize": 12,
-  "editor.formatOnSave": true
+  "editor.fontSize": 18,
+  "terminal.integrated.fontSize": 16,
+  "editor.formatOnSave": true,
+  "editor.fontLigatures": true,
+  "editor.fontFamily": "DinaRemaster"
 }

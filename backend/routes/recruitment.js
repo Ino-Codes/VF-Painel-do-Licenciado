@@ -12,7 +12,7 @@ module.exports = function (pool, logActivity) {
     async (req, res) => {
       try {
         const result = await pool.query(
-          "SELECT * FROM recruitment_stages ORDER BY stage_order ASC"
+          "SELECT * FROM recruitment_stages ORDER BY stage_order ASC",
         );
         res.json(result.rows);
       } catch (err) {
@@ -21,7 +21,7 @@ module.exports = function (pool, logActivity) {
           .status(500)
           .json({ error: "Erro ao buscar etapas do processo seletivo" });
       }
-    }
+    },
   );
 
   // Rota para criar uma nova etapa
@@ -35,12 +35,12 @@ module.exports = function (pool, logActivity) {
         // Ajusta a ordem das etapas existentes se necessário
         await pool.query(
           "UPDATE recruitment_stages SET stage_order = stage_order + 1 WHERE stage_order >= $1",
-          [stage_order]
+          [stage_order],
         );
 
         const result = await pool.query(
           "INSERT INTO recruitment_stages (name, stage_order, pipeline_type) VALUES ($1, $2, $3) RETURNING *",
-          [name, stage_order, pipeline_type || "Recrutamento"]
+          [name, stage_order, pipeline_type || "Recrutamento"],
         );
 
         logActivity(
@@ -50,7 +50,7 @@ module.exports = function (pool, logActivity) {
           `Etapa "${name}" criada no pipeline ${
             pipeline_type || "Recrutamento"
           }`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.status(201).json(result.rows[0]);
@@ -60,7 +60,7 @@ module.exports = function (pool, logActivity) {
           .status(500)
           .json({ error: "Erro ao criar etapa do processo seletivo" });
       }
-    }
+    },
   );
 
   // Rota para deletar uma etapa
@@ -78,19 +78,19 @@ module.exports = function (pool, logActivity) {
         // Verifica se existem candidatos nessa etapa
         const candidatesCheck = await client.query(
           "SELECT COUNT(*) FROM candidates WHERE stage_id = $1",
-          [id]
+          [id],
         );
 
         if (parseInt(candidatesCheck.rows[0].count) > 0) {
           throw new Error(
-            "Não é possível excluir uma etapa que contém candidatos"
+            "Não é possível excluir uma etapa que contém candidatos",
           );
         }
 
         // Busca informações da etapa antes de excluir
         const stageInfo = await client.query(
           "SELECT name, stage_order FROM recruitment_stages WHERE id = $1",
-          [id]
+          [id],
         );
 
         if (stageInfo.rowCount === 0) {
@@ -105,7 +105,7 @@ module.exports = function (pool, logActivity) {
         // Reordena as etapas restantes
         await client.query(
           "UPDATE recruitment_stages SET stage_order = stage_order - 1 WHERE stage_order > $1",
-          [stageInfo.rows[0].stage_order]
+          [stageInfo.rows[0].stage_order],
         );
 
         await client.query("COMMIT");
@@ -115,7 +115,7 @@ module.exports = function (pool, logActivity) {
           req.user.email,
           "Etapa Excluída",
           `Etapa "${stageInfo.rows[0].name}" foi excluída do pipeline`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.json({ success: true, message: "Etapa excluída com sucesso" });
@@ -136,7 +136,7 @@ module.exports = function (pool, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // Rota para atualizar ordem das etapas (drag-and-drop)
@@ -154,7 +154,7 @@ module.exports = function (pool, logActivity) {
         for (const stage of stages) {
           await client.query(
             "UPDATE recruitment_stages SET stage_order = $1 WHERE id = $2",
-            [stage.stage_order, stage.id]
+            [stage.stage_order, stage.id],
           );
         }
 
@@ -170,7 +170,7 @@ module.exports = function (pool, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // Rota para listar candidatos (com filtros e paginação)
@@ -197,7 +197,7 @@ module.exports = function (pool, logActivity) {
         if (search) {
           params.push(`%${search}%`);
           whereClauses.push(
-            `(c.name ILIKE $${paramCount} OR c.email ILIKE $${paramCount})`
+            `(c.name ILIKE $${paramCount} OR c.email ILIKE $${paramCount})`,
           );
           paramCount++;
         }
@@ -273,7 +273,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao buscar candidatos:", err);
         res.status(500).json({ error: "Erro ao buscar candidatos" });
       }
-    }
+    },
   );
 
   // Rota para criar um novo candidato
@@ -303,7 +303,7 @@ module.exports = function (pool, logActivity) {
             stage_id,
             req.body.unit_id || null,
             user_id,
-          ]
+          ],
         );
 
         const newCandidate = candidateResult.rows[0];
@@ -320,26 +320,26 @@ module.exports = function (pool, logActivity) {
                 task.task_name,
                 task.responsible_user_id,
                 task.due_date,
-              ]
+              ],
             );
           }
         } else {
           // If no tasks provided, apply default checklist template items
           try {
             const templateRes = await client.query(
-              "SELECT id FROM checklist_templates WHERE is_default = true LIMIT 1"
+              "SELECT id FROM checklist_templates WHERE is_default = true LIMIT 1",
             );
             if (templateRes.rowCount > 0) {
               const templateId = templateRes.rows[0].id;
               const itemsRes = await client.query(
                 "SELECT task_name, due_days FROM checklist_template_items WHERE template_id = $1 ORDER BY id",
-                [templateId]
+                [templateId],
               );
               for (const item of itemsRes.rows) {
                 // due_days can be used to set a due_date relative to now if needed
                 await client.query(
                   `INSERT INTO candidate_tasks (candidate_id, task_name, responsible_user_id, due_date) VALUES ($1, $2, $3, $4)`,
-                  [newCandidate.id, item.task_name, null, null]
+                  [newCandidate.id, item.task_name, null, null],
                 );
               }
             }
@@ -355,7 +355,7 @@ module.exports = function (pool, logActivity) {
           req.user.email,
           "Novo Candidato",
           `Candidato "${name}" cadastrado para a vaga de ${role_applied_for}`,
-          req.ipAddress
+          req.ipAddress,
         );
         res.status(201).json(newCandidate);
       } catch (err) {
@@ -365,7 +365,7 @@ module.exports = function (pool, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // Rota para atualizar um candidato
@@ -403,7 +403,7 @@ module.exports = function (pool, logActivity) {
             user_id,
             unit_id || null,
             id,
-          ]
+          ],
         );
 
         if (result.rowCount === 0) {
@@ -415,7 +415,7 @@ module.exports = function (pool, logActivity) {
           req.user.email,
           "Candidato Atualizado",
           `Dados do candidato "${name}" foram atualizados`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.json(result.rows[0]);
@@ -423,7 +423,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao atualizar candidato:", err);
         res.status(500).json({ error: "Erro ao atualizar candidato" });
       }
-    }
+    },
   );
 
   // Rota para mover um candidato entre etapas (drag-and-drop)
@@ -438,7 +438,7 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "UPDATE candidates SET stage_id = $1 WHERE id = $2 RETURNING *",
-          [stage_id, id]
+          [stage_id, id],
         );
 
         if (result.rowCount === 0) {
@@ -450,7 +450,7 @@ module.exports = function (pool, logActivity) {
           req.user.email,
           "Candidato Movido",
           `Candidato movido para nova etapa do processo`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.json(result.rows[0]);
@@ -458,7 +458,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao mover candidato:", err);
         res.status(500).json({ error: "Erro ao mover candidato" });
       }
-    }
+    },
   );
 
   // Rota para gerenciar tarefas do candidato
@@ -476,7 +476,7 @@ module.exports = function (pool, logActivity) {
                     (candidate_id, task_name, responsible_user_id, due_date) 
                 VALUES ($1, $2, $3, $4) 
                 RETURNING *`,
-          [id, task_name, responsible_user_id, due_date]
+          [id, task_name, responsible_user_id, due_date],
         );
 
         res.status(201).json(result.rows[0]);
@@ -484,7 +484,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao criar tarefa:", err);
         res.status(500).json({ error: "Erro ao criar tarefa" });
       }
-    }
+    },
   );
 
   // Rota para excluir um candidato
@@ -502,13 +502,13 @@ module.exports = function (pool, logActivity) {
         // Primeiro, excluir todas as tarefas relacionadas ao candidato
         await client.query(
           "DELETE FROM candidate_tasks WHERE candidate_id = $1",
-          [id]
+          [id],
         );
 
         // Depois, excluir o candidato
         const result = await client.query(
           "DELETE FROM candidates WHERE id = $1 RETURNING name",
-          [id]
+          [id],
         );
 
         if (result.rowCount === 0) {
@@ -523,7 +523,7 @@ module.exports = function (pool, logActivity) {
           req.user.email,
           "Candidato Excluído",
           `Candidato "${result.rows[0].name}" foi excluído do sistema`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.json({ success: true, message: "Candidato excluído com sucesso" });
@@ -534,7 +534,7 @@ module.exports = function (pool, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // Rota para atualizar status de uma tarefa
@@ -549,7 +549,7 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "UPDATE candidate_tasks SET is_completed = $1 WHERE id = $2 RETURNING *",
-          [is_completed, taskId]
+          [is_completed, taskId],
         );
 
         if (result.rowCount === 0) {
@@ -561,7 +561,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao atualizar tarefa:", err);
         res.status(500).json({ error: "Erro ao atualizar tarefa" });
       }
-    }
+    },
   );
 
   // Rota para deletar uma tarefa do candidato
@@ -574,7 +574,7 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "DELETE FROM candidate_tasks WHERE id = $1 RETURNING *",
-          [taskId]
+          [taskId],
         );
 
         if (result.rowCount === 0) {
@@ -586,7 +586,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao deletar tarefa:", err);
         res.status(500).json({ error: "Erro ao deletar tarefa" });
       }
-    }
+    },
   );
 
   // --- Checklist templates management (admin RH) ---
@@ -599,14 +599,14 @@ module.exports = function (pool, logActivity) {
     async (req, res) => {
       try {
         const result = await pool.query(
-          "SELECT id, name, is_default, created_at FROM checklist_templates ORDER BY id"
+          "SELECT id, name, is_default, created_at FROM checklist_templates ORDER BY id",
         );
         res.json(result.rows);
       } catch (err) {
         console.error("Erro ao buscar templates:", err);
         res.status(500).json({ error: "Erro ao buscar templates" });
       }
-    }
+    },
   );
 
   // Create template
@@ -621,20 +621,20 @@ module.exports = function (pool, logActivity) {
         await client.query("BEGIN");
         if (is_default) {
           await client.query(
-            "UPDATE checklist_templates SET is_default = false WHERE is_default = true"
+            "UPDATE checklist_templates SET is_default = false WHERE is_default = true",
           );
         }
         const result = await client.query(
           "INSERT INTO checklist_templates (name, is_default) VALUES ($1, $2) RETURNING *",
-          [name, !!is_default]
+          [name, !!is_default],
         );
         await client.query("COMMIT");
         logActivity(
           req.user.id,
           req.user.email,
-          "Template Criado",
+          "Checklist Template Criado",
           `Template de checklist '${name}' criado`,
-          req.ipAddress
+          req.ipAddress,
         );
         res.status(201).json(result.rows[0]);
       } catch (err) {
@@ -644,7 +644,7 @@ module.exports = function (pool, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // Update template
@@ -660,12 +660,12 @@ module.exports = function (pool, logActivity) {
         await client.query("BEGIN");
         if (is_default) {
           await client.query(
-            "UPDATE checklist_templates SET is_default = false WHERE is_default = true"
+            "UPDATE checklist_templates SET is_default = false WHERE is_default = true",
           );
         }
         const result = await client.query(
           "UPDATE checklist_templates SET name = $1, is_default = $2 WHERE id = $3 RETURNING *",
-          [name, !!is_default, id]
+          [name, !!is_default, id],
         );
         if (result.rowCount === 0) {
           await client.query("ROLLBACK");
@@ -676,9 +676,9 @@ module.exports = function (pool, logActivity) {
         logActivity(
           req.user.id,
           req.user.email,
-          "Template Editado",
+          "Checklist Template Editado",
           `Template de checklist '${name}' atualizado`,
-          req.ipAddress
+          req.ipAddress,
         );
         res.json(result.rows[0]);
       } catch (err) {
@@ -688,7 +688,7 @@ module.exports = function (pool, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // Delete template
@@ -701,23 +701,23 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "DELETE FROM checklist_templates WHERE id = $1 RETURNING *",
-          [id]
+          [id],
         );
         if (result.rowCount === 0)
           return res.status(404).json({ error: "Template não encontrado" });
         logActivity(
           req.user.id,
           req.user.email,
-          "Template Excluído",
+          "Checklist Template Excluído",
           `Template ID ${id} excluído`,
-          req.ipAddress
+          req.ipAddress,
         );
         res.json({ success: true });
       } catch (err) {
         console.error("Erro ao deletar template:", err);
         res.status(500).json({ error: "Erro ao deletar template" });
       }
-    }
+    },
   );
 
   // Items: list/create/update/delete for template items
@@ -730,14 +730,14 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "SELECT id, task_name, due_days FROM checklist_template_items WHERE template_id = $1 ORDER BY id",
-          [id]
+          [id],
         );
         res.json(result.rows);
       } catch (err) {
         console.error("Erro ao buscar items:", err);
         res.status(500).json({ error: "Erro ao buscar items" });
       }
-    }
+    },
   );
 
   router.post(
@@ -750,21 +750,21 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "INSERT INTO checklist_template_items (template_id, task_name, due_days) VALUES ($1, $2, $3) RETURNING *",
-          [id, task_name, due_days || null]
+          [id, task_name, due_days || null],
         );
         logActivity(
           req.user.id,
           req.user.email,
-          "Item do Template Criado",
+          "Item do Checklist Template Criado",
           `Item '${task_name}' criado no template ${id}`,
-          req.ipAddress
+          req.ipAddress,
         );
         res.status(201).json(result.rows[0]);
       } catch (err) {
         console.error("Erro ao criar item:", err);
         res.status(500).json({ error: "Erro ao criar item" });
       }
-    }
+    },
   );
 
   router.put(
@@ -777,23 +777,23 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "UPDATE checklist_template_items SET task_name = $1, due_days = $2 WHERE id = $3 RETURNING *",
-          [task_name, due_days || null, itemId]
+          [task_name, due_days || null, itemId],
         );
         if (result.rowCount === 0)
           return res.status(404).json({ error: "Item não encontrado" });
         logActivity(
           req.user.id,
           req.user.email,
-          "Item do Template Editado",
+          "Item do Checklist Template Editado",
           `Item '${task_name}' atualizado`,
-          req.ipAddress
+          req.ipAddress,
         );
         res.json(result.rows[0]);
       } catch (err) {
         console.error("Erro ao atualizar item:", err);
         res.status(500).json({ error: "Erro ao atualizar item" });
       }
-    }
+    },
   );
 
   router.delete(
@@ -805,23 +805,23 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "DELETE FROM checklist_template_items WHERE id = $1 RETURNING *",
-          [itemId]
+          [itemId],
         );
         if (result.rowCount === 0)
           return res.status(404).json({ error: "Item não encontrado" });
         logActivity(
           req.user.id,
           req.user.email,
-          "Item do Template Excluído",
+          "Item do Checklist Template Excluído",
           `Item ID ${itemId} excluído`,
-          req.ipAddress
+          req.ipAddress,
         );
         res.json({ success: true });
       } catch (err) {
         console.error("Erro ao deletar item:", err);
         res.status(500).json({ error: "Erro ao deletar item" });
       }
-    }
+    },
   );
 
   // --- Recruitment interviews (calendar) CRUD ---
@@ -889,7 +889,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao buscar entrevistas:", err);
         res.status(500).json({ error: "Erro ao buscar entrevistas" });
       }
-    }
+    },
   );
 
   // Get single interview
@@ -907,7 +907,7 @@ module.exports = function (pool, logActivity) {
            LEFT JOIN users u ON ri.interviewer_id = u.id
            LEFT JOIN recruitment_stages rs ON ri.stage_id = rs.id
            WHERE ri.id = $1`,
-          [id]
+          [id],
         );
         if (result.rowCount === 0)
           return res.status(404).json({ error: "Entrevista não encontrada" });
@@ -916,7 +916,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao buscar entrevista:", err);
         res.status(500).json({ error: "Erro ao buscar entrevista" });
       }
-    }
+    },
   );
 
   // Create interview
@@ -954,7 +954,7 @@ module.exports = function (pool, logActivity) {
         if (!finalCandidateId) {
           // Need to create candidate. Find interview stage if exists
           let stageRes = await client.query(
-            "SELECT id FROM recruitment_stages WHERE name ILIKE 'entrevista' LIMIT 1"
+            "SELECT id FROM recruitment_stages WHERE name ILIKE 'entrevista' LIMIT 1",
           );
 
           let interviewStageId = null;
@@ -962,7 +962,7 @@ module.exports = function (pool, logActivity) {
           else {
             // fallback to first stage
             const firstStage = await client.query(
-              "SELECT id FROM recruitment_stages ORDER BY stage_order LIMIT 1"
+              "SELECT id FROM recruitment_stages ORDER BY stage_order LIMIT 1",
             );
             interviewStageId =
               firstStage.rowCount > 0 ? firstStage.rows[0].id : null;
@@ -979,7 +979,7 @@ module.exports = function (pool, logActivity) {
               interviewStageId,
               unit_id || null,
               null,
-            ]
+            ],
           );
 
           finalCandidateId = insertCandidateRes.rows[0].id;
@@ -989,10 +989,41 @@ module.exports = function (pool, logActivity) {
             req.user.email,
             "Candidato Criado via Entrevista",
             `Candidato ID ${finalCandidateId} criado ao agendar entrevista`,
-            req.ipAddress
+            req.ipAddress,
           );
+
+          // --- NOVA LÓGICA: APLICAR CHECKLIST PADRÃO ---
+          try {
+            const templateRes = await client.query(
+              "SELECT id FROM checklist_templates WHERE is_default = true LIMIT 1",
+            );
+
+            if (templateRes.rowCount > 0) {
+              const templateId = templateRes.rows[0].id;
+              const itemsRes = await client.query(
+                "SELECT task_name, due_days FROM checklist_template_items WHERE template_id = $1 ORDER BY id",
+                [templateId],
+              );
+
+              for (const item of itemsRes.rows) {
+                // Insere cada tarefa para o novo candidato
+                await client.query(
+                  `INSERT INTO candidate_tasks (candidate_id, task_name, responsible_user_id, due_date) VALUES ($1, $2, $3, $4)`,
+                  [finalCandidateId, item.task_name, null, null],
+                );
+              }
+            }
+          } catch (checklistErr) {
+            console.error(
+              "Erro ao aplicar template de checklist (via entrevista):",
+              checklistErr,
+            );
+            // Não interrompe o fluxo principal se falhar o checklist
+          }
+          // --- FIM DA LÓGICA DE CHECKLIST ---
         }
 
+        // Cria a entrevista
         const insertInterviewRes = await client.query(
           `INSERT INTO recruitment_interviews
             (candidate_id, interviewer_id, stage_id, title, description, start_at, end_at, is_virtual, meeting_link, location, status, created_by)
@@ -1011,7 +1042,7 @@ module.exports = function (pool, logActivity) {
             location || null,
             status || "scheduled",
             req.user.id || null,
-          ]
+          ],
         );
 
         await client.query("COMMIT");
@@ -1021,7 +1052,7 @@ module.exports = function (pool, logActivity) {
           req.user.email,
           "Entrevista Agendada",
           `Entrevista agendada para candidato ID ${finalCandidateId} em ${start_at}`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.status(201).json(insertInterviewRes.rows[0]);
@@ -1032,69 +1063,7 @@ module.exports = function (pool, logActivity) {
       } finally {
         client.release();
       }
-    }
-  );
-
-  // Approve candidate from interview to move into Kanban
-  router.post(
-    "/interviews/:id/approve",
-    isLoggedIn,
-    checkRole(["admin", "rh"]),
-    async (req, res) => {
-      const { id } = req.params;
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
-
-        const interviewRes = await client.query(
-          "SELECT candidate_id FROM recruitment_interviews WHERE id = $1",
-          [id]
-        );
-        if (interviewRes.rowCount === 0) {
-          await client.query("ROLLBACK");
-          client.release();
-          return res.status(404).json({ error: "Entrevista não encontrada" });
-        }
-
-        const candidateId = interviewRes.rows[0].candidate_id;
-
-        // Choose the first stage that is not the 'Entrevista' stage
-        const targetStageRes = await client.query(
-          "SELECT id FROM recruitment_stages WHERE name NOT ILIKE '%entrevista%' ORDER BY stage_order LIMIT 1"
-        );
-
-        const targetStageId =
-          targetStageRes.rowCount > 0 ? targetStageRes.rows[0].id : null;
-
-        const updateRes = await client.query(
-          "UPDATE candidates SET is_approved = true, stage_id = $1 WHERE id = $2 RETURNING *",
-          [targetStageId, candidateId]
-        );
-
-        if (updateRes.rowCount === 0) {
-          await client.query("ROLLBACK");
-          return res.status(404).json({ error: "Candidato não encontrado" });
-        }
-
-        await client.query("COMMIT");
-
-        logActivity(
-          req.user.id,
-          req.user.email,
-          "Candidato Aprovado",
-          `Candidato ID ${candidateId} aprovado para o Kanban via entrevista ID ${id}`,
-          req.ipAddress
-        );
-
-        res.json(updateRes.rows[0]);
-      } catch (err) {
-        await client.query("ROLLBACK");
-        console.error("Erro ao aprovar candidato:", err);
-        res.status(500).json({ error: "Erro ao aprovar candidato" });
-      } finally {
-        client.release();
-      }
-    }
+    },
   );
 
   // Update interview
@@ -1118,8 +1087,51 @@ module.exports = function (pool, logActivity) {
         status,
       } = req.body;
 
+      const client = await pool.connect();
+
       try {
-        const result = await pool.query(
+        await client.query("BEGIN");
+
+        // 1. Busca os dados atuais da entrevista para não perder informações
+        const currentRes = await client.query(
+          "SELECT * FROM recruitment_interviews WHERE id = $1 FOR UPDATE",
+          [id],
+        );
+
+        if (currentRes.rowCount === 0) {
+          await client.query("ROLLBACK");
+          return res.status(404).json({ error: "Entrevista não encontrada" });
+        }
+
+        const current = currentRes.rows[0];
+
+        // 2. Prepara os novos valores.
+        // Se o campo vier no req.body (diferente de undefined), usa o novo.
+        // Caso contrário, mantém o valor atual do banco (current).
+        const new_candidate_id =
+          candidate_id !== undefined ? candidate_id : current.candidate_id;
+        const new_interviewer_id =
+          interviewer_id !== undefined
+            ? interviewer_id
+            : current.interviewer_id;
+        const new_stage_id =
+          stage_id !== undefined ? stage_id : current.stage_id;
+        const new_title = title !== undefined ? title : current.title;
+        const new_description =
+          description !== undefined ? description : current.description;
+        const new_start_at =
+          start_at !== undefined ? start_at : current.start_at;
+        const new_end_at = end_at !== undefined ? end_at : current.end_at;
+        const new_is_virtual =
+          is_virtual !== undefined ? is_virtual : current.is_virtual;
+        const new_meeting_link =
+          meeting_link !== undefined ? meeting_link : current.meeting_link;
+        const new_location =
+          location !== undefined ? location : current.location;
+        const new_status = status !== undefined ? status : current.status;
+
+        // 3. Executa a atualização com os dados mesclados
+        const result = await client.query(
           `UPDATE recruitment_interviews SET
             candidate_id = $1,
             interviewer_id = $2,
@@ -1146,7 +1158,7 @@ module.exports = function (pool, logActivity) {
             location || null,
             status || "scheduled",
             id,
-          ]
+          ],
         );
 
         if (result.rowCount === 0)
@@ -1157,7 +1169,7 @@ module.exports = function (pool, logActivity) {
           req.user.email,
           "Entrevista Atualizada",
           `Entrevista ID ${id} atualizada`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.json(result.rows[0]);
@@ -1165,7 +1177,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao atualizar entrevista:", err);
         res.status(500).json({ error: "Erro ao atualizar entrevista" });
       }
-    }
+    },
   );
 
   // Delete interview
@@ -1178,7 +1190,7 @@ module.exports = function (pool, logActivity) {
       try {
         const result = await pool.query(
           "DELETE FROM recruitment_interviews WHERE id = $1 RETURNING *",
-          [id]
+          [id],
         );
         if (result.rowCount === 0)
           return res.status(404).json({ error: "Entrevista não encontrada" });
@@ -1188,7 +1200,7 @@ module.exports = function (pool, logActivity) {
           req.user.email,
           "Entrevista Excluída",
           `Entrevista ID ${id} excluída`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.json({ success: true });
@@ -1196,7 +1208,7 @@ module.exports = function (pool, logActivity) {
         console.error("Erro ao excluir entrevista:", err);
         res.status(500).json({ error: "Erro ao excluir entrevista" });
       }
-    }
+    },
   );
 
   return router;

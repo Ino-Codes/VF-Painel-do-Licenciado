@@ -1,18 +1,40 @@
 const express = require("express");
-const path = require("path");
-const https = require("https");
-const mime = require("mime-types");
 const router = express.Router();
 const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
-  router.get("/", isLoggedIn, async (req, res) => {
-    const { category, search } = req.query;
-    const { role } = req.user;
-    try {
-      let whereClauses = [];
-      const params = [];
+  // --- HELPER: Busca ID da empresa pelo Slug ---
+  const getCompanyId = async (slug) => {
+    // Se não vier slug ou for undefined, assume ID 1 (Valor Fiscal) como padrão
+    if (!slug || slug === "undefined" || slug === "null") return 1;
 
+    try {
+      const result = await pool.query(
+        "SELECT id FROM companies WHERE slug = $1",
+        [slug]
+      );
+
+      return result.rows.length > 0 ? result.rows[0].id : 1;
+    } catch (error) {
+      console.error("Erro ao resolver company_id:", error);
+    }
+  };
+
+  // --- LISTAR ARQUIVOS ---
+  router.get("/", isLoggedIn, async (req, res) => {
+    const { category, search, company } = req.query; // Recebe 'company'
+    const { role } = req.user;
+
+    try {
+      // 1. Resolve o ID da empresa
+      const companyId = await getCompanyId(company);
+
+      // 2. Inicia os arrays de parâmetros e cláusulas
+      // O primeiro parâmetro será sempre o company_id
+      const params = [companyId];
+      let whereClauses = ["company_id = $1"];
+
+      // Filtros de Role (Visibilidade)
       if (role === "licenciado") {
         whereClauses.push(
           "(visibility = 'todos' OR visibility = 'licenciados')"
@@ -23,10 +45,14 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         );
       }
 
+      // Filtro de Categoria
       if (category) {
         params.push(category);
+        // Usa params.length para pegar o índice dinâmico ($2, $3...)
         whereClauses.push(`category = $${params.length}`);
       }
+
+      // Filtro de Busca
       if (search) {
         params.push(`%${search}%`);
         whereClauses.push(
@@ -34,12 +60,13 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         );
       }
 
-      const whereString =
-        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+      // Monta a query final
+      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
       const filesSql = `SELECT * FROM files ${whereString} ORDER BY folder ASC, originalname ASC`;
 
       const filesResult = await pool.query(filesSql, params);
 
+      // Agrupa por pasta
       const groupedByFolder = filesResult.rows.reduce((acc, file) => {
         const folderName = file.folder || "Geral";
         if (!acc[folderName]) acc[folderName] = [];
@@ -54,21 +81,32 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
+  // --- LISTAR CATEGORIAS ---
   router.get("/categories", isLoggedIn, async (req, res) => {
     const { role } = req.user;
+    const { company } = req.query; // Recebe company
+
     try {
-      let whereClause = "";
+      const companyId = await getCompanyId(company);
+
+      // Inicia com filtro de empresa e visibilidade
+      const params = [companyId];
+      let whereClauses = ["company_id = $1"];
 
       if (role === "licenciado") {
-        whereClause =
-          "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'licenciados')"
+        );
       } else if (role !== "admin") {
-        whereClause =
-          "WHERE (visibility = 'todos' OR visibility = 'colaboradores')";
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'colaboradores')"
+        );
       }
 
-      const query = `SELECT DISTINCT category FROM files ${whereClause} ORDER BY category ASC`;
-      const result = await pool.query(query);
+      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const query = `SELECT DISTINCT category FROM files ${whereString} ORDER BY category ASC`;
+
+      const result = await pool.query(query, params);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
       console.error("Erro ao buscar categorias de arquivos:", err);
@@ -76,25 +114,30 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // Upload
+  // --- UPLOAD ---
   router.post(
     "/",
     isLoggedIn,
     checkRole(["admin", "rh"]),
     upload.single("file"),
     async (req, res) => {
-      const { originalname, category, folder, visibility } = req.body;
+      // Recebe 'company' do corpo da requisição (FormData)
+      const { originalname, category, folder, visibility, company } = req.body;
+
       if (!req.file)
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
 
       try {
-        const resourceType = "image";
+        // Resolve o ID da empresa para salvar no banco
+        const companyId = await getCompanyId(company);
+
+        const resourceType = "image"; // Mantendo sua lógica original de resourceType
+
         const uploadResult = await new Promise((resolve, reject) => {
-          // Para raw, o public_id DEVE incluir a extensão completa
           const publicIdWithExtension =
             resourceType === "raw" &&
             originalname.toLowerCase().endsWith(".pdf")
-              ? originalname // Use o nome completo COM .pdf
+              ? originalname
               : undefined;
 
           cloudinary.uploader
@@ -117,9 +160,21 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         const { secure_url: fileUrl, public_id: publicId } = uploadResult;
 
+        // INSERÇÃO NO BANCO: Adicionado company_id ($7)
         const result = await pool.query(
-          "INSERT INTO files (filename, originalname, category, folder, visibility, public_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-          [fileUrl, originalname, category, folder, visibility, publicId]
+          `INSERT INTO files 
+           (filename, originalname, category, folder, visibility, public_id, company_id) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7) 
+           RETURNING *`,
+          [
+            fileUrl,
+            originalname,
+            category,
+            folder,
+            visibility,
+            publicId,
+            companyId,
+          ]
         );
 
         try {
@@ -129,7 +184,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             "CREATE_FILE",
             `Usuário ${
               req.user?.email || "desconhecido"
-            } enviou o arquivo "${originalname}".`,
+            } enviou o arquivo "${originalname}" na empresa ID ${companyId}.`,
             req.ipAddress
           );
         } catch (e) {
@@ -144,7 +199,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
-  // Editar
+  // --- EDITAR ---
   router.put(
     "/:id",
     isLoggedIn,
@@ -152,6 +207,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     async (req, res) => {
       const { id } = req.params;
       const { originalname, category, folder, visibility } = req.body;
+
+      // Nota: Não estamos permitindo mudar a empresa na edição por enquanto para simplificar,
+      // mas mantemos os outros campos.
       try {
         const result = await pool.query(
           "UPDATE files SET originalname = $1, category = $2, folder = $3, visibility = $4 WHERE id = $5 RETURNING *",
@@ -180,7 +238,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
-  // Excluir
+  // --- EXCLUIR (Mantido igual) ---
   router.delete(
     "/:id",
     isLoggedIn,
@@ -232,10 +290,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   );
 
-  // Rota de download segura, que envia o arquivo em vez de redirecionar
+  // --- DOWNLOAD (Mantido igual, ID é único) ---
   router.get("/download/:id", isLoggedIn, async (req, res) => {
     try {
-      // 1. Verifica se o arquivo existe e se o usuário tem permissão para acessá-lo
       const fileResult = await pool.query(
         "SELECT public_id, originalname, filename, visibility FROM files WHERE id = $1",
         [req.params.id]
@@ -248,7 +305,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const file = fileResult.rows[0];
       const { role } = req.user;
 
-      // 2. Lógica de autorização (consistente com a rota de listagem)
       const isAllowed =
         role === "admin" ||
         file.visibility === "todos" ||
@@ -267,20 +323,17 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           .send("URL do arquivo não encontrada no banco de dados.");
       }
 
-      // 3. Gera uma URL assinada do Cloudinary que força o download com o nome correto
       const resourceType =
         file.filename.includes("/image/") &&
         !file.originalname.toLowerCase().endsWith(".pdf")
           ? "image"
           : "raw";
 
-      // Lógica unificada para forçar o download com o nome correto para TODOS os tipos de arquivo.
       let sanitizedFilename = file.originalname.replace(
         /[^a-zA-Z0-9._-]/g,
         "_"
       );
 
-      // Para PDFs raw, garante que o nome tenha a extensão .pdf
       if (
         resourceType === "raw" &&
         file.originalname.toLowerCase().endsWith(".pdf")
@@ -308,7 +361,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           : `${file.public_id}.pdf`;
       }
 
-      // Use publicIdToUse aqui, não file.public_id
       const signedUrl = cloudinary.url(publicIdToUse, options);
 
       try {
@@ -323,7 +375,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         console.warn("Falha ao registrar log de download:", e);
       }
 
-      // 4. Envia a URL segura para o frontend
       res.json({ downloadUrl: signedUrl });
     } catch (err) {
       console.error("Erro ao gerar link de acesso ao arquivo:", err);

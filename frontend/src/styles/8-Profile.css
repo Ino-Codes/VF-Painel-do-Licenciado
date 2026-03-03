@@ -76,7 +76,34 @@
   margin-bottom: 25px;
 }
 
-.profile-avatar-main.profile-avatar-icon {
+.profile-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-grow: 1;
+  width: 100%;
+}
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Separa o texto do botão */
+  flex-grow: 1; /* Ocupa todo o espaço restante do header */
+  width: 100%;
+  margin: 0;
+}
+
+.profile-avatar-main {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  background-color: var(--bg-primary);
+  box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.05);
+}
+
+.profile-avatar-icon {
   width: 100%;
   height: 100%;
   color: var(--text-secondary);
@@ -96,12 +123,6 @@
 .profile-header-info p {
   margin: 0;
   color: var(--text-secondary);
-}
-
-.profile-header .botao-logout {
-  margin-left: auto;
-  margin-top: 0;
-  margin-bottom: 0;
 }
 
 .profile-tab-content {
@@ -211,7 +232,6 @@
   margin-top: 20px;
 }
 
-/* --- RESPONSIVO (PERFIL) --- */
 @media (max-width: 900px) {
   .profile-card {
     flex-direction: column;
@@ -228,8 +248,16 @@
     flex-direction: column;
     text-align: center;
   }
+
+  /* NOVA REGRA: Empilha o texto e o botão e centraliza no mobile */
+  .profile-actions {
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+  }
+
   .profile-header .botao-logout {
     margin-left: 0;
-    margin-top: 15px;
+    margin-top: 0;
   }
 }

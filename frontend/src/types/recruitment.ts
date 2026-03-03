@@ -1,3 +1,5 @@
+import { CompanySlug } from "../types.ts";
+
 export interface Task {
   id: number;
   task_name: string;
@@ -20,6 +22,7 @@ export interface Candidate {
   stage_name?: string;
   responsible_name?: string;
   tasks?: Task[];
+  company_slug: CompanySlug;
 }
 
 export interface Stage {

@@ -7,6 +7,10 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
+import CourseModal from "../../components/forms/CourseModal.tsx";
+import { FiTrash2, FiEdit } from "react-icons/fi";
+import { FaChalkboardTeacher } from "react-icons/fa";
+// Removemos import de CompanySlug pois não filtraremos mais aqui
 
 interface Course {
   id: number;
@@ -16,11 +20,14 @@ interface Course {
   is_active: boolean;
   visibility: "todos" | "licenciados" | "internos";
   certificate_template_url?: string;
+  company_name?: string; // Campo novo vindo do backend
 }
 
 const AdminCourses: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Não lemos mais a URL para filtro
 
   useEffect(() => {
     if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
@@ -30,17 +37,8 @@ const AdminCourses: React.FC = () => {
   }, [user, loading, navigate]);
 
   const [courses, setCourses] = useState<Course[]>([]);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    visibility: "todos",
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [certificateTemplateFile, setCertificateTemplateFile] =
-    useState<File | null>(null);
-
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
 
@@ -52,7 +50,13 @@ const AdminCourses: React.FC = () => {
   const fetchCourses = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get("/api/admin/courses", getAuthHeaders());
+      // Removemos o params: { company: ... }
+      const res = await api.get("/api/admin/courses", {
+        params: {
+          _t: new Date().getTime(), // Evita cache
+        },
+        ...getAuthHeaders(),
+      });
       setCourses(res.data);
     } catch (err) {
       toast.error("Não foi possível carregar os cursos.");
@@ -65,90 +69,19 @@ const AdminCourses: React.FC = () => {
     }
   }, [user, fetchCourses]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingCourse) {
-        const updatedCourse = { ...editingCourse, ...form };
-        await api.put(
-          `/api/admin/courses/${editingCourse.id}`,
-          updatedCourse,
-          getAuthHeaders()
-        );
-        toast.success("Dados do curso atualizados!");
-      } else {
-        await api.post("/api/admin/courses", form, getAuthHeaders());
-        toast.success("Curso criado com sucesso!");
-      }
-      setForm({ title: "", description: "", visibility: "" });
-      setEditingCourse(null);
-      fetchCourses();
-    } catch (err) {
-      toast.error("Ocorreu um erro ao salvar o curso.");
-    }
-  };
-
-  const startEdit = (course: Course) => {
-    setEditingCourse(course);
-    setForm({
-      title: course.title,
-      description: course.description,
-      visibility: course.visibility || "todos",
-    });
-    setThumbnailFile(null);
-    setCertificateTemplateFile(null);
-  };
-
-  const cancelEdit = () => {
+  const openModalForCreate = () => {
     setEditingCourse(null);
-    setForm({ title: "", description: "", visibility: "todos" });
-    setThumbnailFile(null);
-    setCertificateTemplateFile(null);
+    setIsModalOpen(true);
   };
 
-  const handleThumbnailUpload = async () => {
-    if (!thumbnailFile || !editingCourse) {
-      toast.error("Selecione um arquivo de imagem para fazer o upload.");
-      return;
-    }
-    const formData = new FormData();
-    formData.append("thumbnail", thumbnailFile);
-    try {
-      await api.post(
-        `/api/admin/courses/${editingCourse.id}/thumbnail`,
-        formData,
-        getAuthHeaders()
-      );
-      toast.success("Imagem de capa atualizada com sucesso!");
-      setThumbnailFile(null);
-      fetchCourses();
-    } catch (err) {
-      toast.error("Erro ao fazer o upload da imagem.");
-    }
+  const openModalForEdit = (course: Course) => {
+    setEditingCourse(course);
+    setIsModalOpen(true);
   };
 
-  const handleTemplateUpload = async () => {
-    if (!certificateTemplateFile || !editingCourse) {
-      toast.error("Selecione um arquivo PDF para o modelo.");
-      return;
-    }
-    const formData = new FormData();
-    formData.append("template", certificateTemplateFile);
-
-    try {
-      const toastId = toast.loading("A fazer o upload do modelo...");
-      await api.post(
-        `/api/admin/courses/${editingCourse.id}/certificate-template`,
-        formData,
-        getAuthHeaders()
-      );
-      toast.dismiss(toastId);
-      toast.success("Modelo de certificado atualizado!");
-      setCertificateTemplateFile(null);
-      fetchCourses();
-    } catch (err) {
-      toast.error("Erro ao fazer upload do modelo.");
-    }
+  const handleModalSuccess = () => {
+    setIsModalOpen(false);
+    fetchCourses();
   };
 
   const handleManageContent = (courseId: number) =>
@@ -164,7 +97,7 @@ const AdminCourses: React.FC = () => {
     try {
       await api.delete(
         `/api/admin/courses/${courseToDelete}`,
-        getAuthHeaders()
+        getAuthHeaders(),
       );
       toast.success("Curso excluído com sucesso!");
       fetchCourses();
@@ -176,6 +109,15 @@ const AdminCourses: React.FC = () => {
     }
   };
 
+  // Função auxiliar para cor da badge da empresa
+  const getCompanyColor = (name: string | undefined) => {
+    if (!name) return "var(--action-secondary)";
+    if (name.includes("Fiscal")) return "var(--valor-fiscal)";
+    if (name.includes("Banking")) return "var(--valor-banking)";
+    if (name.includes("Business")) return "var(--valor-business)";
+    return "var(--action-secondary)";
+  };
+
   if (loading || !user || (user.role !== "admin" && user.role !== "rh")) {
     return <LoadingSpinner />;
   }
@@ -184,237 +126,108 @@ const AdminCourses: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <h2>{editingCourse ? "Editar Curso" : "Adicionar Novo Curso"}</h2>
-        <form onSubmit={handleSubmit} className="on-screen-form">
-          <div className="form-row">
-            <input
-              className="form-input"
-              placeholder="Título do Curso"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              required
-            />
+        <div className="document-header">
+          <div>
+            <h2 className="content-title">Gestão de Cursos (Global)</h2>
+            <span className="content-subtitle">
+              Administração de todas as empresas
+            </span>
           </div>
+          <button className="form-button" onClick={openModalForCreate}>
+            + Adicionar Curso
+          </button>
+        </div>
 
-          <div className="form-row">
-            <textarea
-              className="form-input"
-              placeholder="Descrição..."
-              rows={3}
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="form-row">
-            <select
-              id="visibility"
-              name="visibility"
-              className="form-select"
-              value={form.visibility}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  visibility: e.target.value as Course["visibility"],
-                })
-              }
-            >
-              <option value="todos">Todos</option>
-              <option value="licenciados">Apenas Licenciados</option>
-              <option value="internos">Apenas Internos</option>
-            </select>
-          </div>
-
-          <div className="form-row">
-            <button className="form-button" type="submit">
-              {editingCourse ? "Salvar Alterações de Texto" : "Criar Curso"}
-            </button>
-            {editingCourse && (
-              <button
-                className="form-button-cancel"
-                type="button"
-                onClick={cancelEdit}
-              >
-                Cancelar Edição
-              </button>
-            )}
-          </div>
-        </form>
-
-        {editingCourse && (
-          <>
-            <div className="on-screen-form">
-              <h3>Alterar Imagem de Capa</h3>
-              <div className="form-row">
-                <div className="file-upload-wrapper">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    id="thumbnail-upload"
-                    className="file-upload-input"
-                    onChange={(e) =>
-                      e.target.files && setThumbnailFile(e.target.files[0])
-                    }
-                  />
-                  <label
-                    htmlFor="thumbnail-upload"
-                    className="file-upload-label"
-                  >
-                    Escolher Imagem
-                  </label>
-                  <span className="file-upload-filename">
-                    {thumbnailFile
-                      ? thumbnailFile.name
-                      : "Nenhum arquivo escolhido"}
-                  </span>
-                </div>
-                <button
-                  className="form-button"
-                  type="button"
-                  onClick={handleThumbnailUpload}
-                  disabled={!thumbnailFile}
+        {courses.length === 0 ? (
+          <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
+            Nenhum curso encontrado.
+          </p>
+        ) : (
+          <ul className="user-list">
+            {courses.map((course) => (
+              <li key={course.id} className="user-list-item">
+                <div
+                  className="user-info"
+                  style={{
+                    alignItems: "center",
+                    flexDirection: "row",
+                    gap: "15px",
+                  }}
                 >
-                  Salvar Imagem
-                </button>
-              </div>
-              {editingCourse.thumbnail_url && (
-                <div>
-                  <p>Imagem Atual:</p>
                   <img
-                    src={editingCourse.thumbnail_url}
-                    alt="Thumbnail atual"
-                    style={{ maxWidth: "200px", borderRadius: "8px" }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="on-screen-form">
-              <h3>Alterar Modelo de Certificado</h3>
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: "#6c757d",
-                  margin: "-10px 0 15px",
-                }}
-              >
-                Faça o upload de um arquivo PDF que será usado como fundo.
-                <br />
-                <strong>Recomendado:</strong> Formato A4 Paisagem (297 x 210mm).
-              </p>
-              <div className="form-row">
-                <div className="file-upload-wrapper">
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    id="template-upload"
-                    className="file-upload-input"
-                    onChange={(e) =>
-                      e.target.files &&
-                      setCertificateTemplateFile(e.target.files[0])
+                    src={
+                      course.thumbnail_url ||
+                      "https://res.cloudinary.com/dsgbgrll5/image/upload/v1756927817/ev4gvx4bqvz5x34ngrc8_x6fzrp.jpg"
                     }
+                    alt="Thumbnail"
+                    style={{ width: "100px", borderRadius: "4px" }}
                   />
-                  <label
-                    htmlFor="template-upload"
-                    className="file-upload-label"
+                  <div className="course-list-item-info">
+                    {/* Badge da Empresa */}
+                    {course.company_name && (
+                      <p
+                        className={`company-badge company-${course.company_name
+                          .toLowerCase()
+                          .replace(/\s+/g, "-")}`}
+                      >
+                        {course.company_name}
+                      </p>
+                    )}
+                    <br />
+                    <strong>{course.title}</strong>
+                    <br />
+                    <span style={{ fontSize: "0.85rem", color: "#666" }}>
+                      Visível para: {course.visibility}
+                    </span>
+                  </div>
+                </div>
+                <div className="user-actions">
+                  <button
+                    className="form-icon-edit"
+                    title="Gerenciar Aulas e Módulos"
+                    onClick={() => handleManageContent(course.id)}
                   >
-                    Escolher Modelo
-                  </label>
-                  <span className="file-upload-filename">
-                    {certificateTemplateFile
-                      ? certificateTemplateFile.name
-                      : "Nenhum arquivo escolhido"}
-                  </span>
+                    <FaChalkboardTeacher />
+                  </button>
+                  <button
+                    className="form-icon-edit"
+                    title="Editar Informações"
+                    onClick={() => openModalForEdit(course)}
+                  >
+                    <FiEdit />
+                  </button>
+                  <button
+                    className="form-icon-delete"
+                    title="Excluir Curso"
+                    onClick={() => handleDeleteClick(course.id)}
+                  >
+                    <FiTrash2 />
+                  </button>
                 </div>
-                <button
-                  className="form-button"
-                  type="button"
-                  onClick={handleTemplateUpload}
-                  disabled={!certificateTemplateFile}
-                >
-                  Salvar Modelo
-                </button>
-              </div>
-
-              {editingCourse.certificate_template_url && (
-                <div>
-                  <p>
-                    Modelo Atual:{" "}
-                    <a
-                      href={editingCourse.certificate_template_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Visualizar PDF
-                    </a>
-                  </p>
-                </div>
-              )}
-            </div>
-          </>
+              </li>
+            ))}
+          </ul>
         )}
-
-        <h2>Cursos Cadastrados:</h2>
-        <ul className="user-list">
-          {courses.map((course) => (
-            <li key={course.id} className="user-list-item">
-              <div
-                className="user-info"
-                style={{
-                  alignItems: "center",
-                  flexDirection: "row",
-                  gap: "15px",
-                }}
-              >
-                <img
-                  src={
-                    course.thumbnail_url ||
-                    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1756927817/ev4gvx4bqvz5x34ngrc8_x6fzrp.jpg"
-                  }
-                  alt="Thumbnail"
-                  style={{ width: "100px", borderRadius: "4px" }}
-                />
-                <div className="course-list-item-info">
-                  <span>Visível para {course.visibility}</span>
-                  <br />
-                  <strong>{course.title}</strong>
-                  <br />
-                  <p>{course.description}</p>
-                </div>
-              </div>
-              <div className="user-actions">
-                <button
-                  className="list-button"
-                  onClick={() => handleManageContent(course.id)}
-                >
-                  Gerenciar
-                </button>
-                <button
-                  className="list-button"
-                  onClick={() => startEdit(course)}
-                >
-                  Editar
-                </button>
-                <button
-                  className="delete-button"
-                  onClick={() => handleDeleteClick(course.id)}
-                >
-                  Excluir
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
       </div>
+
       <Footer />
+
+      {isModalOpen && (
+        <CourseModal
+          courseToEdit={editingCourse}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleModalSuccess}
+        />
+      )}
+
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Confirmar Exclusão"
-        message="Tem certeza que deseja excluir este curso? Todos os seus módulos e aulas também serão removidos."
+        message={`Tem certeza que deseja excluir o curso "${
+          courses.find((c) => c.id === courseToDelete)?.title
+        }"? Todos os seus módulos e aulas também serão removidos.`}
       />
     </div>
   );

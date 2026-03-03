@@ -54,7 +54,7 @@
   height: 30px;
   padding-left: 20px;
   background: transparent;
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   border-radius: 100px;
 }
 
@@ -71,7 +71,7 @@
   height: 30px;
   border-radius: 100px;
   border: none;
-  background-color: var(--accent-color);
+  background-color: #d09829;
   color: var(--text-white);
   font-weight: bold;
   margin-top: 10px;
@@ -103,7 +103,7 @@
   .p-1 {
     width: 90%;
     min-width: unset;
-    border: 1px solid var(--accent-color);
+    border: 1px solid #d09829;
     background-color: var(--text-black);
   }
   .input-login {

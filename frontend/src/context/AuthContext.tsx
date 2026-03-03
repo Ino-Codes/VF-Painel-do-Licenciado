@@ -1,18 +1,24 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import api from "../api.ts";
+import { CompanySlug } from "../types.ts";
 
 interface User {
   id: number;
   email: string;
   nome: string;
+  nickname: string;
   role: "admin" | "licenciado" | "rh";
   avatar_url?: string;
   must_change_password?: boolean;
+  company_slug: CompanySlug;
+  allowed_companies?: CompanySlug[];
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  currentCompany: CompanySlug;
+  switchCompany: (slug: CompanySlug) => void;
   login: (userData: User, token: string) => void;
   logout: () => void;
 }
@@ -25,12 +31,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [currentCompany, setCurrentCompany] =
+    useState<CompanySlug>("valor-fiscal");
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("userData");
+    const savedCompany = localStorage.getItem("currentCompany") as CompanySlug;
+
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      if (savedCompany) {
+        setCurrentCompany(savedCompany);
+      } else if (parsedUser.company_slug) {
+        setCurrentCompany(parsedUser.company_slug);
+      }
     }
     setLoading(false);
   }, []);
@@ -40,17 +58,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("userData", JSON.stringify(userData));
     setUser(userData);
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    setCurrentCompany(userData.company_slug || "valor-fiscal");
   };
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userData");
+    localStorage.removeItem("currentCompany");
     setUser(null);
     delete api.defaults.headers.common["Authorization"];
+    window.location.href = "/";
+  };
+
+  const switchCompany = (slug: CompanySlug) => {
+    setCurrentCompany(slug);
+    localStorage.setItem("currentCompany", slug);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        currentCompany,
+        switchCompany,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -59,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth deve ser usado dentro de AuthProvider");
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
   }
   return context;
 };

@@ -55,131 +55,142 @@ input[type="checkbox"]:checked {
   opacity: 0.85;
 }
 
-.form-icon-delete {
-  border: none;
-  padding: 10px 12px;
-  color: var(--text-white);
-  background-color: var(--action-danger);
-  border-radius: 5px;
+.form-icon-photo {
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  z-index: 10;
+  padding: 10px;
   font-size: 14px;
-  transition: opacity 0.2s;
 }
 
-.form-icon-delete:hover {
-  opacity: 0.85;
+.form-icon-photo.camera {
+  color: var(--text-primary);
 }
-
-.form-icon-delete.inverted {
-  color: var(--action-danger);
-  background-color: var(--bg-primary);
-  border: 1px solid var(--action-danger);
-}
-
-.form-icon-delete.inverted:hover {
-  color: var(--text-white);
-  background-color: var(--action-danger);
-}
-
-.form-icon-save {
-  border: none;
-  padding: 10px 12px;
-  color: var(--text-white);
-  background-color: var(--action-primary);
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: opacity 0.2s;
-}
-
-.form-icon-save:hover {
-  opacity: 0.85;
-}
-
-.form-icon-edit {
-  border: none;
-  padding: 10px 12px;
+.form-icon-photo.camera:hover {
   color: var(--text-white);
   background-color: var(--action-edit);
+  border-color: var(--action-edit);
+}
+
+.form-icon-photo.trash {
+  color: var(--action-danger);
+}
+.form-icon-photo.trash:hover {
+  color: var(--text-white);
+  background-color: var(--action-danger);
+  border-color: var(--action-danger);
+}
+
+.form-icon-delete,
+.form-icon-save,
+.form-icon-edit,
+.form-icon-list {
+  padding: 8px 11px;
+  border: 1px solid var(--border-color);
+  background-color: transparent;
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
   transition: opacity 0.2s;
 }
 
-.form-icon-edit:hover {
+.form-icon-delete:hover,
+.form-icon-save:hover,
+.form-icon-edit:hover,
+.form-icon-list:hover {
   opacity: 0.85;
+  color: var(--text-white);
 }
 
-.list-button {
-  background-color: initial;
-  border: 1px solid var(--text-primary);
-  border-radius: 6px;
+.form-icon-save,
+.form-icon-edit,
+.form-icon-list {
   color: var(--text-primary);
+}
+.form-icon-save:hover {
+  background-color: var(--action-primary);
+  border-color: var(--action-primary);
+}
+.form-icon-edit:hover {
+  background-color: var(--action-edit);
+  border-color: var(--action-edit);
+}
+.form-icon-list:hover {
+  background-color: var(--action-secondary);
+  border-color: var(--action-secondary);
+}
+
+.form-icon-delete {
+  color: var(--action-danger);
+}
+.form-icon-delete:hover {
+  background-color: var(--action-danger);
+  border-color: var(--action-danger);
+}
+
+.form-icon-save:disabled {
+  color: var(--text-secondary);
+}
+
+.save-button,
+.edit-button,
+.delete-button,
+.list-button {
+  background-color: transparent;
+  border-radius: 6px;
+  border: 1px solid;
   cursor: pointer;
   font-weight: 700;
   padding: 5px 10px;
   transition: all 0.2s;
 }
 
+.save-button:hover,
+.edit-button:hover,
+.delete-button:hover,
 .list-button:hover {
   opacity: 0.85;
-  background-color: var(--action-secondary);
-  border: 1px solid var(--action-secondary);
   color: var(--text-white);
 }
 
 .save-button {
-  background-color: initial;
-  border: 1px solid var(--action-primary);
-  border-radius: 6px;
+  border-color: var(--action-primary);
   color: var(--action-primary);
-  cursor: pointer;
-  font-weight: 700;
-  padding: 5px 10px;
-  transition: all 0.2s;
 }
-
 .save-button:hover {
-  opacity: 0.85;
   background-color: var(--action-primary);
-  border: 1px solid var(--action-primary);
-  color: var(--text-white);
 }
 
 .edit-button {
-  background-color: initial;
-  border: 1px solid var(--action-edit);
-  border-radius: 6px;
+  border-color: var(--action-edit);
   color: var(--action-edit);
-  cursor: pointer;
-  font-weight: 700;
-  padding: 5px 10px;
-  transition: all 0.2s;
 }
-
 .edit-button:hover {
-  opacity: 0.85;
   background-color: var(--action-edit);
-  border: 1px solid var(--action-edit);
-  color: var(--text-white);
 }
 
 .delete-button {
-  background-color: initial;
-  border: 1px solid var(--action-danger);
-  border-radius: 6px;
+  border-color: var(--action-danger);
   color: var(--action-danger);
-  cursor: pointer;
-  font-weight: 700;
-  padding: 5px 10px;
-  transition: all 0.2s;
+}
+.delete-button:hover {
+  background-color: var(--action-danger);
 }
 
-.delete-button:hover {
-  opacity: 0.85;
-  background-color: var(--action-danger);
-  color: var(--text-white);
+.list-button {
+  border-color: var(--action-secondary);
+  color: var(--action-secondary);
+}
+.list-button:hover {
+  background-color: var(--action-secondary);
 }
 
 .botao-logout {
@@ -258,14 +269,22 @@ input[type="checkbox"]:checked {
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 15px auto;
-  border: 4px solid var(--border-color);
+  position: relative;
+  box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.05);
+}
+
+.avatar-preview {
+  border: 1px solid var(--border-color);
 }
 
 .avatar-preview img {
-  width: 100%;
-  height: 100%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
   object-fit: cover;
 }
 
@@ -301,20 +320,20 @@ input[type="checkbox"]:checked {
 /* --- PESQUISA E PAGINAÇÃO --- */
 .modal-close-button {
   position: absolute;
-  top: 10px; /* Distância do topo */
-  right: 15px; /* Distância da direita */
+  top: 10px;
+  right: 15px;
   background: none;
   border: none;
-  font-size: 1.5rem; /* Tamanho do 'X' */
-  line-height: 1; /* Para alinhar o 'X' verticalmente */
-  color: var(--text-secondary); /* Cor do 'X' */
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-secondary);
   cursor: pointer;
-  z-index: 10; /* Garante que fique por cima de outros elementos */
+  z-index: 10;
   transition: all 0.2s ease;
 }
 
 .modal-close-button:hover {
-  color: var(--text-primary); /* Muda a cor no hover */
+  color: var(--text-primary);
 }
 
 .modal-delete-button {
@@ -338,7 +357,7 @@ input[type="checkbox"]:checked {
 .modal-edit-button {
   position: absolute;
   top: 10px;
-  right: 85px; /* Posicionado à esquerda do botão de fechar */
+  right: 85px;
   background: none;
   border: none;
   font-size: 1.5rem;
@@ -363,7 +382,7 @@ input[type="checkbox"]:checked {
   padding: 8px;
   border-radius: 50%;
   transition: background-color 0.3s ease;
-  display: flex; /* Para centralizar o ícone */
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
@@ -479,6 +498,7 @@ input[type="checkbox"]:checked {
 .tiptap-container {
   position: relative;
   border-radius: 5px;
+  width: 100%;
 }
 
 .tiptap-menu-bar {
@@ -532,11 +552,11 @@ input[type="checkbox"]:checked {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  width: 350px;
+  width: 100%;
   background-color: var(--bg-secondary);
 }
 
-.emoji-picker-container-modal .epr-category-label {
+.epr-emoji-category h2 {
   display: none !important;
 }
 
@@ -594,11 +614,10 @@ input[type="radio"]:checked {
 .table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
 }
 
 .table thead th {
@@ -607,8 +626,8 @@ input[type="radio"]:checked {
   font-weight: 700;
   font-size: 13px;
   color: var(--text-secondary);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent);
-  border-bottom: 1px solid var(--border-strong);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .table tbody td {
@@ -621,11 +640,6 @@ input[type="radio"]:checked {
 
 .table tbody tr:last-child td {
   border-bottom: none;
-}
-
-/* row highlight for default template (reuse quiz correct style) */
-.correct-option {
-  background: linear-gradient(90deg, var(--bg-result-green), transparent);
 }
 
 .template-default-cell .default-badge {
@@ -650,9 +664,7 @@ input[type="radio"]:checked {
   align-items: center;
 }
 
-/* smaller buttons in table rows */
 .table .form-button,
-.table .list-button,
 .table .delete-button {
   padding: 6px 10px;
   font-size: 13px;

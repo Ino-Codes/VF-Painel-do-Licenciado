@@ -1,25 +1,40 @@
+// src/pages/public/NotFoundPage.tsx
 import React from "react";
-import { Link } from "react-router-dom";
-import api from "../../api.ts";
-import Menu from "../../components/layout/Menu.tsx";
-import Footer from "../../components/layout/Footer.tsx";
-import EmptyState from "../../components/ui/EmptyState.tsx";
-import { useAuth } from "../../context/AuthContext.tsx";
+import { useNavigate } from "react-router-dom";
+import { getIconByKey } from "../../utils/assets.ts";
 
 const NotFoundPage: React.FC = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const Icon404 = getIconByKey("404");
 
   return (
-    <div className="p-2">
-      {user && <Menu />}
-      <div className="content-area">
-        <EmptyState
-          imageKey="404"
-          title="Página Não Encontrada"
-          message="O endereço que você tentou acessar não existe ou foi movido."
-        ></EmptyState>
-      </div>
-      {user && <Footer />}
+    <div
+      className="not-found-container"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        backgroundColor: "var(--bg-primary)", // Fundo dinâmico
+        color: "var(--text-primary)", // Texto dinâmico
+      }}
+    >
+      {Icon404 && (
+        <Icon404 size={180} style={{ color: "var(--valor-fiscal)" }} />
+      )}
+
+      <h1 style={{ fontSize: "2.5rem", marginBottom: "10px" }}>
+        Página não encontrada
+      </h1>
+
+      <p style={{ color: "var(--text-secondary)", marginBottom: "30px" }}>
+        O conteúdo que você procura não existe ou foi movido.
+      </p>
+
+      <button className="form-button" onClick={() => navigate("/home")}>
+        Voltar para o Início
+      </button>
     </div>
   );
 };

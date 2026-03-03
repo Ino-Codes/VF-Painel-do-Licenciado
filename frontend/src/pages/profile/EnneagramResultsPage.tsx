@@ -32,7 +32,7 @@ ChartJS.register(
   Filler,
   Tooltip,
   Legend,
-  Title
+  Title,
 );
 
 const EnneagramResultsPage: React.FC = () => {
@@ -120,7 +120,7 @@ const EnneagramResultsPage: React.FC = () => {
         {
           label: "Percentual (%)",
           data: scores.map((s) =>
-            totalScore > 0 ? ((s / totalScore) * 100).toFixed(1) : 0
+            totalScore > 0 ? ((s / totalScore) * 100).toFixed(1) : 0,
           ),
           backgroundColor: getCssVar("--bg-graph-column"),
           borderColor: getCssVar("--border-graph-column"),
@@ -159,7 +159,7 @@ const EnneagramResultsPage: React.FC = () => {
   if (!results || typesInfo.length === 0) return <LoadingSpinner />;
 
   const dominantTypeInfo = typesInfo.find(
-    (t) => t.id === results.dominant_type
+    (t) => t.id === results.dominant_type,
   );
 
   return (
@@ -170,10 +170,7 @@ const EnneagramResultsPage: React.FC = () => {
 
         <div className="result-summary">
           <h3>
-            Seu tipo dominante é:{" "}
-            <strong>
-              Tipo {results.dominant_type} - {dominantTypeInfo.name}
-            </strong>
+            {dominantTypeInfo.id} - {dominantTypeInfo.name}
           </h3>
           <p>{dominantTypeInfo.description}</p>
         </div>

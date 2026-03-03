@@ -81,20 +81,20 @@ const userRoutes = require("./routes/users.js")(
   pool,
   cloudinary,
   upload,
-  logActivity
+  logActivity,
 );
 const cronFunctions = require("./cron.js");
 cronFunctions.initializeCron(pool, resend); // Passa o resend para o cron
 const noticeRoutes = require("./routes/notices.js")(
   pool,
   createNotification,
-  logActivity
+  logActivity,
 );
 const filesRoutes = require("./routes/files")(
   pool,
   cloudinary,
   upload,
-  logActivity
+  logActivity,
 );
 
 const videoRoutes = require("./routes/videos.js")(pool);
@@ -107,22 +107,28 @@ const eventRoutes = require("./routes/events.js")(pool);
 const enneagramRoutes = require("./routes/enneagram.js")(pool);
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(
   pool,
-  resend
+  resend,
 );
 const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
 const vacationRoutes = require("./routes/vacations.js")(
   pool,
-  createNotification
+  createNotification,
 );
 const notificationRoutes = require("./routes/notifications.js")(pool);
 const recruitmentRoutes = require("./routes/recruitment.js")(pool, logActivity);
 const unitsRoutes = require("./routes/units.js")(pool);
+const socialPostsTable = require("./routes/social.js")(
+  pool,
+  cloudinary,
+  upload,
+);
 
 // --- USO DAS ROTAS ---
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notices", noticeRoutes);
 app.use("/api/files", filesRoutes);
+app.use("/api/social", socialPostsTable);
 app.use("/api/videos", videoRoutes);
 app.use("/api/faq", faqRoutes);
 app.use("/api/admin/logs", logRoutes);
@@ -448,6 +454,19 @@ const createTables = async () => {
       );
     `;
 
+  const socialPostsTable = `
+    CREATE TABLE IF NOT EXISTS social_posts (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      category VARCHAR(100) NOT NULL,
+      caption TEXT,
+      images TEXT[] NOT NULL,
+      visibility TEXT DEFAULT 'public',
+      company_name TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      created_by INTEGER REFERENCES users(id)
+    );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -473,24 +492,31 @@ const createTables = async () => {
     await pool.query(vacationRequestsTable);
     await pool.query(notificationsTable);
     await pool.query(unitsTable);
+    await pool.query(socialPostsTable);
+
     // ensure users has unidade_id column to link to units (backwards-compatible)
     await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS unidade_id INTEGER;"
-    );
-    // seed default units if not exists
-    await pool.query(
-      "INSERT INTO units (name) SELECT 'Matriz' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Matriz')"
+      "ALTER TABLE users ADD COLUMN IF NOT EXISTS unidade_id INTEGER;",
     );
     await pool.query(
-      "INSERT INTO units (name) SELECT 'Filial SC' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Filial SC')"
+      "INSERT INTO units (name) SELECT 'Matriz' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Matriz')",
     );
     await pool.query(
-      "INSERT INTO units (name) SELECT 'Filial SP' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Filial SP')"
+      "INSERT INTO units (name) SELECT 'Filial SC' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Filial SC')",
+    );
+    await pool.query(
+      "INSERT INTO units (name) SELECT 'Filial SP' WHERE NOT EXISTS (SELECT 1 FROM units WHERE name='Filial SP')",
     );
     await pool.query(recruitmentStagesTable);
     // Seed an "Entrevista" stage used for scheduled interviews (pre-kanban)
     await pool.query(
-      "INSERT INTO recruitment_stages (name, stage_order, pipeline_type) SELECT 'Entrevista', 0, 'Recrutamento' WHERE NOT EXISTS (SELECT 1 FROM recruitment_stages WHERE name ILIKE 'entrevista')"
+      "INSERT INTO recruitment_stages (name, stage_order, pipeline_type) SELECT 'Entrevista', 0, 'Recrutamento' WHERE NOT EXISTS (SELECT 1 FROM recruitment_stages WHERE name ILIKE 'entrevista')",
+    );
+    await pool.query(
+      "ALTER TABLE social_posts DROP COLUMN IF EXISTS company_name;",
+    );
+    await pool.query(
+      "ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS company_id INTEGER;",
     );
 
     const recruitmentInterviewsTable = `
@@ -516,7 +542,7 @@ const createTables = async () => {
     await pool.query(recruitmentInterviewsTable);
     // Ensure candidates table has unit_id column for new linkage
     await pool.query(
-      "ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unit_id INTEGER;"
+      "ALTER TABLE candidates ADD COLUMN IF NOT EXISTS unit_id INTEGER;",
     );
     await pool.query(candidatesTable);
     await pool.query(candidateTasksTable);
@@ -524,7 +550,7 @@ const createTables = async () => {
     await pool.query(checklistTemplateItemsTable);
     // seed a default checklist template if not exists
     await pool.query(
-      "INSERT INTO checklist_templates (name, is_default) SELECT 'Template Padrão' , true WHERE NOT EXISTS (SELECT 1 FROM checklist_templates WHERE is_default = true)"
+      "INSERT INTO checklist_templates (name, is_default) SELECT 'Template Padrão' , true WHERE NOT EXISTS (SELECT 1 FROM checklist_templates WHERE is_default = true)",
     );
     // seed some template items if template exists and items empty
     await pool.query(
@@ -532,7 +558,7 @@ const createTables = async () => {
          SELECT t.id, v.task FROM (SELECT id FROM checklist_templates WHERE is_default = true LIMIT 1) t
          CROSS JOIN (VALUES ('Contato inicial'), ('Enviar teste técnico'), ('Agendar entrevista')) v(task)
          WHERE NOT EXISTS (SELECT 1 FROM checklist_template_items it JOIN checklist_templates tt ON it.template_id = tt.id WHERE tt.is_default = true)
-        `
+        `,
     );
 
     console.log("Tabelas verificadas/criadas com sucesso no PostgreSQL.");
@@ -550,7 +576,7 @@ cron.schedule(
   {
     scheduled: true,
     timezone: "America/Sao_Paulo",
-  }
+  },
 );
 
 app.listen(port, () => {

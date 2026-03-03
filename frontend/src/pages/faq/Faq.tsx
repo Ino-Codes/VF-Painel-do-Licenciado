@@ -6,7 +6,7 @@ import Footer from "../../components/layout/Footer.tsx";
 import FaqModal from "../../components/forms/FaqModal.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 
 interface FaqData {
@@ -18,9 +18,21 @@ interface FaqData {
   document_originalname?: string;
 }
 
+const COMPANY_NAMES = {
+  "valor-fiscal": "Valor Fiscal",
+  "valor-banking": "Valor Banking",
+  "valor-business": "Valor Business",
+  "valor-corporate": "Valor Corp",
+};
+
 const Faq: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  const [searchParams] = useSearchParams();
+  const companySlug =
+    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
+  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
 
   const [faqs, setFaqs] = useState<FaqData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -39,16 +51,24 @@ const Faq: React.FC = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await api.get("/api/faq/categories");
+      const res = await api.get("/api/faq/categories", {
+        params: { company: companySlug },
+      });
       setCategories(res.data);
     } catch (err) {
       toast.error("Erro ao buscar categorias.");
     }
-  }, []);
+  }, [companySlug]);
 
   const fetchFaqs = useCallback(async () => {
     try {
-      const params: any = { page: currentPage, limit: 15 };
+      const params: any = {
+        page: currentPage,
+        limit: 10,
+        company: companySlug,
+        _t: new Date().getTime(),
+      };
+
       if (selectedCategory) params.category = selectedCategory;
       if (searchQuery) params.search = searchQuery;
 
@@ -58,7 +78,7 @@ const Faq: React.FC = () => {
     } catch (err) {
       toast.error("Erro ao buscar FAQs.");
     }
-  }, [currentPage, selectedCategory, searchQuery]);
+  }, [currentPage, selectedCategory, searchQuery, companySlug]);
 
   useEffect(() => {
     if (!loading && !user) navigate("/");
@@ -75,7 +95,7 @@ const Faq: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, companySlug]);
 
   const handleSearch = () => setSearchQuery(searchTerm);
 
@@ -111,9 +131,13 @@ const Faq: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className="content-area document-center">
+      <div className={`content-area document-center company-${companySlug}`}>
         <div className="document-header">
-          <h2>Perguntas Frequentes (FAQ)</h2>
+          <div>
+            <h2 className="content-title">Perguntas Frequentes (FAQ)</h2>
+            <span className="content-subtitle">{companyName}</span>
+          </div>
+
           {user.role === "admin" && (
             <button
               className="form-button"
@@ -200,7 +224,7 @@ const Faq: React.FC = () => {
             <EmptyState
               imageKey="faq"
               title="Nenhuma Pergunta Encontrada"
-              message="Estamos incluindo perguntas e respostas ao FAQ. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
+              message="Nosso FAQ está crescendo! Estamos adicionando novas perguntas e respostas para deixar tudo claro para você. Se não encontrou o que precisava agora, volte logo — a resposta que você busca pode estar a caminho!"
             ></EmptyState>
           )}
         </div>

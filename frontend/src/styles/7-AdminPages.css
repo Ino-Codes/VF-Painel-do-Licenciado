@@ -283,8 +283,41 @@
 }
 
 .fc .fc-button {
-  font-size: 0.9em;
-  padding: 6px 12px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-transform: capitalize;
+  border-radius: 8px;
+  padding: 8px 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.fc .fc-button:hover {
+  background-color: var(--bg-menu-hover);
+  color: var(--text-primary);
+  border-color: var(--bg-menu-hover);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--text-white);
+}
+
+.fc .fc-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Grade e Células */
+.fc-theme-standard td,
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid {
+  border-color: var(--border-color);
 }
 
 .fc-col-header {
@@ -538,6 +571,29 @@
 
 .admin-table th.sortable-header:hover {
   background-color: var(--border-color);
+}
+
+.admin-table tbody tr:nth-of-type(even) {
+  background-color: var(--bg-secondary);
+}
+
+/* .company-badge {
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  display: inline-block;
+  color: var(--text-white);
+} */
+
+.company-badge {
+  display: inline-block;
+  background-color: var(--bg-accent-color);
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  border: 1px solid var(--accent-color);
+  font-size: 0.75rem;
 }
 
 /* --- RESPONSIVO (ADMIN) --- */

@@ -1,0 +1,347 @@
+/* --- Container Principal --- */
+.feedback-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Listagem (Grid Layout) --- */
+.list-container {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Cabeçalho da Lista */
+.list-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr 100px;
+  gap: 15px;
+  padding: 15px 20px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  align-items: center;
+}
+
+/* Item da Lista (Card) */
+.list-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr 100px;
+  gap: 15px;
+  padding: 15px 20px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  align-items: center;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.list-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: var(--border-strong);
+}
+
+/* Coluna: Colaborador (Principal) */
+.item-main-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-main-info strong {
+  color: var(--text-primary);
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.item-main-info small {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* Coluna: Status e Data */
+.status-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.status-column small {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Coluna: Ações */
+.action-column {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* --- Badges de Status (Cores) --- */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.status-badge.status-pending {
+  background-color: var(--action-edit);
+  color: var(--text-white);
+}
+
+.status-badge.status-completed,
+.status-badge.status-realized,
+.status-badge.status-validated {
+  background-color: var(--action-primary);
+  color: var(--text-white);
+}
+
+.status-badge.status-declined {
+  background-color: var(--action-danger);
+  color: var(--text-white);
+}
+
+/* Cabeçalho do Feedback dentro do Modal */
+.feedback-header-info {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 25px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.feedback-header-info p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+/* Lista de Entradas (Temas) */
+.feedback-entries-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 10px;
+  margin-bottom: 20px;
+}
+
+/* Item de Feedback (Card de cada Tema) */
+.feedback-entry-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+  transition: box-shadow 0.2s ease;
+}
+
+.feedback-entry-card:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.feedback-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.feedback-entry-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+/* Áreas de Texto (Positivo vs Melhoria) */
+.feedback-text-area-group {
+  display: flex;
+  gap: 20px;
+}
+
+.feedback-text-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feedback-label-positive {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #28a745;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.feedback-label-improvement {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #dc3545;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.feedback-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-family: inherit;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  resize: vertical;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.feedback-textarea:focus {
+  outline: none;
+}
+
+/* Botão de Adicionar Tema */
+.btn-add-theme {
+  width: 100%;
+  padding: 12px;
+  background-color: transparent;
+  border: 2px dashed var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 25px;
+}
+
+.btn-add-theme:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background-color: var(--bg-secondary);
+}
+
+/* Comentários Gerais */
+.general-comments-section {
+  background-color: var(--bg-primary);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.general-comments-section label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.see-button,
+.del-button,
+.reply-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reply-button:hover {
+  color: var(--action-edit);
+}
+
+.see-button:hover {
+  color: var(--text-primary);
+}
+
+.del-button:hover {
+  color: var(--action-danger);
+}
+
+/* --- Responsividade para Telas Menores --- */
+@media (max-width: 900px) {
+  .feedback-header-info {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-text-area-group {
+    flex-direction: column;
+  }
+
+  .list-header,
+  .list-item {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .list-header {
+    display: none;
+  }
+
+  .list-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 20px;
+  }
+
+  .item-main-info {
+    width: 100%;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 5px;
+  }
+
+  .item-main-info strong {
+    font-size: 1.1rem;
+  }
+
+  /* Transforma as colunas em linhas com labels */
+  .list-item > span::before,
+  .status-column::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-right: 8px;
+    display: inline-block;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+  }
+
+  /* Ajuste específico para o botão em mobile */
+  .list-item > div:last-child {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .list-button {
+    width: 100%;
+    padding: 10px;
+  }
+}

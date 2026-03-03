@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
+import { useSearchParams } from "react-router-dom"; // Importado
 
 interface VideoData {
   id: number;
@@ -18,12 +19,23 @@ interface VideoModalProps {
   categories: string[];
 }
 
+// Opções de empresas
+const COMPANIES_OPTIONS = [
+  { slug: "valor-fiscal", name: "Valor Fiscal" },
+  { slug: "valor-banking", name: "Valor Banking" },
+  { slug: "valor-business", name: "Valor Business" },
+];
+
 const VideoModal: React.FC<VideoModalProps> = ({
   videoToEdit,
   onClose,
   onSuccess,
   categories,
 }) => {
+  // 1. Captura a empresa atual da URL
+  const [searchParams] = useSearchParams();
+  const currentCompanySlug = searchParams.get("company") || "valor-fiscal";
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [youtube_url, setYoutubeUrl] = useState("");
@@ -32,6 +44,9 @@ const VideoModal: React.FC<VideoModalProps> = ({
   >("todos");
   const [category, setCategory] = useState("");
 
+  // 2. Estado para a empresa selecionada
+  const [company, setCompany] = useState(currentCompanySlug);
+
   useEffect(() => {
     if (videoToEdit) {
       setTitle(videoToEdit.title);
@@ -39,8 +54,18 @@ const VideoModal: React.FC<VideoModalProps> = ({
       setYoutubeUrl(videoToEdit.youtube_url);
       setVisibility(videoToEdit.visibility || "todos");
       setCategory(videoToEdit.category || "");
+      // Na edição, mantemos a empresa atual da navegação
+      setCompany(currentCompanySlug);
+    } else {
+      setTitle("");
+      setDescription("");
+      setYoutubeUrl("");
+      setVisibility("todos");
+      setCategory("");
+      // Reseta para a empresa da URL
+      setCompany(currentCompanySlug);
     }
-  }, [videoToEdit]);
+  }, [videoToEdit, currentCompanySlug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,14 +74,27 @@ const VideoModal: React.FC<VideoModalProps> = ({
       return;
     }
 
-    const videoData = { title, description, youtube_url, visibility, category };
+    // 3. Inclui a empresa no objeto de dados
+    const videoData = {
+      title,
+      description,
+      youtube_url,
+      visibility,
+      category,
+      company, // Importante para o backend salvar o ID correto
+    };
+
     try {
       if (videoToEdit && videoToEdit.id) {
         await api.put(`/api/videos/${videoToEdit.id}`, videoData);
         toast.success("Vídeo atualizado com sucesso!");
       } else {
         await api.post("/api/videos", videoData);
-        toast.success("Vídeo adicionado com sucesso!");
+        toast.success(
+          `Vídeo adicionado na ${
+            COMPANIES_OPTIONS.find((c) => c.slug === company)?.name
+          }!`
+        );
       }
       onSuccess();
     } catch (err) {
@@ -69,6 +107,33 @@ const VideoModal: React.FC<VideoModalProps> = ({
       <div className="modal-content">
         <h2>{videoToEdit ? "Editar Vídeo" : "Adicionar Novo Vídeo"}</h2>
         <form onSubmit={handleSubmit}>
+          {/* 4. Campo de Seleção de Empresa */}
+
+          <div className="form-row">
+            <label htmlFor="company-select" style={{ marginRight: "10px" }}>
+              Empresa:
+            </label>
+          </div>
+          <div className="form-row">
+            <select
+              id="company-select"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="form-select"
+            >
+              {COMPANIES_OPTIONS.map((opt) => (
+                <option key={opt.slug} value={opt.slug}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-row">
+            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+              Dados do vídeo:
+            </label>
+          </div>
           <div className="form-row">
             <input
               type="text"
@@ -83,7 +148,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
           <div className="form-row">
             <input
               type="text"
-              placeholder="Link do YouTube (não listado)"
+              placeholder="Link do YouTube"
               value={youtube_url}
               onChange={(e) => setYoutubeUrl(e.target.value)}
               className="form-input"

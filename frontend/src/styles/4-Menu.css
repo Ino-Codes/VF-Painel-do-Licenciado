@@ -22,7 +22,7 @@
 }
 
 .menu-item {
-  color: var(--text-white);
+  color: var(--text-primary);
   font-weight: 500;
   font-size: 16px;
   padding: 8px 12px;
@@ -35,8 +35,15 @@
   background-color: var(--bg-menu-hover);
 }
 
+.menu-logo-link:hover,
+.menu-logo-link:active {
+  background-color: var(--bg-menu-hover);
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
 .menu-logo {
-  height: 50px;
+  height: 35px;
 }
 
 .dropdown-menu {
@@ -50,7 +57,6 @@
   padding: 8px 12px;
   font-family: "Montserrat", sans-serif;
   font-size: 16px;
-  color: var(--text-white);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -86,7 +92,7 @@
   width: 36px;
   height: 36px;
   background-color: var(--bg-menu-hover);
-  color: var(--text-white);
+  color: var(--text-primary);
   border-radius: 100%;
   font-size: 20px;
   font-weight: 600;
@@ -101,7 +107,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  color: var(--text-white);
+  color: var(--text-primary);
   padding: 8px 15px;
   border-radius: 8px;
   transition: background-color 0.3s ease;
@@ -120,7 +126,6 @@
 
 .profile-role {
   font-size: 0.8em;
-  color: var(--text-white);
   font-weight: 200;
 }
 
@@ -146,7 +151,7 @@
 .icon-button {
   background: none;
   border: none;
-  color: var(--text-white);
+  color: var(--text-primary);
   font-size: 20px;
   cursor: pointer;
   position: relative;
@@ -175,7 +180,7 @@
   top: 0px;
   right: 0px;
   background-color: var(--action-danger);
-  color: var(--text-white);
+  color: var(--text-primary);
   font-size: 10px;
   font-weight: bold;
   border-radius: 50%;
@@ -256,7 +261,7 @@
   color: var(--text-secondary);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1100px) {
   .main-menu {
     flex-wrap: wrap;
     position: relative;
@@ -265,7 +270,7 @@
     display: block;
     background: none;
     border: none;
-    color: var(--text-white);
+    color: var(--text-primary);
     font-size: 24px;
     cursor: pointer;
   }
@@ -295,7 +300,7 @@
   }
 }
 
-@media (min-width: 1180px) {
+@media (min-width: 1100.1px) {
   .hamburger-menu {
     display: none;
   }

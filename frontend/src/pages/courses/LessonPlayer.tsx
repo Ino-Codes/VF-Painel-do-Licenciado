@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  Link,
+  useSearchParams,
+} from "react-router-dom"; // Importado useSearchParams
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
@@ -7,6 +12,7 @@ import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import { Module, Lesson } from "../../types.ts";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { FaArrowLeftLong } from "react-icons/fa6";
 
 interface CourseWithDetails {
   id: number;
@@ -16,23 +22,6 @@ interface CourseWithDetails {
   quiz_id: number | null;
   has_passed_quiz: boolean;
 }
-
-const BackArrowIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="19" y1="12" x2="5" y2="12"></line>
-    <polyline points="12 19 5 12 12 5"></polyline>
-  </svg>
-);
 
 const getYoutubeEmbedUrl = (url: string): string => {
   if (!url) return "";
@@ -63,6 +52,10 @@ const LessonPlayer: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
+  // 1. Captura o slug da empresa da URL atual para manter a navegação consistente
+  const [searchParams] = useSearchParams();
+  const companySlug = searchParams.get("company") || "valor-fiscal";
+
   const [course, setCourse] = useState<CourseWithDetails | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -77,7 +70,7 @@ const LessonPlayer: React.FC = () => {
     try {
       const res = await api.get(
         `/api/admin/courses/public/${courseId}`,
-        getAuthHeaders()
+        getAuthHeaders(),
       );
       setCourse(res.data);
       if (res.data.modules?.[0]?.lessons?.[0]) {
@@ -87,9 +80,10 @@ const LessonPlayer: React.FC = () => {
       }
     } catch (error) {
       toast.error("Não foi possível carregar este curso.");
-      navigate("/courses");
+      // Redireciona mantendo o contexto da empresa em caso de erro
+      navigate(`/content/courses?company=${companySlug}`);
     }
-  }, [courseId, user, getAuthHeaders, navigate]);
+  }, [courseId, user, getAuthHeaders, navigate, companySlug]);
 
   useEffect(() => {
     if (user) fetchCourse();
@@ -106,7 +100,7 @@ const LessonPlayer: React.FC = () => {
       await api.post(
         `/api/admin/courses/lessons/${activeLesson.id}/complete`,
         {},
-        getAuthHeaders()
+        getAuthHeaders(),
       );
       toast.success("Aula concluída!");
       setCourse((prev) =>
@@ -115,7 +109,7 @@ const LessonPlayer: React.FC = () => {
               ...prev,
               completedLessons: [...prev.completedLessons, activeLesson.id],
             }
-          : null
+          : null,
       );
     } catch (error) {
       toast.error("Erro ao salvar progresso.");
@@ -127,7 +121,7 @@ const LessonPlayer: React.FC = () => {
     try {
       await api.delete(
         `/api/admin/courses/lessons/${activeLesson.id}/progress`,
-        getAuthHeaders()
+        getAuthHeaders(),
       );
       toast.success("Progresso removido!");
       setCourse((prev) =>
@@ -135,10 +129,10 @@ const LessonPlayer: React.FC = () => {
           ? {
               ...prev,
               completedLessons: prev.completedLessons.filter(
-                (id) => id !== activeLesson.id
+                (id) => id !== activeLesson.id,
               ),
             }
-          : null
+          : null,
       );
     } catch (error) {
       toast.error("Erro ao remover progresso.");
@@ -156,7 +150,7 @@ const LessonPlayer: React.FC = () => {
         {
           ...getAuthHeaders(),
           responseType: "blob",
-        }
+        },
       );
 
       toast.dismiss();
@@ -198,7 +192,7 @@ const LessonPlayer: React.FC = () => {
     if (course.quiz_id && !course.has_passed_quiz) {
       return (
         <Link
-          to={`/courses/${courseId}/quiz`}
+          to={`/content/courses/${courseId}/quiz?company=${companySlug}`}
           className="form-button"
           style={{ textDecoration: "none" }}
         >
@@ -217,14 +211,16 @@ const LessonPlayer: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className="content-area">
+      {/* Classe para aplicar o tema da empresa (opcional, se usar variáveis CSS globais) */}
+      <div className={`content-area company-${companySlug}`}>
         <div className="document-header">
+          {/* 2. Botão Voltar agora aponta para a URL com o parâmetro da empresa */}
           <Link
-            to="/courses"
+            to={`/content/courses?company=${companySlug}`}
             className="btn-back-subtle"
             style={{ textDecoration: "none" }}
           >
-            <BackArrowIcon />
+            <FaArrowLeftLong />
             Voltar
           </Link>
 
@@ -300,7 +296,7 @@ const LessonPlayer: React.FC = () => {
                 <h4 className="sidebar-module-title">{module.title}</h4>
                 {module.lessons?.map((lesson) => {
                   const isCompleted = course.completedLessons.includes(
-                    lesson.id
+                    lesson.id,
                   );
                   const isActive = activeLesson?.id === lesson.id;
                   return (

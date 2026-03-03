@@ -4,14 +4,29 @@ const path = require("path");
 const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
+  const getCompanyId = async (slug) => {
+    if (!slug || slug === "undefined" || slug === "null") return 1;
+    try {
+      const result = await pool.query(
+        "SELECT id FROM companies WHERE slug = $1",
+        [slug]
+      );
+      return result.rows.length > 0 ? result.rows[0].id : 1;
+    } catch (error) {
+      console.error("Erro ao resolver company_id:", error);
+      return 1;
+    }
+  };
+
   router.get("/", isLoggedIn, async (req, res) => {
-    const { category, search, page = 1, limit = 15 } = req.query;
+    const { category, search, page = 1, limit = 15, company } = req.query;
     const userRole = req.user ? req.user.role : null;
 
     try {
       const offset = (page - 1) * limit;
-      let whereClauses = [];
-      const params = [];
+      const companyId = await getCompanyId(company);
+      let whereClauses = ["company_id = $1"];
+      const params = [companyId];
 
       if (userRole === "licenciado") {
         whereClauses.push(
@@ -58,21 +73,27 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   router.get("/categories", isLoggedIn, async (req, res) => {
+    const { company } = req.query;
     const userRole = req.user ? req.user.role : null;
+
     try {
-      let whereClause = "";
+      const companyId = await getCompanyId(company);
+
+      let whereClauses = ["company_id = $1"];
 
       if (userRole === "licenciado") {
-        whereClause =
-          "WHERE (visibility = 'todos' OR visibility = 'licenciados')";
-      } else if (userRole === "admin") {
-        whereClause = "";
-      } else {
-        whereClause = "WHERE (visibility = 'todos' OR visibility = 'internos')";
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'licenciados')"
+        );
+      } else if (userRole !== "admin") {
+        whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
       }
 
-      const query = `SELECT DISTINCT category FROM faq ${whereClause} ORDER BY category ASC`;
-      const result = await pool.query(query);
+      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+
+      const query = `SELECT DISTINCT category FROM faq ${whereString} ORDER BY category ASC`;
+
+      const result = await pool.query(query, [companyId]);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
       console.error("Erro ao buscar categorias do FAQ:", err);
@@ -135,11 +156,19 @@ module.exports = function (pool, cloudinary, upload) {
     checkRole(["admin", "rh"]),
     upload.single("document"),
     async (req, res) => {
-      const { category, question, answer, visibility = "todos" } = req.body;
-      let document_url = null;
-      let document_originalname = null;
+      const {
+        category,
+        question,
+        answer,
+        visibility = "todos",
+        company,
+      } = req.body;
 
       try {
+        const companyId = await getCompanyId(company);
+        let document_url = null;
+        let document_originalname = null;
+
         if (req.file) {
           const resourceType = req.file.mimetype.startsWith("image")
             ? "image"
@@ -160,7 +189,7 @@ module.exports = function (pool, cloudinary, upload) {
         }
 
         const result = await pool.query(
-          "INSERT INTO faq (category, question, answer, document_url, document_originalname, visibility) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+          "INSERT INTO faq (category, question, answer, document_url, document_originalname, visibility, company_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
           [
             category,
             question,
@@ -168,6 +197,7 @@ module.exports = function (pool, cloudinary, upload) {
             document_url,
             document_originalname,
             visibility,
+            companyId,
           ]
         );
         res.status(201).json(result.rows[0]);

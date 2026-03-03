@@ -3,10 +3,11 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import CourseCard from "../../components/ui/CourseCard.tsx";
+import { CompanySlug } from "../../types.ts";
 
 interface CourseData {
   id: number;
@@ -17,12 +18,24 @@ interface CourseData {
   completed_lessons: number;
 }
 
+const COMPANY_NAMES = {
+  "valor-fiscal": "Valor Fiscal",
+  "valor-banking": "Valor Banking",
+  "valor-business": "Valor Business",
+  "valor-corporate": "Valor Corp",
+};
+
 const CoursesPage: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const [allCourses, setAllCourses] = useState<CourseData[]>([]);
+  // 1. Captura da Empresa
+  const [searchParams] = useSearchParams();
+  const companySlug =
+    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
+  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
 
+  const [allCourses, setAllCourses] = useState<CourseData[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "ongoing">("all");
   const [isLoadingContent, setIsLoadingContent] = useState(true);
 
@@ -30,14 +43,25 @@ const CoursesPage: React.FC = () => {
     if (!user) return;
     setIsLoadingContent(true);
     try {
-      const res = await api.get("/api/admin/courses/public");
+      // 2. Envio do parâmetro company para a API
+      const res = await api.get("/api/admin/courses/public", {
+        params: {
+          company: companySlug,
+          _t: new Date().getTime(), // Evita cache
+        },
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setAllCourses(res.data);
     } catch (err) {
       console.error("Erro ao buscar cursos:", err);
     } finally {
       setIsLoadingContent(false);
     }
-  }, [user]);
+  }, [user, companySlug]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -48,9 +72,6 @@ const CoursesPage: React.FC = () => {
     }
   }, [user, loading, navigate, fetchCourses]);
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
   if (!user) {
     return null;
   }
@@ -58,17 +79,17 @@ const CoursesPage: React.FC = () => {
   const ongoingCourses = allCourses.filter(
     (course) =>
       course.completed_lessons > 0 &&
-      course.completed_lessons < course.total_lessons
+      course.completed_lessons < course.total_lessons,
   );
 
   const availableCourses = allCourses.filter(
-    (course) => course.completed_lessons === 0
+    (course) => course.completed_lessons === 0,
   );
 
   const completedCourses = allCourses.filter(
     (course) =>
       course.total_lessons > 0 &&
-      course.completed_lessons >= course.total_lessons
+      course.completed_lessons >= course.total_lessons,
   );
 
   const coursesToDisplay =
@@ -79,9 +100,12 @@ const CoursesPage: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className="content-area">
+      <div className={`content-area document-center company-${companySlug}`}>
         <div className="document-header">
-          <h2>Cursos</h2>
+          <div>
+            <h2 className="content-title">Cursos</h2>
+            <span className="content-subtitle">{companyName}</span>
+          </div>
         </div>
 
         <div className="tabs">
@@ -89,7 +113,7 @@ const CoursesPage: React.FC = () => {
             className={`tab-item ${activeTab === "all" ? "active" : ""}`}
             onClick={() => setActiveTab("all")}
           >
-            Trilhas de Conhecimento
+            Catálogo de Cursos
           </button>
           <button
             className={`tab-item ${activeTab === "ongoing" ? "active" : ""}`}
@@ -106,7 +130,11 @@ const CoursesPage: React.FC = () => {
             {coursesToDisplay.length > 0 ? (
               <div className="courses-grid">
                 {coursesToDisplay.map((course) => (
-                  <CourseCard key={course.id} course={course} />
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    companySlug={companySlug}
+                  />
                 ))}
               </div>
             ) : (
@@ -119,8 +147,8 @@ const CoursesPage: React.FC = () => {
                 }
                 message={
                   activeTab === "all"
-                    ? "Ainda não há cursos disponíveis. Volte em breve!"
-                    : "Você ainda não iniciou nenhum curso. Explore as Trilhas de Conhecimento para começar!"
+                    ? `Estamos preparando conteúdos incríveis para a ${companyName}! Fique de olho, as novidades chegam em breve.`
+                    : "Pronto para começar? Seus cursos em andamento serão exibidos aqui para facilitar seu acesso."
                 }
               />
             )}

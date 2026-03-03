@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
+import { useSearchParams } from "react-router-dom"; // Importado para ler a URL
 
 interface FileData {
   id: number;
@@ -8,6 +9,7 @@ interface FileData {
   category: string;
   folder?: string;
   visibility: "todos" | "licenciados" | "colaboradores";
+  // O backend pode retornar company_id, mas lidamos com slugs no front
 }
 
 interface FileModalProps {
@@ -18,6 +20,13 @@ interface FileModalProps {
   folders: string[];
 }
 
+// Configuração das empresas disponíveis para seleção
+const COMPANIES_OPTIONS = [
+  { slug: "valor-fiscal", name: "Valor Fiscal" },
+  { slug: "valor-banking", name: "Valor Banking" },
+  { slug: "valor-business", name: "Valor Business" },
+];
+
 const FileModal: React.FC<FileModalProps> = ({
   fileToEdit,
   onClose,
@@ -25,12 +34,20 @@ const FileModal: React.FC<FileModalProps> = ({
   categories,
   folders,
 }) => {
+  // 1. Captura a empresa atual da URL para usar como padrão
+  const [searchParams] = useSearchParams();
+  const currentCompanySlug = searchParams.get("company") || "valor-fiscal";
+
   const [originalname, setOriginalname] = useState("");
   const [category, setCategory] = useState("");
   const [folder, setFolder] = useState("");
   const [visibility, setVisibility] = useState<
     "todos" | "licenciados" | "colaboradores"
   >("todos");
+
+  // 2. Novo estado para a Empresa
+  const [company, setCompany] = useState(currentCompanySlug);
+
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -39,22 +56,28 @@ const FileModal: React.FC<FileModalProps> = ({
       setCategory(fileToEdit.category);
       setFolder(fileToEdit.folder || "");
       setVisibility(fileToEdit.visibility || "todos");
+      // Na edição, mantemos a empresa atual da navegação ou
+      // idealmente viria do objeto fileToEdit se o backend retornasse o slug.
+      // Por enquanto, assume a empresa da URL.
+      setCompany(currentCompanySlug);
     } else {
       setOriginalname("");
       setCategory("");
       setFolder("");
       setVisibility("todos");
       setFile(null);
+      // Ao criar novo, reseta para a empresa da URL
+      setCompany(currentCompanySlug);
     }
-  }, [fileToEdit]);
+  }, [fileToEdit, currentCompanySlug]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      const MAX_FILE_SIZE = 20 * 1024 * 1024;
+      const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
       if (selectedFile.size > MAX_FILE_SIZE) {
-        toast.error("O arquivo é muito grande. O limite máximo é de 10 MB.");
+        toast.error("O arquivo é muito grande. O limite máximo é de 20 MB.");
         e.target.value = "";
         setFile(null);
       } else {
@@ -73,14 +96,17 @@ const FileModal: React.FC<FileModalProps> = ({
 
     try {
       if (fileToEdit) {
+        // Edição
         await api.put(`/api/files/${fileToEdit.id}`, {
           originalname,
           category,
           folder,
           visibility,
+          company, // Envia a empresa selecionada (requer suporte no backend PUT)
         });
         toast.success("Arquivo atualizado com sucesso!");
       } else {
+        // Criação (Upload)
         if (!file) {
           toast.error("Por favor, selecione um arquivo.");
           return;
@@ -91,8 +117,16 @@ const FileModal: React.FC<FileModalProps> = ({
         formData.append("category", category);
         formData.append("folder", folder);
         formData.append("visibility", visibility);
+
+        // 3. Anexa a empresa escolhida ao FormData
+        formData.append("company", company);
+
         await api.post("/api/files", formData);
-        toast.success("Arquivo incluído com sucesso!");
+        toast.success(
+          `Arquivo incluído na ${
+            COMPANIES_OPTIONS.find((c) => c.slug === company)?.name || "empresa"
+          }!`
+        );
       }
       onSuccess();
     } catch (err) {
@@ -106,6 +140,31 @@ const FileModal: React.FC<FileModalProps> = ({
       <div className="modal-content">
         <h2>{fileToEdit ? "Editar Arquivo" : "Adicionar Novo Arquivo"}</h2>
         <form onSubmit={handleSubmit}>
+          <div className="form-row">
+            <label htmlFor="company-select" style={{ marginRight: "10px" }}>
+              Empresa:
+            </label>
+          </div>
+          <div className="form-row">
+            <select
+              id="company-select"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="form-select"
+            >
+              {COMPANIES_OPTIONS.map((opt) => (
+                <option key={opt.slug} value={opt.slug}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-row">
+            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+              Dados do arquivo:
+            </label>
+          </div>
           <div className="form-row">
             <input
               type="text"
@@ -143,7 +202,7 @@ const FileModal: React.FC<FileModalProps> = ({
           <div className="form-row">
             <input
               type="text"
-              placeholder="Nome do Arquivo"
+              placeholder="Nome"
               value={originalname}
               onChange={(e) => setOriginalname(e.target.value)}
               className="form-input"

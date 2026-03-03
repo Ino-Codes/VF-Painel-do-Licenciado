@@ -11,6 +11,7 @@ import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import Perfil from "./pages/profile/Perfil.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import Documentos from "./pages/documents/Documentos.tsx";
+import MidiasSociais from "./pages/social/SocialMedia.tsx";
 import Videos from "./pages/videos/Videos.tsx";
 import ActivityLogs from "./pages/admin/ActivityLogs.tsx";
 import Faq from "./pages/faq/Faq.tsx";
@@ -22,6 +23,7 @@ import LessonPlayer from "./pages/courses/LessonPlayer.tsx";
 import QuizPlayer from "./pages/courses/QuizPlayer.tsx";
 import NotFoundPage from "./pages/public/NotFoundPage.tsx";
 import AdminCalendar from "./pages/admin/AdminCalendar.tsx";
+import InterviewsCalendar from "./pages/admin/InterviewsCalendar.tsx";
 import EnneagramPage from "./pages/profile/EnneagramPage.tsx";
 import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
 import Empresa from "./pages/company/Empresa.tsx";
@@ -29,7 +31,12 @@ import GestaoFerias from "./pages/admin/GestaoFerias.tsx";
 import SolicitarFerias from "./pages/internal/SolicitarFerias.tsx";
 import Recruitment from "./pages/admin/Recruitment.tsx";
 import ChecklistTemplatesAdmin from "./pages/admin/ChecklistTemplatesAdmin.tsx";
-import RecruitmentInterviews from "./pages/admin/RecruitmentInterviews.tsx";
+import RhGestao from "./pages/admin/RhGestao.tsx";
+import Feedbacks from "./pages/feedbacks/Feedbacks.tsx";
+import AdminGestao from "./pages/admin/AdminGestao.tsx";
+import AdminStatistics from "./pages/admin/AdminStatistics.tsx";
+import InternalGestao from "./pages/internal/InternalGestao.tsx";
+import ContentGestao from "./pages/content/ContentGestao.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -45,6 +52,8 @@ import "./styles/10-Company.css";
 import "./styles/11-Dashboards.css";
 import "./styles/12-Internal.css";
 import "./styles/13-Recruitment.css";
+import "./styles/14-Feedbacks.css";
+import "./styles/15-Gestao.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
@@ -74,20 +83,29 @@ const AppRouter: React.FC = () => {
           <Route path="/reset-password" element={<ResetPassword />} />{" "}
           <Route path="/home" element={<Home />} />
           <Route path="/perfil" element={<Perfil />} />
-          <Route path="/documentos" element={<Documentos />} />
-          <Route path="/videos" element={<Videos />} />
+          <Route path="/content/documentos" element={<Documentos />} />
+          <Route path="/content/midiassociais" element={<MidiasSociais />} />
+          <Route path="/content/videos" element={<Videos />} />
           <Route path="/faq" element={<Faq />} />
-          <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/courses/:courseId" element={<LessonPlayer />} />
-          <Route path="/courses/:courseId/quiz" element={<QuizPlayer />} />
+          <Route path="/content/courses" element={<CoursesPage />} />
+          <Route path="/content/courses/:courseId" element={<LessonPlayer />} />
+          <Route
+            path="/content/courses/:courseId/quiz"
+            element={<QuizPlayer />}
+          />
           <Route path="/enneagram" element={<EnneagramPage />} />
           <Route
             path="/perfil/enneagram-results"
             element={<EnneagramResultsPage />}
           />
+          <Route path="/content/content-gestao" element={<ContentGestao />} />
           {/* Rotas da Área Interna */}
-          <Route path="/ferias" element={<SolicitarFerias />} />
-          <Route path="/empresa" element={<Empresa />} />
+          <Route
+            path="/internal/internal-gestao"
+            element={<InternalGestao />}
+          />
+          <Route path="/internal/ferias" element={<SolicitarFerias />} />
+          <Route path="/internal/empresa" element={<Empresa />} />
           {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
@@ -99,15 +117,19 @@ const AppRouter: React.FC = () => {
           <Route path="/admin/ferias" element={<GestaoFerias />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/dashboards" element={<Dashboards />} />
-          <Route path="/admin/recrutamento" element={<Recruitment />} />
           <Route
             path="/admin/recrutamento/entrevistas"
-            element={<RecruitmentInterviews />}
+            element={<InterviewsCalendar />}
           />
+          <Route path="/admin/recrutamento" element={<Recruitment />} />
           <Route
             path="/admin/checklist-templates"
             element={<ChecklistTemplatesAdmin />}
           />
+          <Route path="/admin/rh-gestao" element={<RhGestao />} />
+          <Route path="/admin/feedbacks" element={<Feedbacks />} />
+          <Route path="/admin/admin-gestao" element={<AdminGestao />} />
+          <Route path="/admin/statistics" element={<AdminStatistics />} />
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
@@ -117,7 +139,7 @@ const AppRouter: React.FC = () => {
 };
 
 const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement
+  document.getElementById("root") as HTMLElement,
 );
 
 root.render(
@@ -125,5 +147,5 @@ root.render(
     <ThemeProvider>
       <AppRouter />
     </ThemeProvider>
-  </React.Fragment>
+  </React.Fragment>,
 );

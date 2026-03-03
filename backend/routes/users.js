@@ -3,12 +3,38 @@ const bcrypt = require("bcryptjs");
 const csv = require("csv-parser");
 const { Readable } = require("stream");
 const router = express.Router();
+const jwt = require("jsonwebtoken");
+
+// Função para capitalizar nomes
+const capitalizeNameWithPrepositions = (name) => {
+  if (!name || typeof name !== "string") return name;
+
+  const prepositions = ["de", "di", "do", "da", "dos", "das", "e", "d'"];
+
+  return name
+    .toLowerCase()
+    .split(" ")
+    .map((word, index) => {
+      // Primeira palavra sempre capitalizada
+      if (index === 0) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }
+      // Preposições sempre em minúsculas
+      if (prepositions.includes(word)) {
+        return word;
+      }
+      // Outras palavras com primeira letra maiúscula
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
+};
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
   const { isAdmin, isLoggedIn, checkRole } = require("../middleware/auth.js");
 
   // --- Rotas de Admin (Listar, Criar, Editar, Excluir) ---
 
+  // LISTAR USUÁRIOS (Admin)
   router.get(
     "/admin",
     isLoggedIn,
@@ -36,7 +62,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         if (search) {
           params.push(`%${search}%`);
           whereClauses.push(
-            `(nome ILIKE $${params.length} OR email ILIKE $${params.length})`
+            `(nome ILIKE $${params.length} OR email ILIKE $${params.length} OR nickname ILIKE $${params.length})`,
           );
         }
 
@@ -45,21 +71,17 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         const countSql = `SELECT COUNT(*) FROM users ${whereString}`;
 
-        // --- CORREÇÃO DA LÓGICA DE ORDENAÇÃO ---
         const allowedSortBy = ["nome", "email", "role", "unidade"];
         let orderByClause = "ORDER BY nome ASC"; // Padrão
 
-        // Verificamos se o sortBy está na nossa lista segura
         if (
           allowedSortBy.includes(sortBy) &&
           ["ASC", "DESC"].includes(sortOrder?.toUpperCase())
         ) {
-          // Como 'sortBy' foi validado, é seguro concatenar
           orderByClause = `ORDER BY "${sortBy}" ${sortOrder.toUpperCase()}`;
         }
-        // --- FIM DA CORREÇÃO ---
 
-        const usersSql = `SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
+        const usersSql = `SELECT id, nome, nickname, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 
@@ -78,17 +100,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         console.error("Erro ao buscar usuários:", err);
         res.status(500).json({ error: "Erro ao buscar usuários" });
       }
-    }
+    },
   );
 
+  // CRIAR USUÁRIO
   router.post(
     "/admin",
     isLoggedIn,
     checkRole(["admin", "rh"]),
     async (req, res) => {
       const {
-        nome,
-        email,
+        nome: nomeOriginal, // CORREÇÃO AQUI
+        email: emailOriginal, // CORREÇÃO AQUI
         password,
         role,
         birth_date,
@@ -98,7 +121,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         unidade_id,
         telefone,
         data_admissao,
+        nickname, // Opcional na criação
       } = req.body;
+
+      const nome = capitalizeNameWithPrepositions(nomeOriginal);
+      const email = emailOriginal ? emailOriginal.toLowerCase().trim() : "";
       const client = await pool.connect();
 
       try {
@@ -124,7 +151,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         const hash = await bcrypt.hash(password, 10);
 
         const userResult = await client.query(
-          "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
+          "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao, nickname) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
           [
             nome,
             email,
@@ -137,7 +164,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             unidade_id || null,
             telefone || null,
             role === "licenciado" ? null : data_admissao,
-          ]
+            nickname || null,
+          ],
         );
         const newUserId = userResult.rows[0].id;
 
@@ -148,7 +176,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           for (let i = 0; i < 10; i++) {
             const eventYear = new Date().getFullYear() + i;
             const eventStartDate = new Date(
-              `${eventYear}-${month}-${day}T11:00:00`
+              `${eventYear}-${month}-${day}T11:00:00`,
             );
             await client.query(
               `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
@@ -161,7 +189,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
                 "Aniversário",
                 "#81e18c",
                 newUserId,
-              ]
+              ],
             );
           }
         }
@@ -170,10 +198,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         logActivity(
           newUserId,
-          re.user.email,
+          req.user.email, // CORREÇÃO AQUI (estava re.user.email)
           "Usuário Criado",
           `Usuário ${email} (${role}) foi criado.`,
-          req.ipAddress
+          req.ipAddress,
         );
 
         res.status(201).json({ success: true, id: newUserId });
@@ -184,82 +212,136 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
-  router.put(
-    "/admin/:id",
-    isLoggedIn,
-    checkRole(["admin", "rh"]),
-    async (req, res) => {
-      const { id } = req.params;
-      const {
-        nome,
-        email,
-        role,
-        birth_date,
-        cargo,
-        setor,
-        unidade,
-        telefone,
-        data_admissao,
-      } = req.body;
-      const client = await pool.connect();
+  // EDITAR USUÁRIO (Admin ou Próprio Usuário com Restrições)
+  router.put("/admin/:id", isLoggedIn, async (req, res) => {
+    const { id } = req.params;
+    const isSelfUpdate = req.user.id == id;
+    const hasPrivilegedRole =
+      req.user.role === "admin" || req.user.role === "rh";
 
-      try {
-        if (role !== "licenciado" && (!unidade || !unidade.trim())) {
-          return res.status(400).json({
-            error: "O campo Unidade é obrigatório para Colaboradores.",
-          });
-        }
+    if (!hasPrivilegedRole && !isSelfUpdate) {
+      return res.status(403).json({
+        error:
+          "Acesso negado. Você não tem permissão para editar este usuário.",
+      });
+    }
 
-        if (role !== "licenciado" && !data_admissao) {
-          return res.status(400).json({
-            error: "A Data de Admissão é obrigatória para Colaboradores.",
-          });
-        }
+    const {
+      nome: nomeOriginal,
+      email: emailOriginal,
+      role,
+      birth_date,
+      cargo,
+      setor,
+      unidade,
+      unidade_id,
+      telefone,
+      data_admissao,
+      nickname,
+    } = req.body;
 
-        await client.query("BEGIN");
+    const client = await pool.connect();
 
-        const finalBirthDate = role !== "licenciado" ? birth_date : null;
+    try {
+      const currentUserResult = await client.query(
+        "SELECT * FROM users WHERE id = $1",
+        [id],
+      );
 
-        await client.query(
-          "UPDATE users SET nome = $1, email = $2, role = $3, birth_date = $4, cargo = $5, setor = $6, unidade = $7, unidade_id = $8, telefone = $9, data_admissao = $10 WHERE id = $11 RETURNING *",
-          [
-            nome,
-            email,
-            role,
-            finalBirthDate,
-            cargo,
-            setor,
-            unidade || null,
-            req.body.unidade_id || null,
-            telefone,
-            role === "licenciado" ? null : data_admissao,
-            id,
-          ]
-        );
+      if (currentUserResult.rowCount === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado." });
+      }
+      const currentUser = currentUserResult.rows[0];
 
-        const updatedUserResult = await client.query(
-          "SELECT id, nome, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, telefone, data_admissao FROM users WHERE id = $1",
-          [id]
-        );
+      let finalNome = currentUser.nome;
+      let finalRole = currentUser.role;
+      let finalEmail = currentUser.email;
+      let finalCargo = currentUser.cargo;
+      let finalSetor = currentUser.setor;
+      let finalUnidade = currentUser.unidade;
+      let finalUnidadeId = currentUser.unidade_id;
+      let finalDataAdmissao = currentUser.data_admissao;
+      let finalBirthDate = currentUser.birth_date;
 
-        if (updatedUserResult.rowCount === 0) {
-          await client.query("ROLLBACK");
-          client.release();
-          return res.status(404).json({ error: "Usuário não encontrado." });
-        }
+      if (hasPrivilegedRole) {
+        finalNome =
+          capitalizeNameWithPrepositions(nomeOriginal) || currentUser.nome;
+        finalRole = role || currentUser.role;
+        finalEmail = emailOriginal
+          ? emailOriginal.toLowerCase().trim()
+          : currentUser.email;
+        finalCargo = cargo;
+        finalSetor = setor;
+        finalUnidade = unidade;
+        finalUnidadeId =
+          unidade_id !== undefined ? unidade_id : currentUser.unidade_id;
+        finalDataAdmissao = data_admissao;
+        finalBirthDate = birth_date;
+      }
 
-        // Apaga eventos de aniversário antigos para recriá-los
+      const finalNickname = nickname ? nickname.trim() : null;
+      const finalTelefone = telefone;
+
+      if (
+        hasPrivilegedRole &&
+        finalRole !== "licenciado" &&
+        (!finalUnidade || !finalUnidade.trim())
+      ) {
+        client.release();
+        return res.status(400).json({
+          error: "O campo Unidade é obrigatório para Colaboradores.",
+        });
+      }
+
+      await client.query("BEGIN");
+
+      await client.query(
+        `UPDATE users SET 
+          nome = $1, 
+          email = $2, 
+          role = $3, 
+          birth_date = $4, 
+          cargo = $5, 
+          setor = $6, 
+          unidade = $7, 
+          unidade_id = $8, 
+          telefone = $9, 
+          data_admissao = $10,
+          nickname = $11 
+        WHERE id = $12`,
+        [
+          finalNome,
+          finalEmail,
+          finalRole,
+          finalBirthDate,
+          finalCargo,
+          finalSetor,
+          finalUnidade,
+          finalUnidadeId || null,
+          finalTelefone,
+          role === "licenciado" ? null : finalDataAdmissao,
+          finalNickname,
+          id,
+        ],
+      );
+
+      const updatedUserResult = await client.query(
+        "SELECT id, nome, nickname, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, unidade_id AS unit_id, telefone, data_admissao FROM users WHERE id = $1",
+        [id],
+      );
+
+      if (hasPrivilegedRole && finalBirthDate !== currentUser.birth_date) {
         await client.query(
           "DELETE FROM events WHERE created_by_user_id = $1 AND category = 'Aniversário'",
-          [id]
+          [id],
         );
 
-        if (role !== "licenciado" && finalBirthDate) {
+        if (finalRole !== "licenciado" && finalBirthDate) {
           const birthDate = new Date(finalBirthDate);
-          const eventTitle = `Aniversário de ${nome}`;
+          const eventTitle = `Aniversário de ${finalNome}`;
 
           for (let i = 0; i < 10; i++) {
             const eventYear = new Date().getFullYear() + i;
@@ -268,13 +350,13 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
                 eventYear,
                 birthDate.getUTCMonth(),
                 birthDate.getUTCDate(),
-                8
-              )
+                8,
+              ),
             );
 
             await client.query(
               `INSERT INTO events (title, description, start_date, end_date, category, color, created_by_user_id) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+               VALUES ($1, $2, $3, $4, $5, $6, $7)`,
               [
                 eventTitle,
                 "Dia de comemorar!",
@@ -283,40 +365,60 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
                 "Aniversário",
                 "#81e18c",
                 id,
-              ]
+              ],
             );
           }
         }
-
-        await client.query("COMMIT");
-
-        logActivity(
-          id,
-          req.user.email,
-          "Usuário Editado",
-          `Dados do usuário ${email} foram atualizados.`,
-          req.ipAddress
-        );
-
-        const updatedUser = updatedUserResult.rows[0];
-        delete updatedUser.password;
-
-        res.json({ success: true, user: updatedUser });
-      } catch (err) {
-        await client.query("ROLLBACK");
-        console.error("Erro ao atualizar usuário:", err);
-        if (err.code === "23505" && err.constraint === "users_email_key") {
-          return res
-            .status(409)
-            .json({ error: "Este e-mail já está em uso por outro usuário." });
-        }
-        res.status(500).json({ error: "Erro no servidor" });
-      } finally {
-        client.release();
       }
-    }
-  );
 
+      await client.query("COMMIT");
+
+      logActivity(
+        id,
+        req.user.email,
+        "Usuário Editado",
+        `Dados do usuário ${finalEmail} foram atualizados.`,
+        req.ipAddress,
+      );
+
+      const updatedUser = updatedUserResult.rows[0];
+      delete updatedUser.password;
+
+      let responsePayload = { success: true, user: updatedUser };
+
+      if (req.user.id == id) {
+        const newToken = jwt.sign(
+          {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            nome: updatedUser.nome,
+            nickname: updatedUser.nickname,
+            avatar_url: updatedUser.avatar_url,
+            data_admissao: updatedUser.data_admissao,
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: "7d" },
+        );
+        responsePayload.token = newToken;
+      }
+
+      res.json(responsePayload);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error("Erro ao atualizar usuário:", err);
+      if (err.code === "23505" && err.constraint === "users_email_key") {
+        return res
+          .status(409)
+          .json({ error: "Este e-mail já está em uso por outro usuário." });
+      }
+      res.status(500).json({ error: "Erro no servidor" });
+    } finally {
+      client.release();
+    }
+  });
+
+  // DELETAR USUÁRIO
   router.delete(
     "/admin/:id",
     isLoggedIn,
@@ -328,7 +430,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         await client.query("BEGIN");
         const userResult = await client.query(
           "SELECT email FROM users WHERE id = $1",
-          [id]
+          [id],
         );
         if (userResult.rowCount === 0) {
           await client.query("ROLLBACK");
@@ -337,7 +439,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         const userEmail = userResult.rows[0].email;
         await client.query(
           "UPDATE activity_logs SET user_id = NULL WHERE user_id = $1",
-          [id]
+          [id],
         );
         await client.query("DELETE FROM users WHERE id = $1", [id]);
         logActivity(
@@ -345,7 +447,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           userEmail,
           "Usuário Excluído",
           `Usuário ${userEmail} (ID: ${id}) foi excluído.`,
-          req.ipAddress
+          req.ipAddress,
         );
         await client.query("COMMIT");
         res.json({ success: true, message: "Usuário excluído com sucesso." });
@@ -358,7 +460,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // --- Rotas Específicas (Bulk Upload, Gestores, Fotos Corporativas) ---
@@ -384,14 +486,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             const { nome, email, password, role } = user;
             if (!nome || !email || !password || !role) {
               errors.push(
-                `Dados incompletos para o e-mail: ${email || "desconhecido"}.`
+                `Dados incompletos para o e-mail: ${email || "desconhecido"}.`,
               );
               continue;
             }
             try {
+              // CORREÇÃO AQUI
+              const emailNormalizado = email.toLowerCase().trim();
+              const nomeCapitalizado = capitalizeNameWithPrepositions(nome);
+
               const existingUser = await pool.query(
                 "SELECT id FROM users WHERE email = $1",
-                [email]
+                [emailNormalizado],
               );
               if (existingUser.rowCount > 0) {
                 errors.push(`E-mail já cadastrado: ${email}.`);
@@ -400,14 +506,14 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
               const hash = await bcrypt.hash(password, 10);
               await pool.query(
                 "INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4)",
-                [nome, email, hash, role]
+                [nomeCapitalizado, emailNormalizado, hash, role],
               );
               logActivity(
                 null,
                 req.user.email,
                 "Usuários Criados em Massa",
-                `Usuário ${email} criado via importação em massa.`,
-                req.ipAddress
+                `Usuário ${emailNormalizado} criado via importação em massa.`,
+                req.ipAddress,
               );
               successCount++;
             } catch (dbError) {
@@ -422,7 +528,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             errors,
           });
         });
-    }
+    },
   );
 
   router.put(
@@ -442,7 +548,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         const userResult = await client.query(
           "SELECT corporate_photo_url FROM users WHERE id = $1",
-          [id]
+          [id],
         );
         const oldPhotoUrl = userResult.rows[0]?.corporate_photo_url;
 
@@ -469,7 +575,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         // Atualiza o URL no banco de dados
         const updateResult = await client.query(
           "UPDATE users SET corporate_photo_url = $1 WHERE id = $2 RETURNING corporate_photo_url",
-          [newPhotoUrl, id]
+          [newPhotoUrl, id],
         );
 
         await client.query("COMMIT");
@@ -484,7 +590,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   router.delete(
@@ -500,7 +606,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         const userResult = await client.query(
           "SELECT corporate_photo_url FROM users WHERE id = $1",
-          [id]
+          [id],
         );
         const oldPhotoUrl = userResult.rows[0]?.corporate_photo_url;
 
@@ -513,7 +619,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         const updateResult = await client.query(
           "UPDATE users SET corporate_photo_url = NULL WHERE id = $1 RETURNING *",
-          [id]
+          [id],
         );
 
         await client.query("COMMIT");
@@ -529,7 +635,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // --- Rotas Públicas ou de Utilizador Logado ---
@@ -537,12 +643,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.get("/internal", isLoggedIn, async (req, res) => {
     try {
       const internalUsersSql = `
-      SELECT id, nome, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, unidade_id, telefone, birth_date, data_admissao 
+      SELECT id, nome, nickname, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, unidade_id, telefone, birth_date, data_admissao 
       FROM users 
       WHERE role IN ('admin', 'rh', 'comercial', 'operacional') 
       ORDER BY nome ASC
     `;
-      // include unidade_id for clients that use id-based unit linking
 
       const result = await pool.query(internalUsersSql);
       res.json(result.rows);
@@ -566,7 +671,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const newHash = await bcrypt.hash(password, 10);
       await pool.query(
         "UPDATE users SET password = $1, must_change_password = FALSE WHERE id = $2",
-        [newHash, userId]
+        [newHash, userId],
       );
 
       logActivity(
@@ -574,7 +679,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         req.user.email,
         "Alteração de Senha Forçada",
         "Senha alterada no primeiro acesso.",
-        req.ipAddress
+        req.ipAddress,
       );
       res.json({ success: true, message: "Senha alterada com sucesso!" });
     } catch (err) {
@@ -594,7 +699,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       try {
         const userResult = await pool.query(
           "SELECT avatar_url FROM users WHERE id = $1",
-          [id]
+          [id],
         );
         const oldAvatarUrl = userResult.rows[0]?.avatar_url;
         if (oldAvatarUrl) {
@@ -611,18 +716,31 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         });
         const newAvatarUrl = uploadResult.secure_url;
         const updateResult = await pool.query(
-          "UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url",
-          [newAvatarUrl, id]
+          "UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING id, nome, nickname, email, role, avatar_url, cargo, setor, unidade, unidade_id AS unit_id, telefone",
+          [newAvatarUrl, id],
         );
-        res.json({
-          success: true,
-          avatarUrl: updateResult.rows[0].avatar_url,
-        });
+
+        const updatedUser = updateResult.rows[0];
+
+        const newToken = jwt.sign(
+          {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            nome: updatedUser.nome,
+            nickname: updatedUser.nickname,
+            avatar_url: updatedUser.avatar_url,
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: "7d" },
+        );
+
+        res.json({ success: true, user: updatedUser, token: newToken });
       } catch (err) {
         console.error("Erro no upload de avatar:", err);
         res.status(500).json({ error: "Erro no servidor durante o upload." });
       }
-    }
+    },
   );
 
   router.delete("/:id/avatar", isLoggedIn, async (req, res) => {
@@ -630,7 +748,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       const userResult = await pool.query(
         "SELECT avatar_url FROM users WHERE id = $1",
-        [id]
+        [id],
       );
       const oldAvatarUrl = userResult.rows[0]?.avatar_url;
       if (oldAvatarUrl) {
@@ -638,13 +756,23 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         await cloudinary.uploader.destroy(publicId);
       }
       const updateResult = await pool.query(
-        "UPDATE users SET avatar_url = NULL WHERE id = $1 RETURNING *",
-        [id]
+        "UPDATE users SET avatar_url = NULL WHERE id = $1 RETURNING id, nome, nickname, email, role, avatar_url, cargo, setor, unidade, telefone",
+        [id],
       );
       const updatedUser = updateResult.rows[0];
-      delete updatedUser.password;
-      delete updatedUser.reset_token;
-      delete updatedUser.reset_token_expires;
+      const jwt = require("jsonwebtoken");
+      const newToken = jwt.sign(
+        {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          nome: updatedUser.nome,
+          nickname: updatedUser.nickname,
+          avatar_url: null,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" },
+      );
 
       res.json({ success: true, user: updatedUser });
     } catch (err) {
@@ -659,7 +787,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       const userResult = await pool.query(
         "SELECT password FROM users WHERE id = $1",
-        [id]
+        [id],
       );
       if (userResult.rowCount === 0)
         return res.status(404).json({ error: "Usuário não encontrado." });
@@ -677,7 +805,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         null,
         "Alteração de Senha",
         "Senha alterada com sucesso.",
-        req.ipAddress
+        req.ipAddress,
       );
       res.json({ success: true, message: "Senha alterada com sucesso." });
     } catch (err) {

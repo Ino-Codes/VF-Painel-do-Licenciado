@@ -4,7 +4,7 @@ import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import FileModal from "../../components/forms/FileModal.tsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
@@ -23,9 +23,22 @@ type GroupedFiles = {
   [folderName: string]: FileData[];
 };
 
+const COMPANY_NAMES = {
+  "valor-fiscal": "Valor Fiscal",
+  "valor-banking": "Valor Banking",
+  "valor-business": "Valor Business",
+  "valor-corporate": "Valor Corp",
+};
+
 const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  const [searchParams] = useSearchParams();
+
+  const companySlug =
+    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
+  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
 
   const [groupedFiles, setGroupedFiles] = useState<GroupedFiles>({});
   const [categories, setCategories] = useState<string[]>([]);
@@ -50,40 +63,64 @@ const Documentos: React.FC = () => {
   const fetchCategories = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get("/api/files/categories");
+      const res = await api.get("/api/files/categories", {
+        params: { company: companySlug },
+      });
       setCategories(res.data);
+
+      // Se não houver categoria selecionada e houver resultados, seleciona a primeira.
       if (!category && res.data.length > 0) {
         setCategory(res.data[0]);
-      } else if (res.data.length === 0) {
+      }
+      // Se a categoria que estava ativa NÃO existe na nova empresa, muda para a primeira disponível.
+      else if (category && !res.data.includes(category)) {
+        setCategory(res.data[0] || "");
+      }
+      // Se não vier nada, limpa.
+      else if (res.data.length === 0) {
         setCategory("");
       }
     } catch (err) {
       toast.error("Erro ao buscar categorias.");
     }
-  }, [user, category]);
+  }, [user, category, companySlug]);
+
+  const fetchFiles = useCallback(async () => {
+    if (!user || (!category && !searchQuery)) {
+      setGroupedFiles({});
+      return;
+    }
+
+    try {
+      const params: any = {
+        category,
+        company: companySlug,
+        _t: new Date().getTime(), // Evita cache
+      };
+
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+
+      const res = await api.get("/api/files", {
+        params,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
+      setGroupedFiles(res.data);
+    } catch (err) {
+      toast.error("Erro ao buscar arquivos.");
+    }
+  }, [user, category, searchQuery, companySlug]);
 
   useEffect(() => {
     if (user) {
       fetchCategories();
     }
-  }, [user, fetchCategories]);
-
-  const fetchFiles = useCallback(async () => {
-    if (!user || !category) {
-      setGroupedFiles({});
-      return;
-    }
-    try {
-      const params: any = { category };
-      if (searchQuery) {
-        params.search = searchQuery;
-      }
-      const res = await api.get("/api/files", { params });
-      setGroupedFiles(res.data);
-    } catch (err) {
-      toast.error("Erro ao buscar arquivos.");
-    }
-  }, [user, category, searchQuery]);
+  }, [user, fetchCategories, companySlug]);
 
   useEffect(() => {
     fetchFiles();
@@ -92,27 +129,22 @@ const Documentos: React.FC = () => {
   const handleDownload = async (fileId: number, originalname: string) => {
     toast.loading("Iniciando download...");
     try {
-      // 1. Pede ao backend para gerar uma URL de download segura
       const response = await api.get(`/api/files/download/${fileId}`);
       const { downloadUrl } = response.data;
 
-      // Detecta se é um dispositivo móvel
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // Solução para Mobile: Cria um link e simula o clique
         const link = document.createElement("a");
         link.href = downloadUrl;
-        link.setAttribute("download", originalname); // Força o download com o nome original
+        link.setAttribute("download", originalname);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         toast.dismiss();
         toast.success("Download iniciado!");
       } else {
-        // Solução para Desktop (comportamento original mantido)
         toast.dismiss();
-        // Abre a URL em uma nova aba. O navegador cuidará do download.
         window.open(downloadUrl, "_blank");
       }
     } catch (err) {
@@ -181,9 +213,12 @@ const Documentos: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className="content-area document-center">
+      <div className={`content-area document-center company-${companySlug}`}>
         <div className="document-header">
-          <h2>Central de Documentos</h2>
+          <div>
+            <h2 className="content-title">Central de Documentos</h2>
+            <span className="content-subtitle">{companyName}</span>
+          </div>
           {user?.role === "admin" && (
             <button className="form-button" onClick={openModalForCreate}>
               + Adicionar Arquivo
@@ -272,7 +307,7 @@ const Documentos: React.FC = () => {
             <EmptyState
               imageKey="documentos"
               title="Nenhum Documento Encontrado"
-              message="Estamos incluindo documentos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
+              message="Estamos selecionando e incluindo novos documentos para facilitar sua rotina. Se não encontrar o que busca agora, dê uma passadinha aqui mais tarde!"
             />
           )}
         </div>

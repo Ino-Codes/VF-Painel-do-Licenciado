@@ -4,10 +4,12 @@ import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import VideoModal from "../../components/forms/VideoModal.tsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom"; // Importado useSearchParams
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
+import { FiTrash2, FiEdit } from "react-icons/fi";
+import { CompanySlug } from "../../types.ts"; // Certifique-se de que types existe
 
 interface VideoData {
   id: number;
@@ -24,7 +26,7 @@ const getYoutubeEmbedUrl = (url: string): string => {
   let videoId = null;
 
   const youtubeRegex =
-    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?#]+)/; // Parece confuso mas serve para refatorar a URL do vídeo e deixar no modelo embed correto
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?#]+)/;
   const match = url.match(youtubeRegex);
 
   if (match && match[1]) {
@@ -40,9 +42,22 @@ const getYoutubeEmbedUrl = (url: string): string => {
   return "";
 };
 
+const COMPANY_NAMES = {
+  "valor-fiscal": "Valor Fiscal",
+  "valor-banking": "Valor Banking",
+  "valor-business": "Valor Business",
+  "valor-corporate": "Valor Corp",
+};
+
 const Videos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  // 1. Captura slug da URL
+  const [searchParams] = useSearchParams();
+  const companySlug =
+    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
+  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
 
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -55,7 +70,7 @@ const Videos: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Partial<VideoData> | null>(
-    null
+    null,
   );
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -65,13 +80,14 @@ const Videos: React.FC = () => {
     if (!user) return;
     try {
       const res = await api.get("/api/videos/categories", {
-        params: { role: user.role },
+        // Envia a empresa para filtrar categorias
+        params: { role: user.role, company: companySlug },
       });
       setCategories(res.data);
     } catch (err) {
       toast.error("Erro ao buscar categorias de vídeo.");
     }
-  }, [user]);
+  }, [user, companySlug]);
 
   const fetchVideos = useCallback(
     async (page: number) => {
@@ -81,14 +97,30 @@ const Videos: React.FC = () => {
       if (page > 1) setIsLoadingMore(true);
 
       try {
-        const params: any = { role: user.role, page, limit: 4 };
+        const params: any = {
+          role: user.role,
+          page,
+          limit: 4,
+          company: companySlug, // Filtro de empresa
+          _t: new Date().getTime(), // Evita cache (304)
+        };
+
         if (selectedCategory) {
           params.category = selectedCategory;
         }
-        const res = await api.get("/api/videos", { params });
+
+        // Headers anti-cache
+        const res = await api.get("/api/videos", {
+          params,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
 
         setVideos((prev) =>
-          page === 1 ? res.data.videos : [...prev, ...res.data.videos]
+          page === 1 ? res.data.videos : [...prev, ...res.data.videos],
         );
         setTotalPages(res.data.totalPages);
       } catch (err) {
@@ -98,19 +130,20 @@ const Videos: React.FC = () => {
         setIsLoadingMore(false);
       }
     },
-    [user, selectedCategory]
+    [user, selectedCategory, companySlug],
   );
 
   useEffect(() => {
     if (user) {
       fetchCategories();
     }
-  }, [user, fetchCategories]);
+  }, [user, fetchCategories]); // fetchCategories depende de companySlug
 
   useEffect(() => {
     if (user) {
       if (currentPage === 1) {
-        setVideos([]);
+        // Limpa lista ao trocar de filtro
+        // setVideos([]); // Opcional, mas ajuda visualmente
       }
       fetchVideos(currentPage);
     }
@@ -118,7 +151,7 @@ const Videos: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory]);
+  }, [selectedCategory, companySlug]); // Reseta página ao trocar de empresa
 
   const handleLoadMore = () => {
     if (currentPage < totalPages) {
@@ -160,7 +193,7 @@ const Videos: React.FC = () => {
   const handleSuccess = () => {
     setIsModalOpen(false);
     setCurrentPage(1);
-    if (currentPage === 1) fetchVideos(1);
+    fetchVideos(1); // Recarrega sempre a página 1 ao salvar
     fetchCategories();
   };
 
@@ -170,11 +203,19 @@ const Videos: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className="content-area document-center">
+
+      <div className={`content-area document-center company-${companySlug}`}>
         <div className="document-header">
-          <h2>Vídeos</h2>
+          <div>
+            <h2 className="content-title">Vídeos</h2>
+            <span className="content-subtitle">{companyName}</span>
+          </div>
+
           {user.role === "admin" && (
-            <button className="form-button" onClick={openModalForCreate}>
+            <button
+              className="form-button"
+              onClick={() => setIsModalOpen(true)}
+            >
               + Adicionar Vídeo
             </button>
           )}
@@ -202,51 +243,49 @@ const Videos: React.FC = () => {
           <div className="tela-loading">Carregando vídeos...</div>
         ) : (
           <>
-            <div>
-              {videos.length > 0 ? (
-                videos.map((video) => (
-                  <div className="video-list">
-                    <div key={video.id} className="video-card">
-                      <div className="video-embed">
-                        <iframe
-                          src={getYoutubeEmbedUrl(video.youtube_url)}
-                          title={video.title}
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        ></iframe>
-                      </div>
-                      <div className="video-info">
-                        <h3>{video.title}</h3>
-                        <p>{video.description}</p>
-                        {user.role === "admin" && (
-                          <div className="video-actions">
-                            <button
-                              className="edit-button"
-                              onClick={() => openModalForEdit(video)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              className="delete-button"
-                              onClick={() => handleDeleteClick(video.id)}
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        )}
-                      </div>
+            {videos.length > 0 ? (
+              <div className="video-list">
+                {videos.map((video) => (
+                  <div key={video.id} className="video-card">
+                    <div className="video-embed">
+                      <iframe
+                        src={getYoutubeEmbedUrl(video.youtube_url)}
+                        title={video.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                    <div className="video-info">
+                      <h3>{video.title}</h3>
+                      <p>{video.description}</p>
+                      {user.role === "admin" && (
+                        <div className="video-actions">
+                          <button
+                            className="form-icon-edit"
+                            onClick={() => openModalForEdit(video)}
+                          >
+                            <FiEdit />
+                          </button>
+                          <button
+                            className="form-icon-delete"
+                            onClick={() => handleDeleteClick(video.id)}
+                          >
+                            <FiTrash2 />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))
-              ) : (
-                <EmptyState
-                  imageKey="video"
-                  title="Nenhum Vídeo Encontrado"
-                  message="Estamos incluindo vídeos neste módulo do painel. Caso não tenha encontrado resultados para sua busca, tente novamente mais tarde."
-                ></EmptyState>
-              )}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                imageKey="video"
+                title="Nenhum Vídeo Encontrado"
+                message={`Estamos preparando conteúdos em vídeo incríveis para a ${companyName}. Fique de olho, as novidades chegam em breve!`}
+              ></EmptyState>
+            )}
 
             <div className="load-more-container">
               {currentPage < totalPages && (
@@ -264,7 +303,7 @@ const Videos: React.FC = () => {
       </div>
       {isModalOpen && (
         <VideoModal
-          videoToEdit={editingVideo}
+          videoToEdit={editingVideo as VideoData}
           onClose={() => setIsModalOpen(false)}
           onSuccess={handleSuccess}
           categories={categories}

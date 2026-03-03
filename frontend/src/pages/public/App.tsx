@@ -4,13 +4,13 @@ import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import ForcePasswordResetModal from "../../components/ui/ForcePasswordResetModal.tsx";
 import Logo from "../../img/logo-clara.png";
+import { toast } from "react-hot-toast";
 
 const App: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false);
   const [emailRecuperacao, setEmailRecuperacao] = useState("");
-  const [loginError, setLoginError] = useState("");
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -21,7 +21,6 @@ const App: React.FC = () => {
     e.preventDefault();
     setIsLoading(true); // Para acompanhar o processo de validação dos dados e dar retorno visual ao usuário
     try {
-      setLoginError("");
       const res = await api.post("/api/auth/login", { email, password });
       const { user, token } = res.data;
 
@@ -33,7 +32,7 @@ const App: React.FC = () => {
         navigate("/home"); // Se não, vai para o home
       }
     } catch (err) {
-      setLoginError("Revise os dados de login e tente novamente.");
+      toast.error("Revise os dados de login e tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -42,11 +41,10 @@ const App: React.FC = () => {
   const handleRecuperarSenha = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailRecuperacao) {
-      setLoginError("Por favor, insira um e-mail.");
+      toast.error("Revise os dados de login e tente novamente.");
       return;
     }
     try {
-      setLoginError("");
       const res = await api.post("/api/auth/solicitar-redefinicao", {
         email: emailRecuperacao,
       });
@@ -60,14 +58,12 @@ const App: React.FC = () => {
   const toggleRecuperacao = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     setMostrarRecuperacao(true);
-    setLoginError("");
   };
 
   const toggleLogin = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     setMostrarRecuperacao(false);
     setRecoveryMessage("");
-    setLoginError("");
   };
 
   const onPasswordResetSuccess = () => {
@@ -83,12 +79,8 @@ const App: React.FC = () => {
         </div>
         <div className="p-1">
           <h2 className="titulo-login">
-            {!mostrarRecuperacao ? "Painel Valor Fiscal" : "Recuperar Senha"}
+            {!mostrarRecuperacao ? "Painel da Valor Fiscal" : "Recuperar Senha"}
           </h2>
-
-          {loginError && (
-            <div className="login-error-message">{loginError}</div>
-          )}
 
           {!mostrarRecuperacao ? (
             <form onSubmit={handleLogin}>
@@ -99,7 +91,6 @@ const App: React.FC = () => {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (loginError) setLoginError("");
                 }}
                 required
               />
@@ -110,7 +101,6 @@ const App: React.FC = () => {
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  if (loginError) setLoginError("");
                 }}
                 required
               />
@@ -123,7 +113,7 @@ const App: React.FC = () => {
               </button>
               <p className="esqueceu-senha">
                 <a href="#" onClick={toggleRecuperacao}>
-                  Esqueceu sua senha?
+                  Esqueci minha senha
                 </a>
               </p>
             </form>
@@ -138,7 +128,7 @@ const App: React.FC = () => {
                       margin: "0 auto 20px",
                     }}
                   >
-                    Digite seu e-mail para receber o link de redefinição.
+                    Informe seu e-mail para receber o link de redefinição.
                   </p>
                   <input
                     type="email"

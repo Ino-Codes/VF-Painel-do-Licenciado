@@ -1,5 +1,5 @@
 import React from "react";
-import { useThemeableAsset } from "../../utils/assets.ts";
+import { getIconByKey } from "../../utils/assets.ts";
 
 interface EmptyStateProps {
   imageKey: "faq" | "logo";
@@ -12,13 +12,24 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   message,
 }) => {
-  const imageUrl = useThemeableAsset(imageKey);
+  // Recupera o componente do ícone
+  const IconComponent = getIconByKey(imageKey);
 
   return (
     <div className="empty-state-container">
-      <img src={imageUrl} alt={title} className="empty-state-image" />
-      <h3 className="empty-state-title">{title}</h3>
-      <p className="empty-state-message">{message}</p>
+      {IconComponent ? (
+        <IconComponent
+          size={120} // Tamanho grande para substituir a imagem
+          className="icon"
+        />
+      ) : (
+        // Fallback caso a chave não exista
+        <div style={{ height: 120, marginBottom: 20 }}>-</div>
+      )}
+
+      <h3>{title}</h3>
+
+      <p>{message}</p>
     </div>
   );
 };

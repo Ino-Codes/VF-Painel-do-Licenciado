@@ -94,7 +94,7 @@ const ActivityLogs: React.FC = () => {
             <thead>
               <tr>
                 <th>Data</th>
-                <th>Usuário</th>
+                <th>Operador</th>
                 <th>Ação</th>
                 <th>Detalhes</th>
                 <th>Endereço IP</th>

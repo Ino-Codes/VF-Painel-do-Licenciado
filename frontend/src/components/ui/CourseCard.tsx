@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface CourseData {
   id: number;
@@ -12,15 +12,25 @@ interface CourseData {
 
 interface CourseCardProps {
   course: CourseData;
+  companySlug?: string;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ course, companySlug }) => {
+  const navigate = useNavigate();
+
   const isCompleted =
     course.total_lessons > 0 &&
     course.completed_lessons >= course.total_lessons;
 
+  const handleClick = () => {
+    const url = `/content/courses/${course.id}${
+      companySlug ? `?company=${companySlug}` : ""
+    }`;
+    navigate(url);
+  };
+
   return (
-    <Link to={`/courses/${course.id}`} className="course-card-link">
+    <div onClick={handleClick} className="course-card-link">
       <div className="course-card">
         <div className="course-card-thumbnail">
           <img
@@ -41,7 +51,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           <p>{course.description}</p>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

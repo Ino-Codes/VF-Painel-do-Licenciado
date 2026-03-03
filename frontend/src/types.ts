@@ -1,3 +1,9 @@
+export type CompanySlug =
+  | "valor-fiscal"
+  | "valor-banking"
+  | "valor-business"
+  | "valor-corporate";
+
 export interface Lesson {
   id: number;
   title: string;
@@ -15,11 +21,21 @@ export interface Module {
 export interface Course {
   id: number;
   title: string;
+  company_slug: CompanySlug;
   modules: Module[];
+}
+
+export interface Company {
+  id: number;
+  name: string;
+  slug: CompanySlug;
+  active: boolean;
+  primary_color?: string;
 }
 
 export interface Unit {
   id: number;
   name: string;
+  company_slug: CompanySlug;
   created_at?: string;
 }

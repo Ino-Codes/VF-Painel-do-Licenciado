@@ -72,6 +72,10 @@
   margin-top: 15px;
 }
 
+.quiz-option-label input[type="radio"]:checked {
+  accent-color: var(--action-edit);
+}
+
 .quiz-results {
   text-align: center;
 }

@@ -45,9 +45,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
   const customSelectStyles: StylesConfig<UserOption, true> = useMemo(() => {
     const getCssVar = (varName: string) =>
-      getComputedStyle(document.documentElement)
-        .getPropertyValue(varName)
-        .trim();
+      getComputedStyle(document.body).getPropertyValue(varName).trim();
 
     return {
       control: (provided) => ({
@@ -60,37 +58,52 @@ const EventModal: React.FC<EventModalProps> = ({
       menu: (provided) => ({
         ...provided,
         backgroundColor: getCssVar("--bg-secondary"),
+        zIndex: 9999,
       }),
       option: (provided, state) => ({
         ...provided,
         backgroundColor: state.isFocused
-          ? getCssVar("--border-color")
-          : getCssVar("--bg-secondary"),
+          ? getCssVar("--border-color") // Cor ao passar o mouse
+          : getCssVar("--bg-secondary"), // Cor de fundo padrão
         color: getCssVar("--text-primary"),
+        cursor: "pointer",
         "&:active": { backgroundColor: getCssVar("--border-strong") },
       }),
       input: (provided) => ({
         ...provided,
         color: getCssVar("--text-primary"),
       }),
+      singleValue: (provided) => ({
+        ...provided,
+        color: getCssVar("--text-primary"),
+      }),
       multiValue: (provided) => ({
         ...provided,
         backgroundColor: getCssVar("--bg-secondary"),
+        border: `1px solid ${getCssVar("--border-strong")}`,
       }),
       multiValueLabel: (provided) => ({
         ...provided,
         color: getCssVar("--text-primary"),
+      }),
+      multiValueRemove: (provided) => ({
+        ...provided,
+        color: getCssVar("--text-secondary"),
+        ":hover": {
+          backgroundColor: getCssVar("--border-strong"),
+          color: "red",
+        },
       }),
       placeholder: (provided) => ({
         ...provided,
         color: getCssVar("--text-secondary"),
       }),
     };
-  }, [theme]);
+  }, [theme]); // Recalcula quando o tema muda
 
   useEffect(() => {
     api.get("/api/admin/events/users-for-notification").then((res) => {
-      const userOptions = res.data.map((user) => ({
+      const userOptions = res.data.map((user: any) => ({
         value: user.id,
         label: user.nome,
       }));
@@ -123,7 +136,7 @@ const EventModal: React.FC<EventModalProps> = ({
           .then((res) => {
             const notifiedIds = res.data;
             const preSelected = allUsers.filter((user) =>
-              notifiedIds.includes(user.value)
+              notifiedIds.includes(user.value),
             );
             setSelectedUsers(preSelected);
           });

@@ -1,19 +1,38 @@
 const express = require("express");
 const router = express.Router();
-
 const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool) {
+  // Helper para buscar ID da empresa
+  const getCompanyId = async (slug) => {
+    if (!slug || slug === "undefined") return 1;
+    try {
+      const result = await pool.query(
+        "SELECT id FROM companies WHERE slug = $1",
+        [slug]
+      );
+      return result.rows.length > 0 ? result.rows[0].id : 1;
+    } catch (error) {
+      return 1;
+    }
+  };
+
   // Rota de busca dos vídeos
   router.get("/", isLoggedIn, async (req, res) => {
-    const { category, page = 1, limit = 4 } = req.query;
+    const { company, category, page = 1, limit = 4 } = req.query;
     const { role } = req.user;
 
     try {
-      const offset = (parseInt(page) - 1) * parseInt(limit);
-      let params = [];
-      let whereClauses = [];
+      // 1. Resolve ID da empresa
+      const companyId = await getCompanyId(company);
 
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      // O primeiro parâmetro será sempre o companyId
+      let params = [companyId];
+      let whereClauses = ["company_id = $1"]; // Filtro base
+
+      // Filtros de Role
       if (role === "licenciado") {
         whereClauses.push(
           "(visibility = 'todos' OR visibility = 'licenciados')"
@@ -22,18 +41,21 @@ module.exports = function (pool) {
         whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
       }
 
+      // Filtro de Categoria
       if (category) {
         params.push(category);
-        whereClauses.push(`category = $${params.length}`);
+        whereClauses.push(`category = $${params.length}`); // $2 se category existir
       }
 
-      const whereString =
-        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
 
       const countSql = `SELECT COUNT(*) FROM videos ${whereString}`;
-      const videosSql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC LIMIT $${
-        params.length + 1
-      } OFFSET $${params.length + 2}`;
+
+      // Paginação usa os próximos índices disponíveis
+      const limitIndex = params.length + 1;
+      const offsetIndex = params.length + 2;
+
+      const videosSql = `SELECT * FROM videos ${whereString} ORDER BY created_at DESC LIMIT $${limitIndex} OFFSET $${offsetIndex}`;
 
       const pagedParams = [...params, limit, offset];
 
@@ -57,25 +79,26 @@ module.exports = function (pool) {
   // Rota de busca das categorias
   router.get("/categories", isLoggedIn, async (req, res) => {
     const { role } = req.user;
+    const { company } = req.query; // Recebe company
+
     try {
+      const companyId = await getCompanyId(company);
+
+      // Base da query com filtro de empresa
       let baseSql =
-        "SELECT DISTINCT category FROM videos WHERE category IS NOT NULL AND category != ''";
+        "SELECT DISTINCT category FROM videos WHERE company_id = $1 AND category IS NOT NULL AND category != ''";
       let whereClause = "";
 
       if (role === "licenciado") {
         whereClause =
           "AND (visibility = 'todos' OR visibility = 'licenciados')";
-      } else {
+      } else if (role !== "admin") {
         whereClause = "AND (visibility = 'todos' OR visibility = 'internos')";
-      }
-
-      if (role === "admin") {
-        whereClause = "";
       }
 
       const finalSql = `${baseSql} ${whereClause} ORDER BY category ASC`;
 
-      const result = await pool.query(finalSql);
+      const result = await pool.query(finalSql, [companyId]);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
       console.error("Erro ao buscar categorias de vídeos:", err);
@@ -85,11 +108,14 @@ module.exports = function (pool) {
 
   // Rota de adição
   router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
-    const { title, description, youtube_url, visibility, category } = req.body;
+    const { title, description, youtube_url, visibility, category, company } =
+      req.body;
     try {
+      const companyId = await getCompanyId(company);
+
       const result = await pool.query(
-        "INSERT INTO videos (title, description, youtube_url, visibility, category) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        [title, description, youtube_url, visibility, category]
+        "INSERT INTO videos (title, description, youtube_url, visibility, category, company_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+        [title, description, youtube_url, visibility, category, companyId]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -98,7 +124,7 @@ module.exports = function (pool) {
     }
   });
 
-  // Rota de edição
+  // Rota de edição (Mantida igual - não altera empresa na edição)
   router.put(
     "/:id",
     isLoggedIn,
@@ -122,7 +148,7 @@ module.exports = function (pool) {
     }
   );
 
-  // Rota de exclusão
+  // Rota de exclusão (Mantida igual)
   router.delete(
     "/:id",
     isLoggedIn,

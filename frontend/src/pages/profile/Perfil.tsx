@@ -12,6 +12,8 @@ import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import AvatarModal from "../../components/forms/AvatarModal.tsx";
 import { HiOutlineUserCircle } from "react-icons/hi";
+import { FiEdit, FiEye, FiCamera } from "react-icons/fi";
+import { PiPencilSimpleLineBold } from "react-icons/pi";
 
 interface CertificateData {
   certificate_id: number;
@@ -29,26 +31,11 @@ interface User {
   cargo?: string;
   setor?: string;
   unit_id?: number;
-  unidade?: string; // legacy support
+  unidade_id?: number;
+  unidade?: string;
   telefone?: string;
+  data_admissao?: string;
 }
-
-const EditIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 20h9"></path>
-    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-  </svg>
-);
 
 const formatarTelefone = (telefone?: string | null): string => {
   if (!telefone) {
@@ -63,13 +50,18 @@ const formatarTelefone = (telefone?: string | null): string => {
 
   return `(${digitos.substring(0, 2)}) ${digitos.substring(
     2,
-    7
+    7,
   )}-${digitos.substring(7)}`;
 };
 
 const Perfil: React.FC = () => {
-  const { user, login, logout, loading } = useAuth();
-  const { units, getUnitNameById, getUnitIdByName } = useUnits();
+  const { user, login, logout, loading } = useAuth() as {
+    user: User | null;
+    login: (u: any, t?: string) => void;
+    logout: () => void;
+    loading: boolean;
+  };
+  const { getUnitNameById, getUnitIdByName } = useUnits();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"info" | "certificates">("info");
@@ -77,7 +69,6 @@ const Perfil: React.FC = () => {
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   const [nome, setNome] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -137,32 +128,8 @@ const Perfil: React.FC = () => {
     }
   }, [activeTab, fetchCertificates]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile || !user) return;
-    const formData = new FormData();
-    formData.append("avatar", selectedFile);
-    try {
-      const res = await api.post(`/api/users/${user.id}/avatar`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const updatedUser = { ...user, avatar_url: res.data.avatarUrl };
-      login(updatedUser);
-      toast.success("Foto de perfil atualizada com sucesso!");
-      setSelectedFile(null);
-    } catch (err) {
-      toast.error("Erro ao atualizar a foto.");
-      console.error(err);
-    }
-  };
-
   const handleSaveChanges = async () => {
-    if (!user) return; //
+    if (!user) return;
 
     const nomeAtualizado = user.role === "licenciado" ? nome : editForm.nome;
 
@@ -171,30 +138,33 @@ const Perfil: React.FC = () => {
       return;
     }
 
-    const payload = { ...user };
+    const payload: any = {
+      ...user,
+      nome: nomeAtualizado,
+      data_admissao: user.data_admissao,
+    };
 
-    const telefoneLimpo = editForm.telefone.replace(/\D/g, "");
-    const unitId = getUnitIdByName(editForm.unidade);
+    if (user.role !== "licenciado") {
+      const unitId = getUnitIdByName(editForm.unidade);
 
-    if (user.role === "licenciado") {
-      payload.nome = nomeAtualizado;
-    } else {
-      payload.nome = nomeAtualizado;
       payload.cargo = editForm.cargo;
       payload.setor = editForm.setor;
-      payload.unit_id = unitId;
-      payload.unidade = editForm.unidade; // for backward compatibility
-      payload.telefone = telefoneLimpo;
+      payload.unidade = editForm.unidade;
+      payload.unidade_id = unitId;
+      payload.telefone = editForm.telefone.replace(/\D/g, "");
     }
 
     try {
       const res = await api.put(`/api/users/admin/${user.id}`, payload);
-      login(res.data.user);
+
+      login(res.data.user, res.data.token);
 
       toast.success("Perfil atualizado com sucesso!");
       setIsEditing(false);
-    } catch (err) {
-      toast.error("Erro ao salvar as alterações.");
+    } catch (err: any) {
+      const msg = err.response?.data?.error || "Erro ao salvar as alterações.";
+      console.error("Erro 400 Detalhado:", msg);
+      toast.error(msg);
     }
   };
 
@@ -227,15 +197,13 @@ const Perfil: React.FC = () => {
     }
   };
 
-  const handleRemoveAvatarClick = () => {
-    setIsConfirmModalOpen(true);
-  };
-
   const handleConfirmRemoveAvatar = async () => {
     if (!user) return;
     try {
       const res = await api.delete(`/api/users/${user.id}/avatar`);
-      login(res.data.user);
+
+      login(res.data.user, res.data.token);
+
       toast.success("Foto de perfil removida com sucesso!");
     } catch (err) {
       toast.error("Erro ao remover a foto.");
@@ -247,16 +215,15 @@ const Perfil: React.FC = () => {
 
   const handleViewCertificate = async (
     courseId: number,
-    courseTitle: string
+    courseTitle: string,
   ) => {
     toast.loading("Preparando o seu certificado...");
     try {
       const response = await api.get(
         `/api/admin/courses/${courseId}/certificate`,
         {
-          ...getAuthHeaders(),
           responseType: "blob",
-        }
+        },
       );
       toast.dismiss();
 
@@ -295,29 +262,31 @@ const Perfil: React.FC = () => {
                 className="profile-avatar-main"
               />
             ) : (
-              <HiOutlineUserCircle className="profile-user-icon" />
+              <HiOutlineUserCircle className="profile-avatar-main" />
             )}
             <button
-              className="edit-profile-button"
+              className="form-icon-photo camera"
               onClick={() => setIsAvatarModalOpen(true)}
             >
-              <EditIcon />
+              <FiCamera />
             </button>
           </div>
 
-          <div className="profile-header-info">
-            <h2>{user.nome}</h2>
-            <p>{user.email}</p>
+          <div className="profile-actions">
+            <div className="profile-header-info">
+              <h2>{user.nome}</h2>
+              <p>{user.email}</p>
+            </div>
+            <button
+              className="botao-logout"
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+            >
+              Desconectar
+            </button>
           </div>
-          <button
-            className="botao-logout"
-            onClick={() => {
-              logout();
-              navigate("/");
-            }}
-          >
-            Desconectar
-          </button>
         </div>
 
         <div className="tabs">
@@ -339,36 +308,42 @@ const Perfil: React.FC = () => {
 
         {activeTab === "info" && (
           <div className="profile-tab-content">
-            {user.role !== "licenciado" && (
-              <div className="profile-section">
-                <h3>
-                  Informações do Perfil
+            <div className="profile-section">
+              <h3>
+                Informações do Perfil
+                {!isEditing && (
                   <button
-                    className="edit-profile-button"
+                    className="form-icon-edit"
                     onClick={() => setIsEditing(true)}
                   >
-                    <EditIcon /> Editar
+                    <FiEdit /> Editar
                   </button>
-                </h3>
+                )}
+              </h3>
 
-                {!isEditing && (
-                  <div className="profile-info-grid">
-                    <div className="info-item">
-                      <span>Nome</span>
-                      <p>{user.nome}</p>
-                    </div>
-                    <div className="info-item">
-                      <span>Email</span>
-                      <p>{user.email}</p>
-                    </div>
+              {!isEditing && (
+                <div className="profile-info-grid">
+                  <div className="info-item">
+                    <span>Nome</span>
+                    <p>{user.nome}</p>
+                  </div>
+                  <div className="info-item">
+                    <span>Email</span>
+                    <p>{user.email}</p>
+                  </div>
+                  {user.role !== "licenciado" && (
                     <div className="info-item">
                       <span>Cargo</span>
                       <p>{user.cargo || "Não informado"}</p>
                     </div>
+                  )}
+                  {user.role !== "licenciado" && (
                     <div className="info-item">
                       <span>Setor</span>
                       <p>{user.setor || "Não informado"}</p>
                     </div>
+                  )}
+                  {user.role !== "licenciado" && (
                     <div className="info-item">
                       <span>Unidade</span>
                       <p>
@@ -377,78 +352,31 @@ const Perfil: React.FC = () => {
                           "Não informado"}
                       </p>
                     </div>
+                  )}
+                  {user.role !== "licenciado" && (
                     <div className="info-item">
                       <span>Telefone</span>
                       <p>{formatarTelefone(user.telefone)}</p>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {isEditing && (
+                <div className="profile-edit-form">
+                  <div className="form-row">
+                    <label>Nome:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editForm.nome}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, nome: e.target.value })
+                      }
+                    />
                   </div>
-                )}
 
-                {isEditing && (
-                  <div className="profile-edit-form">
-                    <div className="form-row">
-                      <label>Nome:</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editForm.nome}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, nome: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    {user.role === "admin" && (
-                      <div className="form-row">
-                        <label>Cargo:</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={editForm.cargo}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, cargo: e.target.value })
-                          }
-                        />
-                      </div>
-                    )}
-                    {user.role === "admin" && (
-                      <div className="form-row">
-                        <label>Setor:</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={editForm.setor}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, setor: e.target.value })
-                          }
-                        />
-                      </div>
-                    )}
-                    {user.role === "admin" && (
-                      <div className="form-row">
-                        <label>Unidade:</label>
-                        <select
-                          className="form-select"
-                          value={editForm.unidade}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              unidade: e.target.value,
-                            })
-                          }
-                        >
-                          <option value="" disabled>
-                            Selecione a Unidade
-                          </option>
-                          {units.map((unit) => (
-                            <option key={unit.id} value={unit.name}>
-                              {unit.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
+                  {user.role !== "licenciado" && (
                     <div className="form-row">
                       <label>Telefone:</label>
                       <IMaskInput
@@ -462,25 +390,22 @@ const Perfil: React.FC = () => {
                         placeholder="(00) 00000-0000"
                       />
                     </div>
+                  )}
 
-                    <div className="form-actions">
-                      <button
-                        className="form-button-cancel"
-                        onClick={() => setIsEditing(false)}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        className="form-button"
-                        onClick={handleSaveChanges}
-                      >
-                        Salvar Alterações
-                      </button>
-                    </div>
+                  <div className="form-actions">
+                    <button
+                      className="form-button-cancel"
+                      onClick={() => setIsEditing(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button className="form-button" onClick={handleSaveChanges}>
+                      Salvar Alterações
+                    </button>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
 
             {user.role !== "licenciado" && (
               <div className="profile-section">
@@ -490,42 +415,25 @@ const Perfil: React.FC = () => {
                   personalidade e como você interage em equipe.
                 </p>
                 <div className="profile-button-group">
-                  <Link to="/enneagram" className="form-button">
-                    Fazer Teste Eneagrama
+                  <Link to="/enneagram">
+                    <button className="form-icon-save">
+                      <PiPencilSimpleLineBold /> Responder
+                    </button>
                   </Link>
-                  <Link
-                    to="/perfil/enneagram-results"
-                    className="form-button-cancel"
-                  >
-                    Ver Resultado
+
+                  <Link to="/perfil/enneagram-results">
+                    <button className="form-icon-list">
+                      <FiEye /> Ver Resultado
+                    </button>
                   </Link>
                 </div>
               </div>
             )}
 
-            {user.role === "licenciado" && (
-              <div className="other-section">
-                <h3>Editar Informações</h3>
-                <div className="form-row">
-                  <label htmlFor="nome">Nome:</label>
-                  <input
-                    id="nome"
-                    type="text"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <button className="form-button" onClick={handleSaveChanges}>
-                  Salvar Alterações
-                </button>
-              </div>
-            )}
-
-            <div className="other-section">
+            <div className="profile-section">
               <h3>Alterar Senha</h3>
-              <div className="form-row">
+
+              <div className="form-row first">
                 <label htmlFor="current-password">Senha Atual:</label>
                 <input
                   id="current-password"
@@ -536,7 +444,9 @@ const Perfil: React.FC = () => {
                 />
               </div>
               <div className="form-row">
-                <label htmlFor="new-password">Nova Senha:</label>
+                <label className="label-new-password" htmlFor="new-password">
+                  Nova Senha:
+                </label>
                 <input
                   id="new-password"
                   type="password"
@@ -546,7 +456,12 @@ const Perfil: React.FC = () => {
                 />
               </div>
               <div className="form-row">
-                <label htmlFor="confirm-password">Confirmar Senha:</label>
+                <label
+                  className="label-new-password"
+                  htmlFor="confirm-password"
+                >
+                  Confirmar Senha:
+                </label>
                 <input
                   id="confirm-password"
                   type="password"
@@ -578,15 +493,14 @@ const Perfil: React.FC = () => {
                       </p>
                       <button
                         className="form-button"
-                        id="form-button-certificate"
                         onClick={() =>
                           handleViewCertificate(
                             cert.course_id,
-                            cert.course_title
+                            cert.course_title,
                           )
                         }
                       >
-                        Visualizar Certificado
+                        Baixar Certificado
                       </button>
                     </div>
                   ))

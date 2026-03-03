@@ -22,7 +22,7 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 interface EnneagramType {
@@ -56,9 +56,7 @@ const EnneagramStats: React.FC = () => {
     }
 
     const getCssVar = (varName: string) =>
-      getComputedStyle(document.documentElement)
-        .getPropertyValue(varName)
-        .trim();
+      getComputedStyle(document.body).getPropertyValue(varName).trim();
 
     setChartOptions({
       responsive: true,
@@ -124,10 +122,13 @@ const EnneagramStats: React.FC = () => {
     return <p>Não foi possível carregar os dados.</p>;
   }
 
-  const typesMap = typesInfo.reduce((acc, type) => {
-    acc[type.id] = type;
-    return acc;
-  }, {} as Record<number, EnneagramType>);
+  const typesMap = typesInfo.reduce(
+    (acc, type) => {
+      acc[type.id] = type;
+      return acc;
+    },
+    {} as Record<number, EnneagramType>,
+  );
 
   const participationPercentage =
     stats.collaboratorStats.total > 0
@@ -148,7 +149,7 @@ const EnneagramStats: React.FC = () => {
         <h4>Participação dos Colaboradores</h4>
         <div className="stat-card">
           <div className="stat-value">
-            {stats.collaboratorStats.completed} /{" "}
+            {stats.collaboratorStats.completed} de{" "}
             {stats.collaboratorStats.total}
           </div>
           <div className="stat-label">Colaboradores que concluíram o teste</div>
