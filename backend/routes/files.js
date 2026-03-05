@@ -11,7 +11,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       const result = await pool.query(
         "SELECT id FROM companies WHERE slug = $1",
-        [slug]
+        [slug],
       );
 
       return result.rows.length > 0 ? result.rows[0].id : 1;
@@ -37,11 +37,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       // Filtros de Role (Visibilidade)
       if (role === "licenciado") {
         whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')"
+          "(visibility = 'todos' OR visibility = 'licenciados')",
         );
       } else if (role !== "admin") {
         whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'colaboradores')"
+          "(visibility = 'todos' OR visibility = 'colaboradores')",
         );
       }
 
@@ -56,7 +56,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       if (search) {
         params.push(`%${search}%`);
         whereClauses.push(
-          `(originalname ILIKE $${params.length} OR folder ILIKE $${params.length})`
+          `(originalname ILIKE $${params.length} OR folder ILIKE $${params.length})`,
         );
       }
 
@@ -95,11 +95,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
       if (role === "licenciado") {
         whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')"
+          "(visibility = 'todos' OR visibility = 'licenciados')",
         );
       } else if (role !== "admin") {
         whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'colaboradores')"
+          "(visibility = 'todos' OR visibility = 'colaboradores')",
         );
       }
 
@@ -115,30 +115,35 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   // --- UPLOAD ---
+  // --- UPLOAD ---
   router.post(
     "/",
     isLoggedIn,
     checkRole(["admin", "rh"]),
     upload.single("file"),
     async (req, res) => {
-      // Recebe 'company' do corpo da requisição (FormData)
       const { originalname, category, folder, visibility, company } = req.body;
 
       if (!req.file)
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
 
       try {
-        // Resolve o ID da empresa para salvar no banco
+        // Se você mudou a função para síncrona (como recomendado), remova o 'await' abaixo
         const companyId = await getCompanyId(company);
 
-        const resourceType = "image"; // Mantendo sua lógica original de resourceType
+        // 1. Deteção inteligente do tipo de arquivo (Imagem ou Documento Raw)
+        const isImage = req.file.mimetype.startsWith("image/");
+        const resourceType = isImage ? "image" : "raw";
 
+        // 2. Cria a Promise para aguardar o upload
         const uploadResult = await new Promise((resolve, reject) => {
-          const publicIdWithExtension =
-            resourceType === "raw" &&
-            originalname.toLowerCase().endsWith(".pdf")
-              ? originalname
-              : undefined;
+          // Extrai a extensão do arquivo REAL anexado
+          const originalExt = req.file.originalname.includes(".")
+            ? "." + req.file.originalname.split(".").pop()
+            : "";
+
+          const cleanName = originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const uniquePublicId = `${cleanName}_${Date.now()}${originalExt}`;
 
           cloudinary.uploader
             .upload_stream(
@@ -146,21 +151,19 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
                 resource_type: resourceType,
                 folder: category,
                 tags: [category, folder],
-                ...(publicIdWithExtension && {
-                  public_id: publicIdWithExtension,
-                }),
+                ...(resourceType === "raw" && { public_id: uniquePublicId }),
               },
               (error, result) => {
                 if (error) reject(error);
                 resolve(result);
-              }
+              },
             )
             .end(req.file.buffer);
         });
 
         const { secure_url: fileUrl, public_id: publicId } = uploadResult;
 
-        // INSERÇÃO NO BANCO: Adicionado company_id ($7)
+        // INSERÇÃO NO BANCO
         const result = await pool.query(
           `INSERT INTO files 
            (filename, originalname, category, folder, visibility, public_id, company_id) 
@@ -174,7 +177,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             visibility,
             publicId,
             companyId,
-          ]
+          ],
         );
 
         try {
@@ -182,10 +185,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             req.user?.id || null,
             req.user?.email || "desconhecido",
             "CREATE_FILE",
-            `Usuário ${
-              req.user?.email || "desconhecido"
-            } enviou o arquivo "${originalname}" na empresa ID ${companyId}.`,
-            req.ipAddress
+            `Usuário ${req.user?.email || "desconhecido"} enviou o arquivo "${originalname}" na empresa ID ${companyId}.`,
+            req.ipAddress,
           );
         } catch (e) {
           console.warn("Falha ao registrar log de upload:", e);
@@ -196,7 +197,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         console.error("Erro no upload de arquivo:", err);
         res.status(500).json({ error: "Erro no servidor durante o upload." });
       }
-    }
+    },
   );
 
   // --- EDITAR ---
@@ -213,7 +214,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       try {
         const result = await pool.query(
           "UPDATE files SET originalname = $1, category = $2, folder = $3, visibility = $4 WHERE id = $5 RETURNING *",
-          [originalname, category, folder, visibility, id]
+          [originalname, category, folder, visibility, id],
         );
         if (result.rowCount === 0)
           return res.status(404).json({ error: "Arquivo não encontrado." });
@@ -224,7 +225,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             req.user.email,
             "UPDATE_FILE",
             `Usuário ${req.user.email} atualizou o arquivo "${originalname}" (ID: ${id}).`,
-            req.ipAddress
+            req.ipAddress,
           );
         } catch (e) {
           console.warn("Falha ao registrar log de atualização:", e);
@@ -235,7 +236,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         console.error("Erro ao editar arquivo:", err);
         res.status(500).json({ error: "Erro ao editar arquivo." });
       }
-    }
+    },
   );
 
   // --- EXCLUIR (Mantido igual) ---
@@ -248,7 +249,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       try {
         const fileResult = await pool.query(
           "SELECT public_id, filename, originalname FROM files WHERE id = $1",
-          [id]
+          [id],
         );
         if (fileResult.rowCount === 0)
           return res.status(404).json({ error: "Arquivo não encontrado." });
@@ -274,7 +275,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             req.user.email,
             "DELETE_FILE",
             `Usuário ${req.user.email} excluiu o arquivo "${originalname}".`,
-            req.ipAddress
+            req.ipAddress,
           );
         } catch (e) {
           console.warn("Falha ao registrar log de exclusão:", e);
@@ -287,15 +288,15 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           .status(500)
           .json({ error: "Erro no servidor ao tentar excluir o arquivo." });
       }
-    }
+    },
   );
 
-  // --- DOWNLOAD (Mantido igual, ID é único) ---
+  // --- DOWNLOAD ---
   router.get("/download/:id", isLoggedIn, async (req, res) => {
     try {
       const fileResult = await pool.query(
         "SELECT public_id, originalname, filename, visibility FROM files WHERE id = $1",
-        [req.params.id]
+        [req.params.id],
       );
 
       if (fileResult.rowCount === 0) {
@@ -323,42 +324,51 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           .send("URL do arquivo não encontrada no banco de dados.");
       }
 
-      const resourceType =
-        file.filename.includes("/image/") &&
-        !file.originalname.toLowerCase().endsWith(".pdf")
-          ? "image"
-          : "raw";
+      // 1. Descobre a base correta do arquivo lendo a URL salva no banco
+      const isRaw = file.filename.includes("/raw/upload/");
+      const resourceType = isRaw ? "raw" : "image";
 
-      let sanitizedFilename = file.originalname.replace(
-        /[^a-zA-Z0-9._-]/g,
-        "_"
-      );
+      // 2. Extrai a extensão exata que está salva no Cloudinary (ex: pdf, jpg, docx)
+      const urlExtMatch = file.filename.match(/\.([a-zA-Z0-9]+)(?:[\?#]|$)/);
+      const extNoDot = urlExtMatch ? urlExtMatch[1] : "";
+      const urlExt = extNoDot ? "." + extNoDot : "";
 
-      if (
-        resourceType === "raw" &&
-        file.originalname.toLowerCase().endsWith(".pdf")
-      ) {
-        if (!sanitizedFilename.toLowerCase().endsWith(".pdf")) {
-          sanitizedFilename = sanitizedFilename + ".pdf";
-        }
+      // 3. Nome limpo SEM a extensão (Cloudinary dá Erro 400 se tiver ponto no fl_attachment)
+      let cleanName = file.originalname;
+      const dotIndex = cleanName.lastIndexOf(".");
+      if (dotIndex > -1) {
+        cleanName = cleanName.substring(0, dotIndex);
       }
+      cleanName = cleanName.replace(/[^a-zA-Z0-9_-]/g, "_");
 
       const options = {
         resource_type: resourceType,
-        flags: `attachment:${sanitizedFilename}`,
+        secure: true,
         sign_url: true,
         expires_at: Math.floor(Date.now() / 1000) + 300,
       };
 
       let publicIdToUse = file.public_id;
 
-      if (
-        resourceType === "raw" &&
-        file.originalname.toLowerCase().endsWith(".pdf")
-      ) {
-        publicIdToUse = file.public_id.endsWith(".pdf")
-          ? file.public_id
-          : `${file.public_id}.pdf`;
+      // 4. Aplica regras diferentes para RAW vs IMAGES/PDFs
+      if (!isRaw) {
+        // Se for imagem ou PDF (salvo como image), aplicamos o attachment sem a extensão
+        options.flags = `attachment:${cleanName}`;
+        if (extNoDot) {
+          options.format = extNoDot;
+        }
+        // Limpa a extensão do public_id caso exista, para evitar duplicação (.pdf.pdf)
+        if (publicIdToUse.endsWith(urlExt)) {
+          publicIdToUse = publicIdToUse.substring(
+            0,
+            publicIdToUse.length - urlExt.length,
+          );
+        }
+      } else {
+        // Se for raw (como o DOCX), o public_id precisa obrigatoriamente ter a extensão
+        if (urlExt && !publicIdToUse.endsWith(urlExt)) {
+          publicIdToUse += urlExt;
+        }
       }
 
       const signedUrl = cloudinary.url(publicIdToUse, options);
@@ -369,7 +379,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           req.user.email,
           "DOWNLOAD_FILE",
           `Usuário ${req.user.email} baixou o arquivo "${file.originalname}".`,
-          req.ipAddress
+          req.ipAddress,
         );
       } catch (e) {
         console.warn("Falha ao registrar log de download:", e);
