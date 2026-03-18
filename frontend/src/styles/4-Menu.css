@@ -126,7 +126,12 @@
 
 .profile-role {
   font-size: 0.8em;
-  font-weight: 200;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.profile-name {
+  font-weight: 500;
 }
 
 .profile-image-container .profile-avatar-icon {

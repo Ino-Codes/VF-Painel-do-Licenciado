@@ -1,4 +1,4 @@
-// require("dotenv").config();
+//require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -84,11 +84,12 @@ const userRoutes = require("./routes/users.js")(
   logActivity,
 );
 const cronFunctions = require("./cron.js");
-cronFunctions.initializeCron(pool, resend); // Passa o resend para o cron
+cronFunctions.initializeCron(pool, resend);
 const noticeRoutes = require("./routes/notices.js")(
   pool,
   createNotification,
   logActivity,
+  resend,
 );
 const filesRoutes = require("./routes/files")(
   pool,

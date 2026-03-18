@@ -71,14 +71,7 @@ const ContentGestao: React.FC = () => {
       <div className={`content-area company-${companySlug}`}>
         <div className="page-header">
           {/* Título Dinâmico com a cor da empresa */}
-          <h2
-            style={{
-              borderLeft: `5px solid ${companyInfo.color}`,
-              paddingLeft: "10px",
-            }}
-          >
-            Conteúdos da {companyInfo.name}
-          </h2>
+          <h2 className="content-title">Conteúdos da {companyInfo.name}</h2>
           <p>
             Selecione um módulo abaixo para acessar os conteúdos exclusivos.
           </p>

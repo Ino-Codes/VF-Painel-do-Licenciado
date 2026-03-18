@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useRef } from "react"; // 1. Importar o useRef
+import React, { useState, useEffect, useRef } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-// 1. Importar o EmojiPicker e o tipo de dado do emoji
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
-
 import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
 
-// Interface Notice (sem alterações)
 interface Notice {
   id: number;
   message: string;
@@ -17,7 +14,6 @@ interface Notice {
   visibility: "todos" | "internos" | "licenciados";
 }
 
-// Interface NoticeModalProps (sem alterações)
 interface NoticeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,9 +31,10 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     "todos" | "internos" | "licenciados"
   >("todos");
 
-  // 2. Adicionar estados para controlar o Emoji Picker
+  const [sendEmail, setSendEmail] = useState(false);
+
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const emojiPickerRef = useRef<HTMLDivElement>(null); // Ref para o container do picker
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -49,15 +46,15 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     if (noticeToEdit && editor) {
       editor.commands.setContent(noticeToEdit.message);
       setVisibility(noticeToEdit.visibility || "todos");
+      setSendEmail(false);
     } else if (!noticeToEdit && editor) {
       editor.commands.clearContent();
       setVisibility("todos");
+      setSendEmail(false);
     }
-    // Fecha o emoji picker sempre que o modal for reaberto
     setShowEmojiPicker(false);
   }, [noticeToEdit, editor, isOpen]);
 
-  // 3. Adicionar efeito para fechar o picker ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -79,7 +76,6 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     return null;
   }
 
-  // 4. Criar a função que insere o emoji no editor
   const onEmojiClick = (emojiData: EmojiClickData) => {
     if (editor) {
       editor.chain().focus().insertContent(emojiData.emoji).run();
@@ -87,31 +83,36 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     setShowEmojiPicker(false);
   };
 
-  // 5. Criar a função que abre/fecha o picker
   const toggleEmojiPicker = () => {
     setShowEmojiPicker((prev) => !prev);
   };
 
   const handleSubmit = async () => {
-    // (Lógica do handleSubmit permanece a mesma)
     if (!editor || editor.isEmpty) {
       toast.error("O aviso não pode estar em branco.");
       return;
     }
     const message = editor.getHTML();
-    const payload = { message, visibility };
+
+    const payload = { message, visibility, sendEmail };
+
     try {
       if (noticeToEdit) {
         await api.put(`/api/notices/${noticeToEdit.id}`, payload);
         toast.success("Aviso atualizado com sucesso!");
       } else {
+        if (sendEmail) toast.loading("Postando aviso e enviando e-mails...");
+
         await api.post("/api/notices/", payload);
+
+        toast.dismiss();
         toast.success("Aviso postado com sucesso!");
       }
       onSuccess();
       onClose();
     } catch (err) {
-      toast.error("Ocorreu um erro ao salvar o aviso.");
+      toast.dismiss();
+      toast.error("Ocorreu um erro ao guardar o aviso.");
     }
   };
 
@@ -129,7 +130,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content">
+      <div className="modal-content" style={{ maxWidth: "600px" }}>
         <h2>{noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}</h2>
 
         <div className="form-row">
@@ -169,6 +170,42 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
             <option value="internos">Apenas Internos</option>
           </select>
         </div>
+
+        {!noticeToEdit && (
+          <div
+            className="form-row"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginTop: "15px",
+            }}
+          >
+            <input
+              type="checkbox"
+              id="sendEmail"
+              checked={sendEmail}
+              onChange={(e) => setSendEmail(e.target.checked)}
+              style={{
+                width: "auto",
+                cursor: "pointer",
+                transform: "scale(1.2)",
+              }}
+            />
+            <label
+              htmlFor="sendEmail"
+              style={{
+                cursor: "pointer",
+                margin: 0,
+                fontSize: "14px",
+                fontWeight: "normal",
+              }}
+            >
+              Enviar aviso por e-mail imediatamente
+            </label>
+          </div>
+        )}
+
         <div className="modal-actions">
           <button
             type="button"
