@@ -20,6 +20,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       {IconComponent ? (
         <IconComponent
           size={120} // Tamanho grande para substituir a imagem
+          style={{ stroke: "1.3" }}
           className="icon"
         />
       ) : (
