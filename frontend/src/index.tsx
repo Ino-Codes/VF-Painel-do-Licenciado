@@ -37,6 +37,7 @@ import AdminGestao from "./pages/admin/AdminGestao.tsx";
 import AdminStatistics from "./pages/admin/AdminStatistics.tsx";
 import InternalGestao from "./pages/internal/InternalGestao.tsx";
 import ContentGestao from "./pages/content/ContentGestao.tsx";
+import MuralDeAvisos from "./pages/notices/MuralDeAvisos.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -99,6 +100,7 @@ const AppRouter: React.FC = () => {
             element={<EnneagramResultsPage />}
           />
           <Route path="/content/content-gestao" element={<ContentGestao />} />
+          <Route path="/content/avisos" element={<MuralDeAvisos />} />
           {/* Rotas da Área Interna */}
           <Route
             path="/internal/internal-gestao"

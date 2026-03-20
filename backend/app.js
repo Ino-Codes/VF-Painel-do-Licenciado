@@ -468,6 +468,25 @@ const createTables = async () => {
       created_by INTEGER REFERENCES users(id)
     );`;
 
+  const recruitmentInterviewsTable = `
+    CREATE TABLE IF NOT EXISTS recruitment_interviews (
+      id SERIAL PRIMARY KEY,
+      candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+      interviewer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      stage_id INTEGER REFERENCES recruitment_stages(id) ON DELETE SET NULL,
+      title TEXT,
+      description TEXT,
+      start_at TIMESTAMPTZ NOT NULL,
+      end_at TIMESTAMPTZ,
+      is_virtual BOOLEAN DEFAULT FALSE,
+      meeting_link TEXT,
+      location TEXT,
+      status TEXT DEFAULT 'scheduled',
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );`;
+
   try {
     await pool.query(userTable);
     await pool.query(noticeTable);
@@ -519,26 +538,12 @@ const createTables = async () => {
     await pool.query(
       "ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS company_id INTEGER;",
     );
-
-    const recruitmentInterviewsTable = `
-      CREATE TABLE IF NOT EXISTS recruitment_interviews (
-        id SERIAL PRIMARY KEY,
-        candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
-        interviewer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-        stage_id INTEGER REFERENCES recruitment_stages(id) ON DELETE SET NULL,
-        title TEXT,
-        description TEXT,
-        start_at TIMESTAMPTZ NOT NULL,
-        end_at TIMESTAMPTZ,
-        is_virtual BOOLEAN DEFAULT FALSE,
-        meeting_link TEXT,
-        location TEXT,
-        status TEXT DEFAULT 'scheduled',
-        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-    `;
+    await pool.query(
+      "ALTER TABLE notices ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id) ON DELETE SET NULL;",
+    );
+    await pool.query(
+      "ALTER TABLE notices ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE SET NULL;",
+    );
 
     await pool.query(recruitmentInterviewsTable);
     // Ensure candidates table has unit_id column for new linkage

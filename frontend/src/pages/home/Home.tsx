@@ -21,6 +21,7 @@ interface Notice {
   message: string;
   created_at: string;
   visibility: "todos" | "internos" | "licenciados";
+  creator_name?: string;
 }
 
 interface MonthlyEvent {
@@ -72,8 +73,11 @@ const Home: React.FC = () => {
   const fetchNotices = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get("/api/notices");
-      setNotices(res.data);
+      const res = await api.get("/api/notices", {
+        params: { page: 1, limit: 10 },
+      });
+      // ATUALIZADO: consome o novo formato paginado
+      setNotices(res.data.notices);
     } catch (err) {
       console.error("Erro ao buscar avisos:", err);
       toast.error("Não foi possível carregar os avisos.");
@@ -213,6 +217,15 @@ const Home: React.FC = () => {
                       />
                       <div className="notice-footer">
                         <small>
+                          {/* NOVO: nome do autor + data */}
+                          {notice.creator_name && (
+                            <span
+                              style={{ fontWeight: 600, marginRight: "6px" }}
+                            >
+                              {notice.creator_name}
+                            </span>
+                          )}
+                          ·{" "}
                           {new Date(notice.created_at).toLocaleDateString(
                             "pt-BR",
                             {

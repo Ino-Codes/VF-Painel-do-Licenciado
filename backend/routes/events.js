@@ -36,13 +36,13 @@ module.exports = function (pool, cloudinary, upload) {
     async (req, res) => {
       try {
         const result = await pool.query(
-          "SELECT id, nome, email FROM users WHERE role != 'licenciado' ORDER BY nome ASC"
+          "SELECT id, nome, email FROM users WHERE role != 'licenciado' ORDER BY nome ASC",
         );
         res.json(result.rows);
       } catch (err) {
         res.status(500).json({ error: "Erro ao buscar usuários." });
       }
-    }
+    },
   );
 
   // ROTA PARA BUSCAR NOTIFICADOS DE UM EVENTO ESPECÍFICO
@@ -55,13 +55,13 @@ module.exports = function (pool, cloudinary, upload) {
       try {
         const result = await pool.query(
           "SELECT user_id FROM event_notifications WHERE event_id = $1",
-          [id]
+          [id],
         );
         res.json(result.rows.map((row) => row.user_id));
       } catch (err) {
         res.status(500).json({ error: "Erro ao buscar usuários notificados." });
       }
-    }
+    },
   );
 
   // Rota para BUSCAR todos os eventos
@@ -71,7 +71,7 @@ module.exports = function (pool, cloudinary, upload) {
     try {
       // Busca os eventos comuns da tabela 'events'
       const eventsResult = await pool.query(
-        "SELECT * FROM events ORDER BY start_date ASC"
+        "SELECT * FROM events ORDER BY start_date ASC",
       );
       const regularEvents = eventsResult.rows.map((event) => ({
         id: `event-${event.id}`, // Prefixo para evitar conflito de ID
@@ -90,7 +90,7 @@ module.exports = function (pool, cloudinary, upload) {
       // Busca os pedidos de férias DO UTILIZADOR LOGADO
       const vacationResult = await pool.query(
         `SELECT * FROM vacation_requests WHERE user_id = $1 ORDER BY start_date ASC`,
-        [userId]
+        [userId],
       );
 
       const statusColors = {
@@ -105,7 +105,7 @@ module.exports = function (pool, cloudinary, upload) {
         start: req.start_date,
         // Adiciona 1 dia ao end_date para exibição correta no FullCalendar (dia inteiro)
         end: new Date(
-          new Date(req.end_date).setDate(new Date(req.end_date).getDate() + 1)
+          new Date(req.end_date).setDate(new Date(req.end_date).getDate() + 1),
         )
           .toISOString()
           .split("T")[0],
@@ -137,7 +137,7 @@ module.exports = function (pool, cloudinary, upload) {
     async (req, res) => {
       try {
         const result = await pool.query(
-          "SELECT DISTINCT category FROM events WHERE category IS NOT NULL AND category != '' ORDER BY category ASC"
+          "SELECT DISTINCT category FROM events WHERE category IS NOT NULL AND category != '' ORDER BY category ASC",
         );
         res.json(result.rows.map((row) => row.category));
       } catch (err) {
@@ -145,7 +145,7 @@ module.exports = function (pool, cloudinary, upload) {
           .status(500)
           .json({ error: "Erro ao buscar categorias de eventos." });
       }
-    }
+    },
   );
 
   // Rota para CRIAR um novo evento
@@ -164,7 +164,7 @@ module.exports = function (pool, cloudinary, upload) {
       await client.query("BEGIN");
       const eventResult = await client.query(
         "INSERT INTO events (title, description, start_date, end_date, category, color) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-        [title, description, start_date, end_date, category, color]
+        [title, description, start_date, end_date, category, color],
       );
       const newEventId = eventResult.rows[0].id;
 
@@ -172,7 +172,7 @@ module.exports = function (pool, cloudinary, upload) {
         for (const userId of notifiedUserIds) {
           await client.query(
             "INSERT INTO event_notifications (event_id, user_id) VALUES ($1, $2)",
-            [newEventId, userId]
+            [newEventId, userId],
           );
         }
       }
@@ -207,19 +207,19 @@ module.exports = function (pool, cloudinary, upload) {
         await client.query("BEGIN");
         await client.query(
           "UPDATE events SET title = $1, description = $2, start_date = $3, end_date = $4, category = $5, color = $6 WHERE id = $7",
-          [title, description, start_date, end_date, category, color, id]
+          [title, description, start_date, end_date, category, color, id],
         );
 
         await client.query(
           "DELETE FROM event_notifications WHERE event_id = $1",
-          [id]
+          [id],
         );
 
         if (notifiedUserIds && notifiedUserIds.length > 0) {
           for (const userId of notifiedUserIds) {
             await client.query(
               "INSERT INTO event_notifications (event_id, user_id) VALUES ($1, $2)",
-              [id, userId]
+              [id, userId],
             );
           }
         }
@@ -231,23 +231,30 @@ module.exports = function (pool, cloudinary, upload) {
       } finally {
         client.release();
       }
-    }
+    },
   );
 
   // Rota para DELETAR um evento (não precisa de alterações)
-  router.delete("/:id", async (req, res) => {
-    const { id } = req.params;
-    try {
-      const result = await pool.query("DELETE FROM events WHERE id = $1", [id]);
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Evento não encontrado." });
+  router.delete(
+    "/:id",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query("DELETE FROM events WHERE id = $1", [
+          id,
+        ]);
+        if (result.rowCount === 0) {
+          return res.status(404).json({ error: "Evento não encontrado." });
+        }
+        res.json({ success: true, message: "Evento excluído com sucesso." });
+      } catch (err) {
+        console.error("Erro ao excluir evento:", err);
+        res.status(500).json({ error: "Erro ao excluir evento." });
       }
-      res.json({ success: true, message: "Evento excluído com sucesso." });
-    } catch (err) {
-      console.error("Erro ao excluir evento:", err);
-      res.status(500).json({ error: "Erro ao excluir evento." });
-    }
-  });
+    },
+  );
 
   return router;
 };

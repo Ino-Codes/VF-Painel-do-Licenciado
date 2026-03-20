@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
 
@@ -19,6 +18,7 @@ interface NoticeModalProps {
   onClose: () => void;
   onSuccess: () => void;
   noticeToEdit?: Notice | null;
+  companySlug?: string; // NOVO
 }
 
 const NoticeModal: React.FC<NoticeModalProps> = ({
@@ -26,13 +26,12 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   onClose,
   onSuccess,
   noticeToEdit,
+  companySlug, // NOVO
 }) => {
   const [visibility, setVisibility] = useState<
     "todos" | "internos" | "licenciados"
   >("todos");
-
   const [sendEmail, setSendEmail] = useState(false);
-
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
@@ -72,19 +71,13 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
     if (editor) {
       editor.chain().focus().insertContent(emojiData.emoji).run();
     }
     setShowEmojiPicker(false);
-  };
-
-  const toggleEmojiPicker = () => {
-    setShowEmojiPicker((prev) => !prev);
   };
 
   const handleSubmit = async () => {
@@ -94,7 +87,8 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     }
     const message = editor.getHTML();
 
-    const payload = { message, visibility, sendEmail };
+    // ALTERADO: inclui company no payload
+    const payload = { message, visibility, sendEmail, company: companySlug };
 
     try {
       if (noticeToEdit) {
@@ -102,9 +96,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
         toast.success("Aviso atualizado com sucesso!");
       } else {
         if (sendEmail) toast.loading("Postando aviso e enviando e-mails...");
-
         await api.post("/api/notices/", payload);
-
         toast.dismiss();
         toast.success("Aviso postado com sucesso!");
       }
@@ -135,9 +127,11 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
 
         <div className="form-row">
           <div className="tiptap-container">
-            <TiptapMenuBar editor={editor} onEmojiToggle={toggleEmojiPicker} />
+            <TiptapMenuBar
+              editor={editor}
+              onEmojiToggle={() => setShowEmojiPicker((prev) => !prev)}
+            />
             <EditorContent editor={editor} />
-
             {showEmojiPicker && (
               <div
                 ref={emojiPickerRef}
@@ -162,7 +156,11 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           <select
             id="visibility"
             value={visibility}
-            onChange={(e) => setVisibility(e.target.value)}
+            onChange={(e) =>
+              setVisibility(
+                e.target.value as "todos" | "internos" | "licenciados",
+              )
+            }
             className="form-input"
           >
             <option value="todos">Todos</option>

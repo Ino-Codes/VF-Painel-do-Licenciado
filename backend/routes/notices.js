@@ -5,26 +5,82 @@ const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
 
 // IMPORTANTE: Adicionamos 'resend' nos parâmetros recebidos do app.js
 module.exports = function (pool, createNotification, logActivity, resend) {
+  const getCompanyId = async (slug) => {
+    if (!slug || slug === "undefined" || slug === "null") return 4; // valor-fiscal como padrão
+    try {
+      const result = await pool.query(
+        "SELECT id FROM companies WHERE slug = $1",
+        [slug],
+      );
+      return result.rows.length > 0 ? result.rows[0].id : 1;
+    } catch (error) {
+      console.error("Erro ao resolver company_id para notices:", error);
+      return 1;
+    }
+  };
+
   router.get("/", isLoggedIn, async (req, res) => {
     const { role } = req.user;
-    try {
-      let query = "SELECT * FROM notices";
-      let params = [];
+    const { company, page = 1, limit = 10 } = req.query;
 
-      if (role !== "admin") {
-        if (role === "licenciado") {
-          query += " WHERE visibility = 'todos' OR visibility = 'licenciados'";
-        } else if (role !== "licenciado") {
-          query += " WHERE visibility = 'todos' OR visibility = 'internos'";
-        } else {
-          query += " WHERE visibility = 'todos'";
-        }
+    try {
+      const companyId = await getCompanyId(company);
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 10;
+      const offset = (pageNum - 1) * limitNum;
+
+      const whereClauses = [];
+      const params = [];
+
+      // Filtro de empresa
+      params.push(companyId);
+      whereClauses.push("(n.company_id = $1 OR n.company_id IS NULL)");
+
+      // Filtro de visibilidade
+      if (role === "licenciado") {
+        whereClauses.push(
+          "(n.visibility = 'todos' OR n.visibility = 'licenciados')",
+        );
+      } else if (role === "admin") {
+        // admin vê tudo
+      } else {
+        whereClauses.push(
+          "(n.visibility = 'todos' OR n.visibility = 'internos')",
+        );
       }
 
-      query += " ORDER BY created_at DESC";
+      const whereString =
+        whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
-      const result = await pool.query(query, params);
-      res.json(result.rows);
+      const countSql = `SELECT COUNT(*) FROM notices n ${whereString}`;
+
+      const limitIndex = params.length + 1;
+      const offsetIndex = params.length + 2;
+
+      const noticesSql = `
+      SELECT
+        n.*,
+        u.nome AS creator_name
+      FROM notices n
+      LEFT JOIN users u ON n.created_by = u.id
+      ${whereString}
+      ORDER BY n.created_at DESC
+      LIMIT $${limitIndex} OFFSET $${offsetIndex}
+    `;
+
+      const [countResult, noticesResult] = await Promise.all([
+        pool.query(countSql, params),
+        pool.query(noticesSql, [...params, limitNum, offset]),
+      ]);
+
+      const totalCount = parseInt(countResult.rows[0].count, 10);
+
+      res.json({
+        notices: noticesResult.rows,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limitNum),
+        currentPage: pageNum,
+      });
     } catch (err) {
       console.error("Erro ao buscar avisos:", err);
       res.status(500).json({ error: "Erro ao buscar avisos" });
@@ -32,14 +88,15 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   });
 
   router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
-    // Recebendo o sendEmail do frontend
-    const { message, visibility, sendEmail } = req.body;
+    const { message, visibility, sendEmail, company } = req.body;
     const creatorId = req.user.id;
 
     try {
+      const companyId = await getCompanyId(company);
+
       const result = await pool.query(
-        "INSERT INTO notices (message, visibility) VALUES ($1, $2) RETURNING *",
-        [message, visibility],
+        "INSERT INTO notices (message, visibility, company_id, created_by) VALUES ($1, $2, $3, $4) RETURNING *",
+        [message, visibility, companyId, creatorId],
       );
 
       try {

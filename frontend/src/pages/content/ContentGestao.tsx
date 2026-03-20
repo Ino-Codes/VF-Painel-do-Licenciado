@@ -9,6 +9,7 @@ import { MdPlayLesson, MdPlayCircle } from "react-icons/md";
 import { IoMdDocument } from "react-icons/io";
 import { RiQuestionnaireFill } from "react-icons/ri";
 import { IoShareSocialSharp } from "react-icons/io5";
+import { HiSpeakerphone } from "react-icons/hi";
 
 // Configuração local para exibição (pode ser movida para utils/companies.ts depois)
 const COMPANIES_INFO = {
@@ -33,6 +34,12 @@ const ContentGestao: React.FC = () => {
 
   // Definição dos módulos com os links atualizados para incluir o parâmetro
   const modules = [
+    {
+      title: "Avisos",
+      description: "Comunicados e anúncios oficiais da empresa",
+      icon: <HiSpeakerphone />,
+      path: `/content/avisos?company=${companySlug}`,
+    },
     {
       title: "Cursos",
       description: `Trilhas de capacitação e treinamentos`,
