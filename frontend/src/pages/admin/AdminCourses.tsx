@@ -125,14 +125,16 @@ const AdminCourses: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className="content-area">
+
+      <div className={`content-area document-center`}>
         <div className="document-header">
           <div>
-            <h2 className="content-title">Gestão de Cursos (Global)</h2>
+            <h2 className="content-title">Gestão de Cursos</h2>
             <span className="content-subtitle">
-              Administração de todas as empresas
+              Gerenciamento de cursos para todas as empresas do grupo Valor Corp
             </span>
           </div>
+
           <button className="form-button" onClick={openModalForCreate}>
             + Adicionar Curso
           </button>

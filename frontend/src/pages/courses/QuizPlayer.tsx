@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
@@ -32,6 +32,8 @@ const QuizPlayer: React.FC = () => {
   const { user, loading } = useAuth();
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); // NOVO
+  const companySlug = searchParams.get("company") || ""; // NOVO
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<{
@@ -52,11 +54,13 @@ const QuizPlayer: React.FC = () => {
       setQuiz(res.data);
     } catch (error) {
       toast.error("Não foi possível carregar o quiz.");
-      navigate(`/courses/${courseId}`);
+      navigate(
+        `/content/courses/${courseId}${companySlug ? `?company=${companySlug}` : ""}`,
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [courseId, user, navigate]);
+  }, [courseId, user, navigate, companySlug]);
 
   useEffect(() => {
     if (user) fetchQuiz();
@@ -81,14 +85,18 @@ const QuizPlayer: React.FC = () => {
           userId: user?.id,
           answers: selectedAnswers,
         },
-        getAuthHeaders()
+        getAuthHeaders(),
       );
-
       setQuizResult(res.data);
     } catch (error) {
       toast.error("Erro ao submeter o quiz.");
     }
   };
+
+  // URL de volta ao curso com companySlug preservado — mesmo padrão do CourseCard.tsx
+  const backToCourseUrl = `/content/courses/${courseId}${
+    companySlug ? `?company=${companySlug}` : ""
+  }`;
 
   if (loading || isLoading) return <LoadingSpinner />;
 
@@ -120,7 +128,7 @@ const QuizPlayer: React.FC = () => {
           )}
           <button
             className="form-button"
-            onClick={() => navigate(`/courses/${courseId}`)}
+            onClick={() => navigate(backToCourseUrl)}
           >
             Voltar para o Curso
           </button>

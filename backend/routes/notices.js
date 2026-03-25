@@ -1,24 +1,205 @@
 const express = require("express");
 const router = express.Router();
 
-const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
-// IMPORTANTE: Adicionamos 'resend' nos parâmetros recebidos do app.js
 module.exports = function (pool, createNotification, logActivity, resend) {
+  // ─── Helper: resolve company_id pelo slug ────────────────────────────────────
   const getCompanyId = async (slug) => {
-    if (!slug || slug === "undefined" || slug === "null") return 4; // valor-fiscal como padrão
+    if (!slug || slug === "undefined" || slug === "null") return 4; // Valor Corp como padrão
     try {
       const result = await pool.query(
         "SELECT id FROM companies WHERE slug = $1",
         [slug],
       );
-      return result.rows.length > 0 ? result.rows[0].id : 1;
+      return result.rows.length > 0 ? result.rows[0].id : 4;
     } catch (error) {
       console.error("Erro ao resolver company_id para notices:", error);
-      return 1;
+      return 4;
     }
   };
 
+  // ─── Helper: template de e-mail por empresa ──────────────────────────────────
+  const getEmailTemplate = (companySlug, companyName, messageContent) => {
+    // Cores exatas conforme tabela companies no banco
+    const logoMap = {
+      "valor-fiscal": {
+        logoUrl:
+          process.env.LOGO_VALOR_FISCAL ||
+          "https://res.cloudinary.com/SEU_CLOUD/image/upload/v1/logos/valor-fiscal-logo.png",
+        primaryColor: "#d09829",
+        bgColor: "#fff8e7",
+        borderColor: "#d09829",
+        fromName: "Valor Fiscal",
+      },
+      "valor-banking": {
+        logoUrl:
+          process.env.LOGO_VALOR_BANKING ||
+          "https://res.cloudinary.com/SEU_CLOUD/image/upload/v1/logos/valor-banking-logo.png",
+        primaryColor: "#0f57bd",
+        bgColor: "#f0f5ff",
+        borderColor: "#0f57bd",
+        fromName: "Valor Banking",
+      },
+      "valor-business": {
+        logoUrl:
+          process.env.LOGO_VALOR_BUSINESS ||
+          "https://res.cloudinary.com/SEU_CLOUD/image/upload/v1/logos/valor-business-logo.png",
+        primaryColor: "#0b961d",
+        bgColor: "#f0fff3",
+        borderColor: "#0b961d",
+        fromName: "Valor Business",
+      },
+      "valor-corporate": {
+        logoUrl:
+          process.env.LOGO_VALOR_CORPORATE ||
+          "https://res.cloudinary.com/SEU_CLOUD/image/upload/v1/logos/valor-corporate-logo.png",
+        primaryColor: "#222222",
+        bgColor: "#e9f8ff",
+        borderColor: "#333333",
+        fromName: "Valor Corp",
+      },
+    };
+
+    const theme = logoMap[companySlug] || logoMap["valor-corporate"];
+    const currentYear = new Date().getFullYear();
+    const publishedAt = new Date().toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const panelUrl = process.env.FRONTEND_URL || "https://app.valorcorp.com.br";
+
+    return `<!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Novo Aviso no Painel da ${companyName}</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#ececec;font-family:'Segoe UI',Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ececec;padding:40px 0;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="
+              background-color:#ffffff;
+              border-radius:10px;
+              overflow:hidden;
+              box-shadow:0 4px 12px rgba(0,0,0,0.08);
+              max-width:600px;
+              width:100%;
+            ">
+
+              <tr>
+                <td style="
+                  background-color:${theme.primaryColor};
+                  padding:30px 40px;
+                  text-align:center;
+                ">
+                  <img
+                    src="${theme.logoUrl}"
+                    alt="${companyName}"
+                    width="160"
+                    style="display:block;margin:0 auto;max-height:60px;object-fit:contain;"
+                  />
+                </td>
+              </tr>
+
+              <tr>
+                <td style="
+                  background-color:${theme.bgColor};
+                  border-bottom:3px solid ${theme.borderColor};
+                  padding:20px 40px;
+                  text-align:center;
+                ">
+                  <p style="
+                    margin:0;
+                    font-size:12px;
+                    font-weight:700;
+                    text-transform:uppercase;
+                    letter-spacing:1.5px;
+                    color:${theme.primaryColor};
+                  ">${companyName}</p>
+                  <h1 style="
+                    margin:8px 0 0 0;
+                    font-size:22px;
+                    color:#1a1a1a;
+                    font-weight:700;
+                  ">Novo Aviso Publicado</h1>
+                  <p style="font-size:13px;color:#888888;margin:0 0 25px 0;">
+                    Olá, ${userName}! <br />
+                    Um novo aviso importante foi postado no Painel da Valor:
+                  </p>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding:35px 40px;">
+
+                  <div style="
+                    background-color:#f9f9f9;
+                    border-left:4px solid ${theme.primaryColor};
+                    border-radius:0 6px 6px 0;
+                    padding:20px 25px;
+                    margin-bottom:25px;
+                    font-size:15px;
+                    line-height:1.7;
+                    color:#333333;
+                  ">
+                    ${messageContent}
+                  </div>
+
+                  <table cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td align="center">
+                        <a
+                          href="${panelUrl}/home"
+                          style="
+                            display:inline-block;
+                            background-color:${theme.primaryColor};
+                            color:#ffffff;
+                            text-decoration:none;
+                            font-weight:700;
+                            font-size:14px;
+                            padding:14px 35px;
+                            border-radius:6px;
+                            letter-spacing:0.5px;
+                          "
+                        >Acessar o Painel</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              
+              <tr>
+                <td style="
+                  background-color:#f5f5f5;
+                  border-top:1px solid #e0e0e0;
+                  padding:20px 40px;
+                  text-align:center;
+                ">
+                  <p style="margin:0 0 6px 0;font-size:12px;color:#999999;">
+                    Esta é uma mensagem automática. Por favor, não responda a este email.
+                  </p>
+                  <p style="margin:0;font-size:11px;color:#bbbbbb;">
+                    © ${currentYear} ${companyName} — Todos os direitos reservados.
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>`;
+  };
+
+  // ─── GET /api/notices ────────────────────────────────────────────────────────
   router.get("/", isLoggedIn, async (req, res) => {
     const { role } = req.user;
     const { company, page = 1, limit = 10 } = req.query;
@@ -32,17 +213,17 @@ module.exports = function (pool, createNotification, logActivity, resend) {
       const whereClauses = [];
       const params = [];
 
-      // Filtro de empresa
+      // Filtro de empresa: avisos da empresa + avisos globais (NULL)
       params.push(companyId);
       whereClauses.push("(n.company_id = $1 OR n.company_id IS NULL)");
 
-      // Filtro de visibilidade
+      // Filtro de visibilidade por role
       if (role === "licenciado") {
         whereClauses.push(
           "(n.visibility = 'todos' OR n.visibility = 'licenciados')",
         );
       } else if (role === "admin") {
-        // admin vê tudo
+        // admin vê tudo — sem filtro extra
       } else {
         whereClauses.push(
           "(n.visibility = 'todos' OR n.visibility = 'internos')",
@@ -58,15 +239,15 @@ module.exports = function (pool, createNotification, logActivity, resend) {
       const offsetIndex = params.length + 2;
 
       const noticesSql = `
-      SELECT
-        n.*,
-        u.nome AS creator_name
-      FROM notices n
-      LEFT JOIN users u ON n.created_by = u.id
-      ${whereString}
-      ORDER BY n.created_at DESC
-      LIMIT $${limitIndex} OFFSET $${offsetIndex}
-    `;
+        SELECT
+          n.*,
+          u.nome AS creator_name
+        FROM notices n
+        LEFT JOIN users u ON n.created_by = u.id
+        ${whereString}
+        ORDER BY n.created_at DESC
+        LIMIT $${limitIndex} OFFSET $${offsetIndex}
+      `;
 
       const [countResult, noticesResult] = await Promise.all([
         pool.query(countSql, params),
@@ -87,6 +268,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     }
   });
 
+  // ─── POST /api/notices ───────────────────────────────────────────────────────
   router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
     const { message, visibility, sendEmail, company } = req.body;
     const creatorId = req.user.id;
@@ -94,16 +276,27 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     try {
       const companyId = await getCompanyId(company);
 
+      // Salva o aviso com company_id e created_by
       const result = await pool.query(
         "INSERT INTO notices (message, visibility, company_id, created_by) VALUES ($1, $2, $3, $4) RETURNING *",
         [message, visibility, companyId, creatorId],
       );
 
+      // Busca dados da empresa para o template de e-mail
+      const companyResult = await pool.query(
+        "SELECT name, slug FROM companies WHERE id = $1",
+        [companyId],
+      );
+      const companyData = companyResult.rows[0] || {
+        name: "Valor Corp",
+        slug: "valor-corporate",
+      };
+
+      // ── Notificações internas + e-mails (em background) ──
       try {
         let targetUsersQuery = "";
-        const params = [creatorId];
+        const queryParams = [creatorId];
 
-        // Atualizado para buscar nome e email também
         if (visibility === "todos") {
           targetUsersQuery = "SELECT id, nome, email FROM users WHERE id != $1";
         } else if (visibility === "licenciados") {
@@ -115,133 +308,79 @@ module.exports = function (pool, createNotification, logActivity, resend) {
         }
 
         if (targetUsersQuery) {
-          const targetUsers = await pool.query(targetUsersQuery, params);
+          const targetUsers = await pool.query(targetUsersQuery, queryParams);
           const notificationMessage = "Um novo aviso foi postado no mural.";
 
-          // 1. Cria notificações internas no painel
-          for (const user of targetUsers.rows) {
-            createNotification(user.id, notificationMessage, "/home");
+          // 1. Notificações internas no painel
+          for (const u of targetUsers.rows) {
+            createNotification(u.id, notificationMessage, "/home");
           }
 
-          // 2. Dispara os e-mails se a opção foi marcada no frontend (Limite de 3 por segundo)
+          // 2. Disparo de e-mails em lote (background, não bloqueia a resposta)
           if (sendEmail && resend) {
-            const linkPainel =
-              process.env.FRONTEND_URL || "https://painel.valorfiscal.com";
-            const validUsers = targetUsers.rows.filter((user) => user.email);
+            const validUsers = targetUsers.rows.filter((u) => u.email);
 
-            // Executa em background (IIFE) para não travar a resposta ao frontend
+            // Monta o HTML UMA VEZ para todos (mesmo template, personalização por empresa)
+            const emailHtml = getEmailTemplate(
+              companyData.slug,
+              companyData.name,
+              message,
+            );
+
+            // Subject e remetente dinâmicos por empresa
+            const emailSubject = `📢 Novo Aviso — ${companyData.name}`;
+            const emailFrom = `${companyData.name} <${process.env.EMAIL_FROM}>`;
+
             (async () => {
               const delay = (ms) =>
                 new Promise((resolve) => setTimeout(resolve, ms));
-              const batchSize = 3; // Envia de 3 em 3
+              const batchSize = 3; // Resend: limite seguro de 3/s
 
               for (let i = 0; i < validUsers.length; i += batchSize) {
                 const batch = validUsers.slice(i, i + batchSize);
 
                 await Promise.all(
-                  batch.map(async (user) => {
-                    const userName = user.nome.split(" ")[0];
-                    const resumoAviso = message;
-
-                    const html = `
-                    <!DOCTYPE html>
-                    <html lang="pt-BR">
-                    <head>
-                      <style>
-                        body { font-family: 'Montserrat', sans-serif; }
-                      </style>
-                    </head>
-                    <body style="margin: 0; padding: 0; background-color: #f4f4f4;">
-                      <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                        <tr>
-                          <td align="center" style="padding: 20px 0;">
-                            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                              
-                              <tr>
-                                <td align="center" style="background-color: #111217; padding: 20px 0;">
-                                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="Valor Fiscal Logo" style="width: 200px; height: auto;">
-                                </td>
-                              </tr>
-
-                              <tr>
-                                <td style="padding: 30px 40px; color: #2D2C2B; font-size: 16px; line-height: 1.6;">
-                                  <h2 style="font-size: 22px; color: #0D0D0D; margin-top: 0;">Novo Aviso Publicado</h2>
-                                  <p>Olá, ${userName}!</p>
-                                  <p>Um novo aviso importante foi postado no Painel da Valor:</p>
-                                  
-                                  <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 20px 0;">
-                                  
-                                  <div style="background-color: #ffffff; border: 1px solid #e9ecef; border-left: 5px solid #E6A822; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
-                                    <p style="margin: 5px 0 0; font-size: 14px; color: #6c757d;">${resumoAviso}</p>
-                                  </div>
-                                  
-                                  <div style="text-align: center; margin-top: 25px;">
-                                    <a href="${linkPainel}" style="background-color: #111217; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; font-size: 14px; display: inline-block;">Acessar o Painel</a>
-                                  </div>
-                                </td>
-                              </tr>
-
-                              <tr>
-                                <td align="center" style="background-color: #f8f9fa; padding: 20px; font-size: 12px; color: #6c757d;">
-                                  <p>Valor Corp © ${new Date().getFullYear()}</p>
-                                  <p>Esta é uma mensagem automática. Por favor, não responda a este email.</p>
-                                </td>
-                              </tr>
-
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                    </body>
-                    </html>
-                    `;
-
+                  batch.map(async (u) => {
                     try {
                       await resend.emails.send({
-                        from: `Painel Valor Fiscal <${process.env.EMAIL_FROM}>`,
-                        to: user.email,
-                        subject: "Novo Aviso no Painel da Valor",
-                        html: html,
+                        from: emailFrom, // ← dinâmico por empresa
+                        to: u.email,
+                        subject: emailSubject, // ← dinâmico por empresa
+                        html: emailHtml, // ← corrigido (era `html` undefined)
                       });
-                      console.log(
-                        `Aviso enviado por e-mail para ${user.email}`,
-                      );
+                      console.log(`[notices] E-mail enviado para ${u.email}`);
                     } catch (emailErr) {
                       console.error(
-                        `Erro ao enviar aviso por e-mail para ${user.email}:`,
+                        `[notices] Erro ao enviar para ${u.email}:`,
                         emailErr,
                       );
                     }
                   }),
                 );
 
-                // Aguarda 1 segundo (1000ms) antes de enviar o próximo lote, se houver mais e-mails
                 if (i + batchSize < validUsers.length) {
                   await delay(1000);
                 }
               }
-              console.log("Disparo de e-mails em lote concluído com sucesso.");
+              console.log("[notices] Disparo em lote concluído.");
             })();
           }
         }
       } catch (notifyErr) {
-        console.error(
-          "Erro ao processar notificações/e-mails de aviso:",
-          notifyErr,
-        );
+        console.error("[notices] Erro ao processar notificações:", notifyErr);
       }
 
-      // 3. Registra o log de atividade independentemente de ter enviado e-mail ou não
+      // 3. Log de atividade
       try {
         await logActivity(
           req.user?.id || null,
           req.user?.email || "desconhecido",
           "Aviso Criado",
-          `Foi postado um novo aviso. E-mail enviado: ${sendEmail ? "Sim" : "Não"}`,
+          `Novo aviso postado para ${companyData.name}. E-mail: ${sendEmail ? "Sim" : "Não"}`,
           req.ipAddress,
         );
       } catch (e) {
-        console.warn("Falha ao registrar log de postagem:", e);
+        console.warn("[notices] Falha ao registrar log:", e);
       }
 
       res.status(201).json(result.rows[0]);
@@ -251,6 +390,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     }
   });
 
+  // ─── PUT /api/notices/:id ────────────────────────────────────────────────────
   router.put(
     "/:id",
     isLoggedIn,
@@ -273,11 +413,11 @@ module.exports = function (pool, createNotification, logActivity, resend) {
             req.user?.id || null,
             req.user?.email || "desconhecido",
             "Aviso Editado",
-            `Foi editado o aviso ID ${id}.`,
+            `Aviso ID ${id} editado.`,
             req.ipAddress,
           );
         } catch (e) {
-          console.warn("Falha ao registrar log de edição:", e);
+          console.warn("[notices] Falha ao registrar log de edição:", e);
         }
       } catch (err) {
         console.error("Erro ao editar aviso:", err);
@@ -286,6 +426,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     },
   );
 
+  // ─── DELETE /api/notices/:id ─────────────────────────────────────────────────
   router.delete(
     "/:id",
     isLoggedIn,
@@ -301,11 +442,11 @@ module.exports = function (pool, createNotification, logActivity, resend) {
             req.user?.id || null,
             req.user?.email || "desconhecido",
             "Aviso Excluído",
-            `Foi excluído o aviso ID ${id}.`,
+            `Aviso ID ${id} excluído.`,
             req.ipAddress,
           );
         } catch (e) {
-          console.warn("Falha ao registrar log de exclusão:", e);
+          console.warn("[notices] Falha ao registrar log de exclusão:", e);
         }
       } catch (err) {
         console.error("Erro ao excluir aviso:", err);

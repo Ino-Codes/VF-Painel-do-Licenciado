@@ -15,11 +15,15 @@ import { HiOutlineUserCircle } from "react-icons/hi";
 import { FiEdit, FiEye, FiCamera } from "react-icons/fi";
 import { PiPencilSimpleLineBold } from "react-icons/pi";
 
+// ─── Interfaces ───────────────────────────────────────────────────────────────
+
 interface CertificateData {
   certificate_id: number;
   course_id: number;
   issue_date: string;
   course_title: string;
+  company_slug?: string;
+  company_name?: string;
 }
 
 interface User {
@@ -37,22 +41,25 @@ interface User {
   data_admissao?: string;
 }
 
-const formatarTelefone = (telefone?: string | null): string => {
-  if (!telefone) {
-    return "Não informado";
-  }
+// ─── Mapa de nomes de empresa por slug (fallback caso o backend não retorne) ──
 
-  const digitos = telefone.replace(/\D/g, "");
-
-  if (digitos.length !== 11) {
-    return telefone;
-  }
-
-  return `(${digitos.substring(0, 2)}) ${digitos.substring(
-    2,
-    7,
-  )}-${digitos.substring(7)}`;
+const COMPANY_NAMES: Record<string, string> = {
+  "valor-fiscal": "Valor Fiscal",
+  "valor-banking": "Valor Banking",
+  "valor-business": "Valor Business",
+  "valor-corporate": "Valor Corp",
 };
+
+// ─── Helper de formatação de telefone ────────────────────────────────────────
+
+const formatarTelefone = (telefone?: string | null): string => {
+  if (!telefone) return "Não informado";
+  const digitos = telefone.replace(/\D/g, "");
+  if (digitos.length !== 11) return telefone;
+  return `(${digitos.substring(0, 2)}) ${digitos.substring(2, 7)}-${digitos.substring(7)}`;
+};
+
+// ─── Componente ───────────────────────────────────────────────────────────────
 
 const Perfil: React.FC = () => {
   const { user, login, logout, loading } = useAuth() as {
@@ -65,20 +72,15 @@ const Perfil: React.FC = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"info" | "certificates">("info");
-
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-
   const [nome, setNome] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-
   const [certificates, setCertificates] = useState<CertificateData[]>([]);
   const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
-
   const [isEditing, setIsEditing] = useState(false);
-
   const [editForm, setEditForm] = useState({
     nome: "",
     cargo: "",
@@ -86,6 +88,8 @@ const Perfil: React.FC = () => {
     unidade: "",
     telefone: "",
   });
+
+  // ─── Effects ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!loading && user) {
@@ -128,6 +132,8 @@ const Perfil: React.FC = () => {
     }
   }, [activeTab, fetchCertificates]);
 
+  // ─── Handlers ────────────────────────────────────────────────────────────────
+
   const handleSaveChanges = async () => {
     if (!user) return;
 
@@ -146,7 +152,6 @@ const Perfil: React.FC = () => {
 
     if (user.role !== "licenciado") {
       const unitId = getUnitIdByName(editForm.unidade);
-
       payload.cargo = editForm.cargo;
       payload.setor = editForm.setor;
       payload.unidade = editForm.unidade;
@@ -156,9 +161,7 @@ const Perfil: React.FC = () => {
 
     try {
       const res = await api.put(`/api/users/admin/${user.id}`, payload);
-
       login(res.data.user, res.data.token);
-
       toast.success("Perfil atualizado com sucesso!");
       setIsEditing(false);
     } catch (err: any) {
@@ -201,9 +204,7 @@ const Perfil: React.FC = () => {
     if (!user) return;
     try {
       const res = await api.delete(`/api/users/${user.id}/avatar`);
-
       login(res.data.user, res.data.token);
-
       toast.success("Foto de perfil removida com sucesso!");
     } catch (err) {
       toast.error("Erro ao remover a foto.");
@@ -221,12 +222,9 @@ const Perfil: React.FC = () => {
     try {
       const response = await api.get(
         `/api/admin/courses/${courseId}/certificate`,
-        {
-          responseType: "blob",
-        },
+        { responseType: "blob" },
       );
       toast.dismiss();
-
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -242,17 +240,18 @@ const Perfil: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <div className="tela-loading">Carregando...</div>;
-  }
-  if (!user) {
-    return null;
-  }
+  // ─── Guards de render ─────────────────────────────────────────────────────
+
+  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (!user) return null;
+
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="p-2">
       <Menu />
       <div className="content-area">
+        {/* ── Cabeçalho do perfil ── */}
         <div className="profile-header">
           <div className="profile-avatar-container">
             {user.avatar_url ? (
@@ -289,6 +288,7 @@ const Perfil: React.FC = () => {
           </div>
         </div>
 
+        {/* ── Tabs ── */}
         <div className="tabs">
           <button
             className={`tab-item ${activeTab === "info" ? "active" : ""}`}
@@ -297,17 +297,19 @@ const Perfil: React.FC = () => {
             Informações Gerais
           </button>
           <button
-            className={`tab-item ${
-              activeTab === "certificates" ? "active" : ""
-            }`}
+            className={`tab-item ${activeTab === "certificates" ? "active" : ""}`}
             onClick={() => setActiveTab("certificates")}
           >
             Meus Certificados
           </button>
         </div>
 
+        {/* ─────────────────────────────────────────────────────────────────── */}
+        {/* TAB: Informações Gerais                                             */}
+        {/* ─────────────────────────────────────────────────────────────────── */}
         {activeTab === "info" && (
           <div className="profile-tab-content">
+            {/* ── Informações do Perfil ── */}
             <div className="profile-section">
               <h3>
                 Informações do Perfil
@@ -407,6 +409,7 @@ const Perfil: React.FC = () => {
               )}
             </div>
 
+            {/* ── Perfil Comportamental ── */}
             {user.role !== "licenciado" && (
               <div className="profile-section">
                 <h3>Perfil Comportamental</h3>
@@ -420,7 +423,6 @@ const Perfil: React.FC = () => {
                       <PiPencilSimpleLineBold /> Responder
                     </button>
                   </Link>
-
                   <Link to="/perfil/enneagram-results">
                     <button className="form-icon-list">
                       <FiEye /> Ver Resultado
@@ -430,6 +432,7 @@ const Perfil: React.FC = () => {
               </div>
             )}
 
+            {/* ── Alterar Senha ── */}
             <div className="profile-section">
               <h3>Alterar Senha</h3>
 
@@ -477,6 +480,9 @@ const Perfil: React.FC = () => {
           </div>
         )}
 
+        {/* ─────────────────────────────────────────────────────────────────── */}
+        {/* TAB: Meus Certificados                                              */}
+        {/* ─────────────────────────────────────────────────────────────────── */}
         {activeTab === "certificates" && (
           <div className="profile-tab-content">
             {isLoadingCertificates ? (
@@ -484,26 +490,46 @@ const Perfil: React.FC = () => {
             ) : (
               <div className="certificates-grid">
                 {certificates.length > 0 ? (
-                  certificates.map((cert) => (
-                    <div key={cert.certificate_id} className="certificate-card">
-                      <h4>{cert.course_title}</h4>
-                      <p>
-                        Emitido em:{" "}
-                        {new Date(cert.issue_date).toLocaleDateString("pt-BR")}
-                      </p>
-                      <button
-                        className="form-button"
-                        onClick={() =>
-                          handleViewCertificate(
-                            cert.course_id,
-                            cert.course_title,
-                          )
-                        }
+                  certificates.map((cert) => {
+                    // Slug da empresa — fallback para valor-corporate
+                    const slug = cert.company_slug || "valor-corporate";
+
+                    // Nome da empresa — vindo do backend ou fallback do mapa local
+                    const companyName =
+                      cert.company_name || COMPANY_NAMES[slug] || "Valor Corp";
+
+                    return (
+                      <div
+                        key={cert.certificate_id}
+                        className={`certificate-card company-${slug}`}
                       >
-                        Baixar Certificado
-                      </button>
-                    </div>
-                  ))
+                        <h4 className="certificate-title">
+                          {cert.course_title}
+                        </h4>
+
+                        <p>{companyName}</p>
+
+                        <p>
+                          Emitido em:{" "}
+                          {new Date(cert.issue_date).toLocaleDateString(
+                            "pt-BR",
+                          )}
+                        </p>
+
+                        <button
+                          className="form-button"
+                          onClick={() =>
+                            handleViewCertificate(
+                              cert.course_id,
+                              cert.course_title,
+                            )
+                          }
+                        >
+                          Baixar Certificado
+                        </button>
+                      </div>
+                    );
+                  })
                 ) : (
                   <EmptyState
                     imageKey="certificado"
@@ -516,7 +542,9 @@ const Perfil: React.FC = () => {
           </div>
         )}
       </div>
+
       <Footer />
+
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
@@ -524,6 +552,7 @@ const Perfil: React.FC = () => {
         title="Remover Foto de Perfil"
         message="Tem certeza que deseja remover sua foto de perfil?"
       />
+
       <AvatarModal
         isOpen={isAvatarModalOpen}
         onClose={() => setIsAvatarModalOpen(false)}

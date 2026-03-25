@@ -460,6 +460,9 @@ module.exports = function (pool, cloudinary, upload) {
         <head>
 
           <style>
+            @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+            @import url('https://fonts.googleapis.com/css2?family=Edu+NSW+ACT+Cursive:wght@400..700&display=swap');
+            
             body {
                 font-family: 'Montserrat', sans-serif;
                 margin: 0;
@@ -513,7 +516,7 @@ module.exports = function (pool, cloudinary, upload) {
             }
 
             .student-name {
-                font-family: 'Snell Roundhand', cursive;
+                font-family: 'Snell Roundhand', 'Edu NSW ACT Cursive', serif;
                 font-style: italic;
                 font-size: 4em;
                 color: #252525;

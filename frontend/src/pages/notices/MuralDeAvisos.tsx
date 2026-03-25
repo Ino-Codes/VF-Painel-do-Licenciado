@@ -187,8 +187,7 @@ const MuralDeAvisos: React.FC = () => {
               fontSize: "0.9rem",
             }}
           >
-            {totalCount} aviso{totalCount !== 1 ? "s" : ""} encontrado
-            {totalCount !== 1 ? "s" : ""}
+            {totalCount} aviso{totalCount !== 1 ? "s" : ""}
           </p>
         )}
 

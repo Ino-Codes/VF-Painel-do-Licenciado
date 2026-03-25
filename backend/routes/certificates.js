@@ -8,19 +8,22 @@ module.exports = function (pool) {
     const { userId } = req.params;
     try {
       const result = await pool.query(
-        `SELECT 
-            c.id AS certificate_id, 
-            c.course_id, 
-            c.issue_date, 
-            c.expiration_date, 
-            c.certificate_url,
-            co.title AS course_title,
-            co.description AS course_description
-         FROM certificates c
-         JOIN courses co ON c.course_id = co.id
-         WHERE c.user_id = $1
-         ORDER BY c.issue_date DESC`,
-        [userId]
+        `
+        SELECT
+          c.id AS certificate_id,
+          c.course_id,
+          c.issue_date,
+          cr.title AS course_title,
+          co.slug AS company_slug,
+          co.name AS company_name,
+          co.primary_color AS company_color
+        FROM certificates c
+        JOIN courses cr ON c.course_id = cr.id
+        LEFT JOIN companies co ON cr.company_id = co.id
+        WHERE c.user_id = $1
+        ORDER BY c.issue_date DESC
+        `,
+        [userId],
       );
       res.json(result.rows);
     } catch (err) {
