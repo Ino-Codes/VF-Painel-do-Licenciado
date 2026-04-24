@@ -38,6 +38,7 @@ import AdminStatistics from "./pages/admin/AdminStatistics.tsx";
 import InternalGestao from "./pages/internal/InternalGestao.tsx";
 import ContentGestao from "./pages/content/ContentGestao.tsx";
 import MuralDeAvisos from "./pages/notices/MuralDeAvisos.tsx";
+import Projetos from "./pages/internal/Projetos.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -55,6 +56,7 @@ import "./styles/12-Internal.css";
 import "./styles/13-Recruitment.css";
 import "./styles/14-Feedbacks.css";
 import "./styles/15-Gestao.css";
+import "./styles/16-Projects.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
@@ -108,6 +110,7 @@ const AppRouter: React.FC = () => {
           />
           <Route path="/internal/ferias" element={<SolicitarFerias />} />
           <Route path="/internal/empresa" element={<Empresa />} />
+          <Route path="/internal/projetos" element={<Projetos />} />
           {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />

@@ -6,11 +6,19 @@ import StarterKit from "@tiptap/starter-kit";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
 
+type Visibility =
+  | "todos"
+  | "admin"
+  | "rh"
+  | "comercial"
+  | "operacional"
+  | "licenciado";
+
 interface Notice {
   id: number;
   message: string;
   created_at: string;
-  visibility: "todos" | "internos" | "licenciados";
+  visibility: Visibility;
 }
 
 interface NoticeModalProps {
@@ -18,19 +26,27 @@ interface NoticeModalProps {
   onClose: () => void;
   onSuccess: () => void;
   noticeToEdit?: Notice | null;
-  companySlug?: string; // NOVO
+  companySlug?: string;
 }
+
+// Opções de visibilidade com labels legíveis
+const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
+  { value: "todos", label: "Todos" },
+  { value: "admin", label: "Apenas Administradores" },
+  { value: "rh", label: "Apenas RH" },
+  { value: "comercial", label: "Apenas Comercial" },
+  { value: "operacional", label: "Apenas Operacional" },
+  { value: "licenciado", label: "Apenas Licenciados" },
+];
 
 const NoticeModal: React.FC<NoticeModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
   noticeToEdit,
-  companySlug, // NOVO
+  companySlug,
 }) => {
-  const [visibility, setVisibility] = useState<
-    "todos" | "internos" | "licenciados"
-  >("todos");
+  const [visibility, setVisibility] = useState<Visibility>("todos");
   const [sendEmail, setSendEmail] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -63,20 +79,14 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
         setShowEmojiPicker(false);
       }
     };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
-    if (editor) {
-      editor.chain().focus().insertContent(emojiData.emoji).run();
-    }
+    if (editor) editor.chain().focus().insertContent(emojiData.emoji).run();
     setShowEmojiPicker(false);
   };
 
@@ -86,8 +96,6 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       return;
     }
     const message = editor.getHTML();
-
-    // ALTERADO: inclui company no payload
     const payload = { message, visibility, sendEmail, company: companySlug };
 
     try {
@@ -125,6 +133,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       <div className="modal-content" style={{ maxWidth: "600px" }}>
         <h2>{noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}</h2>
 
+        {/* Editor */}
         <div className="form-row">
           <div className="tiptap-container">
             <TiptapMenuBar
@@ -149,6 +158,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           </div>
         </div>
 
+        {/* Visibilidade */}
         <div className="form-row">
           <label htmlFor="visibility">Visível para:</label>
         </div>
@@ -156,19 +166,18 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           <select
             id="visibility"
             value={visibility}
-            onChange={(e) =>
-              setVisibility(
-                e.target.value as "todos" | "internos" | "licenciados",
-              )
-            }
+            onChange={(e) => setVisibility(e.target.value as Visibility)}
             className="form-input"
           >
-            <option value="todos">Todos</option>
-            <option value="licenciados">Apenas Licenciados</option>
-            <option value="internos">Apenas Internos</option>
+            {VISIBILITY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
         </div>
 
+        {/* Envio por e-mail */}
         {!noticeToEdit && (
           <div
             className="form-row"

@@ -15,6 +15,7 @@ import { CompanySlug } from "../../types.ts";
 
 import { HiOutlineUserCircle, HiOutlineBell } from "react-icons/hi";
 import { FaPeopleGroup, FaLock } from "react-icons/fa6";
+import { FaUsers } from "react-icons/fa";
 
 // Configuração das Empresas
 const COMPANIES_CONFIG = [
@@ -193,6 +194,18 @@ const Menu: React.FC = () => {
                 Admin
               </NavLink>
             )}
+          </>
+        )}
+        {user.role !== "licenciado" && (
+          <>
+            <NavLink
+              to="/internal/internal-gestao"
+              className="menu-item dropdown-trigger"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <FaUsers />
+              Área Interna
+            </NavLink>
           </>
         )}
 

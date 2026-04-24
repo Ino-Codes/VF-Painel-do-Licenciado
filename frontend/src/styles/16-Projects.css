@@ -1,0 +1,334 @@
+/* ═══════════════════════════════════════════════════════════════
+   14-AreaInterna.css
+   Estilos para AreaInterna.tsx e Projetos.tsx (Gantt incluso)
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Projetos: cabeçalho e toolbar ──────────────────────────── */
+
+.projetos-header {
+  margin-bottom: 25px;
+}
+
+.projetos-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.projetos-tab-content {
+  margin-top: 25px;
+}
+
+.projetos-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+/* ── Tabela de Projetos ─────────────────────────────────────── */
+
+.projetos-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.projetos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.projetos-table thead tr {
+  background-color: var(--bg-secondary);
+}
+
+.projetos-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.projetos-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.projetos-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.projetos-table tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+.projeto-nome {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.projeto-descricao {
+  max-width: 380px;
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+}
+
+.projetos-table td.projeto-acoes {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.projeto-acoes-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Cronograma: toolbar ────────────────────────────────────── */
+
+.cronograma-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.cronograma-select {
+  min-width: 260px;
+  max-width: 400px;
+}
+
+.cronograma-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Gantt ──────────────────────────────────────────────────── */
+
+.gantt-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.gantt-grid {
+  display: grid;
+  min-width: 900px;
+}
+
+/* Células base */
+.gantt-cell {
+  padding: 8px 10px;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.gantt-cell:last-child {
+  border-right: none;
+}
+
+/* Header: canto superior esquerdo */
+.gantt-header-corner {
+  background-color: var(--bg-secondary);
+}
+
+/* Header: anos */
+.gantt-year {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 13px;
+  justify-content: center;
+}
+
+/* Header: label "Atividades" */
+.gantt-header-label {
+  background-color: var(--bg-secondary);
+}
+
+.gantt-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Header: meses */
+.gantt-month {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 11px;
+  justify-content: center;
+  border-bottom: 2px solid var(--border-color);
+}
+
+/* Label lateral da tarefa */
+.gantt-task-label {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+  gap: 8px;
+  padding: 10px 12px;
+  position: relative;
+  justify-content: space-between;
+}
+
+.gantt-task-label-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gantt-task-label-text {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt-task-actions {
+  display: inline-flex;
+  gap: 4px;
+  opacity: 0;
+  flex-shrink: 0; /* garante que os botões não encolhem */
+  transition: opacity 0.15s ease;
+}
+
+.gantt-task-label:hover .gantt-task-actions {
+  opacity: 1;
+}
+
+.task-period-row {
+  display: flex;
+  gap: 10px;
+}
+
+.task-period-row .form-input {
+  flex: 1;
+}
+
+.gantt-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.gantt-icon-btn:hover {
+  color: var(--action-edit);
+}
+
+.gantt-icon-btn.delete:hover {
+  color: var(--action-danger);
+}
+
+/* Células de fundo (zebra) */
+.gantt-row-bg {
+  background-color: var(--bg-primary);
+  min-height: 44px;
+}
+
+/* Linha da barra — ocupa toda a largura do grid exceto o label */
+.gantt-bar-row {
+  display: grid;
+  grid-column: 2 / -1;
+  align-items: center;
+  position: relative;
+  margin-top: -44px; /* sobe para sobrepor as gantt-row-bg da mesma linha */
+  pointer-events: none;
+}
+
+.gantt-bar {
+  height: 28px;
+  border-radius: 4px;
+  opacity: 0.85;
+  pointer-events: all;
+  cursor: default;
+  transition: opacity 0.15s ease;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.18) 4px,
+    rgba(255, 255, 255, 0.18) 8px
+  );
+}
+
+.gantt-bar:hover {
+  opacity: 1;
+}
+
+/* ── Paleta de cores do TaskModal ───────────────────────────── */
+
+.task-color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.task-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.task-color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.task-color-swatch.selected {
+  border-color: var(--text-primary);
+  transform: scale(1.2);
+}
+
+/* ── Responsivo ─────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .cronograma-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cronograma-select {
+    max-width: 100%;
+  }
+
+  .projeto-descricao {
+    max-width: 200px;
+  }
+}

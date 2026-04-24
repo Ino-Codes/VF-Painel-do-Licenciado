@@ -24,9 +24,11 @@
   --border-strong: #ccc; /* Bordas de inputs */
 
   --bg-accent-color: #ffae003a;
+  --bg-accent-color-light: #ffae0059;
   --bg-event-color: #24ff000d;
   --bg-result-green: #37ff161a;
   --bg-result-red: #ff24242b;
+  --bg-result-blue: #2424ff2b;
 
   --bg-calendar-non-bussiness: #e6e6e6;
 
@@ -63,8 +65,8 @@ body.dark-theme {
   /* --- Tema Escuro --- */
 
   /* telas principais */
-  --bg-primary: #242424;
-  --bg-secondary: #2e3235;
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #282c2e;
 
   /* menu superior */
   --bg-menu: #141414;
@@ -88,7 +90,7 @@ body.dark-theme {
   --bg-event-color: #24ff000d;
   --bg-result-green: #37ff161a;
   --bg-result-red: #ff24242b;
-
+  --bg-result-blue: #2424ff2b;
   --bg-calendar-non-bussiness: #2d2d2d;
 
   /* cores de destaque */
@@ -142,20 +144,22 @@ body {
   background-size: cover;
   background-position: top;
   margin: 0;
-  height: 100vh;
+  min-height: 100vh;
   overflow-x: hidden;
+  width: 100%;
   font-family: "Montserrat", sans-serif;
   color: var(--text-primary);
 }
 body::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.8);
   z-index: -1;
+  height: 100%;
 }
 
 .p-2 {

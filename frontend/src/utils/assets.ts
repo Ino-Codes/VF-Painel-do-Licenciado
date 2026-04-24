@@ -11,6 +11,7 @@ import {
   PiChartDonut,
   PiVideo,
   PiQuestion,
+  PiChartPieSliceFill,
 } from "react-icons/pi";
 import { TbError404 } from "react-icons/tb";
 
@@ -25,6 +26,7 @@ export const iconMap: Record<string, IconType> = {
   eventos: PiCalendarSlash,
   faq: PiQuestion,
   video: PiVideo,
+  projetos: PiChartPieSliceFill,
 };
 
 // Função simples para obter o componente

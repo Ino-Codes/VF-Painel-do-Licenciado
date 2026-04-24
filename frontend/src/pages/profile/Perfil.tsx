@@ -39,6 +39,7 @@ interface User {
   unidade?: string;
   telefone?: string;
   data_admissao?: string;
+  nickname?: string;
 }
 
 // ─── Mapa de nomes de empresa por slug (fallback caso o backend não retorne) ──
@@ -87,6 +88,7 @@ const Perfil: React.FC = () => {
     setor: "",
     unidade: "",
     telefone: "",
+    nickname: "",
   });
 
   // ─── Effects ────────────────────────────────────────────────────────────────
@@ -99,6 +101,7 @@ const Perfil: React.FC = () => {
         setor: user.setor || "",
         unidade: user.unidade || "",
         telefone: user.telefone || "",
+        nickname: user.nickname || "",
       });
     }
   }, [user, loading]);
@@ -148,6 +151,7 @@ const Perfil: React.FC = () => {
       ...user,
       nome: nomeAtualizado,
       data_admissao: user.data_admissao,
+      nickname: editForm.nickname.trim() || null, // ADICIONADO
     };
 
     if (user.role !== "licenciado") {
@@ -326,8 +330,8 @@ const Perfil: React.FC = () => {
               {!isEditing && (
                 <div className="profile-info-grid">
                   <div className="info-item">
-                    <span>Nome</span>
-                    <p>{user.nome}</p>
+                    <span>Apelido</span>
+                    <p>{user.nickname}</p>
                   </div>
                   <div className="info-item">
                     <span>Email</span>
@@ -367,13 +371,13 @@ const Perfil: React.FC = () => {
               {isEditing && (
                 <div className="profile-edit-form">
                   <div className="form-row">
-                    <label>Nome:</label>
+                    <label>Apelido:</label>
                     <input
                       type="text"
                       className="form-input"
-                      value={editForm.nome}
+                      value={editForm.nickname}
                       onChange={(e) =>
-                        setEditForm({ ...editForm, nome: e.target.value })
+                        setEditForm({ ...editForm, nickname: e.target.value })
                       }
                     />
                   </div>

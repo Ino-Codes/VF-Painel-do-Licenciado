@@ -115,7 +115,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   // --- UPLOAD ---
-  // --- UPLOAD ---
   router.post(
     "/",
     isLoggedIn,

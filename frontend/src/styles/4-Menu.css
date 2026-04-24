@@ -292,6 +292,7 @@
   .menu-left.open {
     display: flex;
     padding-bottom: 25px;
+    border-bottom: solid 1px var(--border-color);
   }
   .menu-item {
     text-align: center;

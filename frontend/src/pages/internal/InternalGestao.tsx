@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 
-import { FaBuilding } from "react-icons/fa";
+import { FaBuilding, FaChartPie } from "react-icons/fa";
 
 const InternalGestao: React.FC = () => {
   const { user, loading } = useAuth();
@@ -25,6 +25,13 @@ const InternalGestao: React.FC = () => {
         "Conheça a história da Valor Fiscal e nosso time de colaboradores",
       icon: <FaBuilding />,
       path: "/internal/empresa",
+    },
+    {
+      title: "Projetos",
+      description:
+        "Acesse o cronograma e gerencie os projetos internos da empresa",
+      icon: <FaChartPie />,
+      path: "/internal/projetos",
     },
   ];
 

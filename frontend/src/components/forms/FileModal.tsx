@@ -125,7 +125,7 @@ const FileModal: React.FC<FileModalProps> = ({
         toast.success(
           `Arquivo incluído na ${
             COMPANIES_OPTIONS.find((c) => c.slug === company)?.name || "empresa"
-          }!`
+          }!`,
         );
       }
       onSuccess();
@@ -138,7 +138,7 @@ const FileModal: React.FC<FileModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>{fileToEdit ? "Editar Arquivo" : "Adicionar Novo Arquivo"}</h2>
+        <h2>{fileToEdit ? "Editar Arquivo" : "Novo Arquivo"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <label htmlFor="company-select" style={{ marginRight: "10px" }}>

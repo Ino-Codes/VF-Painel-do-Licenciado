@@ -363,6 +363,7 @@
 .color-swatch.selected {
   border-color: #0000001a;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  transform: scale(0.9);
 }
 
 .fc .fc-day-today {

@@ -2,16 +2,15 @@ import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { FiX, FiPlus } from "react-icons/fi";
-import { useSearchParams } from "react-router-dom"; // Importado para ler a URL
+import { useSearchParams } from "react-router-dom";
 
 interface SocialPostModalProps {
-  postToEdit?: any; // Para futura implementação de edição
+  postToEdit?: any;
   onClose: () => void;
   onSuccess: () => void;
   categories: string[];
 }
 
-// Configuração das empresas (Igual ao do FileModal)
 const COMPANIES_OPTIONS = [
   { slug: "valor-fiscal", name: "Valor Fiscal" },
   { slug: "valor-banking", name: "Valor Banking" },
@@ -19,26 +18,43 @@ const COMPANIES_OPTIONS = [
   { slug: "valor-corporate", name: "Valor Corp" },
 ];
 
+// Opções de visibilidade
+const VISIBILITY_OPTIONS = [
+  {
+    value: "todos",
+    label: "Todos",
+    description: "Visível para qualquer usuário",
+  },
+  {
+    value: "colaboradores",
+    label: "Apenas Internos",
+    description: "Visível apenas para colaboradores e admins",
+  },
+  {
+    value: "licenciados",
+    label: "Apenas Externos",
+    description: "Visível apenas para licenciados e admins",
+  },
+];
+
 const SocialPostModal: React.FC<SocialPostModalProps> = ({
   onClose,
   onSuccess,
   categories,
 }) => {
-  // Captura a empresa atual da URL
   const [searchParams] = useSearchParams();
   const currentCompanySlug = searchParams.get("company") || "valor-fiscal";
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [caption, setCaption] = useState("");
-
-  // Estado para a Empresa, que inicia com a aba em que o usuário já estava
   const [company, setCompany] = useState(currentCompanySlug);
-
+  const [visibility, setVisibility] = useState<
+    "todos" | "colaboradores" | "licenciados"
+  >("todos");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
 
-  // Atualiza a empresa caso a prop mude, para evitar estados fantasmas
   useEffect(() => {
     setCompany(currentCompanySlug);
   }, [currentCompanySlug]);
@@ -47,14 +63,11 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       const MAX_SIZE = 10 * 1024 * 1024;
-
       const validFiles = filesArray.filter((file) => file.size <= MAX_SIZE);
       if (validFiles.length !== filesArray.length) {
         toast.error("Alguns arquivos excedem o limite de 10MB.");
       }
-
       setSelectedFiles((prev) => [...prev, ...validFiles]);
-
       const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
       setPreviews((prev) => [...prev, ...newPreviews]);
     }
@@ -79,13 +92,9 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
     formData.append("title", title);
     formData.append("category", category);
     formData.append("caption", caption);
-
-    // Envia o SLUG da empresa ao invés do nome
     formData.append("company", company);
-
-    selectedFiles.forEach((file) => {
-      formData.append("files", file);
-    });
+    formData.append("visibility", visibility);
+    selectedFiles.forEach((file) => formData.append("files", file));
 
     toast.loading("Fazendo upload do conteúdo...");
 
@@ -110,14 +119,12 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
       <div className="modal-content" style={{ maxWidth: "600px" }}>
         <h2>Adicionar Conteúdo Social</h2>
         <form onSubmit={handleSubmit}>
+          {/* Empresa */}
           <div className="form-row">
-            <label htmlFor="company-select" style={{ marginRight: "10px" }}>
-              Empresa:
-            </label>
+            <label>Empresa:</label>
           </div>
           <div className="form-row">
             <select
-              id="company-select"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               className="form-select"
@@ -130,10 +137,32 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
             </select>
           </div>
 
+          {/* Visibilidade */}
+          <div className="form-row">
+            <label>Visibilidade:</label>
+          </div>
+          <div className="form-row">
+            <select
+              value={visibility}
+              onChange={(e) =>
+                setVisibility(e.target.value as typeof visibility)
+              }
+              className="form-select"
+            >
+              <option value="todos">Visível para Todos</option>
+              <option value="colaboradores">Apenas para Colaboradores</option>
+              <option value="licenciados">Apenas para Licenciados</option>
+            </select>
+          </div>
+
+          {/* Título */}
+          <div className="form-row">
+            <label>Dados do Post:</label>
+          </div>
           <div className="form-row">
             <input
               type="text"
-              placeholder="Título do Post (Ex: Post de Feedback)"
+              placeholder="Título (Ex: Post de Feedback)"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="form-input"
@@ -141,6 +170,7 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
             />
           </div>
 
+          {/* Categoria */}
           <div className="form-row">
             <input
               type="text"
@@ -158,6 +188,7 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
             </datalist>
           </div>
 
+          {/* Legenda */}
           <div className="form-row">
             <textarea
               placeholder="Digite a legenda do post aqui..."
@@ -172,6 +203,7 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
             />
           </div>
 
+          {/* Imagens */}
           <div
             className="form-row"
             style={{

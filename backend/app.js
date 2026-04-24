@@ -1,4 +1,4 @@
-//require("dotenv").config();
+// require("dotenv").config();
 
 const migrationRunner = require("./migrationRunner.js");
 const express = require("express");
@@ -17,8 +17,8 @@ const port = process.env.PORT || 3001;
 
 const allowedOrigins = [
   "https://painel.valorfiscal.com",
-  "http://localhost:3000",
   "https://vf-painel-do-licenciado.onrender.com",
+  "http://localhost:3000",
 ];
 
 const corsOptions = {
@@ -133,6 +133,7 @@ const notificationRoutes = require("./routes/notifications.js")(pool);
 const recruitmentRoutes = require("./routes/recruitment.js")(pool, logActivity);
 const unitsRoutes = require("./routes/units.js")(pool);
 const socialRoutes = require("./routes/social.js")(pool, cloudinary, upload);
+const projectRoutes = require("./routes/projects.js")(pool, logActivity);
 
 // ─── REGISTRO DAS ROTAS ───────────────────────────────────────────────────────
 
@@ -156,6 +157,7 @@ app.use("/api/vacations", vacationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/recruitment", recruitmentRoutes);
 app.use("/api/units", unitsRoutes);
+app.use("/api/projects", projectRoutes);
 
 // ─── CRON JOBS ────────────────────────────────────────────────────────────────
 

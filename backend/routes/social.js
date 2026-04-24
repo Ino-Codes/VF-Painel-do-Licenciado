@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
-// Mapeamento Estático das Empresas
 const COMPANIES_MAP = {
   "valor-fiscal": 1,
   "valor-banking": 2,
@@ -11,43 +10,63 @@ const COMPANIES_MAP = {
 };
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
-  // --- HELPER: Resolve ID da empresa pelo Slug localmente ---
-  const getCompanyId = (slug) => {
-    // Se não for um slug válido ou vier vazio, cai no padrão 1 (Valor Fiscal)
-    return COMPANIES_MAP[slug] || 1;
-  };
+  const getCompanyId = (slug) => COMPANIES_MAP[slug] || 1;
 
-  // 1. CREATE: Criar postagem usando company_id
+  const VALID_VISIBILITIES = ["todos", "colaboradores", "licenciados"];
+
+  // ── 1. CREATE ────────────────────────────────────────────────
   router.post(
     "/",
     isLoggedIn,
     checkRole(["admin", "rh"]),
     upload.array("files", 5),
     async (req, res) => {
-      const { title, category, caption, company } = req.body;
+      const {
+        title,
+        category,
+        caption,
+        company,
+        visibility = "todos",
+      } = req.body;
+
+      if (!VALID_VISIBILITIES.includes(visibility)) {
+        return res.status(400).json({ error: "Visibilidade inválida." });
+      }
 
       try {
         const companyId = getCompanyId(company);
 
-        const uploadPromises = req.files.map((file) => {
-          return new Promise((resolve, reject) => {
-            cloudinary.uploader
-              .upload_stream(
-                { folder: `social/${category}` },
-                (error, result) => {
-                  if (error) reject(error);
-                  resolve(result.secure_url);
-                },
-              )
-              .end(file.buffer);
-          });
-        });
+        const uploadPromises = req.files.map(
+          (file) =>
+            new Promise((resolve, reject) => {
+              cloudinary.uploader
+                .upload_stream(
+                  { folder: `social/${category}` },
+                  (error, result) => {
+                    if (error) reject(error);
+                    resolve(result.secure_url);
+                  },
+                )
+                .end(file.buffer);
+            }),
+        );
 
         const imageUrls = await Promise.all(uploadPromises);
 
         const result = await pool.query(
-          "INSERT INTO social_posts (title, category, caption, images, created_by, company_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-          [title, category, caption, imageUrls, req.user.id, companyId],
+          `INSERT INTO social_posts
+            (title, category, caption, images, created_by, company_id, visibility)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING *`,
+          [
+            title,
+            category,
+            caption,
+            imageUrls,
+            req.user.id,
+            companyId,
+            visibility,
+          ],
         );
 
         res.status(201).json(result.rows[0]);
@@ -58,20 +77,34 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     },
   );
 
-  // 2. READ: Listar posts filtrando pelo company_id
+  // ── 2. READ ──────────────────────────────────────────────────
   router.get("/", isLoggedIn, async (req, res) => {
     const { company } = req.query;
+    const { role } = req.user;
 
     try {
-      const companyId = getCompanyId(company);
+      const companyId = getCompanyId(company); // SEM await — função síncrona
+
+      const params = [companyId];
+      const whereClauses = ["company_id = $1"];
+
+      if (role === "licenciado") {
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'licenciados')",
+        );
+      } else if (role !== "admin") {
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'colaboradores')",
+        );
+      }
 
       const query = `
-        SELECT * FROM social_posts 
-        WHERE company_id = $1 
+        SELECT * FROM social_posts
+        WHERE ${whereClauses.join(" AND ")}
         ORDER BY created_at DESC
       `;
 
-      const result = await pool.query(query, [companyId]);
+      const result = await pool.query(query, params);
 
       const grouped = result.rows.reduce((acc, post) => {
         const cat = post.category || "Geral";
@@ -87,34 +120,52 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // 3. UPDATE: Editar postagem
+  // ── 3. UPDATE ────────────────────────────────────────────────
   router.put(
     "/:id",
     isLoggedIn,
     checkRole(["admin", "rh"]),
     async (req, res) => {
       const { id } = req.params;
-      const { title, category, caption, company } = req.body;
+      const {
+        title,
+        category,
+        caption,
+        company,
+        visibility = "todos",
+      } = req.body;
+
+      if (!VALID_VISIBILITIES.includes(visibility)) {
+        return res.status(400).json({ error: "Visibilidade inválida." });
+      }
 
       try {
         const companyId = getCompanyId(company);
 
         const result = await pool.query(
-          "UPDATE social_posts SET title = $1, category = $2, caption = $3, company_id = $4 WHERE id = $5 RETURNING *",
-          [title, category, caption, companyId, id],
+          `UPDATE social_posts
+           SET title = $1, category = $2, caption = $3, company_id = $4, visibility = $5
+           WHERE id = $6
+           RETURNING *`,
+          [title, category, caption, companyId, visibility, id],
         );
 
         if (result.rowCount === 0) {
           return res.status(404).json({ error: "Post não encontrado." });
         }
 
-        await logActivity(
-          req.user.id,
-          req.user.email,
-          "UPDATE_SOCIAL_POST",
-          `Usuário ${req.user.email} editou o post social "${title}" (ID: ${id}).`,
-          req.ipAddress,
-        );
+        // Mesmo padrão do files.js — try/catch isolado, sem await
+        try {
+          logActivity(
+            req.user.id,
+            req.user.email,
+            "UPDATE_SOCIAL_POST",
+            `Usuário ${req.user.email} editou o post social "${title}" (ID: ${id}).`,
+            req.ipAddress,
+          );
+        } catch (e) {
+          console.warn("Falha ao registrar log de edição:", e);
+        }
 
         res.json(result.rows[0]);
       } catch (err) {
@@ -124,11 +175,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     },
   );
 
-  // Rota de Download
+  // ── 4. DOWNLOAD ──────────────────────────────────────────────
   router.get("/download/:id", isLoggedIn, async (req, res) => {
     try {
       const postResult = await pool.query(
-        "SELECT title, category, images FROM social_posts WHERE id = $1",
+        "SELECT title, category, images, visibility FROM social_posts WHERE id = $1",
         [req.params.id],
       );
 
@@ -136,8 +187,20 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         return res.status(404).send("Post não encontrado.");
       }
 
-      const post = postResult.rows[0];
-      const { images, title } = post;
+      const { images, title, visibility } = postResult.rows[0];
+
+      const userRole = req.user.role;
+      const isLicenciado = userRole === "licenciado";
+      const allowed =
+        visibility === "todos" ||
+        (visibility === "licenciados" && isLicenciado) ||
+        (visibility === "colaboradores" && !isLicenciado);
+
+      if (!allowed) {
+        return res
+          .status(403)
+          .json({ error: "Acesso negado a este conteúdo." });
+      }
 
       if (!images || images.length === 0) {
         return res.status(404).send("Nenhuma imagem encontrada.");
@@ -177,8 +240,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         target_public_id: sanitizedFilename,
       });
 
+      // Mesmo padrão do files.js — try/catch isolado, sem await
       try {
-        await logActivity(
+        logActivity(
           req.user.id,
           req.user.email,
           "Download em Massa",
@@ -186,7 +250,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           req.ipAddress,
         );
       } catch (e) {
-        console.warn("Falha ao registrar log:", e);
+        console.warn("Falha ao registrar log de download:", e);
       }
 
       res.json({ downloadUrl: zipUrl, isZip: true });
@@ -196,7 +260,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
-  // 4. DELETE: Excluir post
+  // ── 5. DELETE ────────────────────────────────────────────────
   router.delete(
     "/:id",
     isLoggedIn,
@@ -222,7 +286,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             const fileName = parts.pop();
             const folder = parts.slice(parts.indexOf("social")).join("/");
             const publicId = `${folder}/${fileName.split(".")[0]}`;
-
             return cloudinary.uploader.destroy(publicId);
           });
           await Promise.all(deletePromises);
@@ -230,13 +293,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         await pool.query("DELETE FROM social_posts WHERE id = $1", [id]);
 
-        await logActivity(
-          req.user.id,
-          req.user.email,
-          "DELETE_SOCIAL_POST",
-          `Usuário ${req.user.email} excluiu o post social "${title}".`,
-          req.ipAddress,
-        );
+        // Mesmo padrão do files.js — try/catch isolado, sem await
+        try {
+          logActivity(
+            req.user.id,
+            req.user.email,
+            "DELETE_SOCIAL_POST",
+            `Usuário ${req.user.email} excluiu o post social "${title}".`,
+            req.ipAddress,
+          );
+        } catch (e) {
+          console.warn("Falha ao registrar log de exclusão:", e);
+        }
 
         res.json({
           success: true,
