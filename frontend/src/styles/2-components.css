@@ -464,7 +464,7 @@ input[type="checkbox"]:checked {
   padding: 40px 20px;
 }
 .empty-state-icon {
-  color: var(--text-secondary);
+  color: #8d8d8d50;
 }
 .empty-state-title {
   color: var(--text-secondary);

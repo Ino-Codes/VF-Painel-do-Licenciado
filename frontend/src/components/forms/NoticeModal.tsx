@@ -5,20 +5,20 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
-
-type Visibility =
-  | "todos"
-  | "admin"
-  | "rh"
-  | "comercial"
-  | "operacional"
-  | "licenciado";
+import { FiSearch, FiX } from "react-icons/fi";
 
 interface Notice {
   id: number;
   message: string;
   created_at: string;
-  visibility: Visibility;
+  visibility: "todos" | "selecionados";
+}
+
+interface InternalUser {
+  id: number;
+  nome: string;
+  cargo?: string;
+  setor?: string;
 }
 
 interface NoticeModalProps {
@@ -29,16 +29,6 @@ interface NoticeModalProps {
   companySlug?: string;
 }
 
-// Opções de visibilidade com labels legíveis
-const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
-  { value: "todos", label: "Todos" },
-  { value: "admin", label: "Apenas Administradores" },
-  { value: "rh", label: "Apenas RH" },
-  { value: "comercial", label: "Apenas Comercial" },
-  { value: "operacional", label: "Apenas Operacional" },
-  { value: "licenciado", label: "Apenas Licenciados" },
-];
-
 const NoticeModal: React.FC<NoticeModalProps> = ({
   isOpen,
   onClose,
@@ -46,9 +36,11 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   noticeToEdit,
   companySlug,
 }) => {
-  const [visibility, setVisibility] = useState<Visibility>("todos");
   const [sendEmail, setSendEmail] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [internalUsers, setInternalUsers] = useState<InternalUser[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [userSearch, setUserSearch] = useState("");
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
@@ -57,17 +49,37 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     editorProps: { attributes: { class: "tiptap-editor" } },
   });
 
+  // Carrega lista de usuários internos uma vez
   useEffect(() => {
-    if (noticeToEdit && editor) {
+    if (!isOpen) return;
+    api
+      .get("/api/notices/internal-users")
+      .then((res) => setInternalUsers(res.data))
+      .catch(() => toast.error("Erro ao carregar usuários."));
+  }, [isOpen]);
+
+  // Preenche o modal ao editar
+  useEffect(() => {
+    if (!editor) return;
+
+    if (noticeToEdit) {
       editor.commands.setContent(noticeToEdit.message);
-      setVisibility(noticeToEdit.visibility || "todos");
       setSendEmail(false);
-    } else if (!noticeToEdit && editor) {
+
+      // Carrega os destinatários já selecionados
+      if (noticeToEdit.id) {
+        api
+          .get(`/api/notices/${noticeToEdit.id}/recipients`)
+          .then((res) => setSelectedUserIds(res.data))
+          .catch(() => {});
+      }
+    } else {
       editor.commands.clearContent();
-      setVisibility("todos");
+      setSelectedUserIds([]);
       setSendEmail(false);
     }
     setShowEmojiPicker(false);
+    setUserSearch("");
   }, [noticeToEdit, editor, isOpen]);
 
   useEffect(() => {
@@ -90,13 +102,41 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     setShowEmojiPicker(false);
   };
 
+  const toggleUser = (userId: number) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
+    );
+  };
+
+  const selectAll = () => {
+    setSelectedUserIds(filteredUsers.map((u) => u.id));
+  };
+
+  const clearAll = () => {
+    setSelectedUserIds([]);
+  };
+
+  const filteredUsers = internalUsers.filter(
+    (u) =>
+      u.nome.toLowerCase().includes(userSearch.toLowerCase()) ||
+      (u.cargo || "").toLowerCase().includes(userSearch.toLowerCase()) ||
+      (u.setor || "").toLowerCase().includes(userSearch.toLowerCase()),
+  );
+
   const handleSubmit = async () => {
     if (!editor || editor.isEmpty) {
       toast.error("O aviso não pode estar em branco.");
       return;
     }
     const message = editor.getHTML();
-    const payload = { message, visibility, sendEmail, company: companySlug };
+    const payload = {
+      message,
+      sendEmail,
+      company: companySlug,
+      selectedUserIds, // vazio = todos; preenchido = selecionados
+    };
 
     try {
       if (noticeToEdit) {
@@ -130,7 +170,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: "600px" }}>
+      <div className="modal-content" style={{ maxWidth: "640px" }}>
         <h2>{noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}</h2>
 
         {/* Editor */}
@@ -158,23 +198,152 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           </div>
         </div>
 
-        {/* Visibilidade */}
-        <div className="form-row">
-          <label htmlFor="visibility">Visível para:</label>
+        {/* Seletor de Destinatários */}
+        <div className="form-row" style={{ marginTop: "16px" }}>
+          <label>
+            Visível para:
+            <span
+              style={{
+                fontWeight: "normal",
+                color: "var(--text-secondary)",
+                marginLeft: "8px",
+                fontSize: "13px",
+              }}
+            >
+              {selectedUserIds.length === 0
+                ? "Todos os usuários"
+                : `${selectedUserIds.length} usuário(s) selecionado(s) + admins`}
+            </span>
+          </label>
         </div>
-        <div className="form-row">
-          <select
-            id="visibility"
-            value={visibility}
-            onChange={(e) => setVisibility(e.target.value as Visibility)}
-            className="form-input"
+
+        {/* Barra de busca + ações */}
+        <div
+          className="form-row"
+          style={{ display: "flex", gap: "8px", alignItems: "center" }}
+        >
+          <div style={{ position: "relative", flex: 1 }}>
+            <FiSearch
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-secondary)",
+              }}
+            />
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Buscar por nome, cargo ou setor..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              style={{ paddingLeft: "32px" }}
+            />
+          </div>
+          <button
+            type="button"
+            className="form-button-cancel"
+            style={{ whiteSpace: "nowrap", fontSize: "13px" }}
+            onClick={selectAll}
           >
-            {VISIBILITY_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            Todos
+          </button>
+          <button
+            type="button"
+            className="form-button-cancel"
+            style={{ whiteSpace: "nowrap", fontSize: "13px" }}
+            onClick={clearAll}
+          >
+            Limpar
+          </button>
+        </div>
+
+        {/* Lista de usuários */}
+        <div
+          className="form-row"
+          style={{
+            maxHeight: "220px",
+            overflowY: "auto",
+            border: "1px solid var(--border-color)",
+            borderRadius: "8px",
+            padding: "6px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+          }}
+        >
+          {filteredUsers.length === 0 ? (
+            <p
+              style={{
+                textAlign: "center",
+                color: "var(--text-secondary)",
+                padding: "20px 0",
+                margin: 0,
+              }}
+            >
+              Nenhum usuário encontrado.
+            </p>
+          ) : (
+            filteredUsers.map((u) => {
+              const isSelected = selectedUserIds.includes(u.id);
+              return (
+                <div
+                  key={u.id}
+                  onClick={() => toggleUser(u.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 10px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    backgroundColor: isSelected
+                      ? "var(--bg-accent-color-light)"
+                      : "transparent",
+                    border: isSelected
+                      ? "1px solid var(--bg-accent-color)"
+                      : "1px solid transparent",
+                    transition: "background-color 0.15s ease",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: isSelected ? "600" : "400",
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      {u.nome}
+                    </span>
+                    {(u.cargo || u.setor) && (
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        {[u.cargo, u.setor].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </div>
+                  {isSelected && (
+                    <FiX
+                      size={14}
+                      style={{ color: "var(--text-primary)", flexShrink: 0 }}
+                    />
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Envio por e-mail */}
@@ -208,7 +377,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
                 fontWeight: "normal",
               }}
             >
-              Enviar aviso por e-mail imediatamente
+              Enviar aviso por e-mail para os selecionados
             </label>
           </div>
         )}
