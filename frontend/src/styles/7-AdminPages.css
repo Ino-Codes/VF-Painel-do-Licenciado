@@ -1,5 +1,42 @@
 /* (Gestão de Utilizadores, Cursos, Agenda) */
 
+.text-span {
+  color: var(--text-secondary);
+  margin-left: 8px;
+  font-size: 13px;
+}
+
+.users-list {
+  background-color: var(--bg-primary);
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.users-list-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.users-list-option-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
 .admin-form {
   background-color: var(--bg-secondary);
 

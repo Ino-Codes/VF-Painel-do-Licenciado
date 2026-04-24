@@ -18,7 +18,66 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     }
   };
 
-  // ─── Helper: template de e-mail por empresa ───────────────────────────────
+  // ─── Visibilidades válidas ─────────────────────────────────────────────────
+  const VALID_VISIBILITIES = ["todos", "colaboradores", "licenciados"];
+
+  // ─── Helper: cláusula de visibilidade para o GET ───────────────────────────
+  // Define o que cada role pode ver no painel
+  const getVisibilityClause = (role, userId, params) => {
+    if (role === "admin") {
+      // Admin vê tudo — sem cláusula extra
+      return null;
+    }
+
+    if (role === "licenciado") {
+      // Licenciados veem: todos + licenciados
+      return "(n.visibility = 'todos' OR n.visibility = 'licenciados')";
+    }
+
+    // Colaboradores internos (rh, comercial, operacional, etc.) veem:
+    // todos + colaboradores + avisos onde foram especificamente selecionados
+    params.push(userId);
+    return `(
+      n.visibility = 'todos'
+      OR n.visibility = 'colaboradores'
+      OR EXISTS (
+        SELECT 1 FROM notice_recipients nr
+        WHERE nr.notice_id = n.id AND nr.user_id = $${params.length}
+      )
+    )`;
+  };
+
+  // ─── Helper: busca usuários alvo para notificação/email ───────────────────
+  // Retorna usuários com base na visibilidade macro
+  const getTargetUsers = async (visibility, creatorId) => {
+    if (visibility === "todos") {
+      const r = await pool.query(
+        "SELECT id, nome, email FROM users WHERE id != $1",
+        [creatorId],
+      );
+      return r.rows;
+    }
+
+    if (visibility === "colaboradores") {
+      const r = await pool.query(
+        "SELECT id, nome, email FROM users WHERE role != 'licenciado' AND id != $1",
+        [creatorId],
+      );
+      return r.rows;
+    }
+
+    if (visibility === "licenciados") {
+      const r = await pool.query(
+        "SELECT id, nome, email FROM users WHERE role = 'licenciado' AND id != $1",
+        [creatorId],
+      );
+      return r.rows;
+    }
+
+    return [];
+  };
+
+  // ─── Helper: template de e-mail ───────────────────────────────────────────
   const getEmailTemplate = (
     companySlug,
     companyName,
@@ -110,7 +169,6 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   };
 
   // ─── GET /api/notices/internal-users ──────────────────────────────────────
-  // Retorna todos os usuários internos (role != licenciado) para o seletor do modal
   router.get(
     "/internal-users",
     isLoggedIn,
@@ -145,23 +203,13 @@ module.exports = function (pool, createNotification, logActivity, resend) {
       const params = [companyId];
       const whereClauses = ["(n.company_id = $1 OR n.company_id IS NULL)"];
 
-      if (role === "licenciado") {
-        // Licenciados não veem avisos segmentados por usuários internos
-        whereClauses.push("n.visibility = 'todos'");
-      } else if (role !== "admin") {
-        // Internos (não-admin) veem: "todos" + avisos onde foram selecionados
-        params.push(userId);
-        whereClauses.push(
-          `(n.visibility = 'todos' OR EXISTS (
-            SELECT 1 FROM notice_recipients nr
-            WHERE nr.notice_id = n.id AND nr.user_id = $${params.length}
-          ))`,
-        );
+      // Aplica filtro de visibilidade conforme role
+      const visibilityClause = getVisibilityClause(role, userId, params);
+      if (visibilityClause) {
+        whereClauses.push(visibilityClause);
       }
-      // admin vê tudo — sem cláusula extra
 
       const whereString = `WHERE ${whereClauses.join(" AND ")}`;
-
       const countSql = `SELECT COUNT(*) FROM notices n ${whereString}`;
       const noticesSql = `
         SELECT n.*, u.nome AS creator_name
@@ -193,13 +241,18 @@ module.exports = function (pool, createNotification, logActivity, resend) {
 
   // ─── POST /api/notices ─────────────────────────────────────────────────────
   router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
-    // selectedUserIds: array de IDs dos usuários internos selecionados
-    // Se vazio ou ausente, o aviso é para "todos"
-    const { message, sendEmail, company, selectedUserIds = [] } = req.body;
+    const {
+      message,
+      visibility,
+      sendEmail,
+      company,
+      selectedUserIds = [],
+    } = req.body;
     const creatorId = req.user.id;
 
-    // Define visibility: "todos" se nenhum usuário selecionado, "selecionados" caso contrário
-    const visibility = selectedUserIds.length === 0 ? "todos" : "selecionados";
+    if (!VALID_VISIBILITIES.includes(visibility)) {
+      return res.status(400).json({ error: "Visibilidade inválida." });
+    }
 
     try {
       const companyId = await getCompanyId(company);
@@ -208,15 +261,16 @@ module.exports = function (pool, createNotification, logActivity, resend) {
       try {
         await client.query("BEGIN");
 
-        // 1. Insere o aviso
+        // 1. Insere o aviso com a visibilidade macro escolhida
         const result = await client.query(
           "INSERT INTO notices (message, visibility, company_id, created_by) VALUES ($1, $2, $3, $4) RETURNING *",
           [message, visibility, companyId, creatorId],
         );
         const noticeId = result.rows[0].id;
 
-        // 2. Se há usuários selecionados, insere os destinatários
-        if (selectedUserIds.length > 0) {
+        // 2. Salva destinatários específicos de email (se houver)
+        //    Apenas quando visibilidade != licenciados (lista não é exibida para licenciados)
+        if (visibility !== "licenciados" && selectedUserIds.length > 0) {
           for (const uid of selectedUserIds) {
             await client.query(
               "INSERT INTO notice_recipients (notice_id, user_id) VALUES ($1, $2)",
@@ -236,30 +290,12 @@ module.exports = function (pool, createNotification, logActivity, resend) {
           slug: "valor-corporate",
         };
 
-        // ── Notificações internas + e-mails (background) ─────────────────
+        // ── Notificações internas + e-mails (background) ──────────────────
         try {
-          let targetUsers;
+          // Busca todos os usuários que têm permissão de ver o aviso
+          const targetUsers = await getTargetUsers(visibility, creatorId);
 
-          if (visibility === "todos") {
-            // Notifica todos (exceto o criador)
-            const r = await pool.query(
-              "SELECT id, nome, email FROM users WHERE id != $1",
-              [creatorId],
-            );
-            targetUsers = r.rows;
-          } else {
-            // Notifica apenas os selecionados + admins (exceto o criador)
-            const ids = selectedUserIds.map((_, i) => `$${i + 1}`).join(", ");
-            const r = await pool.query(
-              `SELECT id, nome, email FROM users
-               WHERE (id = ANY($1::int[]) OR role = 'admin')
-               AND id != $2`,
-              [selectedUserIds, creatorId],
-            );
-            targetUsers = r.rows;
-          }
-
-          // Notificações internas no painel
+          // Notificações internas no painel para todos que podem ver
           for (const u of targetUsers) {
             createNotification(
               u.id,
@@ -268,15 +304,22 @@ module.exports = function (pool, createNotification, logActivity, resend) {
             );
           }
 
-          // Disparo de e-mails em lote (não bloqueia a resposta)
+          // Disparo de e-mails (não bloqueia a resposta)
           if (sendEmail && resend) {
-            // E-mail vai APENAS para os selecionados (não para admins automaticamente)
-            const emailTargets =
-              visibility === "todos"
-                ? targetUsers.filter((u) => u.email)
-                : targetUsers.filter(
-                    (u) => u.email && selectedUserIds.includes(u.id),
-                  );
+            let emailTargets;
+
+            if (visibility === "licenciados") {
+              // Para licenciados: envia para todos os licenciados (sem seleção individual)
+              emailTargets = targetUsers.filter((u) => u.email);
+            } else if (selectedUserIds.length > 0) {
+              // Há seleção específica: envia só para os selecionados
+              emailTargets = targetUsers.filter(
+                (u) => u.email && selectedUserIds.includes(u.id),
+              );
+            } else {
+              // Sem seleção: envia para todos dentro da visibilidade
+              emailTargets = targetUsers.filter((u) => u.email);
+            }
 
             const emailSubject = `📢 Novo Aviso — ${companyData.name}`;
             const emailFrom = `${companyData.name} <${process.env.EMAIL_FROM}>`;
@@ -295,7 +338,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
                       companyData.slug,
                       companyData.name,
                       message,
-                      u.nome || "usuário",
+                      u.nome ? u.nome.split(" ")[0] : "usuário",
                     );
                     try {
                       await resend.emails.send({
@@ -329,7 +372,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
             req.user?.id || null,
             req.user?.email || "desconhecido",
             "Aviso Criado",
-            `Novo aviso postado para ${companyData.name}. Visibilidade: ${visibility}. E-mail: ${sendEmail ? "Sim" : "Não"}. Destinatários: ${selectedUserIds.length || "todos"}.`,
+            `Novo aviso postado. Visibilidade: ${visibility}. E-mail: ${sendEmail ? "Sim" : "Não"}. Destinatários específicos: ${selectedUserIds.length || "nenhum (todos da visibilidade)"}.`,
             req.ipAddress,
           );
         } catch (e) {
@@ -356,10 +399,11 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     checkRole(["admin", "rh"]),
     async (req, res) => {
       const { id } = req.params;
-      const { message, selectedUserIds = [] } = req.body;
+      const { message, visibility, selectedUserIds = [] } = req.body;
 
-      const visibility =
-        selectedUserIds.length === 0 ? "todos" : "selecionados";
+      if (!VALID_VISIBILITIES.includes(visibility)) {
+        return res.status(400).json({ error: "Visibilidade inválida." });
+      }
 
       const client = await pool.connect();
       try {
@@ -374,12 +418,12 @@ module.exports = function (pool, createNotification, logActivity, resend) {
           return res.status(404).json({ error: "Aviso não encontrado." });
         }
 
-        // Recria os destinatários
+        // Recria os destinatários específicos de email
         await client.query(
           "DELETE FROM notice_recipients WHERE notice_id = $1",
           [id],
         );
-        if (selectedUserIds.length > 0) {
+        if (visibility !== "licenciados" && selectedUserIds.length > 0) {
           for (const uid of selectedUserIds) {
             await client.query(
               "INSERT INTO notice_recipients (notice_id, user_id) VALUES ($1, $2)",
@@ -395,7 +439,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
             req.user?.id || null,
             req.user?.email || "desconhecido",
             "Aviso Editado",
-            `Aviso ID ${id} editado. Nova visibilidade: ${visibility}.`,
+            `Aviso ID ${id} editado. Visibilidade: ${visibility}.`,
             req.ipAddress,
           );
         } catch (e) {
@@ -414,7 +458,6 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   );
 
   // ─── GET /api/notices/:id/recipients ──────────────────────────────────────
-  // Retorna os IDs dos destinatários de um aviso (para preencher o seletor ao editar)
   router.get(
     "/:id/recipients",
     isLoggedIn,
@@ -442,8 +485,6 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     async (req, res) => {
       const { id } = req.params;
       try {
-        // notice_recipients será deletado em cascata se tiver ON DELETE CASCADE na FK
-        // caso contrário, deletamos manualmente primeiro
         await pool.query("DELETE FROM notice_recipients WHERE notice_id = $1", [
           id,
         ]);

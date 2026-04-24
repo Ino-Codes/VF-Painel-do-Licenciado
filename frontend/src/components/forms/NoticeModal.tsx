@@ -7,11 +7,13 @@ import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
 import { FiSearch, FiX } from "react-icons/fi";
 
+type Visibility = "todos" | "colaboradores" | "licenciados";
+
 interface Notice {
   id: number;
   message: string;
   created_at: string;
-  visibility: "todos" | "selecionados";
+  visibility: Visibility;
 }
 
 interface InternalUser {
@@ -36,6 +38,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   noticeToEdit,
   companySlug,
 }) => {
+  const [visibility, setVisibility] = useState<Visibility>("todos");
   const [sendEmail, setSendEmail] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [internalUsers, setInternalUsers] = useState<InternalUser[]>([]);
@@ -49,7 +52,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     editorProps: { attributes: { class: "tiptap-editor" } },
   });
 
-  // Carrega lista de usuários internos uma vez
+  // Carrega usuários internos ao abrir o modal
   useEffect(() => {
     if (!isOpen) return;
     api
@@ -58,15 +61,15 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       .catch(() => toast.error("Erro ao carregar usuários."));
   }, [isOpen]);
 
-  // Preenche o modal ao editar
+  // Preenche dados ao editar
   useEffect(() => {
     if (!editor) return;
 
     if (noticeToEdit) {
       editor.commands.setContent(noticeToEdit.message);
+      setVisibility(noticeToEdit.visibility || "todos");
       setSendEmail(false);
 
-      // Carrega os destinatários já selecionados
       if (noticeToEdit.id) {
         api
           .get(`/api/notices/${noticeToEdit.id}/recipients`)
@@ -75,6 +78,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       }
     } else {
       editor.commands.clearContent();
+      setVisibility("todos");
       setSelectedUserIds([]);
       setSendEmail(false);
     }
@@ -110,13 +114,8 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     );
   };
 
-  const selectAll = () => {
-    setSelectedUserIds(filteredUsers.map((u) => u.id));
-  };
-
-  const clearAll = () => {
-    setSelectedUserIds([]);
-  };
+  const selectAll = () => setSelectedUserIds(filteredUsers.map((u) => u.id));
+  const clearAll = () => setSelectedUserIds([]);
 
   const filteredUsers = internalUsers.filter(
     (u) =>
@@ -124,6 +123,9 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       (u.cargo || "").toLowerCase().includes(userSearch.toLowerCase()) ||
       (u.setor || "").toLowerCase().includes(userSearch.toLowerCase()),
   );
+
+  // A lista de usuários só é exibida quando visibilidade != "licenciados"
+  const showUserList = visibility !== "licenciados";
 
   const handleSubmit = async () => {
     if (!editor || editor.isEmpty) {
@@ -133,9 +135,11 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     const message = editor.getHTML();
     const payload = {
       message,
+      visibility,
       sendEmail,
       company: companySlug,
-      selectedUserIds, // vazio = todos; preenchido = selecionados
+      // Só envia selectedUserIds se a lista estiver visível
+      selectedUserIds: showUserList ? selectedUserIds : [],
     };
 
     try {
@@ -170,7 +174,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: "640px" }}>
+      <div className="modal-content">
         <h2>{noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}</h2>
 
         {/* Editor */}
@@ -198,153 +202,110 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           </div>
         </div>
 
-        {/* Seletor de Destinatários */}
-        <div className="form-row" style={{ marginTop: "16px" }}>
-          <label>
-            Visível para:
-            <span
-              style={{
-                fontWeight: "normal",
-                color: "var(--text-secondary)",
-                marginLeft: "8px",
-                fontSize: "13px",
-              }}
-            >
-              {selectedUserIds.length === 0
-                ? "Todos os usuários"
-                : `${selectedUserIds.length} usuário(s) selecionado(s) + admins`}
-            </span>
-          </label>
+        {/* Visibilidade macro */}
+        <div className="form-row">
+          <label htmlFor="visibility">Visível para:</label>
+        </div>
+        <div className="form-row">
+          <select
+            id="visibility"
+            value={visibility}
+            onChange={(e) => {
+              setVisibility(e.target.value as Visibility);
+              // Limpa seleção se mudar para licenciados (lista some)
+              if (e.target.value === "licenciados") setSelectedUserIds([]);
+            }}
+            className="form-input"
+          >
+            <option value="todos">Todos</option>
+            <option value="colaboradores">Apenas Internos</option>
+            <option value="licenciados">Apenas Licenciados</option>
+          </select>
         </div>
 
-        {/* Barra de busca + ações */}
-        <div
-          className="form-row"
-          style={{ display: "flex", gap: "8px", alignItems: "center" }}
-        >
-          <div style={{ position: "relative", flex: 1 }}>
-            <FiSearch
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--text-secondary)",
-              }}
-            />
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Buscar por nome, cargo ou setor..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
-              style={{ paddingLeft: "32px" }}
-            />
-          </div>
-          <button
-            type="button"
-            className="form-button-cancel"
-            style={{ whiteSpace: "nowrap", fontSize: "13px" }}
-            onClick={selectAll}
-          >
-            Todos
-          </button>
-          <button
-            type="button"
-            className="form-button-cancel"
-            style={{ whiteSpace: "nowrap", fontSize: "13px" }}
-            onClick={clearAll}
-          >
-            Limpar
-          </button>
-        </div>
+        {/* Seletor de destinatários (só aparece quando não é "licenciados") */}
+        {showUserList && (
+          <>
+            <div className="form-row">
+              <label>
+                Destinatários para e-mail:
+                <span className="text-span">
+                  {selectedUserIds.length === 0
+                    ? "Todos dentro da visibilidade selecionada"
+                    : `${selectedUserIds.length} usuário(s) selecionado(s)`}
+                </span>
+              </label>
+            </div>
 
-        {/* Lista de usuários */}
-        <div
-          className="form-row"
-          style={{
-            maxHeight: "220px",
-            overflowY: "auto",
-            border: "1px solid var(--border-color)",
-            borderRadius: "8px",
-            padding: "6px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-          }}
-        >
-          {filteredUsers.length === 0 ? (
-            <p
-              style={{
-                textAlign: "center",
-                color: "var(--text-secondary)",
-                padding: "20px 0",
-                margin: 0,
-              }}
-            >
-              Nenhum usuário encontrado.
-            </p>
-          ) : (
-            filteredUsers.map((u) => {
-              const isSelected = selectedUserIds.includes(u.id);
-              return (
-                <div
-                  key={u.id}
-                  onClick={() => toggleUser(u.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    backgroundColor: isSelected
-                      ? "var(--bg-accent-color-light)"
-                      : "transparent",
-                    border: isSelected
-                      ? "1px solid var(--bg-accent-color)"
-                      : "1px solid transparent",
-                    transition: "background-color 0.15s ease",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "2px",
-                    }}
-                  >
-                    <span
+            {/* Barra de busca + ações */}
+            <div className="form-row">
+              <div>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Buscar por nome, cargo ou setor..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                className="form-button-cancel"
+                onClick={selectAll}
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                className="form-button-cancel"
+                onClick={clearAll}
+              >
+                Limpar
+              </button>
+            </div>
+
+            {/* Lista de usuários */}
+            <div className="users-list">
+              {filteredUsers.length === 0 ? (
+                <p>Nenhum usuário encontrado.</p>
+              ) : (
+                filteredUsers.map((u) => {
+                  const isSelected = selectedUserIds.includes(u.id);
+                  return (
+                    <div
+                      key={u.id}
+                      onClick={() => toggleUser(u.id)}
+                      className="users-list-option-details"
                       style={{
-                        fontSize: "14px",
-                        fontWeight: isSelected ? "600" : "400",
-                        color: "var(--text-primary)",
+                        backgroundColor: isSelected
+                          ? "var(--bg-accent-color-light)"
+                          : "transparent",
+                        border: isSelected
+                          ? "1px solid var(--bg-accent-color)"
+                          : "1px solid transparent",
                       }}
                     >
-                      {u.nome}
-                    </span>
-                    {(u.cargo || u.setor) && (
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {[u.cargo, u.setor].filter(Boolean).join(" · ")}
-                      </span>
-                    )}
-                  </div>
-                  {isSelected && (
-                    <FiX
-                      size={14}
-                      style={{ color: "var(--text-primary)", flexShrink: 0 }}
-                    />
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
+                      <div className="users-list-options">
+                        <span>{u.nome}</span>
+                        {(u.cargo || u.setor) && (
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              color: "var(--text-secondary)",
+                            }}
+                          >
+                            {[u.cargo, u.setor].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
+                      </div>
+                      {isSelected && <FiX />}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </>
+        )}
 
         {/* Envio por e-mail */}
         {!noticeToEdit && (
@@ -377,7 +338,9 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
                 fontWeight: "normal",
               }}
             >
-              Enviar aviso por e-mail para os selecionados
+              {showUserList && selectedUserIds.length > 0
+                ? `Enviar e-mail para os ${selectedUserIds.length} selecionados`
+                : "Enviar aviso por e-mail para todos da visibilidade"}
             </label>
           </div>
         )}
