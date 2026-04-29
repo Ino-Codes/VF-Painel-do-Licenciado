@@ -113,7 +113,8 @@ module.exports = function (pool, createNotification, logActivity, resend) {
 
     const theme = logoMap[companySlug] || logoMap["valor-corporate"];
     const currentYear = new Date().getFullYear();
-    const panelUrl = process.env.FRONTEND_URL || "https://app.valorcorp.com.br";
+    const panelUrl =
+      process.env.FRONTEND_URL || "https://painel.valorfiscal.com";
 
     return `<!DOCTYPE html>
     <html lang="pt-BR">
