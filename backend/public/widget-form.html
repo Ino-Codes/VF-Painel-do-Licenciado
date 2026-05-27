@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chamado</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 14px;
+        background: #fff;
+        padding: 24px;
+        color: #1a1a2e;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .header h3 {
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #666;
+        line-height: 1;
+      }
+
+      .type-selector {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .type-btn {
+        flex: 1;
+        padding: 8px 4px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        color: #555;
+        transition: all 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .type-btn span.icon {
+        font-size: 18px;
+      }
+
+      .type-btn.selected {
+        border-color: #1a1a2e;
+        background: #1a1a2e;
+        color: #fff;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        margin-bottom: 14px;
+        transition: border-color 0.15s ease;
+        outline: none;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: #1a1a2e;
+      }
+
+      textarea {
+        height: 100px;
+        resize: vertical;
+      }
+
+      .error {
+        color: #e53e3e;
+        font-size: 12px;
+        margin-top: -10px;
+        margin-bottom: 12px;
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 4px;
+      }
+
+      button.cancel {
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: 1.5px solid #e0e0e0;
+        background: #fff;
+        color: #555;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      button.send {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        background: #1a1a2e;
+        color: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      button.send:disabled {
+        background: #aaa;
+        cursor: not-allowed;
+      }
+
+      .powered {
+        text-align: center;
+        font-size: 11px;
+        color: #bbb;
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h3>Abrir Chamado</h3>
+      <button class="close-btn" id="btn-close" title="Fechar">×</button>
+    </div>
+
+    <!-- Seletor de tipo -->
+    <div class="type-selector">
+      <button class="type-btn" data-type="help">
+        <span class="icon">🙋</span>Ajuda
+      </button>
+      <button class="type-btn" data-type="bug">
+        <span class="icon">⚠️</span>Bug
+      </button>
+      <button class="type-btn" data-type="suggestion">
+        <span class="icon">💡</span>Sugestão
+      </button>
+    </div>
+
+    <label for="fb-name">Solicitante</label>
+    <input id="fb-name" type="text" placeholder="Seu nome completo" />
+    <div class="error" id="err-name"></div>
+
+    <label for="fb-title">Título</label>
+    <input id="fb-title" type="text" placeholder="Resumo em poucas palavras" />
+    <div class="error" id="err-title"></div>
+
+    <label for="fb-desc">Descrição</label>
+    <textarea
+      id="fb-desc"
+      placeholder="Descreva com mais detalhes..."
+    ></textarea>
+    <div class="error" id="err-desc"></div>
+
+    <div class="btn-row">
+      <button class="cancel" id="btn-cancel">Cancelar</button>
+      <button class="send" id="btn-send">Enviar</button>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const TOKEN = params.get("token");
+      const ORIGIN = params.get("origin");
+      const API_BASE = window.location.origin;
+
+      let selectedType = "help";
+
+      // Seletor de tipo
+      document.querySelectorAll(".type-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".type-btn")
+            .forEach((b) => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedType = btn.getAttribute("data-type");
+        });
+      });
+
+      document.getElementById("btn-close").onclick = function () {
+        window.parent.postMessage("fw:close", "*");
+      };
+
+      document.getElementById("btn-cancel").onclick = function () {
+        window.parent.postMessage("fw:close", "*");
+      };
+
+      document.getElementById("btn-send").onclick = async function () {
+        const name = document.getElementById("fb-name").value.trim();
+        const title = document.getElementById("fb-title").value.trim();
+        const description = document.getElementById("fb-desc").value.trim();
+
+        if (!name) {
+          document.getElementById("err-name").innerText =
+            "Informe seu nome completo.";
+          return;
+        }
+        document.getElementById("err-name").innerText = "";
+
+        if (!title) {
+          document.getElementById("err-title").innerText = "Informe um título.";
+          return;
+        }
+        document.getElementById("err-title").innerText = "";
+
+        if (!description) {
+          document.getElementById("err-desc").innerText =
+            "Informe uma descrição.";
+          return;
+        }
+        document.getElementById("err-desc").innerText = "";
+
+        const btn = document.getElementById("btn-send");
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        try {
+          const response = await fetch(`${API_BASE}/api/ticket`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: TOKEN,
+              type: selectedType,
+              title,
+              name,
+              description,
+              origin_url: ORIGIN,
+            }),
+          });
+
+          if (!response.ok) throw new Error("Erro ao enviar");
+
+          window.parent.postMessage("fw:submitted", "*");
+        } catch (err) {
+          btn.disabled = false;
+          btn.innerText = "Enviar";
+          alert("Erro ao enviar o ticket. Tente novamente.");
+        }
+      };
+    </script>
+  </body>
+</html>

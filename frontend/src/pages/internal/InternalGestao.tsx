@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 
-import { FaBuilding, FaChartPie } from "react-icons/fa";
+import { FaBuilding, FaChartPie, FaFileAlt } from "react-icons/fa";
 
 const InternalGestao: React.FC = () => {
   const { user, loading } = useAuth();
@@ -19,6 +19,12 @@ const InternalGestao: React.FC = () => {
   }
 
   const modules = [
+    {
+      title: "Atas de Reuniões",
+      description: "Acesse e gerencie as atas de reuniões da empresa",
+      icon: <FaFileAlt />,
+      path: "/internal/meeting-records",
+    },
     {
       title: "Quem Somos",
       description:

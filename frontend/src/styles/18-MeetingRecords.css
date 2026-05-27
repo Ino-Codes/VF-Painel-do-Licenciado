@@ -1,0 +1,313 @@
+/* ═══════════════════════════════════════════════════════════════
+   18-MeetingRecords.css — Estilos da tela de Atas de Reunião
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Contador ─────────────────────────────────────────────────── */
+
+.meeting-count {
+  color: var(--text-secondary);
+  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+}
+
+/* ── Lista de cards ───────────────────────────────────────────── */
+
+.meeting-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Card ─────────────────────────────────────────────────────── */
+
+.meeting-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: box-shadow 0.18s ease;
+}
+
+.meeting-card:hover {
+  box-shadow: var(--box-shadow);
+}
+
+/* ── Cabeçalho do card ────────────────────────────────────────── */
+
+.meeting-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  gap: 16px;
+  user-select: none;
+}
+
+.meeting-card-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.meeting-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meeting-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.meeting-card-author {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.meeting-card-separator {
+  color: var(--border-color);
+}
+
+.meeting-card-date {
+  color: var(--text-secondary);
+}
+
+.meeting-card-participants-count,
+.meeting-card-attachments-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meeting-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.meeting-card-chevron {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+/* ── Corpo expandido ──────────────────────────────────────────── */
+
+.meeting-card-body {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.meeting-card-description {
+  padding-top: 16px;
+}
+
+.meeting-card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.meeting-card-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.meeting-card-description-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* ── Participantes ────────────────────────────────────────────── */
+
+.meeting-participants-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meeting-participant-chip {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* ── Anexos ───────────────────────────────────────────────────── */
+
+.meeting-attachments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meeting-attachment-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--accent-color, #6366f1);
+  background: #ede9fe;
+  padding: 5px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  font-weight: 500;
+}
+
+.meeting-attachment-item:hover {
+  background: #ddd6fe;
+}
+
+/* ── Modal ────────────────────────────────────────────────────── */
+
+.meeting-modal-content {
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.meeting-description-textarea {
+  resize: vertical;
+  min-height: 130px;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+/* Anexos no modal */
+
+.meeting-modal-attachments-existing,
+.meeting-modal-attachments-new {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.meeting-modal-attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.meeting-modal-attachment-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-decoration: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meeting-modal-attachment-name:hover {
+  color: var(--accent-color, #6366f1);
+}
+
+.meeting-modal-attachment-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.meeting-modal-attachment-remove:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.meeting-modal-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  margin-bottom: 12px;
+}
+
+/* E-mail checkbox */
+
+.meeting-modal-email-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.meeting-modal-email-row input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+  transform: scale(1.2);
+  flex-shrink: 0;
+}
+
+.meeting-modal-email-row label {
+  cursor: pointer;
+  margin: 0;
+  font-size: 14px;
+  font-weight: normal;
+  color: var(--text-primary);
+}
+
+/* ── Responsivo ───────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .meeting-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .meeting-card-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .meeting-modal-content {
+    max-width: 100%;
+  }
+}

@@ -3,14 +3,25 @@
 :root {
   /* --- Tema Claro --- */
 
-  /* telas principais */
+  /* backgrounds */
   --bg-primary: #fbfbfc;
   --bg-secondary: #f3f3f5;
 
-  /* menu superior */
   --bg-menu: #fff;
   --bg-menu-hover: #f3f3f5;
   --bg-menu-list: #f0f0f2;
+
+  --bg-accent-color: #ffae003a;
+  --bg-accent-color-light: #ffae0059;
+  --bg-event-color: #24ff000d;
+  --bg-result-green: #37ff161a;
+  --bg-result-red: #ff24242b;
+  --bg-result-blue: #2424ff2b;
+
+  --bg-calendar-non-bussiness: #e6e6e6;
+
+  /* sombras */
+  --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 
   /* textos */
   --text-primary: #0a0a0a;
@@ -22,15 +33,6 @@
 
   --border-color: #d4d9de; /* Bordas de cards e divisórias */
   --border-strong: #ccc; /* Bordas de inputs */
-
-  --bg-accent-color: #ffae003a;
-  --bg-accent-color-light: #ffae0059;
-  --bg-event-color: #24ff000d;
-  --bg-result-green: #37ff161a;
-  --bg-result-red: #ff24242b;
-  --bg-result-blue: #2424ff2b;
-
-  --bg-calendar-non-bussiness: #e6e6e6;
 
   /* cores de destaque */
   --accent-color: #d09829;
@@ -92,6 +94,9 @@ body.dark-theme {
   --bg-result-red: #ff24242b;
   --bg-result-blue: #2424ff2b;
   --bg-calendar-non-bussiness: #2d2d2d;
+
+  /* sombras */
+  --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 
   /* cores de destaque */
   --accent-color: #3b7394;

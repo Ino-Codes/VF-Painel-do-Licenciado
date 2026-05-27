@@ -339,8 +339,8 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
               }}
             >
               {showUserList && selectedUserIds.length > 0
-                ? `Enviar e-mail para os ${selectedUserIds.length} selecionados`
-                : "Enviar aviso por e-mail para todos da visibilidade"}
+                ? `Enviar aviso por e-mail para os ${selectedUserIds.length} selecionados`
+                : "Enviar aviso por e-mail para todos"}
             </label>
           </div>
         )}

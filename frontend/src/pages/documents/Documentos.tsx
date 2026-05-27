@@ -8,6 +8,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
+import { FiEdit, FiTrash2, FiDownload } from "react-icons/fi";
 
 interface FileData {
   id: number;
@@ -270,29 +271,30 @@ const Documentos: React.FC = () => {
                     {groupedFiles[folderName].map((file) => (
                       <div key={file.id} className="file-item">
                         <span className="file-name">{file.originalname}</span>
-                        <div className="file-actions">
+
+                        <div className="user-actions">
                           <button
-                            className="save-button"
+                            className="form-icon-save"
                             onClick={() =>
                               handleDownload(file.id, file.originalname)
                             }
                           >
-                            Baixar
+                            <FiDownload />
                           </button>
 
                           {user?.role === "admin" && (
                             <>
                               <button
-                                className="list-button"
+                                className="form-icon-edit"
                                 onClick={() => openModalForEdit(file)}
                               >
-                                Editar
+                                <FiEdit />
                               </button>
                               <button
-                                className="delete-button"
+                                className="form-icon-delete"
                                 onClick={() => handleDeleteClick(file.id)}
                               >
-                                Excluir
+                                <FiTrash2 />
                               </button>
                             </>
                           )}

@@ -8,6 +8,7 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { FaCheckCircle } from "react-icons/fa";
+import { FiEdit, FiTrash2, FiCheckCircle } from "react-icons/fi";
 
 interface Template {
   id: number;
@@ -69,7 +70,7 @@ const ChecklistTemplatesAdmin: React.FC = () => {
     if (!deleteTemplate) return;
     try {
       await api.delete(
-        `/api/recruitment/checklist-templates/${deleteTemplate.id}`
+        `/api/recruitment/checklist-templates/${deleteTemplate.id}`,
       );
       setTemplates((p) => p.filter((t) => t.id !== deleteTemplate.id));
       toast.success("Template excluído");
@@ -106,10 +107,10 @@ const ChecklistTemplatesAdmin: React.FC = () => {
         {
           name: editingTemplate.name,
           is_default: editingTemplate.is_default,
-        }
+        },
       );
       setTemplates((p) =>
-        p.map((it) => (it.id === res.data.id ? res.data : it))
+        p.map((it) => (it.id === res.data.id ? res.data : it)),
       );
       setEditingTemplate(null);
       toast.success("Template atualizado");
@@ -206,22 +207,22 @@ const ChecklistTemplatesAdmin: React.FC = () => {
                     ) : (
                       <>
                         <button
-                          className="save-button"
+                          className="form-icon-save"
                           onClick={() => handleSetDefault(t)}
                         >
-                          Definir Padrão
+                          <FiCheckCircle />
                         </button>
                         <button
-                          className="edit-button"
+                          className="form-icon-edit"
                           onClick={() => setItemsModalTemplateId(t.id)}
                         >
-                          Edição
+                          <FiEdit />
                         </button>
                         <button
-                          className="delete-button"
+                          className="form-icon-delete"
                           onClick={() => handleDelete(t)}
                         >
-                          Excluir
+                          <FiTrash2 />
                         </button>
                       </>
                     )}

@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 
-import { FaUserCog, FaUserSecret } from "react-icons/fa";
+import { FaUserCog, FaUserSecret, FaLaptop } from "react-icons/fa";
 import { FaMagnifyingGlassChart } from "react-icons/fa6";
 
 const AdminGestao: React.FC = () => {
@@ -26,6 +26,12 @@ const AdminGestao: React.FC = () => {
       icon: <FaMagnifyingGlassChart />,
       path: "/admin/statistics",
     },
+    // {
+    //   title: "Help Desk",
+    //   description: "Gerencie os tickets de suporte",
+    //   icon: <FaLaptop />,
+    //   path: "/admin/helpdesk",
+    // },
     {
       title: "Logs de Atividade",
       description: "Visualize e gerencie os logs de atividade",

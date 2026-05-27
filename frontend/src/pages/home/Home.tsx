@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
@@ -8,13 +8,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import EventCard from "./EventCard.tsx";
-
 import NoticeModal from "../../components/forms/NoticeModal.tsx";
-import { Editor } from "@tiptap/react";
-
-import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
-
-import { FiTrash2, FiEdit } from "react-icons/fi";
 
 interface Notice {
   id: number;
@@ -40,29 +34,8 @@ const Home: React.FC = () => {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [activeEditor, setActiveEditor] = useState<Editor | null>(null);
-  const [pickerPosition, setPickerPosition] = useState<{
-    top: number;
-    right: number;
-  }>({ top: 0, right: 0 });
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
-
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [noticeToEdit, setNoticeToEdit] = useState<Notice | null>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        emojiPickerRef.current &&
-        !emojiPickerRef.current.contains(event.target as Node)
-      ) {
-        setShowEmojiPicker(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -131,26 +104,6 @@ const Home: React.FC = () => {
     }
   };
 
-  const onEmojiClick = (emojiData: EmojiClickData) => {
-    if (activeEditor) {
-      activeEditor.chain().focus().insertContent(emojiData.emoji).run();
-    }
-    setShowEmojiPicker(false);
-  };
-
-  const toggleEmojiPicker = (editor: Editor, event: React.MouseEvent) => {
-    const button = event.currentTarget as HTMLElement;
-    const rect = button.getBoundingClientRect();
-
-    setPickerPosition({
-      top: rect.top,
-      right: window.innerWidth - rect.right - 350, // 350 é a largura do picker
-    });
-
-    setActiveEditor(editor);
-    setShowEmojiPicker((prev) => !prev);
-  };
-
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
@@ -163,7 +116,7 @@ const Home: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="home-header">
-          <h2>Olá, {user.nickname || firstName}!</h2>
+          <h2 className="hello-user">Olá, {user.nickname || firstName}!</h2>
           <p>
             Este é o seu novo Painel da Valor Corp!
             <br />
@@ -267,23 +220,6 @@ const Home: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {showEmojiPicker && (
-          <div
-            className="emoji-picker-container-global"
-            ref={emojiPickerRef}
-            style={{
-              top: `${pickerPosition.top}px`,
-              left: `${pickerPosition.right}px`,
-            }}
-          >
-            <EmojiPicker
-              onEmojiClick={onEmojiClick}
-              width="100%"
-              height={380}
-            />
-          </div>
-        )}
       </div>
 
       <NoticeModal

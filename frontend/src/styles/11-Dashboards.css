@@ -61,7 +61,7 @@
 }
 
 .engagement-item:hover {
-  box-shadow: 0 4px 5px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--box-shadow);
   transform: translateY(-2px);
 }
 
@@ -229,7 +229,7 @@
 
 .stat-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--box-shadow);
 }
 
 .stat-icon {

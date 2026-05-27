@@ -160,19 +160,19 @@
 }
 
 .map-svg g:not(.interactive) path {
-  fill: var(--bg-secondary);
+  fill: var(--border-color);
   stroke: var(--border-strong);
   pointer-events: none;
 }
 
 .map-svg g.interactive path {
-  fill: var(--border-color);
+  fill: var(--bg-primary);
   stroke: var(--border-strong);
   cursor: pointer;
 }
 
 .map-svg g.interactive:hover path {
-  fill: var(--accent-color-hover);
+  fill: var(--bg-secondary);
 }
 
 .map-svg g.interactive.active path {
@@ -244,7 +244,7 @@
   border-radius: 16px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 10px 10px -10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
   cursor: pointer;
   width: 90%;
   max-width: 350px;

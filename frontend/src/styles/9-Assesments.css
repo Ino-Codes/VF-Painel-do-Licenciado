@@ -25,7 +25,7 @@
 
 .statement-option.selected {
   border-color: var(--accent-color);
-  background-color: var(--bg-accent-color);
+  box-shadow: var(--box-shadow);
 }
 
 .assessment-option-label input {

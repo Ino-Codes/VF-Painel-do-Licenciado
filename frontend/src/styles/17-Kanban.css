@@ -1,0 +1,382 @@
+/* ═══════════════════════════════════════════════════════════════
+   17-Kanban.css — Estilos do HelpDesk Kanban
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Board ────────────────────────────────────────────────────── */
+
+.kanban-container {
+  overflow-x: auto;
+  padding-bottom: 24px;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  min-width: max-content;
+  padding: 4px 2px 16px;
+}
+
+/* ── Coluna ───────────────────────────────────────────────────── */
+
+.kanban-column {
+  width: 300px;
+  min-width: 300px;
+  background: var(--bg-secondary);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.kanban-column--over {
+  border-color: var(--border-color);
+  box-shadow: var(--box-shadow);
+}
+
+.kanban-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-radius: 12px 12px 0 0;
+}
+
+.kanban-column-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-column-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.kanban-column-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.kanban-column-count {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  min-width: 26px;
+  text-align: center;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+}
+
+.kanban-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 12px 14px;
+  min-height: 80px;
+}
+
+.kanban-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+/* ── Card ─────────────────────────────────────────────────────── */
+
+.ticket-card {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: grab;
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+  position: relative;
+  border: 1px solid transparent;
+}
+
+.ticket-card:hover {
+  box-shadow: var(--box-shadow);
+  transform: translateY(-2px);
+}
+
+.ticket-card:active {
+  cursor: grabbing;
+}
+
+.ticket-card--dragging {
+  opacity: 0.45;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+  transform: rotate(1.5deg) scale(1.02);
+  border-color: var(--border-color);
+}
+
+/* Linha colorida no topo do card */
+.ticket-card-accent {
+  height: 3px;
+  width: 100%;
+}
+
+.ticket-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 4px;
+}
+
+.ticket-type-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+
+.ticket-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 6px 12px 4px;
+  line-height: 1.4;
+}
+
+.ticket-card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 0 12px 8px;
+  line-height: 1.5;
+}
+
+.ticket-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--border-color);
+  gap: 8px;
+}
+
+.ticket-card-requester,
+.ticket-card-date,
+.ticket-card-id {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket-card-requester {
+  font-weight: 600;
+  min-width: 0;
+}
+
+/* ── Modal de detalhes ────────────────────────────────────────── */
+.detail-ticket-modal {
+  position: relative;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 1000px;
+  height: 80%;
+  max-height: 400px;
+  display: flex;
+}
+
+.kanban-modal-left {
+  padding: 30px;
+  flex: 1;
+  gap: 12px;
+  background-color: var(--bg-primary);
+  border-radius: 8px 0 0 8px;
+}
+.kanban-modal-right {
+  padding: 30px;
+  flex: 1;
+  gap: 12px;
+}
+
+.kanban-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  line-height: 1;
+  padding: 0 4px;
+  transition: color 0.15s ease;
+}
+
+.kanban-modal-close:hover {
+  color: var(--text-primary);
+}
+
+.kanban-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.kanban-modal-desc {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.65;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.kanban-modal-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+}
+
+.kanban-modal-footer p {
+  margin: 14px 0 0 0;
+}
+
+.kanban-modal-footer-left {
+  gap: 12px;
+  flex: 1;
+  text-align: left;
+}
+
+.kanban-modal-footer-right {
+  flex: 1;
+  gap: 12px;
+  text-align: right;
+}
+
+.kanban-modal-system,
+.kanban-modal-date,
+.kanban-modal-id,
+.kanban-modal-requester {
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kanban-modal-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 16px 0;
+}
+
+/* ── Modal — instruções de resolução ─────────────────────────── */
+
+.kanban-modal-resolution {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0 4px;
+}
+
+.kanban-modal-resolution-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.kanban-modal-resolution-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-primary, #1a1a2e);
+  font-size: 13.5px;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.kanban-modal-resolution-textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.kanban-modal-resolution-textarea:disabled {
+  cursor: not-allowed;
+}
+
+/* Atendente */
+.kanban-modal-attendant {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  margin: 12px 0 4px;
+}
+
+.kanban-modal-attendant-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.kanban-modal-attendant-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.kanban-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.kanban-attend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Responsivo ───────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .kanban-board {
+    flex-direction: column;
+    min-width: unset;
+  }
+
+  .kanban-column {
+    width: 100%;
+    min-width: unset;
+  }
+}

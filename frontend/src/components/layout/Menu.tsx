@@ -129,11 +129,15 @@ const Menu: React.FC = () => {
       </button>
 
       <div className={`menu-left ${isMenuOpen ? "open" : ""}`}>
-        <img
+        {/* <img
           src={currentLogoValorCorp}
           alt="Valor Corp Logo"
           className="menu-logo"
-        />
+        /> */}
+
+        <h2 className="menu-valor-corp">
+          <strong>Valor</strong>Corp
+        </h2>
 
         <NavLink
           to="/home"

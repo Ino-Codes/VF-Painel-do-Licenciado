@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -39,6 +39,9 @@ import InternalGestao from "./pages/internal/InternalGestao.tsx";
 import ContentGestao from "./pages/content/ContentGestao.tsx";
 import MuralDeAvisos from "./pages/notices/MuralDeAvisos.tsx";
 import Projetos from "./pages/internal/Projetos.tsx";
+import HelpDeskKanban from "./pages/itsm/HelpDeskKanban.tsx";
+import WidgetTenants from "./pages/itsm/WidgetTenants.tsx";
+import MeetingRecords from "./pages/meetings/MeetingRecords.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -57,6 +60,8 @@ import "./styles/13-Recruitment.css";
 import "./styles/14-Feedbacks.css";
 import "./styles/15-Gestao.css";
 import "./styles/16-Projects.css";
+import "./styles/17-Kanban.css";
+import "./styles/18-MeetingRecords.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
@@ -111,6 +116,10 @@ const AppRouter: React.FC = () => {
           <Route path="/internal/ferias" element={<SolicitarFerias />} />
           <Route path="/internal/empresa" element={<Empresa />} />
           <Route path="/internal/projetos" element={<Projetos />} />
+          <Route
+            path="/internal/meeting-records"
+            element={<MeetingRecords />}
+          />
           {/* Rotas de Admin */}
           <Route path="/admin/logs" element={<ActivityLogs />} />
           <Route path="/admin/courses" element={<AdminCourses />} />
@@ -135,6 +144,8 @@ const AppRouter: React.FC = () => {
           <Route path="/admin/feedbacks" element={<Feedbacks />} />
           <Route path="/admin/admin-gestao" element={<AdminGestao />} />
           <Route path="/admin/statistics" element={<AdminStatistics />} />
+          <Route path="/admin/helpdesk" element={<HelpDeskKanban />} />
+          <Route path="/admin/widget-tenants" element={<WidgetTenants />} />
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

@@ -327,7 +327,7 @@
   text-transform: capitalize;
   border-radius: 8px;
   padding: 8px 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--box-shadow);
   transition: all 0.2s ease;
 }
 
@@ -335,7 +335,7 @@
   background-color: var(--bg-menu-hover);
   color: var(--text-primary);
   border-color: var(--bg-menu-hover);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
 }
 
 .fc .fc-button-primary:not(:disabled).fc-button-active,
@@ -399,7 +399,7 @@
 
 .color-swatch.selected {
   border-color: #0000001a;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--box-shadow);
   transform: scale(0.9);
 }
 
@@ -427,7 +427,7 @@
   background-color: var(--bg-primary);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--box-shadow);
   z-index: 1001;
   width: auto;
   padding: 10px;
@@ -533,7 +533,7 @@
   background-color: var(--bg-primary);
   border: 1px solid var(--border-strong);
   border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
   z-index: 1001;
 
   max-height: 180px;
@@ -594,7 +594,7 @@
 }
 
 .admin-table tbody tr:hover {
-  background-color: var(--bg-secondary);
+  background-color: var(--border-color);
 }
 
 .admin-table td .user-actions {
@@ -613,6 +613,10 @@
 
 .admin-table tbody tr:nth-of-type(even) {
   background-color: var(--bg-secondary);
+}
+
+.admin-table tbody tr:nth-of-type(even):hover {
+  background-color: var(--border-color);
 }
 
 /* .company-badge {

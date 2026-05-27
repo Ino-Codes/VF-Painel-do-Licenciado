@@ -98,7 +98,7 @@
 
 .video-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
 }
 
 .video-embed {
@@ -157,7 +157,7 @@
   background-color: var(--bg-secondary);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 5px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--box-shadow);
   transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
@@ -167,7 +167,7 @@
 
 .course-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 4px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
 }
 
 .course-card img {
@@ -388,7 +388,7 @@
 
 .social-post-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
 }
 
 /* Fix da Imagem - Mantém proporção quadrada sem esticar */

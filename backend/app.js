@@ -13,7 +13,9 @@ const { Resend } = require("resend");
 const app = express();
 const port = process.env.PORT || 3001;
 
-// ─── CONFIGURAÇÕES ────────────────────────────────────────────────────────────
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+// Regra: NÃO usar cors() globalmente.
+// Cada grupo de rotas recebe seu próprio middleware de CORS.
 
 const allowedOrigins = [
   "https://painel.valorfiscal.com",
@@ -21,18 +23,37 @@ const allowedOrigins = [
   "http://localhost:3000",
 ];
 
-const corsOptions = {
+// Middleware CORS restrito — usado nas rotas protegidas
+const corsRestrito = cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error("Não permitido pelo CORS"));
     }
   },
   optionsSuccessStatus: 200,
-};
+});
 
-app.use(cors(corsOptions));
+// Middleware CORS aberto — usado apenas na rota pública do widget
+const corsAberto = cors({
+  origin: "*",
+  methods: ["POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+});
+
+// ─── MIDDLEWARES GLOBAIS ───────────────────────────────────────────────────────
+// Nenhum cors() aqui — cada rota aplica o seu próprio
+
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json());
+app.use((req, res, next) => {
+  req.ipAddress =
+    req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  next();
+});
+
+// ─── CONFIGURAÇÕES ────────────────────────────────────────────────────────────
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -49,29 +70,19 @@ cloudinary.config({
 
 const storage = multer.memoryStorage();
 const upload = multer({
-  storage: storage,
+  storage,
   limits: { fileSize: 200 * 1024 * 1024 },
-});
-
-// ─── MIDDLEWARES ──────────────────────────────────────────────────────────────
-
-app.use(express.json());
-
-app.use((req, res, next) => {
-  req.ipAddress =
-    req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-  next();
 });
 
 // ─── FUNÇÕES AUXILIARES ───────────────────────────────────────────────────────
 
 const logActivity = async (userId, userEmail, action, details, ipAddress) => {
   try {
-    const sql = `
-      INSERT INTO activity_logs (user_id, user_email, action, details, ip_address)
-      VALUES ($1, $2, $3, $4, $5)
-    `;
-    await pool.query(sql, [userId, userEmail, action, details, ipAddress]);
+    await pool.query(
+      `INSERT INTO activity_logs (user_id, user_email, action, details, ip_address)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, userEmail, action, details, ipAddress],
+    );
   } catch (err) {
     console.error("Falha ao registrar log de atividade:", err);
   }
@@ -79,11 +90,11 @@ const logActivity = async (userId, userEmail, action, details, ipAddress) => {
 
 const createNotification = async (userId, message, linkTo) => {
   try {
-    const sql = `
-      INSERT INTO notifications (user_id, message, link_to)
-      VALUES ($1, $2, $3)
-    `;
-    await pool.query(sql, [userId, message, linkTo || null]);
+    await pool.query(
+      `INSERT INTO notifications (user_id, message, link_to)
+       VALUES ($1, $2, $3)`,
+      [userId, message, linkTo || null],
+    );
   } catch (err) {
     console.error(`Falha ao criar notificação para user_id ${userId}:`, err);
   }
@@ -91,6 +102,7 @@ const createNotification = async (userId, message, linkTo) => {
 
 // ─── IMPORTAÇÃO DAS ROTAS ─────────────────────────────────────────────────────
 
+const cronFunctions = require("./cron.js");
 const authRoutes = require("./routes/auth.js")(pool, resend, logActivity);
 const userRoutes = require("./routes/users.js")(
   pool,
@@ -98,8 +110,6 @@ const userRoutes = require("./routes/users.js")(
   upload,
   logActivity,
 );
-const cronFunctions = require("./cron.js");
-cronFunctions.initializeCron(pool, resend);
 const noticeRoutes = require("./routes/notices.js")(
   pool,
   createNotification,
@@ -134,44 +144,52 @@ const recruitmentRoutes = require("./routes/recruitment.js")(pool, logActivity);
 const unitsRoutes = require("./routes/units.js")(pool);
 const socialRoutes = require("./routes/social.js")(pool, cloudinary, upload);
 const projectRoutes = require("./routes/projects.js")(pool, logActivity);
+const widgetTenantsRoutes = require("./routes/widgetTenants.js")(
+  pool,
+  logActivity,
+);
+const ticketsRoutes = require("./routes/tickets.js")(pool, logActivity);
+const meetingRecordsRoutes = require("./routes/meetingRecords.js")(
+  pool,
+  cloudinary,
+  upload,
+  resend,
+  logActivity,
+);
+
+cronFunctions.initializeCron(pool, resend);
 
 // ─── REGISTRO DAS ROTAS ───────────────────────────────────────────────────────
+// Cada rota recebe corsRestrito como middleware explícito.
+// A rota pública do widget recebe corsAberto.
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/notices", noticeRoutes);
-app.use("/api/files", filesRoutes);
-app.use("/api/social", socialRoutes);
-app.use("/api/videos", videoRoutes);
-app.use("/api/faq", faqRoutes);
-app.use("/api/admin/logs", logRoutes);
-app.use("/api/admin/courses", courseRoutes);
-app.use("/api/certificates", certificatesRoutes);
-app.use("/api/quizzes", quizzesRoutes);
-app.use("/api/admin/events", eventRoutes);
-app.use("/api/events", eventRoutes);
-app.use("/api/enneagram", enneagramRoutes);
-app.use("/api/admin/analytics", adminAnalyticsRoutes);
-app.use("/api/cron", cronTriggerRoutes);
-app.use("/api/vacations", vacationRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/recruitment", recruitmentRoutes);
-app.use("/api/units", unitsRoutes);
-app.use("/api/projects", projectRoutes);
+app.use("/api/auth", corsRestrito, authRoutes);
+app.use("/api/users", corsRestrito, userRoutes);
+app.use("/api/notices", corsRestrito, noticeRoutes);
+app.use("/api/files", corsRestrito, filesRoutes);
+app.use("/api/social", corsRestrito, socialRoutes);
+app.use("/api/videos", corsRestrito, videoRoutes);
+app.use("/api/faq", corsRestrito, faqRoutes);
+app.use("/api/admin/logs", corsRestrito, logRoutes);
+app.use("/api/admin/courses", corsRestrito, courseRoutes);
+app.use("/api/certificates", corsRestrito, certificatesRoutes);
+app.use("/api/quizzes", corsRestrito, quizzesRoutes);
+app.use("/api/admin/events", corsRestrito, eventRoutes);
+app.use("/api/events", corsRestrito, eventRoutes);
+app.use("/api/enneagram", corsRestrito, enneagramRoutes);
+app.use("/api/admin/analytics", corsRestrito, adminAnalyticsRoutes);
+app.use("/api/cron", corsRestrito, cronTriggerRoutes);
+app.use("/api/vacations", corsRestrito, vacationRoutes);
+app.use("/api/notifications", corsRestrito, notificationRoutes);
+app.use("/api/recruitment", corsRestrito, recruitmentRoutes);
+app.use("/api/units", corsRestrito, unitsRoutes);
+app.use("/api/projects", corsRestrito, projectRoutes);
+app.use("/api/widget-tenants", corsRestrito, widgetTenantsRoutes);
+app.use("/api/tickets", corsRestrito, ticketsRoutes);
+app.use("/api/meeting-records", corsRestrito, meetingRecordsRoutes);
 
-// ─── CRON JOBS ────────────────────────────────────────────────────────────────
-
-cron.schedule(
-  "*/60 * * * *",
-  () => {
-    console.log("CRON: Executando updateVacationBalance...");
-    cronFunctions.updateVacationBalance();
-  },
-  {
-    scheduled: true,
-    timezone: "America/Sao_Paulo",
-  },
-);
+// ── Rota pública do widget — CORS aberto, sem autenticação ────────────────────
+app.use("/api/ticket", corsAberto, ticketsRoutes);
 
 // ─── INICIALIZAÇÃO DO SERVIDOR ────────────────────────────────────────────────
 
@@ -180,9 +198,6 @@ app.listen(port, async () => {
   try {
     await migrationRunner(pool);
   } catch (err) {
-    console.error(
-      "[migrations] Falha crítica — servidor pode estar instável:",
-      err.message,
-    );
+    console.error("[migrations] Falha crítica:", err.message);
   }
 });
