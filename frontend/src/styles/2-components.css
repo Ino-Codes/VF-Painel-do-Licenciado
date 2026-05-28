@@ -250,8 +250,10 @@ input[type="checkbox"]:checked {
   background-color: var(--bg-secondary);
   padding: 30px;
   border-radius: 8px;
-  width: 90%;
+  width: 100%;
   max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-actions {

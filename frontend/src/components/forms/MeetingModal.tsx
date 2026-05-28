@@ -184,7 +184,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content meeting-modal-content">
+      <div className="modal-content">
         <h2>
           {meetingToEdit ? "Editar Ata de Reunião" : "Nova Ata de Reunião"}
         </h2>
@@ -192,6 +192,8 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
         {/* ── Campo A: Título ── */}
         <div className="form-row">
           <label htmlFor="meeting-title">Título da Reunião</label>
+        </div>
+        <div className="form-row">
           <input
             id="meeting-title"
             type="text"
@@ -207,6 +209,8 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
           <label htmlFor="meeting-description">
             Assuntos Abordados e Decisões Tomadas
           </label>
+        </div>
+        <div className="form-row">
           <textarea
             id="meeting-description"
             className="form-input meeting-description-textarea"
@@ -389,7 +393,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
             />
             <label htmlFor="meeting-send-email">
               {selectedUserIds.length > 0
-                ? `Enviar ata por e-mail para os ${selectedUserIds.length} participante${selectedUserIds.length !== 1 ? "s" : ""} selecionado${selectedUserIds.length !== 1 ? "s" : ""}`
+                ? `Enviar ata por e-mail para o${selectedUserIds.length !== 1 ? "s" : ""} ${selectedUserIds.length} participante${selectedUserIds.length !== 1 ? "s" : ""} selecionado${selectedUserIds.length !== 1 ? "s" : ""}`
                 : "Enviar ata por e-mail para os participantes"}
             </label>
           </div>
@@ -411,7 +415,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Salvando..." : "Salvar Ata"}
+            {isSubmitting ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </div>

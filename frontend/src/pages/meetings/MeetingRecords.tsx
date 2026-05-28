@@ -145,7 +145,7 @@ const MeetingRecords: React.FC = () => {
     <div className="p-2">
       <Menu />
 
-      <div className="content-area">
+      <div className="content-area document-center">
         {/* ── Cabeçalho ── */}
         <div className="document-header">
           <div>
@@ -154,6 +154,7 @@ const MeetingRecords: React.FC = () => {
               Registros de reuniões internas
             </span>
           </div>
+
           {canManage && (
             <button className="form-button" onClick={handleOpenCreate}>
               + Nova Ata

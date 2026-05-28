@@ -28,10 +28,6 @@
   transition: box-shadow 0.18s ease;
 }
 
-.meeting-card:hover {
-  box-shadow: var(--box-shadow);
-}
-
 /* ── Cabeçalho do card ────────────────────────────────────────── */
 
 .meeting-card-header {
@@ -174,28 +170,21 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--accent-color, #6366f1);
-  background: #ede9fe;
+  color: var(--accent-color);
+  background: var(--bg-secondary);
   padding: 5px 12px;
   border-radius: 8px;
   text-decoration: none;
-  transition: background 0.15s ease;
+  transition: 0.15s ease;
   font-weight: 500;
 }
 
 .meeting-attachment-item:hover {
-  background: #ddd6fe;
+  transform: translateY(-1px);
+  box-shadow: var(--box-shadow);
 }
 
 /* ── Modal ────────────────────────────────────────────────────── */
-
-.meeting-modal-content {
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
 .meeting-description-textarea {
   resize: vertical;
   min-height: 130px;
@@ -307,7 +296,7 @@
     justify-content: flex-end;
   }
 
-  .meeting-modal-content {
+  .modal-content {
     max-width: 100%;
   }
 }
