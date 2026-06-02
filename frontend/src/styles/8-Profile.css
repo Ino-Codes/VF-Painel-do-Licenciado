@@ -274,10 +274,11 @@
 
 /* ── Cores de borda e badge por empresa ──────────────────── */
 
-.certificate-card.company-valor-fiscal,
-.certificate-card.company-valor-banking,
-.certificate-card.company-valor-business,
-.certificate-card.company-valor-corporate {
+.certificate-card.company-v-tax,
+.certificate-card.company-v-banking,
+.certificate-card.company-v-business,
+.certificate-card.company-v-corp,
+.certificate-card.company-v-tech {
   border-top-color: var(--accent-color);
 }
 

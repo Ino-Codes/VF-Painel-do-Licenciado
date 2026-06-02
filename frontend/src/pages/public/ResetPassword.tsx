@@ -23,7 +23,7 @@ const ResetPassword = () => {
 
     if (!token) {
       setError(
-        "Token de redefinição não encontrado. Tente solicitar novamente."
+        "Token de redefinição não encontrado. Tente solicitar novamente.",
       );
       return;
     }
@@ -54,7 +54,7 @@ const ResetPassword = () => {
   return (
     <div className="p-login">
       <div className="p-img">
-        <img alt="Logo da Valor Fiscal" src={logo} />
+        <img alt="Logo da V-CORP" src={logo} />
       </div>
       <div className="p-1">
         <h2 className="titulo-login">Criar Nova Senha</h2>

@@ -1,8 +1,9 @@
 export type CompanySlug =
-  | "valor-fiscal"
-  | "valor-banking"
-  | "valor-business"
-  | "valor-corporate";
+  | "v-tax"
+  | "v-banking"
+  | "v-business"
+  | "v-corp"
+  | "v-tech";
 
 export interface Lesson {
   id: number;

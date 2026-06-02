@@ -20,22 +20,22 @@ import { FaUsers } from "react-icons/fa";
 // Configuração das Empresas
 const COMPANIES_CONFIG = [
   {
-    name: "Valor Banking",
-    slug: "valor-banking" as CompanySlug,
-    color: "var(--valor-banking)", // Azul
-    logo: "LogoValorBanking",
+    name: "V-BANKING",
+    slug: "v-banking" as CompanySlug,
+    color: "var(--v-banking)", // Azul
+    logo: "LogoVBanking",
   },
   // {
-  //   name: "Valor Business",
-  //   slug: "valor-business" as CompanySlug,
-  //   color: "var(--valor-business)", // Verde
-  //   logo: "LogoValorBusiness",
+  //   name: "V-BUSINESS",
+  //   slug: "v-business" as CompanySlug,
+  //   color: "var(--v-business)", // Verde
+  //   logo: "LogoVBusiness",
   // },
   {
-    name: "Valor Fiscal",
-    slug: "valor-fiscal" as CompanySlug,
-    color: "var(--valor-fiscal)", // Dourado
-    logo: "LogoValorFiscal",
+    name: "V-TAX",
+    slug: "v-tax" as CompanySlug,
+    color: "var(--v-tax)", // Dourado
+    logo: "LogoVTax",
   },
 ];
 
@@ -130,14 +130,12 @@ const Menu: React.FC = () => {
 
       <div className={`menu-left ${isMenuOpen ? "open" : ""}`}>
         {/* <img
-          src={currentLogoValorCorp}
-          alt="Valor Corp Logo"
+          src={currentLogoVCorp}
+          alt="V-CORP Logo"
           className="menu-logo"
         /> */}
 
-        <h2 className="menu-valor-corp">
-          <strong>Valor</strong>Corp
-        </h2>
+        <h2 className="menu-v-corp">V-CORP</h2>
 
         <NavLink
           to="/home"

@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   const [currentCompany, setCurrentCompany] =
-    useState<CompanySlug>("valor-fiscal");
+    useState<CompanySlug>("v-tax");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(userData);
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-    setCurrentCompany(userData.company_slug || "valor-fiscal");
+    setCurrentCompany(userData.company_slug || "v-tax");
   };
 
   const logout = () => {

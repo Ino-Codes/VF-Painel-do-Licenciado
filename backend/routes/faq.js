@@ -5,16 +5,18 @@ const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
   const getCompanyId = async (slug) => {
-    if (!slug || slug === "undefined" || slug === "null") return 1;
+    if (!slug || slug === "undefined" || slug === "null") return null;
     try {
       const result = await pool.query(
         "SELECT id FROM companies WHERE slug = $1",
         [slug]
       );
-      return result.rows.length > 0 ? result.rows[0].id : 1;
+      if (result.rows.length > 0) return result.rows[0].id;
+      console.warn(`[FAQ] Slug de empresa não encontrado no banco: "${slug}"`);
+      return null;
     } catch (error) {
       console.error("Erro ao resolver company_id:", error);
-      return 1;
+      return null;
     }
   };
 
@@ -25,6 +27,11 @@ module.exports = function (pool, cloudinary, upload) {
     try {
       const offset = (page - 1) * limit;
       const companyId = await getCompanyId(company);
+
+      if (companyId === null) {
+        return res.status(404).json({ error: "Empresa não encontrada.", faqs: [], totalCount: 0, totalPages: 0 });
+      }
+
       let whereClauses = ["company_id = $1"];
       const params = [companyId];
 
@@ -78,6 +85,10 @@ module.exports = function (pool, cloudinary, upload) {
 
     try {
       const companyId = await getCompanyId(company);
+
+      if (companyId === null) {
+        return res.json([]);
+      }
 
       let whereClauses = ["company_id = $1"];
 

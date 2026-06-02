@@ -3,10 +3,11 @@ const router = express.Router();
 const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 const COMPANIES_MAP = {
-  "valor-fiscal": 1,
-  "valor-banking": 2,
-  "valor-business": 3,
-  "valor-corporate": 4,
+  "v-tax": 1,
+  "v-banking": 2,
+  "v-business": 3,
+  "v-corp": 4,
+  "v-tech": 5,
 };
 
 module.exports = function (pool, cloudinary, upload, logActivity) {

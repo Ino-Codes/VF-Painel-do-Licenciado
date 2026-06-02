@@ -5,7 +5,7 @@ const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 module.exports = function (pool, cloudinary, upload, logActivity) {
   // --- HELPER: Busca ID da empresa pelo Slug ---
   const getCompanyId = async (slug) => {
-    // Se não vier slug ou for undefined, assume ID 1 (Valor Fiscal) como padrão
+    // Se não vier slug ou for undefined, assume ID 1 (V-CORP) como padrão
     if (!slug || slug === "undefined" || slug === "null") return 1;
 
     try {

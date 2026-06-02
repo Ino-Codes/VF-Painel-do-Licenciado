@@ -25,10 +25,11 @@ type GroupedFiles = {
 };
 
 const COMPANY_NAMES = {
-  "valor-fiscal": "Valor Fiscal",
-  "valor-banking": "Valor Banking",
-  "valor-business": "Valor Business",
-  "valor-corporate": "Valor Corp",
+  "v-tax": "V-TAX",
+  "v-banking": "V-BANKING",
+  "v-business": "V-BUSINESS",
+  "v-corp": "V-CORP",
+  "v-tech": "V-TECH",
 };
 
 const Documentos: React.FC = () => {
@@ -38,8 +39,8 @@ const Documentos: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   const companySlug =
-    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
-  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
+    (searchParams.get("company") as CompanySlug) || "v-tax";
+  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
 
   const [groupedFiles, setGroupedFiles] = useState<GroupedFiles>({});
   const [categories, setCategories] = useState<string[]>([]);

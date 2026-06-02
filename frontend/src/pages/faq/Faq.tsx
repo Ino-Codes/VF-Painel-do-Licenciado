@@ -19,10 +19,11 @@ interface FaqData {
 }
 
 const COMPANY_NAMES = {
-  "valor-fiscal": "Valor Fiscal",
-  "valor-banking": "Valor Banking",
-  "valor-business": "Valor Business",
-  "valor-corporate": "Valor Corp",
+  "v-tax": "V-TAX",
+  "v-banking": "V-BANKING",
+  "v-business": "V-BUSINESS",
+  "v-corp": "V-CORP",
+  "v-tech": "V-TECH",
 };
 
 const Faq: React.FC = () => {
@@ -30,9 +31,8 @@ const Faq: React.FC = () => {
   const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
-  const companySlug =
-    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
-  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
+  const companySlug = (searchParams.get("company") as CompanySlug) || "v-tax";
+  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
 
   const [faqs, setFaqs] = useState<FaqData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -55,8 +55,12 @@ const Faq: React.FC = () => {
         params: { company: companySlug },
       });
       setCategories(res.data);
-    } catch (err) {
-      toast.error("Erro ao buscar categorias.");
+    } catch (err: any) {
+      // 404 = empresa não encontrada no banco (slug ainda não migrado) — não exibir erro
+      if (err?.response?.status !== 404) {
+        toast.error("Erro ao buscar categorias.");
+      }
+      setCategories([]);
     }
   }, [companySlug]);
 
@@ -73,10 +77,15 @@ const Faq: React.FC = () => {
       if (searchQuery) params.search = searchQuery;
 
       const res = await api.get("/api/faq", { params });
-      setFaqs(res.data.faqs);
-      setTotalPages(res.data.totalPages);
-    } catch (err) {
-      toast.error("Erro ao buscar FAQs.");
+      setFaqs(res.data.faqs ?? []);
+      setTotalPages(res.data.totalPages ?? 0);
+    } catch (err: any) {
+      // 404 = empresa não encontrada no banco (slug ainda não migrado) — não exibir erro
+      if (err?.response?.status !== 404) {
+        toast.error("Erro ao buscar FAQs.");
+      }
+      setFaqs([]);
+      setTotalPages(0);
     }
   }, [currentPage, selectedCategory, searchQuery, companySlug]);
 

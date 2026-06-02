@@ -10,11 +10,7 @@ const LogosTheme: React.FC<LogosThemeProps> = ({ imageKey }) => {
 
   return (
     <div className="corp-user-card-logo">
-      <img
-        src={imageUrl}
-        alt="Logo Valor Fiscal"
-        className="empty-state-image"
-      />
+      <img src={imageUrl} alt="Logo V-CORP" className="empty-state-image" />
     </div>
   );
 };

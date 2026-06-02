@@ -562,7 +562,7 @@ module.exports = function (pool, cloudinary, upload) {
               <h1 class="title">CERTIFICADO</h1>
               <p class="subtitle">de conclusão</p>
 
-              <p class="body-text">A Valor Fiscal certifica que</p>
+              <p class="body-text">A V-CORP certifica que</p>
               <p class="student-name">${userName}</p>
               <p class="body-text">concluiu com êxito o treinamento</p>
               <p class="course-name">${course.title}</p>
@@ -574,7 +574,7 @@ module.exports = function (pool, cloudinary, upload) {
               <p class="date">${completionDate}</p>
 
               <div class="logo-container">
-                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-escura_acorgj.png" alt="Logo Valor Fiscal" width="180" />
+                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-escura_acorgj.png" alt="Logo V-CORP" width="180" />
               </div>
             </div>
           </body>

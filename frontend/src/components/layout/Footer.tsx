@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="main-footer">
-      <p>Valor Corp © 2025 - 2026. Todos os direitos reservados.</p>
+      <p>V-CORP © 2025 - 2026. Todos os direitos reservados.</p>
     </footer>
   );
 };

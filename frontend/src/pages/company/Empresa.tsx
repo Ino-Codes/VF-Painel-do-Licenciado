@@ -119,7 +119,7 @@ const Empresa: React.FC = () => {
               <div className="timeline-image-placeholder">
                 <img
                   src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759930448/default-01_br7je3.png"
-                  alt="Fundação da Valor Fiscal"
+                  alt="Fundação da V-CORP"
                 />
               </div>
               <div className="timeline-dot"></div>
@@ -177,18 +177,17 @@ const Empresa: React.FC = () => {
           <div className="page-header">
             <h2>Nossa Equipe</h2>
             <p>
-              Com atuação nacional, a matriz da Valor Fiscal está localizada em
-              Porto Alegre/RS, e conta com filiais em Balneário Camboriú/SC e
-              São Paulo/SP.
+              Com atuação nacional, a matriz da V-CORP está localizada em Porto
+              Alegre/RS, e conta com uma unidade em São Paulo/SP.
             </p>
-            <p>
+            {/* <p>
               Selecione um estado no mapa para ver a equipe local ou veja todos
               os colaboradores.
-            </p>
+            </p> */}
           </div>
 
           <div className="equipe-layout">
-            <div className="equipe-sidebar">
+            {/* <div className="equipe-sidebar">
               <MapaEscritorios
                 activeState={selectedState}
                 onStateClick={setSelectedState}
@@ -203,7 +202,7 @@ const Empresa: React.FC = () => {
                   Ver Todos
                 </button>
               </div>
-            </div>
+            </div> */}
 
             <div className="equipe-main-content">
               {selectedState !== "todos" && (
@@ -214,7 +213,7 @@ const Empresa: React.FC = () => {
 
               {selectedState === "todos" && (
                 <h3 className="equipe-local-title">
-                  Todos os colaboradores da Valor Fiscal
+                  Todos os colaboradores da V-CORP
                 </h3>
               )}
 

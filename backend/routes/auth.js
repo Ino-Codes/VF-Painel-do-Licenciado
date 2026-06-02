@@ -10,7 +10,7 @@ module.exports = function (pool, resend, logActivity) {
     try {
       const result = await pool.query(
         "SELECT *, must_change_password FROM users WHERE email = $1",
-        [email]
+        [email],
       );
       const user = result.rows[0];
 
@@ -20,7 +20,7 @@ module.exports = function (pool, resend, logActivity) {
           email,
           "Falha no Login",
           "Tentativa de login falhou.",
-          req.ipAddress
+          req.ipAddress,
         );
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
@@ -41,7 +41,7 @@ module.exports = function (pool, resend, logActivity) {
         user.email,
         "Login Bem-Sucedido",
         "Usuário logado com sucesso.",
-        req.ipAddress
+        req.ipAddress,
       );
 
       delete user.password;
@@ -58,7 +58,7 @@ module.exports = function (pool, resend, logActivity) {
     try {
       const userResult = await pool.query(
         "SELECT * FROM users WHERE email = $1",
-        [email]
+        [email],
       );
       const user = userResult.rows[0];
 
@@ -79,7 +79,7 @@ module.exports = function (pool, resend, logActivity) {
 
       await pool.query(
         "UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3",
-        [hashedToken, tokenExpiry, user.id]
+        [hashedToken, tokenExpiry, user.id],
       );
 
       const resetUrl = `https://painel.valorfiscal.com/reset-password?token=${resetToken}`;
@@ -99,7 +99,7 @@ module.exports = function (pool, resend, logActivity) {
                   
                   <tr>
                     <td align="center" style="background-color: #111217; padding: 20px 0;">
-                      <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="Valor Fiscal Logo" style="width: 200px; height: auto;">
+                      <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="V-CORP Logo" style="width: 200px; height: auto;">
                     </td>
                   </tr>
 
@@ -107,7 +107,7 @@ module.exports = function (pool, resend, logActivity) {
                     <td style="padding: 30px 40px; color: #2D2C2B; font-size: 16px; line-height: 1.6;">
                       <h2 style="font-size: 22px; color: #0D0D0D; margin-top: 0;">Redefinição de Senha</h2>
                       <p>Olá, ${user.nome},</p>
-                      <p>Recebemos uma solicitação para redefinir a sua senha de acesso ao Painel Valor Fiscal. Se foi você, clique no botão abaixo para criar uma nova senha:</p>
+                      <p>Recebemos uma solicitação para redefinir a sua senha de acesso ao Painel V-CORP. Se foi você, clique no botão abaixo para criar uma nova senha:</p>
                       
                       <table border="0" cellspacing="0" cellpadding="0" style="margin: 30px 0;">
                         <tr>
@@ -123,7 +123,7 @@ module.exports = function (pool, resend, logActivity) {
 
                   <tr>
                     <td align="center" style="background-color: #f8f9fa; padding: 20px; font-size: 12px; color: #6c757d;">
-                      <p>Valor Fiscal Inteligência Tributária © ${new Date().getFullYear()}</p>
+                      <p>V-CORP Inteligência Tributária © ${new Date().getFullYear()}</p>
                       <p>Esta é uma mensagem automática. Por favor, não responda a este email.</p>
                     </td>
                   </tr>
@@ -137,9 +137,9 @@ module.exports = function (pool, resend, logActivity) {
       `;
 
       await resend.emails.send({
-        from: `Painel Valor Fiscal <${process.env.EMAIL_FROM}>`,
+        from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
         to: user.email,
-        subject: "Redefinição de Senha - Painel Valor Fiscal",
+        subject: "Redefinição de Senha - Painel V-CORP",
         html: html,
       });
 
@@ -150,7 +150,7 @@ module.exports = function (pool, resend, logActivity) {
     } catch (err) {
       console.error(
         "Erro ao solicitar redefinição de senha:",
-        err.response ? err.response.data : err
+        err.response ? err.response.data : err,
       );
       res.status(500).send({ error: "Erro no servidor" });
     }
@@ -170,7 +170,7 @@ module.exports = function (pool, resend, logActivity) {
         .digest("hex");
       const userResult = await pool.query(
         "SELECT * FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()",
-        [hashedToken]
+        [hashedToken],
       );
       const user = userResult.rows[0];
 
@@ -184,14 +184,14 @@ module.exports = function (pool, resend, logActivity) {
       const newPasswordHash = await bcrypt.hash(password, 10);
       await pool.query(
         "UPDATE users SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2",
-        [newPasswordHash, user.id]
+        [newPasswordHash, user.id],
       );
       logActivity(
         user.id,
         user.email,
         "Senha Redefinida",
         "Senha redefinida com sucesso através do link.",
-        req.ipAddress
+        req.ipAddress,
       );
       res.json({ message: "Senha redefinida com sucesso!" });
     } catch (err) {

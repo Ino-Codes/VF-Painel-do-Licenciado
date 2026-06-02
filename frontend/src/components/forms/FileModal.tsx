@@ -22,9 +22,11 @@ interface FileModalProps {
 
 // Configuração das empresas disponíveis para seleção
 const COMPANIES_OPTIONS = [
-  { slug: "valor-fiscal", name: "Valor Fiscal" },
-  { slug: "valor-banking", name: "Valor Banking" },
-  { slug: "valor-business", name: "Valor Business" },
+  { slug: "v-tax", name: "V-TAX" },
+  { slug: "v-banking", name: "V-BANKING" },
+  { slug: "v-business", name: "V-BUSINESS" },
+  { slug: "v-corp", name: "V-CORP" },
+  { slug: "v-tech", name: "V-TECH" },
 ];
 
 const FileModal: React.FC<FileModalProps> = ({
@@ -36,7 +38,7 @@ const FileModal: React.FC<FileModalProps> = ({
 }) => {
   // 1. Captura a empresa atual da URL para usar como padrão
   const [searchParams] = useSearchParams();
-  const currentCompanySlug = searchParams.get("company") || "valor-fiscal";
+  const currentCompanySlug = searchParams.get("company") || "v-tax";
 
   const [originalname, setOriginalname] = useState("");
   const [category, setCategory] = useState("");

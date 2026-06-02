@@ -54,7 +54,7 @@ const LessonPlayer: React.FC = () => {
 
   // 1. Captura o slug da empresa da URL atual para manter a navegação consistente
   const [searchParams] = useSearchParams();
-  const companySlug = searchParams.get("company") || "valor-fiscal";
+  const companySlug = searchParams.get("company") || "v-tax";
 
   const [course, setCourse] = useState<CourseWithDetails | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);

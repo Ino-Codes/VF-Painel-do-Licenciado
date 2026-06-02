@@ -85,33 +85,39 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     userName = "usuário",
   ) => {
     const logoMap = {
-      "valor-fiscal": {
-        logoUrl: process.env.LOGO_VALOR_FISCAL || "",
+      "v-tax": {
+        logoUrl: process.env.LOGO_V_TAX || "",
         primaryColor: "#d09829",
         bgColor: "#fff8e7",
         borderColor: "#d09829",
       },
-      "valor-banking": {
-        logoUrl: process.env.LOGO_VALOR_BANKING || "",
+      "v-banking": {
+        logoUrl: process.env.LOGO_V_BANKING || "",
         primaryColor: "#0f57bd",
         bgColor: "#f0f5ff",
         borderColor: "#0f57bd",
       },
-      "valor-business": {
-        logoUrl: process.env.LOGO_VALOR_BUSINESS || "",
+      "v-business": {
+        logoUrl: process.env.LOGO_V_BUSINESS || "",
         primaryColor: "#0b961d",
         bgColor: "#f0fff3",
         borderColor: "#0b961d",
       },
-      "valor-corporate": {
-        logoUrl: process.env.LOGO_VALOR_CORPORATE || "",
+      "v-corp": {
+        logoUrl: process.env.LOGO_V_CORP || "",
         primaryColor: "#222222",
         bgColor: "#e9f8ff",
         borderColor: "#333333",
       },
+      "v-tech": {
+        logoUrl: process.env.LOGO_V_TECH || "",
+        primaryColor: "#7c3aed",
+        bgColor: "#f5f0ff",
+        borderColor: "#7c3aed",
+      },
     };
 
-    const theme = logoMap[companySlug] || logoMap["valor-corporate"];
+    const theme = logoMap[companySlug] || logoMap["v-corp"];
     const currentYear = new Date().getFullYear();
     const panelUrl =
       process.env.FRONTEND_URL || "https://painel.valorfiscal.com";
@@ -131,7 +137,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
               
               <tr>
                 <td align="center" style="background-color: #111217; padding: 20px 0;">
-                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="Valor Fiscal Logo" style="width: 200px; height: auto;">
+                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="V-CORP Logo" style="width: 200px; height: auto;">
                 </td>
               </tr>
 
@@ -155,7 +161,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
 
               <tr>
                 <td align="center" style="background-color: #f8f9fa; padding: 20px; font-size: 12px; color: #6c757d;">
-                  <p>Valor Corp © ${new Date().getFullYear()}</p>
+                  <p>V-CORP © ${new Date().getFullYear()}</p>
                   <p>Esta é uma mensagem automática. Por favor, não responda a este email.</p>
                 </td>
               </tr>
@@ -287,8 +293,8 @@ module.exports = function (pool, createNotification, logActivity, resend) {
           [companyId],
         );
         const companyData = companyResult.rows[0] || {
-          name: "Valor Corp",
-          slug: "valor-corporate",
+          name: "V-CORP",
+          slug: "v-corp",
         };
 
         // ── Notificações internas + e-mails (background) ──────────────────

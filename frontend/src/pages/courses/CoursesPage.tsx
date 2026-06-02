@@ -19,10 +19,11 @@ interface CourseData {
 }
 
 const COMPANY_NAMES = {
-  "valor-fiscal": "Valor Fiscal",
-  "valor-banking": "Valor Banking",
-  "valor-business": "Valor Business",
-  "valor-corporate": "Valor Corp",
+  "v-tax": "V-TAX",
+  "v-banking": "V-BANKING",
+  "v-business": "V-BUSINESS",
+  "v-corp": "V-CORP",
+  "v-tech": "V-TECH",
 };
 
 const CoursesPage: React.FC = () => {
@@ -32,8 +33,8 @@ const CoursesPage: React.FC = () => {
   // 1. Captura da Empresa
   const [searchParams] = useSearchParams();
   const companySlug =
-    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
-  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
+    (searchParams.get("company") as CompanySlug) || "v-tax";
+  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
 
   const [allCourses, setAllCourses] = useState<CourseData[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "ongoing">("all");

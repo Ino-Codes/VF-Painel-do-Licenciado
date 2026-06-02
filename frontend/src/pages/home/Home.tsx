@@ -118,7 +118,7 @@ const Home: React.FC = () => {
         <div className="home-header">
           <h2 className="hello-user">Olá, {user.nickname || firstName}!</h2>
           <p>
-            Este é o seu novo Painel da Valor Corp!
+            Este é o seu novo Painel da V-CORP!
             <br />
             Aqui você encontra os principais documentos e treinamentos para
             atuar conosco.

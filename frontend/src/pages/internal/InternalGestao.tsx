@@ -27,8 +27,7 @@ const InternalGestao: React.FC = () => {
     },
     {
       title: "Quem Somos",
-      description:
-        "Conheça a história da Valor Fiscal e nosso time de colaboradores",
+      description: "Conheça a história da V-CORP e nosso time de colaboradores",
       icon: <FaBuilding />,
       path: "/internal/empresa",
     },

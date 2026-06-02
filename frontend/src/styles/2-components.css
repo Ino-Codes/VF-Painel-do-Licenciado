@@ -100,6 +100,9 @@ input[type="checkbox"]:checked {
   cursor: pointer;
   font-size: 14px;
   transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .form-icon-delete:hover,

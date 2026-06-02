@@ -13,10 +13,11 @@ import { HiSpeakerphone } from "react-icons/hi";
 
 // Configuração local para exibição (pode ser movida para utils/companies.ts depois)
 const COMPANIES_INFO = {
-  "valor-fiscal": { name: "Valor Fiscal", color: "var(--valor-fiscal)" },
-  "valor-banking": { name: "Valor Banking", color: "var(--valor-banking)" },
-  "valor-business": { name: "Valor Business", color: "var(--valor-business)" },
-  "valor-corporate": { name: "Valor Corp", color: "var(--valor-corporate)" },
+  "v-tax": { name: "V-TAX", color: "var(--v-tax)" },
+  "v-banking": { name: "V-BANKING", color: "var(--v-banking)" },
+  "v-business": { name: "V-BUSINESS", color: "var(--v-business)" },
+  "v-corp": { name: "V-CORP", color: "var(--v-corp)" },
+  "v-tech": { name: "V-TECH", color: "var(--v-tech)" },
 };
 
 const ContentGestao: React.FC = () => {
@@ -26,9 +27,9 @@ const ContentGestao: React.FC = () => {
 
   // Pega o slug da URL ou usa 'valor-fiscal' como fallback
   const companySlug =
-    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
+    (searchParams.get("company") as CompanySlug) || "v-tax";
   const companyInfo =
-    COMPANIES_INFO[companySlug] || COMPANIES_INFO["valor-fiscal"];
+    COMPANIES_INFO[companySlug] || COMPANIES_INFO["v-tax"];
 
   if (loading) return <div className="tela-loading">Carregando...</div>;
 

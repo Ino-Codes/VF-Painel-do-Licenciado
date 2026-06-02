@@ -194,7 +194,7 @@ const sendEventNotifications = async (resend) => {
                             
                             <tr>
                               <td align="center" style="background-color: #111217; padding: 20px 0;">
-                                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="Valor Fiscal Logo" style="width: 200px; height: auto;">
+                                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="V-CORP Logo" style="width: 200px; height: auto;">
                               </td>
                             </tr>
 
@@ -202,7 +202,7 @@ const sendEventNotifications = async (resend) => {
                               <td style="padding: 30px 40px; color: #2D2C2B; font-size: 16px; line-height: 1.6;">
                                 <h2 style="font-size: 22px; color: #0D0D0D; margin-top: 0;">Lembrete de Eventos para Hoje</h2>
                                 <p>Olá, ${user.nome.split(" ")[0]}!</p>
-                                <p>Estes são os seus eventos agendados para hoje no Painel da Valor Fiscal:</p>
+                                <p>Estes são os seus eventos agendados para hoje no Painel da V-CORP:</p>
                                 <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 20px 0;">
                                 ${eventsHtmlList}
                                 <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 20px 0;">
@@ -212,7 +212,7 @@ const sendEventNotifications = async (resend) => {
 
                             <tr>
                               <td align="center" style="background-color: #f8f9fa; padding: 20px; font-size: 12px; color: #6c757d;">
-                                <p>Valor Corp © ${new Date().getFullYear()}</p>
+                                <p>V-CORP © ${new Date().getFullYear()}</p>
                                 <p>Esta é uma mensagem automática. Por favor, não responda a este email.</p>
                               </td>
                             </tr>
@@ -227,7 +227,7 @@ const sendEventNotifications = async (resend) => {
 
           try {
             await resend.emails.send({
-              from: `Painel Valor Fiscal <${process.env.EMAIL_FROM}>`,
+              from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
               to: user.email,
               subject: `Lembrete: Você tem ${user.events.length} evento(s) hoje no Painel VF!`,
               html: html,

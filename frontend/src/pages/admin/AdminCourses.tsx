@@ -112,9 +112,13 @@ const AdminCourses: React.FC = () => {
   // Função auxiliar para cor da badge da empresa
   const getCompanyColor = (name: string | undefined) => {
     if (!name) return "var(--action-secondary)";
-    if (name.includes("Fiscal")) return "var(--valor-fiscal)";
-    if (name.includes("Banking")) return "var(--valor-banking)";
-    if (name.includes("Business")) return "var(--valor-business)";
+    if (name.includes("TAX") || name === "V-TAX") return "var(--v-tax)";
+    if (name.includes("BANKING") || name === "V-BANKING")
+      return "var(--v-banking)";
+    if (name.includes("BUSINESS") || name === "V-BUSINESS")
+      return "var(--v-business)";
+    if (name.includes("CORP") || name === "V-CORP") return "var(--v-corp)";
+    if (name.includes("TECH") || name === "V-TECH") return "var(--v-tech)";
     return "var(--action-secondary)";
   };
 
@@ -131,7 +135,7 @@ const AdminCourses: React.FC = () => {
           <div>
             <h2 className="content-title">Gestão de Cursos</h2>
             <span className="content-subtitle">
-              Gerenciamento de cursos para todas as empresas do grupo Valor Corp
+              Gerenciamento de cursos para todas as empresas do grupo V-CORP.
             </span>
           </div>
 

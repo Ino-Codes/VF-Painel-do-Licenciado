@@ -45,10 +45,11 @@ interface User {
 // ─── Mapa de nomes de empresa por slug (fallback caso o backend não retorne) ──
 
 const COMPANY_NAMES: Record<string, string> = {
-  "valor-fiscal": "Valor Fiscal",
-  "valor-banking": "Valor Banking",
-  "valor-business": "Valor Business",
-  "valor-corporate": "Valor Corp",
+  "v-tax": "V-TAX",
+  "v-banking": "V-BANKING",
+  "v-business": "V-BUSINESS",
+  "v-corp": "V-CORP",
+  "v-tech": "V-TECH",
 };
 
 // ─── Helper de formatação de telefone ────────────────────────────────────────
@@ -495,12 +496,12 @@ const Perfil: React.FC = () => {
               <div className="certificates-grid">
                 {certificates.length > 0 ? (
                   certificates.map((cert) => {
-                    // Slug da empresa — fallback para valor-corporate
-                    const slug = cert.company_slug || "valor-corporate";
+                    // Slug da empresa — fallback para v-corp
+                    const slug = cert.company_slug || "v-corp";
 
                     // Nome da empresa — vindo do backend ou fallback do mapa local
                     const companyName =
-                      cert.company_name || COMPANY_NAMES[slug] || "Valor Corp";
+                      cert.company_name || COMPANY_NAMES[slug] || "V-CORP";
 
                     return (
                       <div

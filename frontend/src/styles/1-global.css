@@ -55,12 +55,16 @@
   --border-graph-bar: rgba(221, 177, 65, 1);
 
   /* destaques para cada empresa */
-  --valor-business: #0e881eff;
-  --bg-valor-business: rgba(14, 136, 30, 0.3);
-  --valor-banking: rgb(0, 78, 187);
-  --bg-valor-banking: rgba(0, 115, 255, 0.25);
-  --valor-fiscal: #dfad2d;
-  --bg-valor-fiscal: rgba(223, 173, 45, 0.3);
+  --v-business: #0e881eff;
+  --bg-v-business: rgba(14, 136, 30, 0.3);
+  --v-banking: rgb(0, 78, 187);
+  --bg-v-banking: rgba(0, 115, 255, 0.25);
+  --v-tax: #dfad2d;
+  --bg-v-tax: rgba(223, 173, 45, 0.3);
+  --v-corp: #222222;
+  --bg-v-corp: rgba(34, 34, 34, 0.3);
+  --v-tech: #7c3aed;
+  --bg-v-tech: rgba(124, 58, 237, 0.3);
 }
 
 body.dark-theme {
@@ -118,25 +122,37 @@ body.dark-theme {
   --border-graph-bar: rgba(221, 177, 65, 1);
 
   /* destaques para cada empresa */
-  --valor-business: rgb(11, 150, 29);
-  --bg-valor-business: rgba(11, 150, 29, 0.4);
-  --valor-banking: rgb(15, 87, 189);
-  --bg-valor-banking: rgba(15, 87, 189, 0.4);
-  --valor-fiscal: rgb(208, 152, 41);
-  --bg-valor-fiscal: rgba(208, 152, 41, 0.4);
+  --v-business: rgb(11, 150, 29);
+  --bg-v-business: rgba(11, 150, 29, 0.4);
+  --v-banking: rgb(15, 87, 189);
+  --bg-v-banking: rgba(15, 87, 189, 0.4);
+  --v-tax: rgb(208, 152, 41);
+  --bg-v-tax: rgba(208, 152, 41, 0.4);
+  --v-corp: #444444;
+  --bg-v-corp: rgba(68, 68, 68, 0.4);
+  --v-tech: #9f5df0;
+  --bg-v-tech: rgba(159, 93, 240, 0.4);
 }
 
-.company-valor-fiscal {
-  --accent-color: var(--valor-fiscal);
-  --bg-accent-color: var(--bg-valor-fiscal);
+.company-v-tax {
+  --accent-color: var(--v-tax);
+  --bg-accent-color: var(--bg-v-tax);
 }
-.company-valor-banking {
-  --accent-color: var(--valor-banking);
-  --bg-accent-color: var(--bg-valor-banking);
+.company-v-banking {
+  --accent-color: var(--v-banking);
+  --bg-accent-color: var(--bg-v-banking);
 }
-.company-valor-business {
-  --accent-color: var(--valor-business);
-  --bg-accent-color: var(--bg-valor-business);
+.company-v-business {
+  --accent-color: var(--v-business);
+  --bg-accent-color: var(--bg-v-business);
+}
+.company-v-corp {
+  --accent-color: var(--v-corp);
+  --bg-accent-color: var(--bg-v-corp);
+}
+.company-v-tech {
+  --accent-color: var(--v-tech);
+  --bg-accent-color: var(--bg-v-tech);
 }
 
 * {

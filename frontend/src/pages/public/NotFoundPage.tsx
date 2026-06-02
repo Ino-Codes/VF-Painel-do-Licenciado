@@ -21,7 +21,7 @@ const NotFoundPage: React.FC = () => {
       }}
     >
       {Icon404 && (
-        <Icon404 size={180} style={{ color: "var(--valor-fiscal)" }} />
+        <Icon404 size={180} style={{ color: "var(--v-tax)" }} />
       )}
 
       <h1 style={{ fontSize: "2.5rem", marginBottom: "10px" }}>

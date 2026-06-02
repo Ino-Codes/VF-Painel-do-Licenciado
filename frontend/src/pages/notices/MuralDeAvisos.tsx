@@ -27,10 +27,11 @@ interface Notice {
 // ─── Mapa de nomes de empresa ─────────────────────────────────────────────────
 
 const COMPANY_NAMES: Record<CompanySlug, string> = {
-  "valor-fiscal": "Valor Fiscal",
-  "valor-banking": "Valor Banking",
-  "valor-business": "Valor Business",
-  "valor-corporate": "Valor Corp",
+  "v-tax": "V-TAX",
+  "v-banking": "V-BANKING",
+  "v-business": "V-BUSINESS",
+  "v-corp": "V-CORP",
+  "v-tech": "V-TECH",
 };
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -42,8 +43,8 @@ const MuralDeAvisos: React.FC = () => {
 
   // Empresa vinda da URL (?company=valor-fiscal)
   const companySlug =
-    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
-  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
+    (searchParams.get("company") as CompanySlug) || "v-tax";
+  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
 
   // ─── Estado ─────────────────────────────────────────────────────────────────
 

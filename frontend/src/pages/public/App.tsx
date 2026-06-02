@@ -75,11 +75,11 @@ const App: React.FC = () => {
     <>
       <div className="p-login">
         <div className="p-img">
-          <img alt="Logo da Valor Fiscal" src={Logo} />
+          <img alt="Logo da V-CORP" src={Logo} />
         </div>
         <div className="p-1">
           <h2 className="titulo-login">
-            {!mostrarRecuperacao ? "Painel da Valor Fiscal" : "Recuperar Senha"}
+            {!mostrarRecuperacao ? "Painel da V-CORP" : "Recuperar Senha"}
           </h2>
 
           {!mostrarRecuperacao ? (

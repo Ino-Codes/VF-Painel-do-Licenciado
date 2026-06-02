@@ -43,10 +43,11 @@ const getYoutubeEmbedUrl = (url: string): string => {
 };
 
 const COMPANY_NAMES = {
-  "valor-fiscal": "Valor Fiscal",
-  "valor-banking": "Valor Banking",
-  "valor-business": "Valor Business",
-  "valor-corporate": "Valor Corp",
+  "v-tax": "V-TAX",
+  "v-banking": "V-BANKING",
+  "v-business": "V-BUSINESS",
+  "v-corp": "V-CORP",
+  "v-tech": "V-TECH",
 };
 
 const Videos: React.FC = () => {
@@ -56,8 +57,8 @@ const Videos: React.FC = () => {
   // 1. Captura slug da URL
   const [searchParams] = useSearchParams();
   const companySlug =
-    (searchParams.get("company") as CompanySlug) || "valor-fiscal";
-  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
+    (searchParams.get("company") as CompanySlug) || "v-tax";
+  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
 
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);

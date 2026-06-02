@@ -1,6 +1,6 @@
-# Painel da Valor Corp 🏢
+# Painel da V-CORP 🏢
 
-O **Painel da Valor Corp** é uma plataforma corporativa (intranet e LMS) desenvolvida para centralizar a comunicação, gestão de conhecimento e rotinas de Recursos Humanos para as empresas do grupo (Valor Fiscal, Valor Banking e Valor Business).
+O **Painel da V-CORP** é uma plataforma corporativa (intranet e LMS) desenvolvida para centralizar a comunicação, gestão de conhecimento e rotinas de Recursos Humanos para as empresas do grupo (V-TAX, V-BANKING, V-TECH e V-BUSINESS).
 
 ## 🎯 Objetivo
 
@@ -11,7 +11,7 @@ Prover um ambiente unificado e seguro onde colaboradores e licenciados possam ac
 ### 👥 Gestão de Usuários e Acessos
 
 - **Perfis de Acesso:** Controle estrito para Administradores, RH, Comercial, Operacional e Licenciados.
-- **Multi-Empresa:** Visualização dinâmica de conteúdos dependendo da empresa acessada (Valor Fiscal, Banking, Business).
+- **Multi-Empresa:** Visualização dinâmica de conteúdos dependendo da empresa acessada (V-CORP, Banking, Business).
 - **Gestão de Perfil:** Atualização de dados, apelido (nickname), troca de senha e upload de foto de perfil/avatar.
 
 ### 📚 Plataforma de Ensino (LMS)

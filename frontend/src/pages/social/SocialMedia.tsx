@@ -12,10 +12,11 @@ import toast from "react-hot-toast";
 
 // Mapeamento idêntico ao do Documentos.tsx
 const COMPANY_NAMES: Record<string, string> = {
-  "valor-fiscal": "Valor Fiscal",
-  "valor-banking": "Valor Banking",
-  "valor-business": "Valor Business",
-  "valor-corporate": "Valor Corp",
+  "v-tax": "V-TAX",
+  "v-banking": "V-BANKING",
+  "v-business": "V-BUSINESS",
+  "v-corp": "V-CORP",
+  "v-tech": "V-TECH",
 };
 
 const SocialMedia: React.FC = () => {
@@ -24,8 +25,8 @@ const SocialMedia: React.FC = () => {
 
   // Lógica de captura do slug pela URL
   const [searchParams] = useSearchParams();
-  const companySlug = searchParams.get("company") || "valor-fiscal";
-  const companyName = COMPANY_NAMES[companySlug] || "Valor Fiscal";
+  const companySlug = searchParams.get("company") || "v-tax";
+  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
 
   // Estados para dados e interface
   const [groupedPosts, setGroupedPosts] = useState<any>({});

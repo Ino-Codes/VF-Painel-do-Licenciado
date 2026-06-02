@@ -12,10 +12,11 @@ interface SocialPostModalProps {
 }
 
 const COMPANIES_OPTIONS = [
-  { slug: "valor-fiscal", name: "Valor Fiscal" },
-  { slug: "valor-banking", name: "Valor Banking" },
-  { slug: "valor-business", name: "Valor Business" },
-  { slug: "valor-corporate", name: "Valor Corp" },
+  { slug: "v-tax", name: "V-TAX" },
+  { slug: "v-banking", name: "V-BANKING" },
+  { slug: "v-business", name: "V-BUSINESS" },
+  { slug: "v-corp", name: "V-CORP" },
+  { slug: "v-tech", name: "V-TECH" },
 ];
 
 // Opções de visibilidade
@@ -43,7 +44,7 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
   categories,
 }) => {
   const [searchParams] = useSearchParams();
-  const currentCompanySlug = searchParams.get("company") || "valor-fiscal";
+  const currentCompanySlug = searchParams.get("company") || "v-tax";
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");

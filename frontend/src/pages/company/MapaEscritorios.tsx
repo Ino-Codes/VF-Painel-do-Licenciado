@@ -42,7 +42,7 @@ const MapaEscritorios: React.FC<MapaProps> = ({
     },
   ];
 
-  const nonInteractiveStates = ["pr"];
+  const nonInteractiveStates = ["pr", "sc"];
 
   return (
     <div className="map-container">
