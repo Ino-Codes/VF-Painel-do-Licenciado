@@ -26,6 +26,10 @@
   font-weight: 500;
 }
 
+.menu-logo {
+  height: 40px;
+}
+
 .menu-item {
   color: var(--text-primary);
   font-weight: 500;
@@ -45,10 +49,6 @@
   background-color: var(--bg-menu-hover);
   border-radius: 5px;
   transition: background-color 0.3s ease;
-}
-
-.menu-logo {
-  height: 35px;
 }
 
 .dropdown-menu {

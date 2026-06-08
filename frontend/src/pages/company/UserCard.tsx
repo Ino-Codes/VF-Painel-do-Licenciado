@@ -30,7 +30,7 @@ const UserCard: React.FC<Props> = ({ user, onClick }) => {
         <h3 className="corp-user-card-name">{user.nome}</h3>
         <p className="corp-user-card-title">{title}</p>
 
-        <LogosTheme imageKey="minilogo" />
+        {/* <LogosTheme imageKey="minilogo" /> */}
       </div>
     </div>
   );

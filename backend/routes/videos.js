@@ -37,9 +37,10 @@ module.exports = function (pool) {
         whereClauses.push(
           "(visibility = 'todos' OR visibility = 'licenciados')"
         );
-      } else {
+      } else if (role !== "admin") {
         whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
       }
+      // admin vê todos os vídeos independente da visibilidade
 
       // Filtro de Categoria
       if (category) {

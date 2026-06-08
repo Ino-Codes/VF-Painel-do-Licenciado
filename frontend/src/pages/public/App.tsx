@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import ForcePasswordResetModal from "../../components/ui/ForcePasswordResetModal.tsx";
-import Logo from "../../img/logo-clara.png";
+import Logo from "../../img/textobranco.png";
 import { toast } from "react-hot-toast";
 
 const App: React.FC = () => {

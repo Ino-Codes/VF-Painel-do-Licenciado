@@ -5,8 +5,8 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import { useTheme } from "../../context/ThemeContext.tsx";
 import ThemeToggleButton from "../ui/ThemeToggleButton.tsx";
 // Logos
-import LogoValorCorpClara from "../../img/logo-clara.png";
-import LogoValorCorpEscura from "../../img/logo-escura.png";
+import LogoVCorpClara from "../../img/textobranco.png";
+import LogoVCorpEscura from "../../img/textopreto.png";
 // import LogoValorFiscal from "../../img/valor-fiscal.png";
 // import LogoValorBanking from "../../img/valor-banking.png";
 
@@ -62,8 +62,7 @@ const Menu: React.FC = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const firstName = user?.nome?.split(" ")[0] || "";
 
-  const currentLogoValorCorp =
-    theme === "light" ? LogoValorCorpEscura : LogoValorCorpClara;
+  const currentLogoVCorp = theme === "light" ? LogoVCorpEscura : LogoVCorpClara;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -129,13 +128,9 @@ const Menu: React.FC = () => {
       </button>
 
       <div className={`menu-left ${isMenuOpen ? "open" : ""}`}>
-        {/* <img
-          src={currentLogoVCorp}
-          alt="V-CORP Logo"
-          className="menu-logo"
-        /> */}
+        <img src={currentLogoVCorp} alt="V-CORP Logo" className="menu-logo" />
 
-        <h2 className="menu-v-corp">V-CORP</h2>
+        {/* <h2 className="menu-v-corp">V-CORP</h2> */}
 
         <NavLink
           to="/home"
