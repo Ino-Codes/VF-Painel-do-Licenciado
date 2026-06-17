@@ -5,6 +5,7 @@ import { IconType } from "react-icons";
 import {
   PiCertificate,
   PiGraduationCap,
+  PiArchive,
   PiFolderOpen,
   PiCalendarSlash,
   PiInfo,
@@ -18,6 +19,7 @@ import { TbError404 } from "react-icons/tb";
 // Mapeamento de chaves para Componentes de Ícone
 export const iconMap: Record<string, IconType> = {
   "404": TbError404,
+  arquivos: PiArchive,
   avisos: PiInfo,
   certificado: PiCertificate,
   cursos: PiGraduationCap,

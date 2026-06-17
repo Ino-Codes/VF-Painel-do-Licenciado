@@ -10,6 +10,7 @@ import { IoMdDocument } from "react-icons/io";
 import { RiQuestionnaireFill } from "react-icons/ri";
 import { IoShareSocialSharp } from "react-icons/io5";
 import { HiSpeakerphone } from "react-icons/hi";
+import { FaArchive } from "react-icons/fa";
 
 // Configuração local para exibição (pode ser movida para utils/companies.ts depois)
 const COMPANIES_INFO = {
@@ -35,6 +36,12 @@ const ContentGestao: React.FC = () => {
 
   // Definição dos módulos com os links atualizados para incluir o parâmetro
   const modules = [
+    {
+      title: "Arquivos",
+      description: "Documentos arquivados e históricos de conteúdo",
+      icon: <FaArchive />,
+      path: `/content/arquivos?company=${companySlug}`,
+    },
     {
       title: "Avisos",
       description: "Comunicados e anúncios oficiais da empresa",

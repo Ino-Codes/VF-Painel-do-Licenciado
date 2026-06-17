@@ -42,6 +42,7 @@ import Projetos from "./pages/internal/Projetos.tsx";
 import HelpDeskKanban from "./pages/itsm/HelpDeskKanban.tsx";
 import WidgetTenants from "./pages/itsm/WidgetTenants.tsx";
 import MeetingRecords from "./pages/meetings/MeetingRecords.tsx";
+import Arquivos from "./pages/archives/Arquivos.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -92,6 +93,7 @@ const AppRouter: React.FC = () => {
           <Route path="/home" element={<Home />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/content/documentos" element={<Documentos />} />
+          <Route path="/content/arquivos" element={<Arquivos />} />
           <Route path="/content/midiassociais" element={<MidiasSociais />} />
           <Route path="/content/videos" element={<Videos />} />
           <Route path="/faq" element={<Faq />} />

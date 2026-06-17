@@ -156,6 +156,12 @@ const meetingRecordsRoutes = require("./routes/meetingRecords.js")(
   resend,
   logActivity,
 );
+const archivesRoutes = require("./routes/archives.js")(
+  pool,
+  cloudinary,
+  upload,
+  logActivity,
+);
 
 cronFunctions.initializeCron(pool, resend);
 
@@ -187,6 +193,7 @@ app.use("/api/projects", corsRestrito, projectRoutes);
 app.use("/api/widget-tenants", corsRestrito, widgetTenantsRoutes);
 app.use("/api/tickets", corsRestrito, ticketsRoutes);
 app.use("/api/meeting-records", corsRestrito, meetingRecordsRoutes);
+app.use("/api/archives", corsRestrito, archivesRoutes);
 
 // ── Rota pública do widget — CORS aberto, sem autenticação ────────────────────
 app.use("/api/ticket", corsAberto, ticketsRoutes);
