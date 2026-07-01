@@ -4,8 +4,8 @@
 
   const TOKEN = scriptTag ? scriptTag.getAttribute("data-token") : null;
   const API_BASE = scriptTag
-    ? scriptTag.getAttribute("data-api") || "https://painel.valorfiscal.com"
-    : "https://painel.valorfiscal.com";
+    ? scriptTag.getAttribute("data-api") || "https://painel.vcorporate.com.br"
+    : "https://painel.vcorporate.com.br";
 
   if (!TOKEN) {
     console.warn("[TicketWidget] data-token não informado.");

@@ -4,7 +4,7 @@ import api from "../../api.ts";
 import toast from "react-hot-toast";
 
 const logo =
-  "https://res.cloudinary.com/dsgbgrll5/image/upload/v1754399924/logo-clara_guvics.png";
+  "https://res.cloudinary.com/dsgbgrll5/image/upload/v1782936553/textobranco_zxw32o.png";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");

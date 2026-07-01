@@ -59,6 +59,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
   const editor = useEditor({
     extensions: [StarterKit],
     content: lesson?.text_content || "",
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         class: "tiptap-editor",
@@ -73,6 +74,11 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
     e.preventDefault();
     if (!title.trim()) {
       toast.error("O título da aula é obrigatório.");
+      return;
+    }
+
+    if (!editor || editor.isDestroyed) {
+      toast.error("Não foi possível carregar o editor de conteúdo.");
       return;
     }
 

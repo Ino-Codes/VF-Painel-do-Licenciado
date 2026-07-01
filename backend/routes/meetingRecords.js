@@ -11,7 +11,7 @@ module.exports = function (pool, cloudinary, upload, resend, logActivity) {
     userName = "usuário",
   ) => {
     const panelUrl =
-      process.env.FRONTEND_URL || "https://painel.valorfiscal.com";
+      process.env.FRONTEND_URL || "https://painel.vcorporate.com.br";
     return `<!DOCTYPE html>
     <html lang="pt-BR">
     <head>
@@ -26,7 +26,7 @@ module.exports = function (pool, cloudinary, upload, resend, logActivity) {
             <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
               <tr>
                 <td align="center" style="background-color: #111217; padding: 20px 0;">
-                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="V-CORP Logo" style="width: 200px; height: auto;">
+                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1782936553/textobranco_zxw32o.png" alt="V-CORP Logo" style="width: 200px; height: auto;">
                 </td>
               </tr>
               <tr>

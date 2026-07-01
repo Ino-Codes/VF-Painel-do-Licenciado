@@ -49,6 +49,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   const editor = useEditor({
     extensions: [StarterKit],
     content: "",
+    immediatelyRender: false,
     editorProps: { attributes: { class: "tiptap-editor" } },
   });
 
@@ -63,27 +64,34 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
 
   // Preenche dados ao editar
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || editor.isDestroyed) return;
 
-    if (noticeToEdit) {
-      editor.commands.setContent(noticeToEdit.message);
-      setVisibility(noticeToEdit.visibility || "todos");
-      setSendEmail(false);
+    const applyEditorContent = () => {
+      if (!editor || editor.isDestroyed) return;
 
-      if (noticeToEdit.id) {
-        api
-          .get(`/api/notices/${noticeToEdit.id}/recipients`)
-          .then((res) => setSelectedUserIds(res.data))
-          .catch(() => {});
+      if (noticeToEdit) {
+        editor.commands.setContent(noticeToEdit.message, { emitUpdate: false });
+        setVisibility(noticeToEdit.visibility || "todos");
+        setSendEmail(false);
+
+        if (noticeToEdit.id) {
+          api
+            .get(`/api/notices/${noticeToEdit.id}/recipients`)
+            .then((res) => setSelectedUserIds(res.data))
+            .catch(() => {});
+        }
+      } else {
+        editor.commands.clearContent();
+        setVisibility("todos");
+        setSelectedUserIds([]);
+        setSendEmail(false);
       }
-    } else {
-      editor.commands.clearContent();
-      setVisibility("todos");
-      setSelectedUserIds([]);
-      setSendEmail(false);
-    }
-    setShowEmojiPicker(false);
-    setUserSearch("");
+      setShowEmojiPicker(false);
+      setUserSearch("");
+    };
+
+    const timeoutId = window.setTimeout(applyEditorContent, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [noticeToEdit, editor, isOpen]);
 
   useEffect(() => {

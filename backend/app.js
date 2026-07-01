@@ -1,4 +1,4 @@
-// require("dotenv").config();
+//require("dotenv").config();
 
 const migrationRunner = require("./migrationRunner.js");
 const express = require("express");
@@ -18,7 +18,7 @@ const port = process.env.PORT || 3001;
 // Cada grupo de rotas recebe seu próprio middleware de CORS.
 
 const allowedOrigins = [
-  "https://painel.valorfiscal.com",
+  "https://painel.vcorporate.com.br",
   "https://vf-painel-do-licenciado.onrender.com",
   "http://localhost:3000",
 ];

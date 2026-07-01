@@ -574,7 +574,7 @@ module.exports = function (pool, cloudinary, upload) {
               <p class="date">${completionDate}</p>
 
               <div class="logo-container">
-                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-escura_acorgj.png" alt="Logo V-CORP" width="180" />
+                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1782936521/textopreto_svfbdt.png" alt="Logo V-CORP" width="180" />
               </div>
             </div>
           </body>

@@ -120,7 +120,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     const theme = logoMap[companySlug] || logoMap["v-corp"];
     const currentYear = new Date().getFullYear();
     const panelUrl =
-      process.env.FRONTEND_URL || "https://painel.valorfiscal.com";
+      process.env.FRONTEND_URL || "https://painel.vcorporate.com.br";
 
     return `<!DOCTYPE html>
     <html lang="pt-BR">
@@ -137,7 +137,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
               
               <tr>
                 <td align="center" style="background-color: #111217; padding: 20px 0;">
-                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934050/logo-clara_grkjfa.png" alt="V-CORP Logo" style="width: 200px; height: auto;">
+                  <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1782936553/textobranco_zxw32o.png" alt="V-CORP Logo" style="width: 200px; height: auto;">
                 </td>
               </tr>
 
@@ -145,7 +145,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
                 <td style="padding: 30px 40px; color: #2D2C2B; font-size: 16px; line-height: 1.6;">
                   <h2 style="font-size: 22px; color: #0D0D0D; margin-top: 0;">Novo Aviso Publicado</h2>
                   <p>Olá, ${userName}!</p>
-                  <p>Um novo aviso importante foi postado no Painel da Valor:</p>
+                  <p>Um novo aviso importante foi postado no Painel da V-CORP:</p>
                   
                   <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 20px 0;">
                   
