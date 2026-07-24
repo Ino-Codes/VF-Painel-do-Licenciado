@@ -283,25 +283,14 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
                     <div
                       key={u.id}
                       onClick={() => toggleUser(u.id)}
-                      className="users-list-option-details"
-                      style={{
-                        backgroundColor: isSelected
-                          ? "var(--bg-accent-color-light)"
-                          : "transparent",
-                        border: isSelected
-                          ? "1px solid var(--bg-accent-color)"
-                          : "1px solid transparent",
-                      }}
+                      className={`users-list-option-details notice-recipient-option${
+                        isSelected ? " selected" : ""
+                      }`}
                     >
                       <div className="users-list-options">
                         <span>{u.nome}</span>
                         {(u.cargo || u.setor) && (
-                          <span
-                            style={{
-                              fontSize: "12px",
-                              color: "var(--text-secondary)",
-                            }}
-                          >
+                          <span className="notice-recipient-meta">
                             {[u.cargo, u.setor].filter(Boolean).join(" · ")}
                           </span>
                         )}
@@ -317,35 +306,15 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
 
         {/* Envio por e-mail */}
         {!noticeToEdit && (
-          <div
-            className="form-row"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginTop: "15px",
-            }}
-          >
+          <div className="form-row notice-email-row">
             <input
               type="checkbox"
               id="sendEmail"
               checked={sendEmail}
               onChange={(e) => setSendEmail(e.target.checked)}
-              style={{
-                width: "auto",
-                cursor: "pointer",
-                transform: "scale(1.2)",
-              }}
+              className="notice-email-checkbox"
             />
-            <label
-              htmlFor="sendEmail"
-              style={{
-                cursor: "pointer",
-                margin: 0,
-                fontSize: "14px",
-                fontWeight: "normal",
-              }}
-            >
+            <label htmlFor="sendEmail" className="notice-email-label">
               {showUserList && selectedUserIds.length > 0
                 ? `Enviar aviso por e-mail para os ${selectedUserIds.length} selecionados`
                 : "Enviar aviso por e-mail para todos"}

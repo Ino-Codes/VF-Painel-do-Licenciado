@@ -86,7 +86,7 @@ const GestaoFerias: React.FC = () => {
         <div className="document-header">
           <h2>Agenda de Férias e Ausências</h2>
         </div>
-        <div className="calendar-container" style={{ marginTop: "20px" }}>
+        <div className="calendar-container ferias-calendar">
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"

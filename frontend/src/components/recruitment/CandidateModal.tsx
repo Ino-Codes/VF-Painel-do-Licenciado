@@ -168,7 +168,7 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
         <div className="checklist-section">
           <div className="checklist-header">
             <h3 className="checklist-title">Checklist de Ações</h3>
-            <div style={{ marginLeft: 12 }}>
+            <div className="checklist-edit-action">
               <button
                 className="list-button"
                 onClick={() => setIsChecklistOpen(true)}

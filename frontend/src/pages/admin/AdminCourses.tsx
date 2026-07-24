@@ -145,28 +145,19 @@ const AdminCourses: React.FC = () => {
         </div>
 
         {courses.length === 0 ? (
-          <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
-            Nenhum curso encontrado.
-          </p>
+          <p className="admin-courses-empty">Nenhum curso encontrado.</p>
         ) : (
           <ul className="user-list">
             {courses.map((course) => (
               <li key={course.id} className="user-list-item">
-                <div
-                  className="user-info"
-                  style={{
-                    alignItems: "center",
-                    flexDirection: "row",
-                    gap: "15px",
-                  }}
-                >
+                <div className="user-info admin-courses-user-info">
                   <img
                     src={
                       course.thumbnail_url ||
                       "https://res.cloudinary.com/dsgbgrll5/image/upload/v1756927817/ev4gvx4bqvz5x34ngrc8_x6fzrp.jpg"
                     }
                     alt="Thumbnail"
-                    style={{ width: "100px", borderRadius: "4px" }}
+                    className="course-thumbnail"
                   />
                   <div className="course-list-item-info">
                     {/* Badge da Empresa */}
@@ -182,7 +173,7 @@ const AdminCourses: React.FC = () => {
                     <br />
                     <strong>{course.title}</strong>
                     <br />
-                    <span style={{ fontSize: "0.85rem", color: "#666" }}>
+                    <span className="course-visibility-text">
                       Visível para: {course.visibility}
                     </span>
                   </div>

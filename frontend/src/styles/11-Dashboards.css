@@ -151,6 +151,7 @@
 }
 
 .progress-bar-foreground {
+  width: var(--progress-width);
   height: 100%;
   background-color: var(--action-primary);
   color: var(--text-white);
@@ -261,4 +262,33 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* ---------------------------------------------------------------------------
+   Classes de refatoração (estilos inline movidos das telas de estatísticas)
+   --------------------------------------------------------------------------- */
+
+/* AdminStatistics: caixa de loading com altura fixa (vence .tela-loading) */
+.tela-loading.stats-loading-box {
+  height: 200px;
+}
+
+/* AdminStatistics: cabeçalho "Qtd. Downloads" centralizado
+   (vence `.admin-table th` que define text-align: left) */
+.admin-table th.stats-th-center {
+  text-align: center;
+}
+
+/* AdminStatistics: célula de contagem de downloads
+   (vence `.admin-table td` que define text-align: left) */
+.admin-table td.stats-count-cell {
+  text-align: center;
+  font-weight: 500;
+}
+
+/* AdminStatistics: célula de estado vazio (sem downloads)
+   (vence `.admin-table td` em text-align e padding) */
+.admin-table td.stats-empty-cell {
+  text-align: center;
+  padding: 20px;
 }

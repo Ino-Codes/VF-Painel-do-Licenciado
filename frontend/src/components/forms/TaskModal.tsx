@@ -147,7 +147,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
         <form onSubmit={handleSubmit} className="modal-body">
           {/* Nome */}
           <div className="form-row">
-            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+            <label htmlFor="visibility" className="task-name-label">
               Nome da Tarefa:
             </label>
           </div>
@@ -230,7 +230,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 <div
                   key={c.value}
                   className={`color-swatch ${color === c.value ? "selected" : ""}`}
-                  style={{ backgroundColor: c.value }}
+                  style={{ "--swatch-color": c.value } as React.CSSProperties}
                   onClick={() => setColor(c.value)}
                 />
               ))}

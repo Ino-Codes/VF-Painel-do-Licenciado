@@ -11,15 +11,83 @@ const VALID_STATUSES = [
 ];
 const VALID_TYPES = ["help", "suggestion", "bug"];
 
-module.exports = function (pool, logActivity) {
+const TYPE_LABELS = {
+  help: "Ajuda",
+  bug: "Bug",
+  suggestion: "Sugestão",
+};
+
+// Fluxo de status permitido — deve espelhar o ALLOWED_TRANSITIONS do frontend.
+const ALLOWED_TRANSITIONS = {
+  novo: ["andamento"],
+  andamento: ["concluido", "arquivado"],
+  concluido: [],
+  arquivado: ["andamento"],
+};
+
+const isAllowedTransition = (from, to) =>
+  from === to || (ALLOWED_TRANSITIONS[from] || []).includes(to);
+
+module.exports = function (pool, logActivity, resend) {
+  // ── Helper: escapa valores do usuário antes de injetar no HTML do e-mail ──
+  const escapeHtml = (str) =>
+    String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  // ── Helper: monta o corpo HTML estilizado do e-mail (padrão do Painel) ────
+  const buildEmailHtml = ({ heading, greetingName, bodyHtml }) => `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head><meta charset="utf-8" /></head>
+    <body style="margin:0;padding:0;background-color:#f4f4f4;font-family:'Segoe UI',Arial,sans-serif;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr><td align="center" style="padding:20px 0;">
+          <table width="600" border="0" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            <tr><td align="center" style="background:#111217;padding:20px 0;">
+              <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1782936553/textobranco_zxw32o.png" alt="V-CORP" style="width:200px;height:auto;">
+            </td></tr>
+            <tr><td style="padding:30px 40px;color:#2D2C2B;font-size:16px;line-height:1.6;">
+              <h2 style="font-size:22px;color:#0D0D0D;margin-top:0;">${heading}</h2>
+              <p>Olá, ${escapeHtml(greetingName)},</p>
+              ${bodyHtml}
+            </td></tr>
+            <tr><td align="center" style="background:#f8f9fa;padding:20px;font-size:12px;color:#6c757d;">
+              <p>V-CORP Inteligência Tributária © ${new Date().getFullYear()}</p>
+              <p>Esta é uma mensagem automática. Por favor, não responda a este e-mail.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </body>
+    </html>
+  `;
+
   // ── POST /api/ticket (público — chamado pelo widget) ────────────────────
   router.post("/", async (req, res) => {
-    const { token, type, name, title, description, origin_url } = req.body;
+    const {
+      token,
+      type,
+      name,
+      title,
+      description,
+      origin_url,
+      requester_email,
+    } = req.body;
 
     if (!token || !title) {
       return res
         .status(400)
         .json({ error: "Token e título são obrigatórios." });
+    }
+
+    if (!requester_email || !requester_email.includes("@")) {
+      return res
+        .status(400)
+        .json({ error: "E-mail do solicitante é obrigatório." });
     }
 
     if (type && !VALID_TYPES.includes(type)) {
@@ -42,13 +110,40 @@ module.exports = function (pool, logActivity) {
       const tenantId = tenantResult.rows[0].id;
 
       const result = await pool.query(
-        `INSERT INTO tickets (tenant_id, type, title, description, origin_url, name)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO tickets (tenant_id, type, title, description, origin_url, name, requester_email)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [tenantId, type, title, description, origin_url, name],
+        [tenantId, type, title, description, origin_url, name, requester_email],
       );
 
-      res.status(201).json({ success: true, id: result.rows[0].id });
+      const ticket = result.rows[0];
+
+      // ── E-mail de confirmação de abertura (não bloqueante) ──
+      try {
+        const typeLabel = TYPE_LABELS[ticket.type] || "Chamado";
+        await resend.emails.send({
+          from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
+          to: requester_email,
+          subject: `Chamado #${ticket.id} aberto - Painel V-CORP`,
+          html: buildEmailHtml({
+            heading: "Chamado aberto com sucesso",
+            greetingName: name || "solicitante",
+            bodyHtml: `
+              <p>Recebemos o seu chamado e ele já está registrado no nosso sistema.</p>
+              <p style="background:#f8f9fa;border-left:4px solid #daa520;padding:12px 16px;border-radius:4px;">
+                <strong>Protocolo:</strong> #${ticket.id}<br/>
+                <strong>Tipo:</strong> ${typeLabel}<br/>
+                <strong>Título:</strong> ${escapeHtml(ticket.title)}
+              </p>
+              <p>Nossa equipe irá analisá-lo em breve. Guarde o número do protocolo para acompanhamento.</p>
+            `,
+          }),
+        });
+      } catch (mailErr) {
+        console.warn("Falha ao enviar e-mail de abertura:", mailErr);
+      }
+
+      res.status(201).json({ success: true, id: ticket.id });
     } catch (err) {
       console.error("Erro ao salvar ticket:", err);
       res.status(500).json({ error: "Erro ao salvar ticket." });
@@ -97,33 +192,73 @@ module.exports = function (pool, logActivity) {
     }
   });
 
-  // ── PATCH /api/tickets/:id (atualiza status — drag and drop) ────────────
+  // ── PATCH /api/tickets/:id (atualiza status / observação / resolução) ────
+  // Aceita qualquer combinação dos campos; monta o UPDATE dinamicamente.
   router.patch(
     "/:id",
     isLoggedIn,
     checkRole(["admin", "rh"]),
     async (req, res) => {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, observation, resolution_notes } = req.body;
 
-      if (!VALID_STATUSES.includes(status)) {
+      if (status !== undefined && !VALID_STATUSES.includes(status)) {
         return res.status(400).json({ error: "Status inválido." });
       }
 
+      const fields = [];
+      const params = [];
+
+      if (status !== undefined) {
+        params.push(status);
+        fields.push(`status = $${params.length}`);
+      }
+      if (observation !== undefined) {
+        params.push(observation);
+        fields.push(`observation = $${params.length}`);
+      }
+      if (resolution_notes !== undefined) {
+        params.push(resolution_notes);
+        fields.push(`resolution_notes = $${params.length}`);
+      }
+
+      if (fields.length === 0) {
+        return res.status(400).json({ error: "Nenhum campo para atualizar." });
+      }
+
+      params.push(id);
+
       try {
+        // Valida a transição contra o fluxo permitido (somente quando o status muda)
+        if (status !== undefined) {
+          const cur = await pool.query(
+            "SELECT status FROM tickets WHERE id = $1",
+            [id],
+          );
+          if (cur.rowCount === 0) {
+            return res.status(404).json({ error: "Ticket não encontrado." });
+          }
+          const from = cur.rows[0].status;
+          if (!isAllowedTransition(from, status)) {
+            return res.status(409).json({
+              error: `Transição de status não permitida: ${from} → ${status}.`,
+            });
+          }
+        }
+
         const result = await pool.query(
-          "UPDATE tickets SET status = $1 WHERE id = $2 RETURNING *",
-          [status, id],
+          `UPDATE tickets SET ${fields.join(", ")} WHERE id = $${params.length} RETURNING *`,
+          params,
         );
 
         if (result.rowCount === 0) {
-          return res.status(404).json({ error: "ticket não encontrado." });
+          return res.status(404).json({ error: "Ticket não encontrado." });
         }
 
         res.json(result.rows[0]);
       } catch (err) {
-        console.error("Erro ao atualizar status:", err);
-        res.status(500).json({ error: "Erro ao atualizar status." });
+        console.error("Erro ao atualizar ticket:", err);
+        res.status(500).json({ error: "Erro ao atualizar ticket." });
       }
     },
   );
@@ -167,6 +302,95 @@ module.exports = function (pool, logActivity) {
       } catch (err) {
         console.error("Erro ao iniciar atendimento:", err);
         res.status(500).json({ error: "Erro ao iniciar atendimento." });
+      }
+    },
+  );
+
+  // ── PATCH /api/tickets/:id/close (encerra atendimento + e-mail) ─────────
+  router.patch(
+    "/:id/close",
+    isLoggedIn,
+    checkRole(["admin", "rh"]),
+    async (req, res) => {
+      const { id } = req.params;
+      const { resolution_notes } = req.body;
+
+      try {
+        const result = await pool.query(
+          `UPDATE tickets
+             SET status = 'concluido',
+                 resolution_notes = COALESCE($1, resolution_notes)
+           WHERE id = $2
+           RETURNING *`,
+          [resolution_notes, id],
+        );
+
+        if (result.rowCount === 0) {
+          return res.status(404).json({ error: "Ticket não encontrado." });
+        }
+
+        const ticket = result.rows[0];
+
+        // Busca o e-mail do atendente para colocar em cópia (CC)
+        let attendantEmail = null;
+        if (ticket.attendant_id) {
+          const att = await pool.query(
+            "SELECT email FROM users WHERE id = $1",
+            [ticket.attendant_id],
+          );
+          attendantEmail = att.rows[0] ? att.rows[0].email : null;
+        }
+
+        // ── E-mail de conclusão ao solicitante (CC atendente) ──
+        if (ticket.requester_email) {
+          try {
+            const payload = {
+              from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
+              to: ticket.requester_email,
+              subject: `Chamado #${ticket.id} concluído - Painel V-CORP`,
+              html: buildEmailHtml({
+                heading: "Seu chamado foi concluído",
+                greetingName: ticket.name || "solicitante",
+                bodyHtml: `
+                  <p>O seu chamado <strong>#${ticket.id}</strong> - "${escapeHtml(ticket.title)}", foi concluído.</p>
+                  ${
+                    ticket.resolution_notes
+                      ? `<p><strong>Instruções de resolução:</strong></p>
+                         <p style="background:#f8f9fa;border-left:4px solid #04a146;padding:12px 16px;border-radius:4px;white-space:pre-wrap;">${escapeHtml(
+                           ticket.resolution_notes,
+                         )}</p>`
+                      : ""
+                  }
+                  <p style="font-size:14px;color:#6c757d;">Atendido por: ${escapeHtml(
+                    ticket.attendant_name || "Equipe V-CORP",
+                  )}</p>
+                `,
+              }),
+            };
+            if (attendantEmail) payload.cc = [attendantEmail];
+
+            await resend.emails.send(payload);
+          } catch (mailErr) {
+            console.warn("Falha ao enviar e-mail de conclusão:", mailErr);
+          }
+        }
+
+        try {
+          logActivity(
+            req.user.id,
+            req.user.email,
+            "Atendimento Encerrado",
+            `Ticket ID ${id} concluído por ${req.user.nome || req.user.email}.`,
+            req.ipAddress,
+          );
+        } catch (e) {
+          console.warn("Falha ao registrar log:", e);
+        }
+
+        res.json(ticket);
+      } catch (err) {
+        console.error("Erro ao encerrar atendimento:", err);
+        res.status(500).json({ error: "Erro ao encerrar atendimento." });
       }
     },
   );

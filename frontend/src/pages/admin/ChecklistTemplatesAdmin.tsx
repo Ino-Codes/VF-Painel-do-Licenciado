@@ -126,15 +126,14 @@ const ChecklistTemplatesAdmin: React.FC = () => {
       <div className="content-area">
         <Link
           to="/admin/recrutamento"
-          className="btn-back-subtle"
-          style={{ textDecoration: "none" }}
+          className="btn-back-subtle checklist-templates-back"
         >
           <FaArrowLeftLong />
           Voltar
         </Link>
 
         <h2>Templates de Checklist</h2>
-        <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
+        <div className="checklist-templates-create">
           <input
             className="form-input"
             placeholder="Nome do novo template"

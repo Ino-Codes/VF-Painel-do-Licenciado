@@ -129,7 +129,7 @@ const AdminCalendar: React.FC = () => {
         <div className="document-header">
           <h2>Agenda de Eventos</h2>
         </div>
-        <div className="calendar-container" style={{ marginTop: "20px" }}>
+        <div className="calendar-container admin-calendar-wrapper">
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"

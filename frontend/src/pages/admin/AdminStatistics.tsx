@@ -72,7 +72,7 @@ const AdminStatistics: React.FC = () => {
         </div>
 
         {isLoadingData ? (
-          <div className="tela-loading" style={{ height: "200px" }}>
+          <div className="tela-loading stats-loading-box">
             Carregando dados...
           </div>
         ) : stats ? (
@@ -128,7 +128,7 @@ const AdminStatistics: React.FC = () => {
                   <thead>
                     <tr>
                       <th>Nome do Arquivo</th>
-                      <th style={{ textAlign: "center" }}>Qtd. Downloads</th>
+                      <th className="stats-th-center">Qtd. Downloads</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -142,17 +142,14 @@ const AdminStatistics: React.FC = () => {
                           {file.name}
                         </td>
 
-                        <td style={{ textAlign: "center", fontWeight: "500" }}>
+                        <td className="stats-count-cell">
                           <span className="count-badge">{file.count}</span>
                         </td>
                       </tr>
                     ))}
                     {stats.topDownloads.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={2}
-                          style={{ textAlign: "center", padding: "20px" }}
-                        >
+                        <td colSpan={2} className="stats-empty-cell">
                           Nenhum download registrado ainda.
                         </td>
                       </tr>

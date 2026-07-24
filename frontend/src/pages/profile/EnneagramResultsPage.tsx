@@ -186,7 +186,7 @@ const EnneagramResultsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="tabs" style={{ marginTop: "40px" }}>
+        <div className="tabs enneagram-results-tabs">
           <button
             className={`tab-item ${activeTab === "percentual" ? "active" : ""}`}
             onClick={() => setActiveTab("percentual")}

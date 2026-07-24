@@ -71,16 +71,10 @@ const EnneagramPage: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        <div className="enneagram-page-header">
           <h2>Teste de Perfil Eneagrama</h2>
           {totalPages > 0 && (
-            <span style={{ fontWeight: 500, color: "#6c757d" }}>
+            <span className="enneagram-page-indicator">
               Página {currentPage} de {totalPages}
             </span>
           )}
@@ -113,10 +107,7 @@ const EnneagramPage: React.FC = () => {
             </div>
           ))}
 
-          <div
-            className="pagination-controls"
-            style={{ borderTop: "none", paddingTop: "10px" }}
-          >
+          <div className="pagination-controls enneagram-pagination">
             <button
               className="list-button"
               onClick={handlePrevPage}
@@ -126,7 +117,7 @@ const EnneagramPage: React.FC = () => {
             </button>
 
             {totalPages > 0 && (
-              <span style={{ fontWeight: 500, color: "#6c757d" }}>
+              <span className="enneagram-page-indicator">
                 Página {currentPage} de {totalPages}
               </span>
             )}

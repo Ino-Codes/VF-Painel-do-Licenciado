@@ -194,7 +194,6 @@ const LessonPlayer: React.FC = () => {
         <Link
           to={`/content/courses/${courseId}/quiz?company=${companySlug}`}
           className="form-button"
-          style={{ textDecoration: "none" }}
         >
           Fazer Teste Final
         </Link>
@@ -218,7 +217,6 @@ const LessonPlayer: React.FC = () => {
           <Link
             to={`/content/courses?company=${companySlug}`}
             className="btn-back-subtle"
-            style={{ textDecoration: "none" }}
           >
             <FaArrowLeftLong />
             Voltar
@@ -253,10 +251,13 @@ const LessonPlayer: React.FC = () => {
                 {activeLesson.text_content && (
                   <div
                     className="lesson-content-text"
-                    style={{
-                      whiteSpace: "pre-wrap",
-                      marginTop: activeLesson.video_url ? "25px" : "0",
-                    }}
+                    style={
+                      {
+                        "--lesson-text-mt": activeLesson.video_url
+                          ? "25px"
+                          : "0",
+                      } as React.CSSProperties
+                    }
                     dangerouslySetInnerHTML={{
                       __html: activeLesson.text_content,
                     }}

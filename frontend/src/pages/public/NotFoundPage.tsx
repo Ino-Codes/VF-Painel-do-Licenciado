@@ -8,27 +8,12 @@ const NotFoundPage: React.FC = () => {
   const Icon404 = getIconByKey("404");
 
   return (
-    <div
-      className="not-found-container"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-        backgroundColor: "var(--bg-primary)", // Fundo dinâmico
-        color: "var(--text-primary)", // Texto dinâmico
-      }}
-    >
-      {Icon404 && (
-        <Icon404 size={180} style={{ color: "var(--v-tax)" }} />
-      )}
+    <div className="not-found-container">
+      {Icon404 && <Icon404 size={180} className="notfound-icon" />}
 
-      <h1 style={{ fontSize: "2.5rem", marginBottom: "10px" }}>
-        Página não encontrada
-      </h1>
+      <h1 className="notfound-title">Página não encontrada</h1>
 
-      <p style={{ color: "var(--text-secondary)", marginBottom: "30px" }}>
+      <p className="notfound-subtitle">
         O conteúdo que você procura não existe ou foi movido.
       </p>
 

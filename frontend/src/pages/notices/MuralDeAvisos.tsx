@@ -181,20 +181,14 @@ const MuralDeAvisos: React.FC = () => {
 
         {/* ── Contador de resultados ── */}
         {!isLoading && totalCount > 0 && (
-          <p
-            style={{
-              color: "var(--text-secondary)",
-              margin: "0 0 20px 0",
-              fontSize: "0.9rem",
-            }}
-          >
+          <p className="notice-results-count">
             {totalCount} aviso{totalCount !== 1 ? "s" : ""}
           </p>
         )}
 
         {/* ── Lista de Avisos ── */}
         {isLoading ? (
-          <div className="tela-loading" style={{ height: "200px" }}>
+          <div className="tela-loading notice-loading-box">
             Carregando avisos...
           </div>
         ) : notices.length > 0 ? (
@@ -212,7 +206,7 @@ const MuralDeAvisos: React.FC = () => {
                   <small>
                     {/* NOVO: nome do autor + data */}
                     {notice.creator_name && (
-                      <span style={{ fontWeight: 600, marginRight: "6px" }}>
+                      <span className="notice-author-name">
                         {notice.creator_name}
                       </span>
                     )}

@@ -112,7 +112,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
           {/* 4. Campo de Seleção de Empresa */}
 
           <div className="form-row">
-            <label htmlFor="company-select" style={{ marginRight: "10px" }}>
+            <label htmlFor="company-select" className="content-modal-label">
               Empresa:
             </label>
           </div>
@@ -132,7 +132,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+            <label htmlFor="visibility" className="content-modal-label">
               Dados do vídeo:
             </label>
           </div>
@@ -185,7 +185,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+            <label htmlFor="visibility" className="content-modal-label">
               Visibilidade:
             </label>
           </div>

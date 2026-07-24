@@ -30,6 +30,7 @@
   --text-white: #ffffff; /* Texto sobre fundos escuros (menu, botões) */
   --text-black: #0a0a0a;
   --text-menu: #27292b;
+  --text-inverted: #ffffff; /* Texto sobre fundos de destaque (accent) */
 
   --border-color: #d4d9de; /* Bordas de cards e divisórias */
   --border-strong: #ccc; /* Bordas de inputs */
@@ -40,6 +41,13 @@
   --action-secondary: #778088;
   --action-edit: #2365c8;
   --action-danger: #c82333;
+
+  /* status (badges / feedback visual) — mesmos valores nos dois temas */
+  --status-success-bg: #f0fdf4;
+  --status-success-border: #bbf7d0;
+  --status-success: #16a34a;
+  --status-success-strong: #15803d;
+  --status-danger: #ef4444;
 
   /* gráficos */
   --bg-graph: rgba(221, 177, 65, 0.6);
@@ -85,6 +93,7 @@ body.dark-theme {
   --text-white: #ffffff;
   --text-black: #0a0a0a;
   --text-menu: #f0f3f6;
+  --text-inverted: #ffffff;
 
   /* bordas e divisórias */
   --border-color: #464b53;
@@ -108,6 +117,13 @@ body.dark-theme {
   --action-secondary: #555;
   --action-edit: #2a62e2;
   --action-danger: #c82333;
+
+  /* status — idênticos ao tema claro (cores de status não variam por tema) */
+  --status-success-bg: #f0fdf4;
+  --status-success-border: #bbf7d0;
+  --status-success: #16a34a;
+  --status-success-strong: #15803d;
+  --status-danger: #ef4444;
 
   --bg-graph: rgba(221, 177, 65, 0.8);
   --border-graph: rgba(221, 177, 65, 1);

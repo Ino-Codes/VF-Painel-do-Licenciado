@@ -165,8 +165,7 @@ const WidgetTenantsPage: React.FC = () => {
       <div className="content-area">
         <Link
           to="/admin/helpdesk"
-          className="btn-back-subtle"
-          style={{ textDecoration: "none", marginBottom: "16px" }}
+          className="btn-back-subtle widget-tenants-back"
         >
           <FaArrowLeftLong />
           Voltar
@@ -185,77 +184,35 @@ const WidgetTenantsPage: React.FC = () => {
         {tenants.length === 0 ? (
           <div className="empty-state">
             <p>Nenhum sistema cadastrado ainda.</p>
-            <p
-              style={{
-                fontSize: "13px",
-                color: "var(--text-secondary)",
-                marginTop: "6px",
-              }}
-            >
+            <p className="widget-empty-hint">
               Cadastre um sistema para gerar o token e o snippet do widget.
             </p>
           </div>
         ) : (
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-          >
+          <div className="widget-tenants-list">
             {tenants.map((t) => (
               <div
                 key={t.id}
-                style={{
-                  background: "var(--bg-secondary)",
-                  border: "1px solid var(--border-color)",
-                  borderRadius: "12px",
-                  padding: "20px 24px",
-                  opacity: t.active ? 1 : 0.6,
-                  transition: "opacity 0.2s ease",
-                }}
+                className={`widget-tenant-card${
+                  t.active ? "" : " widget-tenant-card--inactive"
+                }`}
               >
                 {/* Linha 1: Nome + status + ações */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "16px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                    }}
-                  >
+                <div className="widget-tenant-card-header">
+                  <div className="widget-tenant-title-row">
+                    <span className="widget-tenant-name">{t.name}</span>
                     <span
-                      style={{
-                        fontSize: "16px",
-                        fontWeight: 600,
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      {t.name}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        padding: "3px 10px",
-                        borderRadius: "20px",
-                        background: t.active
-                          ? "var(--bg-result-green)"
-                          : "var(--bg-result-red)",
-                        color: t.active
-                          ? "var(--action-success)"
-                          : "var(--text-secondary)",
-                        border: `1px solid ${t.active ? "var(--action-primary)" : "var(--action-danger)"}`,
-                      }}
+                      className={`widget-status-badge ${
+                        t.active
+                          ? "widget-status-badge--active"
+                          : "widget-status-badge--inactive"
+                      }`}
                     >
                       {t.active ? "Ativo" : "Inativo"}
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", gap: "6px" }}>
+                  <div className="widget-tenant-actions">
                     {/* Toggle ativo/inativo */}
                     <button
                       className="form-icon-save"
@@ -297,46 +254,16 @@ const WidgetTenantsPage: React.FC = () => {
                 </div>
 
                 {/* Linha 2: Token */}
-                <div style={{ marginBottom: "14px" }}>
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: "var(--text-secondary)",
-                      marginBottom: "6px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
+                <div className="widget-tenant-field">
+                  <p className="widget-tenant-field-label">
                     Token de autenticação
                   </p>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      background: "var(--bg-primary)",
-                      border: "1px solid var(--border-color)",
-                      borderRadius: "8px",
-                      padding: "10px 14px",
-                    }}
-                  >
-                    <code
-                      style={{
-                        flex: 1,
-                        fontSize: "13px",
-                        color: "var(--text-primary)",
-                        fontFamily: "monospace",
-                        wordBreak: "break-all",
-                      }}
-                    >
-                      {t.token}
-                    </code>
+                  <div className="widget-tenant-code-box">
+                    <code className="widget-tenant-code">{t.token}</code>
                     <button
                       className="form-icon-edit"
                       title="Copiar token"
                       onClick={() => copyToken(t)}
-                      style={{ flexShrink: 0 }}
                       disabled={!t.active}
                     >
                       <FiCopy size={14} />
@@ -345,39 +272,12 @@ const WidgetTenantsPage: React.FC = () => {
                 </div>
 
                 {/* Linha 3: Snippet */}
-                <div style={{ marginBottom: "14px" }}>
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: "var(--text-secondary)",
-                      marginBottom: "6px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
+                <div className="widget-tenant-field">
+                  <p className="widget-tenant-field-label">
                     Code Snippet do Widget
                   </p>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: "8px",
-                      background: "var(--bg-primary)",
-                      border: "1px solid var(--border-color)",
-                      borderRadius: "8px",
-                      padding: "10px 14px",
-                    }}
-                  >
-                    <code
-                      style={{
-                        flex: 1,
-                        fontSize: "12px",
-                        color: "var(--text-primary)",
-                        fontFamily: "monospace",
-                        wordBreak: "break-all",
-                      }}
-                    >
+                  <div className="widget-tenant-code-box widget-tenant-code-box--top">
+                    <code className="widget-tenant-code widget-tenant-code--sm">
                       {`<script src="${window.location.origin}/widget.js" data-api="${window.location.origin}"> data-token="${t.token}"></script>`}
                     </code>
                     <button
@@ -392,13 +292,7 @@ const WidgetTenantsPage: React.FC = () => {
                 </div>
 
                 {/* Linha 4: Meta */}
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: "var(--text-secondary)",
-                    margin: 0,
-                  }}
-                >
+                <p className="widget-tenant-meta">
                   Cadastrado por <strong>{t.created_by_name || "—"}</strong> em{" "}
                   {new Date(t.created_at).toLocaleDateString("pt-BR", {
                     day: "2-digit",
@@ -415,12 +309,12 @@ const WidgetTenantsPage: React.FC = () => {
       {/* Modal de criação/edição */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: "460px" }}>
+          <div className="modal-content widget-tenant-modal">
             <h2>
               {editTenant ? "Editar Integração" : "Novo Token de Integração"}
             </h2>
 
-            <div className="form-row" style={{ marginTop: "8px" }}>
+            <div className="form-row widget-tenant-modal-label-row">
               <label>Nome do Sistema:</label>
             </div>
             <div className="form-row">
@@ -436,14 +330,7 @@ const WidgetTenantsPage: React.FC = () => {
             </div>
 
             {!editTenant && (
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "var(--text-secondary)",
-                  margin: "0 0 16px 0",
-                  lineHeight: 1.5,
-                }}
-              >
+              <p className="widget-tenant-modal-hint">
                 Um token de autenticação será gerado automaticamente após o
                 cadastro.
               </p>

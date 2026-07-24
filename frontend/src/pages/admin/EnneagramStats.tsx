@@ -156,7 +156,11 @@ const EnneagramStats: React.FC = () => {
           <div className="progress-bar-background">
             <div
               className="progress-bar-foreground"
-              style={{ width: `${participationPercentage}%` }}
+              style={
+                {
+                  "--progress-width": `${participationPercentage}%`,
+                } as React.CSSProperties
+              }
             >
               {participationPercentage}%
             </div>

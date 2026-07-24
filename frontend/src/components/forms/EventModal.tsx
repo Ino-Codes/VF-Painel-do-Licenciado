@@ -245,7 +245,7 @@ const EventModal: React.FC<EventModalProps> = ({
           </div>
 
           <div className="form-row">
-            <div className="form-group" style={{ width: "100%" }}>
+            <div className="form-group event-modal-group-full">
               <label>Data do Evento</label>
               <DatePicker value={eventDate} onChange={handleDateChange} />
             </div>
@@ -280,8 +280,10 @@ const EventModal: React.FC<EventModalProps> = ({
               {colorPalette.map((c) => (
                 <div
                   key={c}
-                  className={`color-swatch ${color === c ? "selected" : ""}`}
-                  style={{ backgroundColor: c }}
+                  className={`color-swatch event-swatch-fill ${
+                    color === c ? "selected" : ""
+                  }`}
+                  style={{ "--event-swatch-color": c } as React.CSSProperties}
                   onClick={() => setColor(c)}
                 />
               ))}

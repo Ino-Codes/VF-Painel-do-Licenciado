@@ -74,7 +74,7 @@ const CorporatePhotoUploader: React.FC<Props> = ({ user, onUploadSuccess }) => {
             {file ? file.name : "Nenhuma imagem selecionada"}
           </span>
         </div>
-        <div className="form-row" style={{ gap: "10px" }}>
+        <div className="form-row corporate-photo-actions-row">
           <button
             onClick={handleUpload}
             disabled={!file || isUploading}

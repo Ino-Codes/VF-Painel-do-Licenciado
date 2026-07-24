@@ -4,12 +4,12 @@
 
 /* ── Board ────────────────────────────────────────────────────── */
 
-.kanban-container {
+.hd-kanban-container {
   overflow-x: auto;
   padding-bottom: 24px;
 }
 
-.kanban-board {
+.hd-kanban-board {
   display: flex;
   gap: 16px;
   align-items: flex-start;
@@ -19,51 +19,39 @@
 
 /* ── Coluna ───────────────────────────────────────────────────── */
 
-.kanban-column {
+.hd-kanban-column {
   width: 300px;
   min-width: 300px;
   background: var(--bg-secondary);
   border-radius: 14px;
   display: flex;
   flex-direction: column;
-  transition: box-shadow 0.2s ease;
   border: 1px solid transparent;
 }
 
-.kanban-column--over {
-  border-color: var(--border-color);
-  box-shadow: var(--box-shadow);
-}
-
-.kanban-column-header {
+.hd-kanban-column-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px 12px;
   border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.kanban-column-header-left {
+.hd-kanban-column-header-left {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.kanban-column-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.kanban-column-title {
+.hd-kanban-column-title {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: 0.01em;
 }
 
-.kanban-column-count {
+.hd-kanban-column-count {
   font-size: 12px;
   font-weight: 700;
   padding: 2px 9px;
@@ -74,15 +62,36 @@
   color: var(--text-secondary);
 }
 
-.kanban-cards {
+.hd-kanban-cards {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 8px 12px 14px;
   min-height: 80px;
+  /* Mostra ~5 cards; o restante fica acessível pela rolagem interna da etapa */
+  max-height: 620px;
+  overflow-y: auto;
+  /* Barra de rolagem no tema (Firefox) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
-.kanban-empty {
+/* Barra de rolagem no tema (Chrome/Edge/Safari) */
+.hd-kanban-cards::-webkit-scrollbar {
+  width: 8px;
+}
+.hd-kanban-cards::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hd-kanban-cards::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 8px;
+}
+.hd-kanban-cards::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.hd-kanban-empty {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,28 +107,19 @@
   background: var(--bg-primary);
   border-radius: 12px;
   overflow: hidden;
-  cursor: grab;
+  cursor: pointer;
   transition:
     box-shadow 0.18s ease,
     transform 0.18s ease;
   position: relative;
   border: 1px solid transparent;
+  /* Não encolher dentro da etapa (flex column) — mantém o tamanho e rola */
+  flex-shrink: 0;
 }
 
 .ticket-card:hover {
   box-shadow: var(--box-shadow);
   transform: translateY(-2px);
-}
-
-.ticket-card:active {
-  cursor: grabbing;
-}
-
-.ticket-card--dragging {
-  opacity: 0.45;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
-  transform: rotate(1.5deg) scale(1.02);
-  border-color: var(--border-color);
 }
 
 /* Linha colorida no topo do card */
@@ -136,11 +136,28 @@
 }
 
 .ticket-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 20px;
+  font-weight: 600;
   letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+/* Apenas o ícone recebe cor (cor do tipo, injetada via --badge-color) */
+.ticket-type-icon {
+  color: var(--badge-color);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Variante maior — usada no cabeçalho do modal de detalhes */
+.ticket-type-badge--lg {
+  font-size: 13px;
+}
+.ticket-type-badge--lg .ticket-type-icon {
+  font-size: 16px;
 }
 
 .ticket-card-title {
@@ -189,46 +206,60 @@
 .detail-ticket-modal {
   position: relative;
   background-color: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 12px;
   width: 90%;
-  max-width: 1000px;
-  height: 80%;
-  max-height: 400px;
+  max-width: 900px;
+  max-height: 90vh;
   display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.kanban-modal-left {
-  padding: 30px;
-  flex: 1;
-  gap: 12px;
-  background-color: var(--bg-primary);
-  border-radius: 8px 0 0 8px;
-}
-.kanban-modal-right {
-  padding: 30px;
-  flex: 1;
-  gap: 12px;
-}
-
-.kanban-modal-header {
+.ticket-modal-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
-.kanban-modal-close {
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
+.ticket-modal-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticket-modal-id {
+  font-size: 12px;
   color: var(--text-secondary);
-  line-height: 1;
-  padding: 0 4px;
-  transition: color 0.15s ease;
 }
 
-.kanban-modal-close:hover {
-  color: var(--text-primary);
+.ticket-modal-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.kanban-modal-left {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background-color: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+}
+
+.kanban-modal-right {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
 }
 
 .kanban-modal-title {
@@ -236,58 +267,63 @@
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.35;
+  margin: 0;
+}
+
+/* Descrição — texto de leitura (sem cara de campo editável) */
+.ticket-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-modal-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .kanban-modal-desc {
-  font-size: 14px;
-  color: var(--text-primary);
-  line-height: 1.65;
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-}
-
-.kanban-modal-footer {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
   margin: 0;
-  padding: 0;
-}
-
-.kanban-modal-footer p {
-  margin: 14px 0 0 0;
-}
-
-.kanban-modal-footer-left {
-  gap: 12px;
-  flex: 1;
-  text-align: left;
-}
-
-.kanban-modal-footer-right {
-  flex: 1;
-  gap: 12px;
-  text-align: right;
-}
-
-.kanban-modal-system,
-.kanban-modal-date,
-.kanban-modal-id,
-.kanban-modal-requester {
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+/* Metadados (rodapé da coluna esquerda) */
+.ticket-modal-meta {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.ticket-modal-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.ticket-modal-meta-icon {
+  font-size: 15px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.ticket-modal-meta-label {
+  color: var(--text-secondary);
+}
+
+.ticket-modal-meta-value {
+  margin-left: auto;
+  color: var(--text-primary);
+  text-align: right;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.kanban-modal-divider {
-  height: 1px;
-  background: var(--border-color);
-  margin: 16px 0;
 }
 
 /* ── Modal — instruções de resolução ─────────────────────────── */
@@ -296,22 +332,35 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin: 14px 0 4px;
 }
 
 .kanban-modal-resolution-label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary, #1a1a2e);
+  color: var(--text-primary);
+}
+
+.ticket-modal-obs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ticket-modal-obs-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 .kanban-modal-resolution-textarea {
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1.5px solid var(--border-color, #e2e8f0);
-  background: var(--bg-secondary, #f8fafc);
-  color: var(--text-primary, #1a1a2e);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   font-size: 13.5px;
   line-height: 1.6;
   resize: vertical;
@@ -322,60 +371,249 @@
 
 .kanban-modal-resolution-textarea:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--border-strong);
 }
 
 .kanban-modal-resolution-textarea:disabled {
   cursor: not-allowed;
 }
 
-/* Atendente */
-.kanban-modal-attendant {
+/* Atendente (discreto) */
+.ticket-modal-attendant {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticket-modal-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.ticket-modal-attendant-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.ticket-modal-attendant-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.ticket-modal-attendant-name {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* Botão de ação principal (neutro escuro) */
+.ticket-modal-action-btn {
+  width: 100%;
+  justify-content: center;
+  background: var(--text-primary);
+  color: var(--bg-secondary);
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.ticket-modal-action-btn:hover {
+  opacity: 0.9;
+}
+
+.ticket-modal-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Grupo de ações (Em Andamento: concluir + arquivar) */
+.ticket-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Botão de ação secundário (arquivar / desarquivar) */
+.ticket-modal-action-btn--secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.ticket-modal-action-btn--secondary:hover {
+  background: var(--bg-primary);
+  opacity: 1;
+}
+
+/* Status editável */
+.kanban-modal-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Estado concluído (substitui o botão de encerrar) */
+.kanban-modal-concluded {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 10px;
-  margin: 12px 0 4px;
-}
-
-.kanban-modal-attendant-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #16a34a;
-}
-
-.kanban-modal-attendant-name {
-  font-size: 13px;
+  color: var(--status-success);
   font-weight: 700;
-  color: #15803d;
+  padding: 8px 0;
 }
 
-.kanban-modal-actions {
+/* ── Widget Tenants (Sistemas Integrados) ─────────────────────── */
+.widget-tenants-back {
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+
+.widget-empty-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+.widget-tenants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.widget-tenant-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px 24px;
+  transition: opacity 0.2s ease;
+}
+.widget-tenant-card--inactive {
+  opacity: 0.6;
+}
+
+.widget-tenant-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color, #e2e8f0);
+  margin-bottom: 16px;
 }
 
-.kanban-attend-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.widget-tenant-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.widget-tenant-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.widget-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.widget-status-badge--active {
+  background: var(--bg-result-green);
+  color: var(--action-primary);
+  border: 1px solid var(--action-primary);
+}
+.widget-status-badge--inactive {
+  background: var(--bg-result-red);
+  color: var(--text-secondary);
+  border: 1px solid var(--action-danger);
+}
+
+.widget-tenant-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.widget-tenant-field {
+  margin-bottom: 14px;
+}
+
+.widget-tenant-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.widget-tenant-code-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.widget-tenant-code-box--top {
+  align-items: flex-start;
+}
+.widget-tenant-code-box button {
+  flex-shrink: 0;
+}
+
+.widget-tenant-code {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: monospace;
+  word-break: break-all;
+}
+.widget-tenant-code--sm {
+  font-size: 12px;
+}
+
+.widget-tenant-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.widget-tenant-modal {
+  max-width: 460px;
+}
+.widget-tenant-modal-label-row {
+  margin-top: 8px;
+}
+.widget-tenant-modal-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 16px 0;
+  line-height: 1.5;
 }
 
 /* ── Responsivo ───────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  .kanban-board {
+  .hd-kanban-board {
     flex-direction: column;
     min-width: unset;
   }
 
-  .kanban-column {
+  .hd-kanban-column {
     width: 100%;
     min-width: unset;
   }

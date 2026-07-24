@@ -42,6 +42,11 @@
   margin-bottom: 20px;
 }
 
+/* Espaçamento superior do calendário na Gestão de Férias (GestaoFerias.tsx) */
+.ferias-calendar {
+  margin-top: 20px;
+}
+
 /* --- Estilos para a Lista de Histórico --- */
 .vacation-history-list {
   display: flex;

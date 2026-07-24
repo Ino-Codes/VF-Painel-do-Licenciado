@@ -129,7 +129,7 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
         <h2>{archiveToEdit ? "Editar Arquivo" : "Novo Arquivo"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
-            <label htmlFor="company-select" style={{ marginRight: "10px" }}>
+            <label htmlFor="company-select" className="content-modal-label">
               Empresa:
             </label>
           </div>
@@ -149,7 +149,7 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+            <label htmlFor="visibility" className="content-modal-label">
               Dados do arquivo:
             </label>
           </div>
@@ -199,7 +199,7 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label htmlFor="visibility" style={{ marginRight: "10px" }}>
+            <label htmlFor="visibility" className="content-modal-label">
               Visibilidade:
             </label>
           </div>

@@ -121,13 +121,7 @@ const App: React.FC = () => {
             <>
               {!recoveryMessage ? (
                 <form onSubmit={handleRecuperarSenha}>
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      maxWidth: "280px",
-                      margin: "0 auto 20px",
-                    }}
-                  >
+                  <p className="login-recovery-text">
                     Informe seu e-mail para receber o link de redefinição.
                   </p>
                   <input
@@ -145,7 +139,7 @@ const App: React.FC = () => {
               ) : (
                 <p className="feedback-message">{recoveryMessage}</p>
               )}
-              <p style={{ marginTop: "20px" }}>
+              <p className="auth-back-link">
                 <a href="#" onClick={toggleLogin}>
                   Voltar para o Login
                 </a>

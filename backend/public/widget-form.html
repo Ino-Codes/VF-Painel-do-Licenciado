@@ -176,6 +176,10 @@
     <input id="fb-name" type="text" placeholder="Seu nome completo" />
     <div class="error" id="err-name"></div>
 
+    <label for="fb-email">E-mail</label>
+    <input id="fb-email" type="email" placeholder="seu@email.com" />
+    <div class="error" id="err-email"></div>
+
     <label for="fb-title">Título</label>
     <input id="fb-title" type="text" placeholder="Resumo em poucas palavras" />
     <div class="error" id="err-title"></div>
@@ -221,6 +225,7 @@
 
       document.getElementById("btn-send").onclick = async function () {
         const name = document.getElementById("fb-name").value.trim();
+        const email = document.getElementById("fb-email").value.trim();
         const title = document.getElementById("fb-title").value.trim();
         const description = document.getElementById("fb-desc").value.trim();
 
@@ -230,6 +235,13 @@
           return;
         }
         document.getElementById("err-name").innerText = "";
+
+        if (!email || !email.includes("@")) {
+          document.getElementById("err-email").innerText =
+            "Informe um e-mail válido.";
+          return;
+        }
+        document.getElementById("err-email").innerText = "";
 
         if (!title) {
           document.getElementById("err-title").innerText = "Informe um título.";
@@ -257,6 +269,7 @@
               type: selectedType,
               title,
               name,
+              requester_email: email,
               description,
               origin_url: ORIGIN,
             }),

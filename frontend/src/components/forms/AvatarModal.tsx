@@ -111,10 +111,7 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
               alt="Pré-visualização do Avatar"
             />
           </div>
-          <div
-            className="form-row"
-            style={{ justifyContent: "center", margin: "20px 0" }}
-          >
+          <div className="form-row avatar-modal-upload-row">
             <div className="file-upload-wrapper">
               <input
                 type="file"

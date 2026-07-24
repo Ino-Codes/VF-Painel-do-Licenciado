@@ -49,7 +49,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose, children }) => {
         </ul>
         <div className="info-modal-content">{children}</div>
 
-        <div className="modal-actions" style={{ justifyContent: "center" }}>
+        <div className="modal-actions modal-actions--center">
           <button type="button" onClick={onClose} className="form-button">
             Entendi
           </button>

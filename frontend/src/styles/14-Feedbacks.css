@@ -284,6 +284,51 @@
   color: var(--action-danger);
 }
 
+/* --- Classes extraídas de estilos inline (refactor) --- */
+
+/* Página Feedbacks: grid de colunas da listagem (De | Para | Criado em | Status | Ação).
+   Compound com .list-header/.list-item para vencer a definição base; a media query
+   de <=900px continua a sobrepor-se via !important. */
+.list-header.feedback-list-grid,
+.list-item.feedback-list-grid {
+  grid-template-columns: 1fr 1fr 1fr 1fr 100px;
+}
+
+/* Página Feedbacks: mensagem de estado vazio da listagem */
+.feedback-list-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* FeedbackFillModal: modal mais largo que o padrão (max-height/overflow-y vêm de .modal-content).
+   Compound para garantir prioridade sobre .modal-content em qualquer largura. */
+.modal-content.feedback-fill-modal {
+  max-width: 900px;
+  width: 95%;
+}
+
+/* FeedbackFillModal: dica (small) abaixo do seletor de alvo */
+.feedback-fill-hint {
+  color: var(--text-secondary);
+}
+
+/* FeedbackFillModal: wrapper do seletor de tema (cresce e afasta-se do botão excluir) */
+.feedback-fill-theme-select-wrap {
+  flex: 1;
+  margin-right: 15px;
+}
+
+/* FeedbackFillModal: seletor de tema ocupa toda a largura do wrapper */
+.feedback-fill-theme-select {
+  width: 100%;
+}
+
+/* FeedbackInitiateModal: grupo do campo Hora (largura fixa) */
+.feedback-initiate-time-group {
+  width: 120px;
+}
+
 /* --- Responsividade para Telas Menores --- */
 @media (max-width: 900px) {
   .feedback-header-info {

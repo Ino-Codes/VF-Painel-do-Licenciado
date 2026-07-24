@@ -234,24 +234,14 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
         </div>
 
         <div className="form-row">
-          <div style={{ position: "relative" }}>
-            <FiSearch
-              size={14}
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--text-secondary)",
-              }}
-            />
+          <div className="meeting-modal-search-wrapper">
+            <FiSearch size={14} className="meeting-modal-search-icon" />
             <input
               type="text"
-              className="form-input"
+              className="form-input meeting-modal-search-input"
               placeholder="Buscar por nome, cargo ou setor..."
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
-              style={{ paddingLeft: "32px" }}
             />
           </div>
           <button
@@ -280,25 +270,14 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
                 <div
                   key={u.id}
                   onClick={() => toggleUser(u.id)}
-                  className="users-list-option-details"
-                  style={{
-                    backgroundColor: isSelected
-                      ? "var(--bg-accent-color-light)"
-                      : "transparent",
-                    border: isSelected
-                      ? "1px solid var(--bg-accent-color)"
-                      : "1px solid transparent",
-                  }}
+                  className={`users-list-option-details meeting-user-option${
+                    isSelected ? " is-selected" : ""
+                  }`}
                 >
                   <div className="users-list-options">
                     <span>{u.nome}</span>
                     {(u.cargo || u.setor) && (
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
+                      <span className="meeting-user-option-subtitle">
                         {[u.cargo, u.setor].filter(Boolean).join(" · ")}
                       </span>
                     )}
@@ -311,7 +290,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
         </div>
 
         {/* ── Campo D: Anexos ── */}
-        <div className="form-row" style={{ marginTop: "8px" }}>
+        <div className="form-row meeting-modal-attachments-row">
           <label>Arquivos Anexados</label>
         </div>
 
@@ -370,7 +349,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
           ref={fileInputRef}
           type="file"
           multiple
-          style={{ display: "none" }}
+          className="meeting-modal-file-input"
           onChange={handleFileChange}
         />
         <button

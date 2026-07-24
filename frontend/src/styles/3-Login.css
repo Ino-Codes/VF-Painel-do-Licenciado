@@ -71,7 +71,7 @@
   height: 30px;
   border-radius: 100px;
   border: none;
-  background-color: #d09829;
+  background-color: var(--accent-color);
   color: var(--text-white);
   font-weight: bold;
   margin-top: 10px;
@@ -97,6 +97,43 @@
   width: 250px;
   text-align: center;
   font-weight: 500;
+}
+
+/* Instruction text on the password-recovery form (App login screen) */
+.login-recovery-text {
+  font-size: 14px;
+  max-width: 280px;
+  margin: 0 auto 20px;
+}
+
+/* Back-to-login link wrapper, shared by public auth screens (login + reset) */
+.auth-back-link {
+  margin-top: 20px;
+}
+
+/* 404 / Not Found public screen */
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.notfound-icon {
+  color: var(--v-tax);
+}
+
+.notfound-title {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.notfound-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 30px;
 }
 
 @media (max-width: 900px) {

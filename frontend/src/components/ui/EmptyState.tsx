@@ -20,12 +20,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       {IconComponent ? (
         <IconComponent
           size={120} // Tamanho grande para substituir a imagem
-          style={{ stroke: "1" }}
           className="empty-state-icon"
         />
       ) : (
         // Fallback caso a chave não exista
-        <div style={{ height: 120, marginBottom: 20 }}>-</div>
+        <div className="empty-state-fallback">-</div>
       )}
 
       <h3 className="empty-state-title">{title}</h3>

@@ -148,7 +148,7 @@ const widgetTenantsRoutes = require("./routes/widgetTenants.js")(
   pool,
   logActivity,
 );
-const ticketsRoutes = require("./routes/tickets.js")(pool, logActivity);
+const ticketsRoutes = require("./routes/tickets.js")(pool, logActivity, resend);
 const meetingRecordsRoutes = require("./routes/meetingRecords.js")(
   pool,
   cloudinary,

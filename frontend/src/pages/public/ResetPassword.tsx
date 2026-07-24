@@ -83,7 +83,7 @@ const ResetPassword = () => {
           </button>
         </form>
 
-        <p style={{ marginTop: "20px" }}>
+        <p className="auth-back-link">
           <Link to="/">Voltar para o Login</Link>
         </p>
       </div>

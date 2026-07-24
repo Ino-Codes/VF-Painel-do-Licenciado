@@ -51,7 +51,7 @@ const TabContent: React.FC<TabContentProps> = ({
 
   return (
     <div>
-      <div className="page-header" style={{ marginBottom: "20px" }}>
+      <div className="page-header tab-content-header">
         <h3>
           {isLicenciadoTab
             ? "Cadastrar ou Importar Licenciados"
@@ -115,7 +115,7 @@ const TabContent: React.FC<TabContentProps> = ({
                   Unidade {getSortIcon("unidade")}
                 </th>
               )}
-              <th style={{ width: "150px" }}>Ações</th>
+              <th className="tab-users-actions-col">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -123,7 +123,7 @@ const TabContent: React.FC<TabContentProps> = ({
               <tr key={u.id}>
                 <td data-label="Nome">{u.nome}</td>
                 <td data-label="Email">{u.email}</td>
-                <td data-label="Tipo" style={{ textTransform: "capitalize" }}>
+                <td data-label="Tipo" className="tab-users-role-cell">
                   {u.role}
                 </td>
                 {!isLicenciadoTab && (

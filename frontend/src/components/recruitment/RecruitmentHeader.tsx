@@ -19,25 +19,22 @@ const RecruitmentHeader: React.FC<RecruitmentHeaderProps> = ({ onRefresh }) => {
       <h1 className="recruitment-title">Gestão de Recrutamento</h1>
       <div className="recruitment-actions">
         <button
-          className="form-button"
+          className="form-button btn-icon-text"
           onClick={() => setIsNewCandidateModalOpen(true)}
-          style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
           <FaUserPlus size={20} />
           Novo Candidato
         </button>
         <button
-          className="form-button"
+          className="form-button btn-icon-text"
           onClick={() => setIsStagesModalOpen(true)}
-          style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
           <FaTableColumns size={20} />
           Gerenciar Etapas
         </button>
         <button
-          className="form-button"
+          className="form-button btn-icon-text"
           onClick={() => navigate("/admin/checklist-templates")}
-          style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
           <FaTasks size={20} />
           Gerenciar Tarefas

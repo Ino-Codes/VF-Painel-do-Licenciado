@@ -43,6 +43,7 @@ import HelpDeskKanban from "./pages/itsm/HelpDeskKanban.tsx";
 import WidgetTenants from "./pages/itsm/WidgetTenants.tsx";
 import MeetingRecords from "./pages/meetings/MeetingRecords.tsx";
 import Arquivos from "./pages/archives/Arquivos.tsx";
+import SupportWidget from "./components/layout/SupportWidget.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -151,6 +152,7 @@ const AppRouter: React.FC = () => {
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        <SupportWidget />
       </Router>
     </AuthProvider>
   );

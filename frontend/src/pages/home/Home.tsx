@@ -172,9 +172,7 @@ const Home: React.FC = () => {
                         <small>
                           {/* NOVO: nome do autor + data */}
                           {notice.creator_name && (
-                            <span
-                              style={{ fontWeight: 600, marginRight: "6px" }}
-                            >
+                            <span className="notice-author-name">
                               {notice.creator_name}
                             </span>
                           )}

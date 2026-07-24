@@ -123,6 +123,30 @@
   margin: 20px auto;
 }
 
+/* ── Eneagrama: cabeçalho, indicador de página e paginação ── */
+
+.enneagram-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.enneagram-page-indicator {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.enneagram-pagination {
+  border-top: none;
+  padding-top: 10px;
+}
+
+/* ── Eneagrama: resultados ────────────────────────────────── */
+
+.enneagram-results-tabs {
+  margin-top: 40px;
+}
+
 @media (max-width: 768px) {
   .detailed-texts {
     grid-template-columns: 1fr;

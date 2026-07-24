@@ -56,7 +56,7 @@
     }
     #__fw-iframe {
       width: 380px;
-      height: 520px;
+      height: 600px;
       border: none;
       border-radius: 16px;
       box-shadow: 0 12px 40px rgba(0,0,0,0.25);

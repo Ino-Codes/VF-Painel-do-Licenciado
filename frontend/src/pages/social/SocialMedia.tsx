@@ -188,21 +188,9 @@ const SocialMedia: React.FC = () => {
 
                 <div className="social-post-content">
                   <div className="social-post-header">
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "5px",
-                      }}
-                    >
+                    <div className="social-post-title-group">
                       <h3>{post.title}</h3>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "5px",
-                          flexWrap: "wrap",
-                        }}
-                      >
+                      <div className="social-post-tags">
                         <span className="social-post-category-tag">
                           {post.category}
                         </span>
@@ -213,7 +201,7 @@ const SocialMedia: React.FC = () => {
                   <p className="social-post-caption">{post.caption}</p>
 
                   <div className="social-post-footer">
-                    <div style={{ display: "flex", gap: "8px" }}>
+                    <div className="social-post-actions">
                       <button
                         className="form-icon-save"
                         onClick={() => handleCopyCaption(post.caption)}

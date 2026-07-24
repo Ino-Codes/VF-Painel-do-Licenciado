@@ -415,9 +415,7 @@ const Projetos: React.FC = () => {
                   <div className="gantt-wrapper">
                     <div
                       className="gantt-grid"
-                      style={{
-                        gridTemplateColumns: `250px repeat(${columns.length}, minmax(48px, 1fr))`,
-                      }}
+                      style={{ "--gantt-cols": columns.length } as React.CSSProperties}
                     >
                       {/* ── Header: Anos ── */}
                       <div className="gantt-cell gantt-header-corner" />
@@ -455,7 +453,7 @@ const Projetos: React.FC = () => {
                             <div className="gantt-cell gantt-task-label">
                               <span
                                 className="gantt-task-label-dot"
-                                style={{ backgroundColor: task.color }}
+                                style={{ "--dot-color": task.color } as React.CSSProperties}
                               />
                               <span className="gantt-task-label-text">
                                 {task.name}
@@ -492,20 +490,16 @@ const Projetos: React.FC = () => {
                             ))}
 
                             {/* Barra da tarefa — subgrid sobre as células de fundo */}
-                            <div
-                              className="gantt-bar-row"
-                              style={{
-                                gridColumn: `2 / span ${columns.length}`,
-                                gridTemplateColumns: `repeat(${columns.length}, minmax(48px, 1fr))`,
-                              }}
-                            >
+                            <div className="gantt-bar-row">
                               <div
                                 className="gantt-bar"
-                                style={{
-                                  gridColumnStart: start - 1,
-                                  gridColumnEnd: end - 1,
-                                  backgroundColor: task.color,
-                                }}
+                                style={
+                                  {
+                                    "--bar-col-start": start - 1,
+                                    "--bar-col-end": end - 1,
+                                    "--bar-color": task.color,
+                                  } as React.CSSProperties
+                                }
                                 title={`${task.name}: ${MONTHS_PT[task.start_month - 1]}/${task.start_year} → ${MONTHS_PT[task.end_month - 1]}/${task.end_year}`}
                               />
                             </div>

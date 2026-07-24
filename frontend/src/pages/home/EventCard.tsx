@@ -23,7 +23,10 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     .toUpperCase();
 
   return (
-    <div className="event-card" style={{ borderLeftColor: event.color }}>
+    <div
+      className="event-card"
+      style={{ "--event-card-border-color": event.color } as React.CSSProperties}
+    >
       <div className="event-card-date">
         <span className="day">{day}</span>
         <span className="month">{month}</span>

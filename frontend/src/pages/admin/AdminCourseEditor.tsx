@@ -295,8 +295,7 @@ const AdminCourseEditor: React.FC = () => {
       <div className="content-area">
         <Link
           to="/admin/courses"
-          className="btn-back-subtle"
-          style={{ textDecoration: "none" }}
+          className="btn-back-subtle course-editor-back-link"
         >
           <FaArrowLeftLong />
           Voltar

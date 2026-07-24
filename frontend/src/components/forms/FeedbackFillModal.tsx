@@ -141,13 +141,7 @@ const FeedbackFillModal: React.FC<Props> = ({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-content"
-        style={{
-          maxWidth: "900px",
-          width: "95%",
-          maxHeight: "90vh",
-          overflowY: "auto",
-        }}
+        className="modal-content feedback-fill-modal"
         onClick={(e) => e.stopPropagation()}
       >
         <button className="modal-close-button" onClick={onClose}>
@@ -176,7 +170,7 @@ const FeedbackFillModal: React.FC<Props> = ({
           {/* --- NOVO CAMPO: SELEÇÃO DO ALVO DO FEEDBACK --- */}
 
           <div className="form-row">
-            <div className="form-group" style={{ flex: 1 }}>
+            <div className="form-group">
               <label>Sobre quem é este feedback?</label>
               {readOnly ? (
                 <div>{feedback.target_name || "Usuário não identificado"}</div>
@@ -196,7 +190,7 @@ const FeedbackFillModal: React.FC<Props> = ({
                 </select>
               )}
               {!readOnly && (
-                <small style={{ color: "var(--text-secondary)" }}>
+                <small className="feedback-fill-hint">
                   Selecione o próprio avaliador para uma autoavaliação, ou outro
                   colaborador para feedback de pares e lideranças.
                 </small>
@@ -208,7 +202,7 @@ const FeedbackFillModal: React.FC<Props> = ({
             {entries.map((entry, index) => (
               <div key={index} className="feedback-entry-card">
                 <div className="feedback-entry-header">
-                  <div style={{ flex: 1, marginRight: "15px" }}>
+                  <div className="feedback-fill-theme-select-wrap">
                     <select
                       value={entry.theme_id || ""}
                       onChange={(e) =>
@@ -218,9 +212,8 @@ const FeedbackFillModal: React.FC<Props> = ({
                           Number(e.target.value),
                         )
                       }
-                      className="form-select"
+                      className="form-select feedback-fill-theme-select"
                       disabled={readOnly}
-                      style={{ width: "100%" }}
                     >
                       <option value="">Selecione um tema...</option>
                       {themes.map((t) => (

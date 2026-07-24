@@ -105,7 +105,7 @@ const InterviewsCalendar: React.FC = () => {
           <h2>Agenda de Entrevistas</h2>
         </div>
 
-        <div className="calendar-container" style={{ marginTop: "20px" }}>
+        <div className="calendar-container interview-calendar">
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"

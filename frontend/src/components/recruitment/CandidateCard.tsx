@@ -58,7 +58,11 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
             <div className="progress-bar">
               <div
                 className="progress-fill"
-                style={{ width: `${progressPercentage}%` }}
+                style={
+                  {
+                    "--progress-width": `${progressPercentage}%`,
+                  } as React.CSSProperties
+                }
               />
             </div>
             <span>

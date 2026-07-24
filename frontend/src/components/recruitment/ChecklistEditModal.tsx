@@ -86,23 +86,15 @@ const ChecklistEditModal: React.FC<Props> = ({
         </button>
         <h3>Editar Checklist</h3>
 
-        <div style={{ maxHeight: 300, overflowY: "auto" }}>
+        <div className="checklist-edit-list">
           {localTasks.map((task) => (
-            <div
-              key={task.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 8,
-              }}
-            >
+            <div key={task.id} className="checklist-edit-row">
               <input
                 type="checkbox"
                 checked={task.is_completed}
                 onChange={() => handleToggleComplete(task)}
               />
-              <span style={{ flex: 1 }}>{task.task_name}</span>
+              <span className="checklist-edit-name">{task.task_name}</span>
               <button
                 className="delete-button"
                 onClick={() => handleDelete(task.id)}
@@ -113,7 +105,7 @@ const ChecklistEditModal: React.FC<Props> = ({
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <div className="checklist-edit-footer">
           <input
             className="form-input"
             value={newTaskName}

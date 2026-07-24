@@ -148,11 +148,11 @@ const FeedbackInitiateModal: React.FC<Props> = ({
           </div>
 
           <div className="form-row">
-            <div className="form-group" style={{ flex: 1 }}>
+            <div className="form-group">
               <label>Data da Reunião</label>
               <DatePicker value={selectedDate} onChange={handleDateChange} />
             </div>
-            <div className="form-group" style={{ width: "120px" }}>
+            <div className="form-group feedback-initiate-time-group">
               <label>Hora</label>
               <TimePicker value={selectedTime} onChange={setSelectedTime} />
             </div>

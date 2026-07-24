@@ -117,7 +117,7 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: "600px" }}>
+      <div className="modal-content social-post-modal-content">
         <h2>Adicionar Conteúdo Social</h2>
         <form onSubmit={handleSubmit}>
           {/* Empresa */}
@@ -195,86 +195,37 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
               placeholder="Digite a legenda do post aqui..."
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              className="form-input"
-              style={{
-                minHeight: "120px",
-                padding: "10px",
-                resize: "vertical",
-              }}
+              className="form-input social-post-modal-caption-input"
             />
           </div>
 
           {/* Imagens */}
-          <div
-            className="form-row"
-            style={{
-              display: "flex",
-              gap: "10px",
-              flexWrap: "wrap",
-              marginBottom: "15px",
-            }}
-          >
+          <div className="form-row social-post-modal-images">
             {previews.map((src, index) => (
-              <div
-                key={index}
-                style={{ position: "relative", width: "80px", height: "80px" }}
-              >
+              <div key={index} className="social-post-modal-preview">
                 <img
                   src={src}
                   alt="preview"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    borderRadius: "5px",
-                    border: "1px solid var(--border-color)",
-                  }}
+                  className="social-post-modal-preview-img"
                 />
                 <button
                   type="button"
                   onClick={() => removeImage(index)}
-                  style={{
-                    position: "absolute",
-                    top: "-5px",
-                    right: "-5px",
-                    background: "var(--action-danger)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "20px",
-                    height: "20px",
-                  }}
+                  className="social-post-modal-preview-remove"
                 >
                   <FiX size={12} />
                 </button>
               </div>
             ))}
 
-            <label
-              className="file-upload-label"
-              style={{
-                width: "80px",
-                height: "80px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "var(--bg-primary)",
-                border: "2px dashed var(--border-strong)",
-                color: "var(--text-secondary)",
-                cursor: "pointer",
-              }}
-            >
+            <label className="file-upload-label social-post-modal-upload-box">
               <FiPlus size={24} />
               <input
                 type="file"
                 multiple
                 accept="image/*"
                 onChange={handleFileChange}
-                style={{ display: "none" }}
+                className="social-post-modal-file-input"
               />
             </label>
           </div>

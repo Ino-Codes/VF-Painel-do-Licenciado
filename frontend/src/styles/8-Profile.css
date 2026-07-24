@@ -282,6 +282,13 @@
   border-top-color: var(--accent-color);
 }
 
+/* ── Modal de Avatar ──────────────────────────────────────── */
+
+.avatar-modal-upload-row {
+  justify-content: center;
+  margin: 20px 0;
+}
+
 @media (max-width: 900px) {
   .profile-card {
     flex-direction: column;

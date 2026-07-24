@@ -38,6 +38,7 @@
   background-color: var(--bg-secondary);
   border: 1px solid var(--bg-secondary);
   border-left-width: 5px;
+  border-left-color: var(--event-card-border-color, var(--bg-secondary));
   border-radius: 8px;
   padding: 15px;
   display: flex;
@@ -272,6 +273,72 @@
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+/* Nome do autor no rodapé do aviso (Home + Mural de Avisos) */
+.notice-author-name {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+/* Mural de Avisos: contador de resultados */
+.notice-results-count {
+  color: var(--text-secondary);
+  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+}
+
+/* Mural de Avisos: caixa de loading da lista */
+.notice-loading-box {
+  height: 200px;
+}
+
+/* NoticeModal: opção de destinatário (estado selecionado) */
+.notice-recipient-option {
+  background-color: transparent;
+  border: 1px solid transparent;
+}
+
+.notice-recipient-option.selected {
+  background-color: var(--bg-accent-color-light);
+  border-color: var(--bg-accent-color);
+}
+
+/* NoticeModal: metadados (cargo/setor) do destinatário */
+.notice-recipient-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* NoticeModal: linha "Enviar por e-mail" */
+.notice-email-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.notice-email-checkbox {
+  width: auto;
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
+.notice-email-label {
+  cursor: pointer;
+  margin: 0;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+/* EventModal: grupo de formulário em largura total */
+.event-modal-group-full {
+  width: 100%;
+}
+
+/* EventModal: cor de fundo dinâmica do swatch (via --event-swatch-color) */
+.event-swatch-fill {
+  background-color: var(--event-swatch-color, transparent);
 }
 
 @media (max-width: 900px) {

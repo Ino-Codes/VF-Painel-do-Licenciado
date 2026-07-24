@@ -172,7 +172,7 @@ const MeetingRecords: React.FC = () => {
 
         {/* ── Lista ── */}
         {isLoading ? (
-          <div className="tela-loading" style={{ height: "200px" }}>
+          <div className="tela-loading meeting-loading">
             Carregando atas...
           </div>
         ) : meetings.length > 0 ? (

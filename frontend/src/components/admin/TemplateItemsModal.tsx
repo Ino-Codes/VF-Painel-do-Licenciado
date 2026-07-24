@@ -154,7 +154,6 @@ const TemplateItemsModal: React.FC<Props> = ({
               value={nameEditing}
               onChange={(e) => setNameEditing(e.target.value)}
               placeholder="Nome do template"
-              style={{ flex: 1 }}
             />
             <button
               className="form-button"
@@ -187,14 +186,12 @@ const TemplateItemsModal: React.FC<Props> = ({
               placeholder="Nome da tarefa"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              style={{ flex: 1 }}
             />
             <input
               className="form-input"
               placeholder="Prazo (dias)"
               value={newDueDays}
               onChange={(e) => setNewDueDays(e.target.value)}
-              style={{ flex: 1 }}
             />
             <button className="form-icon-save" onClick={handleAdd}>
               <FiPlus />

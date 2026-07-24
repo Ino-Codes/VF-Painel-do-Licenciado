@@ -84,7 +84,7 @@
 .form-select {
   flex: 1;
   padding: 10px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-color);
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
   background-color: var(--bg-primary);
@@ -702,4 +702,71 @@
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Classes de refatoração (estilos inline movidos das telas de administração)
+   --------------------------------------------------------------------------- */
+
+/* SortableModuleItem: linha do botão "Adicionar Aula" */
+.module-add-lesson-row {
+  margin-top: 15px;
+}
+
+/* AdminCalendar: espaçamento acima do calendário */
+.admin-calendar-wrapper {
+  margin-top: 20px;
+}
+
+/* AdminCourseEditor: link "Voltar" (usa .btn-back-subtle) sem sublinhado */
+.course-editor-back-link {
+  text-decoration: none;
+}
+
+/* AdminCourses: mensagem de lista vazia */
+.admin-courses-empty {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+}
+
+/* AdminCourses: bloco de info do curso em linha (thumbnail + texto).
+   Sobrescreve o flex-direction/gap de .user-info (definido acima). */
+.admin-courses-user-info {
+  align-items: center;
+  flex-direction: row;
+  gap: 15px;
+}
+
+/* AdminCourses: miniatura do curso */
+.course-thumbnail {
+  width: 100px;
+  border-radius: 4px;
+}
+
+/* AdminCourses: texto "Visível para".
+   Escopo elevado para vencer `.course-list-item-info span`. */
+.course-list-item-info .course-visibility-text {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* CorporatePhotoUploader: linha de ações (gap menor que .form-row) */
+.corporate-photo-actions-row {
+  gap: 10px;
+}
+
+/* TabContent: cabeçalho da aba com espaçamento inferior */
+.tab-content-header {
+  margin-bottom: 20px;
+}
+
+/* TabContent: coluna "Ações" da tabela */
+.tab-users-actions-col {
+  width: 150px;
+}
+
+/* TabContent: célula "Tipo" (role) capitalizada */
+.tab-users-role-cell {
+  text-transform: capitalize;
 }

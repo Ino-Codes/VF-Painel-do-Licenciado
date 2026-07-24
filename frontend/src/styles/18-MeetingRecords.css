@@ -10,6 +10,12 @@
   font-size: 0.9rem;
 }
 
+/* ── Loading da lista ─────────────────────────────────────────── */
+
+.meeting-loading {
+  height: 200px;
+}
+
 /* ── Lista de cards ───────────────────────────────────────────── */
 
 .meeting-list {
@@ -192,6 +198,41 @@
   line-height: 1.6;
 }
 
+/* Busca de participantes */
+
+.meeting-modal-search-wrapper {
+  position: relative;
+}
+
+.meeting-modal-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+}
+
+.meeting-modal-search-input {
+  padding-left: 32px;
+}
+
+/* Opção de participante */
+
+.meeting-user-option {
+  background-color: transparent;
+  border: 1px solid transparent;
+}
+
+.meeting-user-option.is-selected {
+  background-color: var(--bg-accent-color-light);
+  border-color: var(--bg-accent-color);
+}
+
+.meeting-user-option-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 /* Anexos no modal */
 
 .meeting-modal-attachments-existing,
@@ -246,7 +287,7 @@
 
 .meeting-modal-attachment-remove:hover {
   background: #fee2e2;
-  color: #ef4444;
+  color: var(--status-danger);
 }
 
 .meeting-modal-attach-btn {
@@ -255,6 +296,14 @@
   gap: 6px;
   margin-top: 4px;
   margin-bottom: 12px;
+}
+
+.meeting-modal-attachments-row {
+  margin-top: 8px;
+}
+
+.meeting-modal-file-input {
+  display: none;
 }
 
 /* E-mail checkbox */

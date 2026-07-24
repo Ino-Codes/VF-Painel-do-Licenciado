@@ -120,10 +120,7 @@ const Feedbacks: React.FC = () => {
         </div>
 
         <div className="list-container">
-          <div
-            className="list-header"
-            style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr 100px" }}
-          >
+          <div className="list-header feedback-list-grid">
             <span>De</span>
             <span>Para</span>
             <span>Criado em</span>
@@ -133,11 +130,7 @@ const Feedbacks: React.FC = () => {
 
           {filteredFeedbacks.length > 0 ? (
             filteredFeedbacks.map((fb) => (
-              <div
-                key={fb.id}
-                className="list-item"
-                style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr 100px" }}
-              >
+              <div key={fb.id} className="list-item feedback-list-grid">
                 <span>{fb.evaluator_name}</span>
 
                 <span>{fb.target_name}</span>
@@ -193,13 +186,7 @@ const Feedbacks: React.FC = () => {
               </div>
             ))
           ) : (
-            <p
-              style={{
-                padding: "20px",
-                textAlign: "center",
-                color: "var(--text-secondary)",
-              }}
-            >
+            <p className="feedback-list-empty">
               Nenhum feedback encontrado nesta aba.
             </p>
           )}

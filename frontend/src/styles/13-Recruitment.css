@@ -117,6 +117,7 @@
   height: 100%;
   background: var(--accent-color);
   transition: width 0.3s ease;
+  width: var(--progress-width, 0%);
 }
 
 /* --- CANDIDATE MODAL --- */
@@ -354,4 +355,47 @@
     margin-top: 5px;
     flex-wrap: wrap;
   }
+}
+
+/* --- CHECKLIST EDIT MODAL --- */
+.checklist-edit-action {
+  margin-left: 12px;
+}
+
+.checklist-edit-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.checklist-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.checklist-edit-name {
+  flex: 1;
+}
+
+.checklist-edit-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* --- CHECKLIST TEMPLATES ADMIN --- */
+.checklist-templates-back {
+  text-decoration: none;
+}
+
+.checklist-templates-create {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* --- INTERVIEWS CALENDAR --- */
+.interview-calendar {
+  margin-top: 20px;
 }
