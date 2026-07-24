@@ -31,13 +31,6 @@ const InternalGestao: React.FC = () => {
       icon: <FaBuilding />,
       path: "/internal/empresa",
     },
-    {
-      title: "Projetos",
-      description:
-        "Acesse o cronograma e gerencie os projetos internos da empresa",
-      icon: <FaChartPie />,
-      path: "/internal/projetos",
-    },
   ];
 
   return (

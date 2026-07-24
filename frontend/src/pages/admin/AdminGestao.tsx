@@ -26,12 +26,12 @@ const AdminGestao: React.FC = () => {
       icon: <FaMagnifyingGlassChart />,
       path: "/admin/statistics",
     },
-    // {
-    //   title: "Help Desk",
-    //   description: "Gerencie os tickets de suporte",
-    //   icon: <FaLaptop />,
-    //   path: "/admin/helpdesk",
-    // },
+    {
+      title: "Help Desk",
+      description: "Gerencie os tickets de suporte",
+      icon: <FaLaptop />,
+      path: "/admin/helpdesk",
+    },
     {
       title: "Logs de Atividade",
       description: "Visualize e gerencie os logs de atividade",

@@ -38,7 +38,6 @@ import AdminStatistics from "./pages/admin/AdminStatistics.tsx";
 import InternalGestao from "./pages/internal/InternalGestao.tsx";
 import ContentGestao from "./pages/content/ContentGestao.tsx";
 import MuralDeAvisos from "./pages/notices/MuralDeAvisos.tsx";
-import Projetos from "./pages/internal/Projetos.tsx";
 import HelpDeskKanban from "./pages/itsm/HelpDeskKanban.tsx";
 import WidgetTenants from "./pages/itsm/WidgetTenants.tsx";
 import MeetingRecords from "./pages/meetings/MeetingRecords.tsx";
@@ -118,7 +117,6 @@ const AppRouter: React.FC = () => {
           />
           <Route path="/internal/ferias" element={<SolicitarFerias />} />
           <Route path="/internal/empresa" element={<Empresa />} />
-          <Route path="/internal/projetos" element={<Projetos />} />
           <Route
             path="/internal/meeting-records"
             element={<MeetingRecords />}
