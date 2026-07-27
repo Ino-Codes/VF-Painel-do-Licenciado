@@ -5,7 +5,7 @@
 
   /* backgrounds */
   --bg-primary: #fff;
-  --bg-secondary: #f1f1f3;
+  --bg-secondary: #f4f4f4;
 
   --bg-menu: #fbfbfc;
   --bg-menu-hover: #f3f3f5;
@@ -79,8 +79,8 @@ body.dark-theme {
   /* --- Tema Escuro --- */
 
   /* telas principais */
-  --bg-primary: #141414;
-  --bg-secondary: #282c2e;
+  --bg-primary: #0d0d0d;
+  --bg-secondary: #171717;
 
   /* menu superior */
   --bg-menu: #1e1e1e;
