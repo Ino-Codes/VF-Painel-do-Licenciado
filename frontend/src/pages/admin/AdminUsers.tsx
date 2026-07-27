@@ -205,7 +205,7 @@ const AdminUsers: React.FC = () => {
             }`}
             onClick={() => setActiveTab("licenciados")}
           >
-            Licenciados
+            V-Partners
           </button>
 
           <button
