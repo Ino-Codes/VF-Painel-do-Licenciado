@@ -43,6 +43,8 @@ import WidgetTenants from "./pages/itsm/WidgetTenants.tsx";
 import MeetingRecords from "./pages/meetings/MeetingRecords.tsx";
 import Arquivos from "./pages/archives/Arquivos.tsx";
 import SupportWidget from "./components/layout/SupportWidget.tsx";
+import Acompanhar from "./pages/public/Acompanhar.tsx";
+import MeusChamados from "./pages/internal/MeusChamados.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -63,6 +65,7 @@ import "./styles/15-Gestao.css";
 import "./styles/16-Projects.css";
 import "./styles/17-Kanban.css";
 import "./styles/18-MeetingRecords.css";
+import "./styles/19-Tracking.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 
@@ -90,6 +93,7 @@ const AppRouter: React.FC = () => {
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/reset-password" element={<ResetPassword />} />{" "}
+          <Route path="/acompanhar" element={<Acompanhar />} />{" "}
           <Route path="/home" element={<Home />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/content/documentos" element={<Documentos />} />
@@ -116,6 +120,7 @@ const AppRouter: React.FC = () => {
             element={<InternalGestao />}
           />
           <Route path="/internal/ferias" element={<SolicitarFerias />} />
+          <Route path="/internal/meus-chamados" element={<MeusChamados />} />
           <Route path="/internal/empresa" element={<Empresa />} />
           <Route
             path="/internal/meeting-records"

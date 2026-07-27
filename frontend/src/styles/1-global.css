@@ -4,10 +4,10 @@
   /* --- Tema Claro --- */
 
   /* backgrounds */
-  --bg-primary: #fbfbfc;
-  --bg-secondary: #f3f3f5;
+  --bg-primary: #fff;
+  --bg-secondary: #f1f1f3;
 
-  --bg-menu: #fff;
+  --bg-menu: #fbfbfc;
   --bg-menu-hover: #f3f3f5;
   --bg-menu-list: #f0f0f2;
 
@@ -79,11 +79,11 @@ body.dark-theme {
   /* --- Tema Escuro --- */
 
   /* telas principais */
-  --bg-primary: #1e1e1e;
+  --bg-primary: #141414;
   --bg-secondary: #282c2e;
 
   /* menu superior */
-  --bg-menu: #141414;
+  --bg-menu: #1e1e1e;
   --bg-menu-hover: #2e3235;
   --bg-menu-list: #3e4245;
 

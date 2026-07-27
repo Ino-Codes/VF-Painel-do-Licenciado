@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 
-import { FaBuilding, FaChartPie, FaFileAlt } from "react-icons/fa";
+import { FaBuilding, FaFileAlt, FaHeadset } from "react-icons/fa";
 
 const InternalGestao: React.FC = () => {
   const { user, loading } = useAuth();
@@ -24,6 +24,12 @@ const InternalGestao: React.FC = () => {
       description: "Acesse e gerencie as atas de reuniões da empresa",
       icon: <FaFileAlt />,
       path: "/internal/meeting-records",
+    },
+    {
+      title: "Meus Chamados",
+      description: "Acompanhe o andamento dos chamados que você abriu",
+      icon: <FaHeadset />,
+      path: "/internal/meus-chamados",
     },
     {
       title: "Quem Somos",

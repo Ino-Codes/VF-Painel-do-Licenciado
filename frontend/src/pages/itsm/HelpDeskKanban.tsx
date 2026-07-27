@@ -299,7 +299,7 @@ const TicketKanbanPage: React.FC = () => {
         <div className="page-container">
           {/* Header */}
           <div className="recruitment-header">
-            <h1 className="recruitment-title">Tickets de Suporte</h1>
+            <h1 className="recruitment-title">Central de Chamados</h1>
             <div className="recruitment-actions">
               <button
                 className="form-button btn-icon-text"

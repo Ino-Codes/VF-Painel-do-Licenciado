@@ -95,7 +95,7 @@ const AdminStatistics: React.FC = () => {
                 </div>
                 <div className="stat-info">
                   <h3>{stats.totalDownloads}</h3>
-                  <p>Total de Downloads</p>
+                  <p>Downloads Realizados</p>
                 </div>
               </div>
 
@@ -105,7 +105,7 @@ const AdminStatistics: React.FC = () => {
                 </div>
                 <div className="stat-info">
                   <h3>{stats.totalLicenciados}</h3>
-                  <p>Licenciados Cadastrados</p>
+                  <p>V-Partners Cadastrados</p>
                 </div>
               </div>
 
@@ -115,7 +115,7 @@ const AdminStatistics: React.FC = () => {
                 </div>
                 <div className="stat-info">
                   <h3>{stats.totalInternalUsers}</h3>
-                  <p>Colaboradores Internos</p>
+                  <p>Colaboradores Cadastrados</p>
                 </div>
               </div>
             </div>

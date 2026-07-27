@@ -1,6 +1,10 @@
 const express = require("express");
+const crypto = require("crypto");
 const router = express.Router();
 const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "https://painel.vcorporate.com.br";
 
 const VALID_STATUSES = [
   "novo",
@@ -66,6 +70,32 @@ module.exports = function (pool, logActivity, resend) {
     </html>
   `;
 
+  // ── Helper: botão "Acompanhar meu chamado" nos e-mails ────────────────────
+  const trackButtonHtml = (trackingToken) => {
+    if (!trackingToken) return "";
+    const trackUrl = `${FRONTEND_URL}/acompanhar?t=${trackingToken}`;
+    return `
+        <table border="0" cellspacing="0" cellpadding="0" style="margin:24px 0 12px;">
+          <tr><td align="center" style="background:#daa520;border-radius:5px;">
+            <a href="${trackUrl}" target="_blank" style="font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;padding:12px 24px;display:inline-block;">Acompanhar meu chamado</a>
+          </td></tr>
+        </table>
+        <p style="font-size:13px;color:#6c757d;margin:0 0 8px;">Ou copie e cole este endereço no seu navegador:</p>
+        <p style="font-size:13px;margin:0;word-break:break-all;"><a href="${trackUrl}" target="_blank" style="color:#daa520;">${trackUrl}</a></p>`;
+  };
+
+  // ── Helper: campos seguros expostos no acompanhamento público ─────────────
+  const publicTicketView = (t) => ({
+    id: t.id,
+    type: t.type,
+    title: t.title,
+    status: t.status,
+    created_at: t.created_at,
+    tenant_name: t.tenant_name || null,
+    attendant_name: t.attendant_name || null,
+    resolution_notes: t.status === "concluido" ? t.resolution_notes : null,
+  });
+
   // ── POST /api/ticket (público — chamado pelo widget) ────────────────────
   router.post("/", async (req, res) => {
     const {
@@ -108,12 +138,22 @@ module.exports = function (pool, logActivity, resend) {
       }
 
       const tenantId = tenantResult.rows[0].id;
+      const trackingToken = crypto.randomBytes(32).toString("hex");
 
       const result = await pool.query(
-        `INSERT INTO tickets (tenant_id, type, title, description, origin_url, name, requester_email)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO tickets (tenant_id, type, title, description, origin_url, name, requester_email, tracking_token)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [tenantId, type, title, description, origin_url, name, requester_email],
+        [
+          tenantId,
+          type,
+          title,
+          description,
+          origin_url,
+          name,
+          requester_email,
+          trackingToken,
+        ],
       );
 
       const ticket = result.rows[0];
@@ -135,7 +175,8 @@ module.exports = function (pool, logActivity, resend) {
                 <strong>Tipo:</strong> ${typeLabel}<br/>
                 <strong>Título:</strong> ${escapeHtml(ticket.title)}
               </p>
-              <p>Nossa equipe irá analisá-lo em breve. Guarde o número do protocolo para acompanhamento.</p>
+              <p>Nossa equipe irá analisá-lo em breve. Acompanhe o andamento pelo botão abaixo ou guarde o número do protocolo.</p>
+              ${trackButtonHtml(ticket.tracking_token)}
             `,
           }),
         });
@@ -147,6 +188,58 @@ module.exports = function (pool, logActivity, resend) {
     } catch (err) {
       console.error("Erro ao salvar ticket:", err);
       res.status(500).json({ error: "Erro ao salvar ticket." });
+    }
+  });
+
+  // ── GET /api/ticket/track/:token (público — acompanhamento por link) ─────
+  router.get("/track/:token", async (req, res) => {
+    const { token } = req.params;
+    try {
+      const result = await pool.query(
+        `SELECT t.*, wt.name AS tenant_name
+         FROM tickets t
+         LEFT JOIN widget_tenants wt ON t.tenant_id = wt.id
+         WHERE t.tracking_token = $1`,
+        [token],
+      );
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Chamado não encontrado." });
+      }
+      res.json(publicTicketView(result.rows[0]));
+    } catch (err) {
+      console.error("Erro ao consultar chamado (token):", err);
+      res.status(500).json({ error: "Erro ao consultar chamado." });
+    }
+  });
+
+  // ── POST /api/ticket/track (público — consulta por protocolo + e-mail) ────
+  router.post("/track", async (req, res) => {
+    const { id, email } = req.body;
+    const ticketId = parseInt(String(id ?? "").replace(/\D/g, ""), 10);
+
+    if (!ticketId || !email) {
+      return res
+        .status(400)
+        .json({ error: "Protocolo e e-mail são obrigatórios." });
+    }
+
+    try {
+      const result = await pool.query(
+        `SELECT t.*, wt.name AS tenant_name
+         FROM tickets t
+         LEFT JOIN widget_tenants wt ON t.tenant_id = wt.id
+         WHERE t.id = $1 AND LOWER(t.requester_email) = LOWER($2)`,
+        [ticketId, String(email).trim()],
+      );
+      if (result.rowCount === 0) {
+        return res.status(404).json({
+          error: "Chamado não encontrado. Confira o protocolo e o e-mail.",
+        });
+      }
+      res.json(publicTicketView(result.rows[0]));
+    } catch (err) {
+      console.error("Erro ao consultar chamado (protocolo):", err);
+      res.status(500).json({ error: "Erro ao consultar chamado." });
     }
   });
 
@@ -364,6 +457,7 @@ module.exports = function (pool, logActivity, resend) {
                   <p style="font-size:14px;color:#6c757d;">Atendido por: ${escapeHtml(
                     ticket.attendant_name || "Equipe V-CORP",
                   )}</p>
+                  ${trackButtonHtml(ticket.tracking_token)}
                 `,
               }),
             };

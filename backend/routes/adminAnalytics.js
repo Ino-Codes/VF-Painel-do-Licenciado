@@ -33,7 +33,7 @@ module.exports = function (pool, resend) {
 
         // 4. Total de downloads de arquivos
         const totalDownloadsQuery = pool.query(`
-        SELECT COUNT(*) as count FROM activity_logs WHERE action = 'Arquivo Baixado'
+        SELECT COUNT(*) as count FROM activity_logs WHERE action = 'DOWNLOAD_FILE'
       `);
 
         // 5. Top 5 arquivos mais baixados
@@ -42,7 +42,7 @@ module.exports = function (pool, resend) {
           SUBSTRING(details FROM 'baixou o arquivo (.*)') as filename, 
           COUNT(*) as count 
         FROM activity_logs 
-        WHERE action = 'Arquivo Baixado' 
+        WHERE action = 'DOWNLOAD_FILE' 
         GROUP BY filename
         ORDER BY count DESC 
         LIMIT 5

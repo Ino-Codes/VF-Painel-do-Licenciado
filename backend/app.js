@@ -35,11 +35,12 @@ const corsRestrito = cors({
   optionsSuccessStatus: 200,
 });
 
-// Middleware CORS aberto — usado apenas na rota pública do widget
+// Middleware CORS aberto — usado nas rotas públicas do widget e do
+// acompanhamento de chamados (GET/POST, com ou sem Authorization).
 const corsAberto = cors({
   origin: "*",
-  methods: ["POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 
 // ─── MIDDLEWARES GLOBAIS ───────────────────────────────────────────────────────

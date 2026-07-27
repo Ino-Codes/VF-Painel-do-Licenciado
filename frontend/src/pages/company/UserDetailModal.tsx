@@ -66,10 +66,7 @@ const UserDetailModal: React.FC<ModalProps> = ({ isOpen, onClose, user }) => {
           </div>
           <div className="user-detail-info">
             <h3 className="user-detail-name">{user.nome}</h3>
-            <p>
-              <span>Unidade:</span>{" "}
-              {getUnitNameById(user.unit_id) || user.unidade || "Não informado"}
-            </p>
+            
             <p>
               <span>Setor:</span> {user.setor || "Não informado"}
             </p>

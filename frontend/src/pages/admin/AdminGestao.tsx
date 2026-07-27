@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 
-import { FaUserCog, FaUserSecret, FaLaptop } from "react-icons/fa";
+import { FaUserCog, FaUserSecret, FaHeadset } from "react-icons/fa";
 import { FaMagnifyingGlassChart } from "react-icons/fa6";
 
 const AdminGestao: React.FC = () => {
@@ -21,16 +21,16 @@ const AdminGestao: React.FC = () => {
 
   const modules = [
     {
+      title: "Central de Chamados",
+      description: "Gerencie os tickets de suporte",
+      icon: <FaHeadset />,
+      path: "/admin/helpdesk",
+    },
+    {
       title: "Estatísticas Ao Vivo",
       description: "Visualize as métricas de uso do Painel em tempo real",
       icon: <FaMagnifyingGlassChart />,
       path: "/admin/statistics",
-    },
-    {
-      title: "Help Desk",
-      description: "Gerencie os tickets de suporte",
-      icon: <FaLaptop />,
-      path: "/admin/helpdesk",
     },
     {
       title: "Logs de Atividade",
