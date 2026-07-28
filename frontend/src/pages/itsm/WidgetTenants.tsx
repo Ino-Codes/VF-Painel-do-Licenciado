@@ -167,6 +167,27 @@ const WidgetTenantsPage: React.FC = () => {
     toast.success("Snippet copiado!");
   };
 
+  const copyInstructions = (t: Tenant) => {
+    const text = [
+      "Como integrar o widget de chamados ao seu site:",
+      "",
+      "1. Copie o Code Snippet do Widget abaixo:",
+      buildSnippet(t.token),
+      "",
+      "2. Abra o arquivo HTML do site onde o widget deve aparecer. Em sites React, Vue ou Angular, use o index.html público do projeto.",
+      "",
+      "3. Cole o código dentro da tag <body>, logo antes do fechamento </body>.",
+      "",
+      "4. Salve e publique o site. Um botão flutuante de chamado aparecerá no canto inferior direito de todas as páginas.",
+      "",
+      "5. Pronto! Os chamados abertos por esse site chegam automaticamente na nossa Central de Chamados.",
+      "",
+      "Não é preciso instalar nada. O mesmo código funciona em qualquer site, com ou sem framework. O token identifica este sistema — mantenha-o apenas neste site.",
+    ].join("\n");
+    navigator.clipboard.writeText(text);
+    toast.success("Instruções copiadas!");
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────
   if (loading) return <div className="loading-state">Carregando...</div>;
 
@@ -295,6 +316,54 @@ const WidgetTenantsPage: React.FC = () => {
                       className="form-icon-edit"
                       title="Copiar snippet"
                       onClick={() => copySnippet(t)}
+                      disabled={!t.active}
+                    >
+                      <FiCopy size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Instruções de integração */}
+                <div className="widget-tenant-field">
+                  <p className="widget-tenant-field-label">
+                    Instruções de Integração
+                  </p>
+                  <div className="widget-tenant-code-box widget-tenant-code-box--top">
+                    <div className="widget-tenant-steps">
+                      <ol className="widget-steps-list">
+                        <li>
+                          Copie o <strong>Code Snippet do Widget</strong> acima
+                          (no botão de copiar).
+                        </li>
+                        <li>
+                          Abra o arquivo HTML do site onde o widget deve
+                          aparecer. Em sites React, Vue ou Angular, use o{" "}
+                          <code>index.html</code> público do projeto.
+                        </li>
+                        <li>
+                          Cole o código dentro da tag <code>&lt;body&gt;</code>,
+                          logo antes do fechamento <code>&lt;/body&gt;</code>.
+                        </li>
+                        <li>
+                          Salve e publique o site. Um botão flutuante de chamado
+                          aparecerá no canto inferior direito de todas as
+                          páginas.
+                        </li>
+                        <li>
+                          Pronto! Os chamados abertos por esse site chegam
+                          automaticamente na nossa Central de Chamados.
+                        </li>
+                      </ol>
+                      <p className="widget-steps-note">
+                        Não é preciso instalar nada. O mesmo código funciona em
+                        qualquer site, com ou sem framework. O token acima
+                        identifica este sistema — mantenha-o apenas neste site.
+                      </p>
+                    </div>
+                    <button
+                      className="form-icon-edit"
+                      title="Copiar instruções"
+                      onClick={() => copyInstructions(t)}
                       disabled={!t.active}
                     >
                       <FiCopy size={14} />

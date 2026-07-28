@@ -32,7 +32,50 @@ const ALLOWED_TRANSITIONS = {
 const isAllowedTransition = (from, to) =>
   from === to || (ALLOWED_TRANSITIONS[from] || []).includes(to);
 
+// Erro com status HTTP embutido — permite abortar uma transação e devolver o
+// código correto (404/409) a partir de dentro do callback transacional.
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.httpStatus = status;
+  }
+}
+
 module.exports = function (pool, logActivity, resend) {
+  // ── Helper: executa uma função dentro de uma transação (BEGIN/COMMIT) ─────
+  // Garante que a atualização do ticket e o registro no histórico sejam
+  // atômicos: ou os dois acontecem, ou nenhum.
+  const withTransaction = async (fn) => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await fn(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (err) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (_) {
+        /* ignora falha no rollback */
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+  };
+
+  // ── Helper: registra uma transição de status no histórico ──────────────────
+  // `db` pode ser o pool ou um client de transação (ambos expõem .query).
+  const recordStatusChange = (
+    db,
+    { ticketId, fromStatus, toStatus, userId, userName },
+  ) =>
+    db.query(
+      `INSERT INTO ticket_status_history
+         (ticket_id, from_status, to_status, changed_by, changed_by_name)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [ticketId, fromStatus || null, toStatus, userId || null, userName || null],
+    );
   // ── Helper: escapa valores do usuário antes de injetar no HTML do e-mail ──
   const escapeHtml = (str) =>
     String(str ?? "")
@@ -140,23 +183,33 @@ module.exports = function (pool, logActivity, resend) {
       const tenantId = tenantResult.rows[0].id;
       const trackingToken = crypto.randomBytes(32).toString("hex");
 
-      const result = await pool.query(
-        `INSERT INTO tickets (tenant_id, type, title, description, origin_url, name, requester_email, tracking_token)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-         RETURNING *`,
-        [
-          tenantId,
-          type,
-          title,
-          description,
-          origin_url,
-          name,
-          requester_email,
-          trackingToken,
-        ],
-      );
-
-      const ticket = result.rows[0];
+      // Cria o ticket e registra o marco de abertura no histórico (atômico).
+      const ticket = await withTransaction(async (client) => {
+        const result = await client.query(
+          `INSERT INTO tickets (tenant_id, type, title, description, origin_url, name, requester_email, tracking_token)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           RETURNING *`,
+          [
+            tenantId,
+            type,
+            title,
+            description,
+            origin_url,
+            name,
+            requester_email,
+            trackingToken,
+          ],
+        );
+        const created = result.rows[0];
+        await recordStatusChange(client, {
+          ticketId: created.id,
+          fromStatus: null,
+          toStatus: created.status,
+          userId: null,
+          userName: name || null,
+        });
+        return created;
+      });
 
       // ── E-mail de confirmação de abertura (não bloqueante) ──
       try {
@@ -322,34 +375,49 @@ module.exports = function (pool, logActivity, resend) {
       params.push(id);
 
       try {
-        // Valida a transição contra o fluxo permitido (somente quando o status muda)
-        if (status !== undefined) {
-          const cur = await pool.query(
-            "SELECT status FROM tickets WHERE id = $1",
+        const updated = await withTransaction(async (client) => {
+          // Trava a linha e lê o status atual — para validar a transição e
+          // registrar o "from" no histórico.
+          const cur = await client.query(
+            "SELECT status FROM tickets WHERE id = $1 FOR UPDATE",
             [id],
           );
           if (cur.rowCount === 0) {
-            return res.status(404).json({ error: "Ticket não encontrado." });
+            throw new HttpError(404, "Ticket não encontrado.");
           }
           const from = cur.rows[0].status;
-          if (!isAllowedTransition(from, status)) {
-            return res.status(409).json({
-              error: `Transição de status não permitida: ${from} → ${status}.`,
+
+          if (status !== undefined && !isAllowedTransition(from, status)) {
+            throw new HttpError(
+              409,
+              `Transição de status não permitida: ${from} → ${status}.`,
+            );
+          }
+
+          const result = await client.query(
+            `UPDATE tickets SET ${fields.join(", ")} WHERE id = $${params.length} RETURNING *`,
+            params,
+          );
+
+          // Registra no histórico apenas quando o status realmente muda.
+          if (status !== undefined && status !== from) {
+            await recordStatusChange(client, {
+              ticketId: Number(id),
+              fromStatus: from,
+              toStatus: status,
+              userId: req.user.id,
+              userName: req.user.nome || req.user.email,
             });
           }
-        }
 
-        const result = await pool.query(
-          `UPDATE tickets SET ${fields.join(", ")} WHERE id = $${params.length} RETURNING *`,
-          params,
-        );
+          return result.rows[0];
+        });
 
-        if (result.rowCount === 0) {
-          return res.status(404).json({ error: "Ticket não encontrado." });
-        }
-
-        res.json(result.rows[0]);
+        res.json(updated);
       } catch (err) {
+        if (err.httpStatus) {
+          return res.status(err.httpStatus).json({ error: err.message });
+        }
         console.error("Erro ao atualizar ticket:", err);
         res.status(500).json({ error: "Erro ao atualizar ticket." });
       }
@@ -365,19 +433,38 @@ module.exports = function (pool, logActivity, resend) {
       const { id } = req.params;
 
       try {
-        const result = await pool.query(
-          `UPDATE tickets
-         SET status = 'andamento',
-             attendant_id = $1,
-             attendant_name = $2
-         WHERE id = $3
-         RETURNING *`,
-          [req.user.id, req.user.nome || req.user.email, id],
-        );
+        const ticket = await withTransaction(async (client) => {
+          const cur = await client.query(
+            "SELECT status FROM tickets WHERE id = $1 FOR UPDATE",
+            [id],
+          );
+          if (cur.rowCount === 0) {
+            throw new HttpError(404, "Ticket não encontrado.");
+          }
+          const from = cur.rows[0].status;
 
-        if (result.rowCount === 0) {
-          return res.status(404).json({ error: "Ticket não encontrado." });
-        }
+          const result = await client.query(
+            `UPDATE tickets
+             SET status = 'andamento',
+                 attendant_id = $1,
+                 attendant_name = $2
+             WHERE id = $3
+             RETURNING *`,
+            [req.user.id, req.user.nome || req.user.email, id],
+          );
+
+          if (from !== "andamento") {
+            await recordStatusChange(client, {
+              ticketId: Number(id),
+              fromStatus: from,
+              toStatus: "andamento",
+              userId: req.user.id,
+              userName: req.user.nome || req.user.email,
+            });
+          }
+
+          return result.rows[0];
+        });
 
         try {
           logActivity(
@@ -391,8 +478,11 @@ module.exports = function (pool, logActivity, resend) {
           console.warn("Falha ao registrar log:", e);
         }
 
-        res.json(result.rows[0]);
+        res.json(ticket);
       } catch (err) {
+        if (err.httpStatus) {
+          return res.status(err.httpStatus).json({ error: err.message });
+        }
         console.error("Erro ao iniciar atendimento:", err);
         res.status(500).json({ error: "Erro ao iniciar atendimento." });
       }
@@ -409,20 +499,37 @@ module.exports = function (pool, logActivity, resend) {
       const { resolution_notes } = req.body;
 
       try {
-        const result = await pool.query(
-          `UPDATE tickets
-             SET status = 'concluido',
-                 resolution_notes = COALESCE($1, resolution_notes)
-           WHERE id = $2
-           RETURNING *`,
-          [resolution_notes, id],
-        );
+        const ticket = await withTransaction(async (client) => {
+          const cur = await client.query(
+            "SELECT status FROM tickets WHERE id = $1 FOR UPDATE",
+            [id],
+          );
+          if (cur.rowCount === 0) {
+            throw new HttpError(404, "Ticket não encontrado.");
+          }
+          const from = cur.rows[0].status;
 
-        if (result.rowCount === 0) {
-          return res.status(404).json({ error: "Ticket não encontrado." });
-        }
+          const result = await client.query(
+            `UPDATE tickets
+               SET status = 'concluido',
+                   resolution_notes = COALESCE($1, resolution_notes)
+             WHERE id = $2
+             RETURNING *`,
+            [resolution_notes, id],
+          );
 
-        const ticket = result.rows[0];
+          if (from !== "concluido") {
+            await recordStatusChange(client, {
+              ticketId: Number(id),
+              fromStatus: from,
+              toStatus: "concluido",
+              userId: req.user.id,
+              userName: req.user.nome || req.user.email,
+            });
+          }
+
+          return result.rows[0];
+        });
 
         // Busca o e-mail do atendente para colocar em cópia (CC)
         let attendantEmail = null;
@@ -483,6 +590,9 @@ module.exports = function (pool, logActivity, resend) {
 
         res.json(ticket);
       } catch (err) {
+        if (err.httpStatus) {
+          return res.status(err.httpStatus).json({ error: err.message });
+        }
         console.error("Erro ao encerrar atendimento:", err);
         res.status(500).json({ error: "Erro ao encerrar atendimento." });
       }
