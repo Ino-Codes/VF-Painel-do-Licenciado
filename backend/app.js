@@ -1,4 +1,4 @@
-require("dotenv").config();
+//require("dotenv").config();
 
 const migrationRunner = require("./migrationRunner.js");
 const express = require("express");
