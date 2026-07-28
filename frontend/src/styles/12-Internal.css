@@ -10,10 +10,6 @@
   border-bottom: 1px solid var(--accent-color);
 }
 
-.page-header {
-  padding-bottom: 20px;
-}
-
 .admin-section {
   border-top: 1px solid var(--border-color);
   padding-top: 20px;

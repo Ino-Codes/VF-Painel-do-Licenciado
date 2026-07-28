@@ -15,9 +15,9 @@ const RecruitmentHeader: React.FC<RecruitmentHeaderProps> = ({ onRefresh }) => {
   const [isStagesModalOpen, setIsStagesModalOpen] = useState(false);
 
   return (
-    <div className="recruitment-header">
-      <h1 className="recruitment-title">Gestão de Recrutamento</h1>
-      <div className="recruitment-actions">
+    <div className="page-header">
+      <h1 className="page-title">Gestão de Recrutamento</h1>
+      <div className="page-actions">
         <button
           className="form-button btn-icon-text"
           onClick={() => setIsNewCandidateModalOpen(true)}

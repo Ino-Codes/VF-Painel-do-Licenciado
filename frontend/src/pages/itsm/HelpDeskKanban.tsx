@@ -298,9 +298,9 @@ const TicketKanbanPage: React.FC = () => {
       <div className="content-area">
         <div className="page-container">
           {/* Header */}
-          <div className="recruitment-header">
-            <h1 className="recruitment-title">Central de Chamados</h1>
-            <div className="recruitment-actions">
+          <div className="page-header">
+            <h1 className="page-title">Central de Chamados</h1>
+            <div className="page-actions">
               <button
                 className="form-button btn-icon-text"
                 onClick={() => navigate("/admin/widget-tenants")}
@@ -312,7 +312,7 @@ const TicketKanbanPage: React.FC = () => {
           </div>
 
           {/* Filtros */}
-          <div className="recruitment-filters">
+          <div className="page-filters">
             <div className="filter-group">
               <select
                 className="form-select"

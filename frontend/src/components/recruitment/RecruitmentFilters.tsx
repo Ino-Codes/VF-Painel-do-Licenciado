@@ -24,7 +24,7 @@ const RecruitmentFilters: React.FC<RecruitmentFiltersProps> = ({
   stages,
 }) => {
   return (
-    <div className="recruitment-filters">
+    <div className="page-filters">
       <div className="filter-group">
         <input
           type="text"

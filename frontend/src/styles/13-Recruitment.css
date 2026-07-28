@@ -247,28 +247,28 @@
 }
 
 /* --- RECRUITMENT HEADER --- */
-.recruitment-header {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding: 20px;
-  background: var(--bg-secondary);
+  background: linear-gradient(90deg, var(--bg-secondary) 0%, rgba(255, 255, 255, 0) 100%);
   border-radius: 8px;
 }
 
-.recruitment-title {
+.page-title {
   margin: 0;
   font-size: 24px;
   color: var(--text-primary);
 }
 
-.recruitment-actions {
+.page-actions {
   display: flex;
   gap: 10px;
 }
 
-.recruitment-filters {
+.page-filters {
   display: flex;
   gap: 15px;
   padding: 0 20px;
@@ -326,13 +326,13 @@
     min-width: 280px;
   }
 
-  .recruitment-header {
+  .page-header {
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
   }
 
-  .recruitment-filters {
+  .page-filters {
     flex-direction: column;
     gap: 10px;
   }

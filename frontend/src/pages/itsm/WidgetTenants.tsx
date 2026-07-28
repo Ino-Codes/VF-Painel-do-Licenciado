@@ -25,6 +25,18 @@ interface Tenant {
   created_at: string;
 }
 
+// O widget.js, o widget-form.html e a rota POST /api/ticket são servidos pelo
+// BACKEND — não pelo domínio do frontend. Por isso o snippet precisa apontar
+// para a URL da API (src e data-api), senão o navegador do terceiro baixa o
+// HTML da SPA no lugar do script.
+const WIDGET_BASE =
+  process.env.REACT_APP_API_URL ||
+  "https://vf-painel-do-licenciado.onrender.com";
+
+// Fonte única do snippet — evita divergência entre o texto exibido e o copiado.
+const buildSnippet = (token: string) =>
+  `<script src="${WIDGET_BASE}/widget.js" data-api="${WIDGET_BASE}" data-token="${token}"></script>`;
+
 const WidgetTenantsPage: React.FC = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,8 +163,7 @@ const WidgetTenantsPage: React.FC = () => {
   };
 
   const copySnippet = (t: Tenant) => {
-    const snippet = `<script src="${window.location.origin}/widget.js" data-token="${t.token}"></script>`;
-    navigator.clipboard.writeText(snippet);
+    navigator.clipboard.writeText(buildSnippet(t.token));
     toast.success("Snippet copiado!");
   };
 
@@ -171,10 +182,10 @@ const WidgetTenantsPage: React.FC = () => {
           Voltar
         </Link>
 
-        <div className="recruitment-header">
-          <h1 className="recruitment-title">Sistemas Integrados</h1>
+        <div className="page-header">
+          <h1 className="page-title">Sistemas Integrados</h1>
 
-          <div className="recruitment-actions">
+          <div className="page-actions">
             <button className="form-button" onClick={openCreate}>
               + Token
             </button>
@@ -278,7 +289,7 @@ const WidgetTenantsPage: React.FC = () => {
                   </p>
                   <div className="widget-tenant-code-box widget-tenant-code-box--top">
                     <code className="widget-tenant-code widget-tenant-code--sm">
-                      {`<script src="${window.location.origin}/widget.js" data-api="${window.location.origin}"> data-token="${t.token}"></script>`}
+                      {buildSnippet(t.token)}
                     </code>
                     <button
                       className="form-icon-edit"
