@@ -45,7 +45,6 @@ const InternalGestao: React.FC = () => {
       <div className="content-area">
         <div className="page-header">
           <h2>Área Interna</h2>
-          <p>Selecione um módulo abaixo para acessar.</p>
         </div>
 
         <div className="gestao-modules-grid">

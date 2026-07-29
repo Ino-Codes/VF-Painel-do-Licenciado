@@ -206,6 +206,7 @@
 .detail-ticket-modal {
   position: relative;
   background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   width: 90%;
   max-width: 900px;

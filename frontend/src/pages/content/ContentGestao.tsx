@@ -87,9 +87,7 @@ const ContentGestao: React.FC = () => {
         <div className="page-header">
           {/* Título Dinâmico com a cor da empresa */}
           <h2 className="content-title">Conteúdos da {companyInfo.name}</h2>
-          <p>
-            Selecione um módulo abaixo para acessar os conteúdos exclusivos.
-          </p>
+          
         </div>
 
         <div className="gestao-modules-grid">

@@ -52,7 +52,6 @@ const AdminGestao: React.FC = () => {
       <div className="content-area">
         <div className="page-header">
           <h2>Gestão de Admin</h2>
-          <p>Selecione um módulo abaixo para gerenciar.</p>
         </div>
 
         <div className="gestao-modules-grid">
