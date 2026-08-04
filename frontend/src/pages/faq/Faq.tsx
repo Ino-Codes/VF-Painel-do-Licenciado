@@ -6,8 +6,9 @@ import Footer from "../../components/layout/Footer.tsx";
 import FaqModal from "../../components/forms/FaqModal.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import EmptyState from "../../components/ui/EmptyState.tsx";
+import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 
 interface FaqData {
   id: number;
@@ -18,21 +19,11 @@ interface FaqData {
   document_originalname?: string;
 }
 
-const COMPANY_NAMES = {
-  "v-tax": "V-TAX",
-  "v-banking": "V-BANKING",
-  "v-business": "V-BUSINESS",
-  "v-corp": "V-CORP",
-  "v-tech": "V-TECH",
-};
-
 const Faq: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const [searchParams] = useSearchParams();
-  const companySlug = (searchParams.get("company") as CompanySlug) || "v-tax";
-  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
+  const [company, setCompany] = useState<string>("all");
 
   const [faqs, setFaqs] = useState<FaqData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -52,7 +43,7 @@ const Faq: React.FC = () => {
   const fetchCategories = useCallback(async () => {
     try {
       const res = await api.get("/api/faq/categories", {
-        params: { company: companySlug },
+        params: { company },
       });
       setCategories(res.data);
     } catch (err: any) {
@@ -62,14 +53,14 @@ const Faq: React.FC = () => {
       }
       setCategories([]);
     }
-  }, [companySlug]);
+  }, [company]);
 
   const fetchFaqs = useCallback(async () => {
     try {
       const params: any = {
         page: currentPage,
         limit: 10,
-        company: companySlug,
+        company,
         _t: new Date().getTime(),
       };
 
@@ -87,7 +78,7 @@ const Faq: React.FC = () => {
       setFaqs([]);
       setTotalPages(0);
     }
-  }, [currentPage, selectedCategory, searchQuery, companySlug]);
+  }, [currentPage, selectedCategory, searchQuery, company]);
 
   useEffect(() => {
     if (!loading && !user) navigate("/");
@@ -104,7 +95,7 @@ const Faq: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, searchQuery, companySlug]);
+  }, [selectedCategory, searchQuery, company]);
 
   const handleSearch = () => setSearchQuery(searchTerm);
 
@@ -140,22 +131,23 @@ const Faq: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className={`content-area document-center company-${companySlug}`}>
+      <div className={`content-area document-center company-${company}`}>
         <div className="document-header">
           <div>
             <h2 className="content-title">Perguntas Frequentes (FAQ)</h2>
-            <span className="content-subtitle">{companyName}</span>
           </div>
 
           {user.role === "admin" && (
             <button
-              className="form-button"
+              className="form-button form-button--add"
               onClick={() => setIsModalOpen(true)}
             >
               + Adicionar Pergunta
             </button>
           )}
         </div>
+
+        <CompanyFilter value={company} onChange={setCompany} />
 
         <div className="tabs">
           <button

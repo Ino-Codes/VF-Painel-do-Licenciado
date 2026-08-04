@@ -5,6 +5,7 @@ const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 module.exports = function (pool, createNotification, logActivity, resend) {
   // ─── Helper: resolve company_id pelo slug ─────────────────────────────────
   const getCompanyId = async (slug) => {
+    if (slug === "all") return null; // "all" → sem filtro por empresa
     if (!slug || slug === "undefined" || slug === "null") return 4;
     try {
       const result = await pool.query(
@@ -207,8 +208,14 @@ module.exports = function (pool, createNotification, logActivity, resend) {
       const limitNum = parseInt(limit, 10) || 10;
       const offset = (pageNum - 1) * limitNum;
 
-      const params = [companyId];
-      const whereClauses = ["(n.company_id = $1 OR n.company_id IS NULL)"];
+      const params = [];
+      const whereClauses = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(
+          `(n.company_id = $${params.length} OR n.company_id IS NULL)`,
+        );
+      }
 
       // Aplica filtro de visibilidade conforme role
       const visibilityClause = getVisibilityClause(role, userId, params);
@@ -216,7 +223,9 @@ module.exports = function (pool, createNotification, logActivity, resend) {
         whereClauses.push(visibilityClause);
       }
 
-      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const whereString = whereClauses.length
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
       const countSql = `SELECT COUNT(*) FROM notices n ${whereString}`;
       const noticesSql = `
         SELECT n.*, u.nome AS creator_name

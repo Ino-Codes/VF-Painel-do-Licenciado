@@ -5,10 +5,13 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
-import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import EventCard from "./EventCard.tsx";
 import NoticeModal from "../../components/forms/NoticeModal.tsx";
+import { IoMdDocument } from "react-icons/io";
+import { MdPlayLesson, MdPlayCircle } from "react-icons/md";
+import { RiQuestionnaireFill } from "react-icons/ri";
+import { FaHeadset, FaArrowRight } from "react-icons/fa";
 
 interface Notice {
   id: number;
@@ -26,16 +29,19 @@ interface MonthlyEvent {
   color: string;
 }
 
+interface QuickLink {
+  label: string;
+  icon: React.ReactNode;
+  path: string;
+}
+
 const Home: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const firstName = user?.nome?.split(" ")[0] || "";
   const [monthlyEvents, setMonthlyEvents] = useState<MonthlyEvent[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [noticeToDelete, setNoticeToDelete] = useState<number | null>(null);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
-  const [noticeToEdit, setNoticeToEdit] = useState<Notice | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -49,7 +55,6 @@ const Home: React.FC = () => {
       const res = await api.get("/api/notices", {
         params: { page: 1, limit: 10 },
       });
-      // ATUALIZADO: consome o novo formato paginado
       setNotices(res.data.notices);
     } catch (err) {
       console.error("Erro ao buscar avisos:", err);
@@ -75,35 +80,6 @@ const Home: React.FC = () => {
     }
   }, [user, fetchNotices, fetchMonthlyEvents]);
 
-  const handleOpenCreateNotice = () => {
-    setNoticeToEdit(null); // Garante que o modal abra no modo de criação
-    setIsNoticeModalOpen(true);
-  };
-
-  const handleOpenEditNotice = (notice: Notice) => {
-    setNoticeToEdit(notice); // Passa a notícia a ser editada
-    setIsNoticeModalOpen(true);
-  };
-
-  const handleDeleteNoticeClick = (noticeId: number) => {
-    setNoticeToDelete(noticeId);
-    setIsConfirmModalOpen(true);
-  };
-
-  const handleConfirmDeleteNotice = async () => {
-    if (noticeToDelete === null) return;
-    try {
-      await api.delete(`/api/notices/${noticeToDelete}`);
-      toast.success("Aviso excluído com sucesso!");
-      fetchNotices();
-    } catch (err) {
-      toast.error("Erro ao excluir o aviso.");
-    } finally {
-      setIsConfirmModalOpen(false);
-      setNoticeToDelete(null);
-    }
-  };
-
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
   }
@@ -111,24 +87,58 @@ const Home: React.FC = () => {
     return null;
   }
 
+  const isLicenciado = user.role === "licenciado";
+  const canManageNotices = user.role === "admin" || user.role === "rh";
+
+  const quickLinks: QuickLink[] = [
+    { label: "Documentos", icon: <IoMdDocument />, path: "/content/documentos" },
+    { label: "Cursos", icon: <MdPlayLesson />, path: "/content/courses" },
+    { label: "Vídeos", icon: <MdPlayCircle />, path: "/content/videos" },
+    { label: "FAQ", icon: <RiQuestionnaireFill />, path: "/faq" },
+  ];
+  if (!isLicenciado) {
+    quickLinks.push({
+      label: "Meus Chamados",
+      icon: <FaHeadset />,
+      path: "/internal/meus-chamados",
+    });
+  }
+
+  const latestNotice = notices[0];
+
   return (
-    <div className="p-2">
+    <div className="p-2 home-vision">
       <Menu />
       <div className="content-area">
         <div className="home-header">
-          <h2 className="hello-user">Olá, {user.nickname || firstName}!</h2>
-          <p>
-            Este é o seu novo Painel da V-CORP!
-            <br />
-            Aqui você encontra os principais documentos e treinamentos para
-            atuar conosco.
-          </p>
+          <h2 className="hello-user">Olá, {user.nickname || firstName}</h2>
+          <p>Bem-vindo ao seu Painel da V-CORP.</p>
         </div>
 
+        {/* Acesso rápido */}
+        <section className="home-quick-access">
+          <span className="home-section-label">Acesso rápido</span>
+          <div className="home-quick-grid">
+            {quickLinks.map((link) => (
+              <button
+                key={link.path}
+                className="home-quick-tile"
+                onClick={() => navigate(link.path)}
+              >
+                <span className="home-quick-tile-icon">{link.icon}</span>
+                <span className="home-quick-tile-label">{link.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Colunas: eventos + aviso em destaque */}
         <div className="home-main-columns">
-          {user.role !== "licenciado" && (
+          {!isLicenciado && (
             <div className="home-elements events-column">
-              <h3>Eventos do Mês</h3>
+              <div className="home-col-head">
+                <h3>Eventos do mês</h3>
+              </div>
               <div className="events-grid">
                 {monthlyEvents.length > 0 ? (
                   monthlyEvents.map((event) => (
@@ -146,76 +156,62 @@ const Home: React.FC = () => {
           )}
 
           <div className="home-elements notices-column">
-            <h3>Mural de Avisos</h3>
-            <div className="notice-board">
-              {(user.role === "admin" || user.role === "rh") && (
-                <div className="notice-form-actions">
-                  <button
-                    className="form-button"
-                    onClick={handleOpenCreateNotice}
-                  >
-                    + Adicionar Aviso
-                  </button>
-                </div>
+            <div className="home-notices-head home-col-head">
+              <h3>Mural de avisos</h3>
+              {canManageNotices && (
+                <button
+                  className="form-button form-button--add"
+                  onClick={() => setIsNoticeModalOpen(true)}
+                >
+                  + Adicionar Aviso
+                </button>
               )}
             </div>
-            <div className="notice-list">
-              {notices.length > 0 ? (
-                notices.map((notice) => (
-                  <div key={notice.id} className="notice-card">
-                    <>
-                      <div
-                        className="notice-message"
-                        dangerouslySetInnerHTML={{ __html: notice.message }}
-                      />
-                      <div className="notice-footer">
-                        <small>
-                          {/* NOVO: nome do autor + data */}
-                          {notice.creator_name && (
-                            <span className="notice-author-name">
-                              {notice.creator_name}
-                            </span>
-                          )}
-                          ·{" "}
-                          {new Date(notice.created_at).toLocaleDateString(
-                            "pt-BR",
-                            {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}
-                        </small>
-                        {(user.role === "admin" || user.role === "rh") && (
-                          <div className="notice-actions">
-                            <button
-                              className="list-button"
-                              onClick={() => handleOpenEditNotice(notice)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              className="delete-button"
-                              onClick={() => handleDeleteNoticeClick(notice.id)}
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </>
+
+            {latestNotice ? (
+              <>
+                <article className="home-notice-highlight">
+                  <div
+                    className="home-notice-preview"
+                    dangerouslySetInnerHTML={{ __html: latestNotice.message }}
+                  />
+                  <div className="home-notice-meta">
+                    {latestNotice.creator_name && (
+                      <span className="notice-author-name">
+                        {latestNotice.creator_name}
+                      </span>
+                    )}
+                    <span>
+                      {new Date(latestNotice.created_at).toLocaleDateString(
+                        "pt-BR",
+                        { day: "2-digit", month: "long", year: "numeric" },
+                      )}
+                    </span>
                   </div>
-                ))
-              ) : (
-                <EmptyState
-                  imageKey="avisos"
-                  title="Nenhum Aviso no Momento"
-                  message="Não há avisos postados no momento. Verifique novamente mais tarde."
-                />
-              )}
-            </div>
+                  <button
+                    className="home-notice-link"
+                    onClick={() => navigate("/content/avisos")}
+                  >
+                    Ler comunicado completo <FaArrowRight aria-hidden="true" />
+                  </button>
+                </article>
+
+                {notices.length > 1 && (
+                  <button
+                    className="home-notices-all"
+                    onClick={() => navigate("/content/avisos")}
+                  >
+                    Ver todos os avisos
+                  </button>
+                )}
+              </>
+            ) : (
+              <EmptyState
+                imageKey="avisos"
+                title="Nenhum Aviso no Momento"
+                message="Não há avisos postados no momento. Verifique novamente mais tarde."
+              />
+            )}
           </div>
         </div>
       </div>
@@ -226,16 +222,9 @@ const Home: React.FC = () => {
         onSuccess={() => {
           fetchNotices();
         }}
-        noticeToEdit={noticeToEdit}
+        noticeToEdit={null}
       />
       <Footer />
-      <ConfirmationModal
-        isOpen={isConfirmModalOpen}
-        onClose={() => setIsConfirmModalOpen(false)}
-        onConfirm={handleConfirmDeleteNotice}
-        title="Confirmar Exclusão"
-        message="Tem certeza que deseja excluir este aviso? Esta ação não pode ser desfeita."
-      />
     </div>
   );
 };

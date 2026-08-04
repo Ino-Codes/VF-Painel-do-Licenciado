@@ -3,11 +3,11 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import CourseCard from "../../components/ui/CourseCard.tsx";
-import { CompanySlug } from "../../types.ts";
+import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 
 interface CourseData {
   id: number;
@@ -18,23 +18,11 @@ interface CourseData {
   completed_lessons: number;
 }
 
-const COMPANY_NAMES = {
-  "v-tax": "V-TAX",
-  "v-banking": "V-BANKING",
-  "v-business": "V-BUSINESS",
-  "v-corp": "V-CORP",
-  "v-tech": "V-TECH",
-};
-
 const CoursesPage: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // 1. Captura da Empresa
-  const [searchParams] = useSearchParams();
-  const companySlug =
-    (searchParams.get("company") as CompanySlug) || "v-tax";
-  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
+  const [company, setCompany] = useState<string>("all");
 
   const [allCourses, setAllCourses] = useState<CourseData[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "ongoing">("all");
@@ -47,7 +35,7 @@ const CoursesPage: React.FC = () => {
       // 2. Envio do parâmetro company para a API
       const res = await api.get("/api/admin/courses/public", {
         params: {
-          company: companySlug,
+          company,
           _t: new Date().getTime(), // Evita cache
         },
         headers: {
@@ -62,7 +50,7 @@ const CoursesPage: React.FC = () => {
     } finally {
       setIsLoadingContent(false);
     }
-  }, [user, companySlug]);
+  }, [user, company]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -101,13 +89,14 @@ const CoursesPage: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className={`content-area document-center company-${companySlug}`}>
+      <div className={`content-area document-center company-${company}`}>
         <div className="document-header">
           <div>
             <h2 className="content-title">Cursos</h2>
-            <span className="content-subtitle">{companyName}</span>
           </div>
         </div>
+
+        <CompanyFilter value={company} onChange={setCompany} />
 
         <div className="tabs">
           <button
@@ -134,7 +123,7 @@ const CoursesPage: React.FC = () => {
                   <CourseCard
                     key={course.id}
                     course={course}
-                    companySlug={companySlug}
+                    companySlug={company === "all" ? undefined : company}
                   />
                 ))}
               </div>
@@ -148,7 +137,7 @@ const CoursesPage: React.FC = () => {
                 }
                 message={
                   activeTab === "all"
-                    ? `Estamos preparando conteúdos incríveis para a ${companyName}! Fique de olho, as novidades chegam em breve.`
+                    ? "Estamos preparando conteúdos incríveis! Fique de olho, as novidades chegam em breve."
                     : "Pronto para começar? Seus cursos em andamento serão exibidos aqui para facilitar seu acesso."
                 }
               />

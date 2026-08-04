@@ -156,7 +156,10 @@ const MeetingRecords: React.FC = () => {
           </div>
 
           {canManage && (
-            <button className="form-button" onClick={handleOpenCreate}>
+            <button
+              className="form-button form-button--add"
+              onClick={handleOpenCreate}
+            >
               + Nova Ata
             </button>
           )}

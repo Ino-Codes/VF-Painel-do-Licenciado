@@ -29,6 +29,13 @@ interface Tenant {
   name: string;
 }
 
+interface TicketAttachment {
+  id: number;
+  file_url: string;
+  file_name: string | null;
+  file_type: string | null;
+}
+
 interface Ticket {
   id: number;
   tenant_id: number;
@@ -45,6 +52,7 @@ interface Ticket {
   resolution_notes: string | null;
   requester_email: string | null;
   observation: string | null;
+  attachments?: TicketAttachment[];
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -412,6 +420,26 @@ const TicketKanbanPage: React.FC = () => {
                       </p>
                     </div>
                   )}
+
+                  {detailTicket.attachments &&
+                    detailTicket.attachments.length > 0 && (
+                      <div className="ticket-modal-field">
+                        <span className="ticket-modal-field-label">Anexos</span>
+                        <ul className="chamado-attachments">
+                          {detailTicket.attachments.map((att) => (
+                            <li key={att.id}>
+                              <a
+                                href={att.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {att.file_name || "arquivo"}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                   <div className="ticket-modal-meta">
                     {detailTicket.name && (

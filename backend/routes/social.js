@@ -11,7 +11,9 @@ const COMPANIES_MAP = {
 };
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
-  const getCompanyId = (slug) => COMPANIES_MAP[slug] || 1;
+  // "all" → null (sem filtro por empresa); slug inválido/ausente → 1
+  const getCompanyId = (slug) =>
+    slug === "all" ? null : COMPANIES_MAP[slug] || 1;
 
   const VALID_VISIBILITIES = ["todos", "colaboradores", "licenciados"];
 
@@ -86,8 +88,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       const companyId = getCompanyId(company); // SEM await — função síncrona
 
-      const params = [companyId];
-      const whereClauses = ["company_id = $1"];
+      const params = [];
+      const whereClauses = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
+      }
 
       if (role === "licenciado") {
         whereClauses.push(
@@ -99,9 +105,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         );
       }
 
+      const whereString = whereClauses.length
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
       const query = `
         SELECT * FROM social_posts
-        WHERE ${whereClauses.join(" AND ")}
+        ${whereString}
         ORDER BY created_at DESC
       `;
 

@@ -1,7 +1,35 @@
 const express = require("express");
 const crypto = require("crypto");
+const multer = require("multer");
 const router = express.Router();
 const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+
+// ── Anexos do chamado ──────────────────────────────────────────────────────
+const ATTACHMENT_MAX_FILES = 3;
+const ATTACHMENT_MAX_SIZE = 10 * 1024 * 1024; // 10 MB por arquivo
+const ATTACHMENT_ALLOWED_MIMES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain",
+]);
+
+// Multer dedicado aos anexos: memória, limite de tamanho/quantidade e
+// whitelist de tipos (imagens, PDF e documentos comuns).
+const ticketUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: ATTACHMENT_MAX_SIZE, files: ATTACHMENT_MAX_FILES },
+  fileFilter: (req, file, cb) => {
+    if (ATTACHMENT_ALLOWED_MIMES.has(file.mimetype)) return cb(null, true);
+    cb(new Error("TIPO_INVALIDO"));
+  },
+});
 
 const FRONTEND_URL =
   process.env.FRONTEND_URL || "https://painel.vcorporate.com.br";
@@ -41,7 +69,37 @@ class HttpError extends Error {
   }
 }
 
-module.exports = function (pool, logActivity, resend) {
+module.exports = function (pool, logActivity, resend, cloudinary) {
+  // ── Helper: roda o middleware do multer e captura erros de upload ─────────
+  const runAttachmentUpload = (req, res) =>
+    new Promise((resolve, reject) => {
+      ticketUpload.array("files", ATTACHMENT_MAX_FILES)(req, res, (err) =>
+        err ? reject(err) : resolve(),
+      );
+    });
+
+  // ── Helper: sobe um buffer para o Cloudinary (imagens ou arquivos raw) ────
+  const uploadBufferToCloudinary = (file) =>
+    new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "tickets", resource_type: "auto" },
+        (error, result) => (error ? reject(error) : resolve(result)),
+      );
+      stream.end(file.buffer);
+    });
+
+  // ── Helper: busca os anexos de um chamado ─────────────────────────────────
+  const getAttachments = async (ticketId) => {
+    const result = await pool.query(
+      `SELECT id, file_url, file_name, file_type
+       FROM ticket_attachments
+       WHERE ticket_id = $1
+       ORDER BY id ASC`,
+      [ticketId],
+    );
+    return result.rows;
+  };
+
   // ── Helper: executa uma função dentro de uma transação (BEGIN/COMMIT) ─────
   // Garante que a atualização do ticket e o registro no histórico sejam
   // atômicos: ou os dois acontecem, ou nenhum.
@@ -141,6 +199,22 @@ module.exports = function (pool, logActivity, resend) {
 
   // ── POST /api/ticket (público — chamado pelo widget) ────────────────────
   router.post("/", async (req, res) => {
+    // Processa os anexos (multipart) antes de ler os campos do formulário.
+    try {
+      await runAttachmentUpload(req, res);
+    } catch (uploadErr) {
+      const byCode = {
+        LIMIT_FILE_SIZE: "Cada anexo pode ter no máximo 10 MB.",
+        LIMIT_FILE_COUNT: `Envie no máximo ${ATTACHMENT_MAX_FILES} anexos.`,
+        LIMIT_UNEXPECTED_FILE: `Envie no máximo ${ATTACHMENT_MAX_FILES} anexos.`,
+      };
+      const message =
+        uploadErr.message === "TIPO_INVALIDO"
+          ? "Tipo de arquivo não permitido. Envie imagens, PDF ou documentos."
+          : byCode[uploadErr.code] || "Falha ao processar os anexos.";
+      return res.status(400).json({ error: message });
+    }
+
     const {
       token,
       type,
@@ -211,6 +285,23 @@ module.exports = function (pool, logActivity, resend) {
         return created;
       });
 
+      // ── Anexos: sobe cada arquivo pro Cloudinary e grava a referência ──
+      const files = req.files || [];
+      let savedCount = 0;
+      for (const file of files) {
+        try {
+          const uploaded = await uploadBufferToCloudinary(file);
+          await pool.query(
+            `INSERT INTO ticket_attachments (ticket_id, file_url, file_name, file_type)
+             VALUES ($1, $2, $3, $4)`,
+            [ticket.id, uploaded.secure_url, file.originalname, file.mimetype],
+          );
+          savedCount += 1;
+        } catch (attErr) {
+          console.warn("Falha ao anexar arquivo ao chamado:", attErr);
+        }
+      }
+
       // ── E-mail de confirmação de abertura (não bloqueante) ──
       try {
         const typeLabel = TYPE_LABELS[ticket.type] || "Chamado";
@@ -226,7 +317,11 @@ module.exports = function (pool, logActivity, resend) {
               <p style="background:#f8f9fa;border-left:4px solid #daa520;padding:12px 16px;border-radius:4px;">
                 <strong>Protocolo:</strong> #${ticket.id}<br/>
                 <strong>Tipo:</strong> ${typeLabel}<br/>
-                <strong>Título:</strong> ${escapeHtml(ticket.title)}
+                <strong>Título:</strong> ${escapeHtml(ticket.title)}${
+                  savedCount > 0
+                    ? `<br/><strong>Anexos:</strong> ${savedCount} arquivo(s)`
+                    : ""
+                }
               </p>
               <p>Nossa equipe irá analisá-lo em breve. Acompanhe o andamento pelo botão abaixo ou guarde o número do protocolo.</p>
               ${trackButtonHtml(ticket.tracking_token)}
@@ -237,7 +332,7 @@ module.exports = function (pool, logActivity, resend) {
         console.warn("Falha ao enviar e-mail de abertura:", mailErr);
       }
 
-      res.status(201).json({ success: true, id: ticket.id });
+      res.status(201).json({ success: true, id: ticket.id, attachments: savedCount });
     } catch (err) {
       console.error("Erro ao salvar ticket:", err);
       res.status(500).json({ error: "Erro ao salvar ticket." });
@@ -258,7 +353,9 @@ module.exports = function (pool, logActivity, resend) {
       if (result.rowCount === 0) {
         return res.status(404).json({ error: "Chamado não encontrado." });
       }
-      res.json(publicTicketView(result.rows[0]));
+      const t = result.rows[0];
+      const attachments = await getAttachments(t.id);
+      res.json({ ...publicTicketView(t), attachments });
     } catch (err) {
       console.error("Erro ao consultar chamado (token):", err);
       res.status(500).json({ error: "Erro ao consultar chamado." });
@@ -289,7 +386,9 @@ module.exports = function (pool, logActivity, resend) {
           error: "Chamado não encontrado. Confira o protocolo e o e-mail.",
         });
       }
-      res.json(publicTicketView(result.rows[0]));
+      const t = result.rows[0];
+      const attachments = await getAttachments(t.id);
+      res.json({ ...publicTicketView(t), attachments });
     } catch (err) {
       console.error("Erro ao consultar chamado (protocolo):", err);
       res.status(500).json({ error: "Erro ao consultar chamado." });
@@ -323,7 +422,23 @@ module.exports = function (pool, logActivity, resend) {
         whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
       const result = await pool.query(
-        `SELECT f.*, wt.name AS tenant_name
+        `SELECT f.*, wt.name AS tenant_name,
+                COALESCE(
+                  (
+                    SELECT json_agg(
+                             json_build_object(
+                               'id', a.id,
+                               'file_url', a.file_url,
+                               'file_name', a.file_name,
+                               'file_type', a.file_type
+                             )
+                             ORDER BY a.id ASC
+                           )
+                    FROM ticket_attachments a
+                    WHERE a.ticket_id = f.id
+                  ),
+                  '[]'
+                ) AS attachments
          FROM tickets f
          LEFT JOIN widget_tenants wt ON f.tenant_id = wt.id
          ${whereString}

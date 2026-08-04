@@ -111,7 +111,10 @@ export const SortableModuleItem: React.FC<SortableModuleItemProps> = ({
       </DndContext>
 
       <div className="form-row module-add-lesson-row">
-        <button className="form-button" onClick={() => onAddLesson(module.id)}>
+        <button
+          className="form-button form-button--add"
+          onClick={() => onAddLesson(module.id)}
+        >
           + Adicionar Aula
         </button>
       </div>

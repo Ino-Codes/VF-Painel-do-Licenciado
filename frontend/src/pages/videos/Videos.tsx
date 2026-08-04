@@ -4,12 +4,12 @@ import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import VideoModal from "../../components/forms/VideoModal.tsx";
-import { useNavigate, useSearchParams } from "react-router-dom"; // Importado useSearchParams
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
+import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import { FiTrash2, FiEdit } from "react-icons/fi";
-import { CompanySlug } from "../../types.ts"; // Certifique-se de que types existe
 
 interface VideoData {
   id: number;
@@ -42,23 +42,11 @@ const getYoutubeEmbedUrl = (url: string): string => {
   return "";
 };
 
-const COMPANY_NAMES = {
-  "v-tax": "V-TAX",
-  "v-banking": "V-BANKING",
-  "v-business": "V-BUSINESS",
-  "v-corp": "V-CORP",
-  "v-tech": "V-TECH",
-};
-
 const Videos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // 1. Captura slug da URL
-  const [searchParams] = useSearchParams();
-  const companySlug =
-    (searchParams.get("company") as CompanySlug) || "v-tax";
-  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
+  const [company, setCompany] = useState<string>("all");
 
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -82,13 +70,13 @@ const Videos: React.FC = () => {
     try {
       const res = await api.get("/api/videos/categories", {
         // Envia a empresa para filtrar categorias
-        params: { role: user.role, company: companySlug },
+        params: { role: user.role, company },
       });
       setCategories(res.data);
     } catch (err) {
       toast.error("Erro ao buscar categorias de vídeo.");
     }
-  }, [user, companySlug]);
+  }, [user, company]);
 
   const fetchVideos = useCallback(
     async (page: number) => {
@@ -102,7 +90,7 @@ const Videos: React.FC = () => {
           role: user.role,
           page,
           limit: 4,
-          company: companySlug, // Filtro de empresa
+          company, // Filtro de empresa
           _t: new Date().getTime(), // Evita cache (304)
         };
 
@@ -131,7 +119,7 @@ const Videos: React.FC = () => {
         setIsLoadingMore(false);
       }
     },
-    [user, selectedCategory, companySlug],
+    [user, selectedCategory, company],
   );
 
   useEffect(() => {
@@ -152,7 +140,7 @@ const Videos: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, companySlug]); // Reseta página ao trocar de empresa
+  }, [selectedCategory, company]); // Reseta página ao trocar de empresa
 
   const handleLoadMore = () => {
     if (currentPage < totalPages) {
@@ -205,22 +193,23 @@ const Videos: React.FC = () => {
     <div className="p-2">
       <Menu />
 
-      <div className={`content-area document-center company-${companySlug}`}>
+      <div className={`content-area document-center company-${company}`}>
         <div className="document-header">
           <div>
             <h2 className="content-title">Vídeos</h2>
-            <span className="content-subtitle">{companyName}</span>
           </div>
 
           {user.role === "admin" && (
             <button
-              className="form-button"
+              className="form-button form-button--add"
               onClick={() => setIsModalOpen(true)}
             >
               + Adicionar Vídeo
             </button>
           )}
         </div>
+
+        <CompanyFilter value={company} onChange={setCompany} />
 
         <div className="tabs">
           <button
@@ -284,7 +273,7 @@ const Videos: React.FC = () => {
               <EmptyState
                 imageKey="video"
                 title="Nenhum Vídeo Encontrado"
-                message={`Estamos preparando conteúdos em vídeo incríveis para a ${companyName}. Fique de olho, as novidades chegam em breve!`}
+                message="Estamos preparando conteúdos em vídeo incríveis. Fique de olho, as novidades chegam em breve!"
               ></EmptyState>
             )}
 

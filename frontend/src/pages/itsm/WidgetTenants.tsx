@@ -207,7 +207,10 @@ const WidgetTenantsPage: React.FC = () => {
           <h1 className="page-title">Sistemas Integrados</h1>
 
           <div className="page-actions">
-            <button className="form-button" onClick={openCreate}>
+            <button
+              className="form-button form-button--add"
+              onClick={openCreate}
+            >
               + Token
             </button>
           </div>

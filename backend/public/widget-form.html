@@ -164,6 +164,69 @@
         color: #bbb;
         margin-top: 16px;
       }
+
+      .attach-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .attach-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border: 1.5px dashed #cfcfcf;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #444;
+      }
+      .attach-btn:hover {
+        border-color: #1a1a2e;
+      }
+      .attach-btn svg {
+        width: 15px;
+        height: 15px;
+      }
+      .attach-hint {
+        font-size: 11px;
+        color: #999;
+      }
+      .attach-list {
+        list-style: none;
+        margin: 0 0 12px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .attach-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 12px;
+        background: #f6f7f9;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        padding: 6px 10px;
+      }
+      .attach-item .name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .attach-remove {
+        background: none;
+        border: none;
+        color: #e53e3e;
+        cursor: pointer;
+        font-size: 15px;
+        line-height: 1;
+        flex-shrink: 0;
+      }
     </style>
   </head>
   <body>
@@ -234,6 +297,36 @@
     ></textarea>
     <div class="error" id="err-desc"></div>
 
+    <label>Anexos (opcional)</label>
+    <div class="attach-box">
+      <label for="fb-files" class="attach-btn">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"
+          />
+        </svg>
+        Adicionar arquivos
+      </label>
+      <input
+        id="fb-files"
+        type="file"
+        multiple
+        accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+        hidden
+      />
+      <span class="attach-hint">Até 3 arquivos, 10 MB cada</span>
+    </div>
+    <ul class="attach-list" id="attach-list"></ul>
+    <div class="error" id="err-files"></div>
+
     <div class="btn-row">
       <button class="cancel" id="btn-cancel">Cancelar</button>
       <button class="send" id="btn-send">Enviar</button>
@@ -256,6 +349,80 @@
           btn.classList.add("selected");
           selectedType = btn.getAttribute("data-type");
         });
+      });
+
+      // ── Anexos ──
+      const MAX_FILES = 3;
+      const MAX_SIZE = 10 * 1024 * 1024;
+      const ALLOWED = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+      ];
+      let selectedFiles = [];
+      const fileInput = document.getElementById("fb-files");
+      const attachList = document.getElementById("attach-list");
+      const errFiles = document.getElementById("err-files");
+
+      function humanSize(bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+      }
+
+      function renderFiles() {
+        attachList.innerHTML = "";
+        selectedFiles.forEach((f, i) => {
+          const li = document.createElement("li");
+          li.className = "attach-item";
+          const nameEl = document.createElement("span");
+          nameEl.className = "name";
+          nameEl.textContent = f.name + " · " + humanSize(f.size);
+          const rm = document.createElement("button");
+          rm.className = "attach-remove";
+          rm.type = "button";
+          rm.innerHTML = "&times;";
+          rm.title = "Remover";
+          rm.onclick = function () {
+            selectedFiles.splice(i, 1);
+            renderFiles();
+          };
+          li.appendChild(nameEl);
+          li.appendChild(rm);
+          attachList.appendChild(li);
+        });
+      }
+
+      fileInput.addEventListener("change", function () {
+        errFiles.innerText = "";
+        for (const file of Array.from(fileInput.files)) {
+          if (selectedFiles.length >= MAX_FILES) {
+            errFiles.innerText = "Máximo de " + MAX_FILES + " arquivos.";
+            break;
+          }
+          if (ALLOWED.indexOf(file.type) === -1) {
+            errFiles.innerText = "Tipo não permitido: " + file.name;
+            continue;
+          }
+          if (file.size > MAX_SIZE) {
+            errFiles.innerText = file.name + " excede 10 MB.";
+            continue;
+          }
+          const dup = selectedFiles.some(
+            (f) => f.name === file.name && f.size === file.size,
+          );
+          if (dup) continue;
+          selectedFiles.push(file);
+        }
+        fileInput.value = ""; // permite re-selecionar o mesmo arquivo
+        renderFiles();
       });
 
       document.getElementById("btn-close").onclick = function () {
@@ -304,27 +471,36 @@
         btn.innerText = "Enviando...";
 
         try {
+          const fd = new FormData();
+          fd.append("token", TOKEN || "");
+          fd.append("type", selectedType);
+          fd.append("title", title);
+          fd.append("name", name);
+          fd.append("requester_email", email);
+          fd.append("description", description);
+          if (ORIGIN) fd.append("origin_url", ORIGIN);
+          selectedFiles.forEach((f) => fd.append("files", f));
+
+          // Sem header Content-Type: o navegador define o boundary do multipart.
           const response = await fetch(`${API_BASE}/api/ticket`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              token: TOKEN,
-              type: selectedType,
-              title,
-              name,
-              requester_email: email,
-              description,
-              origin_url: ORIGIN,
-            }),
+            body: fd,
           });
 
-          if (!response.ok) throw new Error("Erro ao enviar");
+          if (!response.ok) {
+            let msg = "Erro ao enviar o ticket. Tente novamente.";
+            try {
+              const data = await response.json();
+              if (data && data.error) msg = data.error;
+            } catch (_) {}
+            throw new Error(msg);
+          }
 
           window.parent.postMessage("fw:submitted", "*");
         } catch (err) {
           btn.disabled = false;
           btn.innerText = "Enviar";
-          alert("Erro ao enviar o ticket. Tente novamente.");
+          alert(err.message || "Erro ao enviar o ticket. Tente novamente.");
         }
       };
     </script>

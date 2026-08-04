@@ -52,13 +52,13 @@ const RhGestao: React.FC = () => {
     //   icon: <PiIslandFill />,
     //   path: "/admin/ferias",
     // },
-    {
-      title: "Feedbacks",
-      description:
-        "Convide colaboradores a enviar feedbacks sobre colegas e lideranças e gerencie feedbacks recebidos",
-      icon: <MdFeedback />,
-      path: "/admin/feedbacks",
-    },
+    // {
+    //   title: "Feedbacks",
+    //   description:
+    //     "Convide colaboradores a enviar feedbacks sobre colegas e lideranças e gerencie feedbacks recebidos",
+    //   icon: <MdFeedback />,
+    //   path: "/admin/feedbacks",
+    // },
     {
       title: "Recrutamento",
       description:

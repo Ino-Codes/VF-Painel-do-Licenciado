@@ -1,20 +1,4 @@
-- Adicionar rolagem em todos os modais do Painel
-    1. Os modais estão sendo dimensionados de acordo com a quantidade de conteúdo o que faz com que ultrapassem o tamanho da tela
-
-- Controle de atendimento do chamado
-    1. Criar botão variável
-        a. Começa sendo um botão chamado "Iniciar Atendimento"
-            i. Ao ser clicado salva o usuário que clicou como sendo o Atendente
-            ii. Move o chamado para Em Andamento 
-            iii. Abre campo de texto chamado "Instruções de Resolução"
-
-        b. Após ser clicado se torna um botão "Encerrar Atendimento"
-            i. Ao ser clicado move o chamado para Concluído
-            ii. Realiza envio automático de email para o solicitante informando a conclusão do chamado e passando o conteúdo do campo "Instruções de Resolução" e o nome do Atendente
-
-    2. Criar campo de texto chamado "Observação"
-
-    3. Tornar o badge de status do chamado em seleção em lista editável
-
-    4. Criar mensagem de email automática enviada para o solicitante quando um chamado for aberto
-        a. Confirmar a abertura do chamado e informar o ID gerado
+- Central de Chamados
+    1. Habilitar o anexo de arquivos na abertura de Chamados
+    2. Habilitar o anexo de arquivos nas instruções de resolução dos Chamados
+    3. Habilitar a abertura de chamados via email (este tópico precisamos debater sobre como fazer, discutir ideias antes de começar a desenvolver)

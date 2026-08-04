@@ -5,6 +5,7 @@ const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 module.exports = function (pool) {
   // Helper para buscar ID da empresa
   const getCompanyId = async (slug) => {
+    if (slug === "all") return null; // "all" → sem filtro por empresa
     if (!slug || slug === "undefined") return 1;
     try {
       const result = await pool.query(
@@ -23,14 +24,17 @@ module.exports = function (pool) {
     const { role } = req.user;
 
     try {
-      // 1. Resolve ID da empresa
+      // 1. Resolve ID da empresa (null = todas)
       const companyId = await getCompanyId(company);
 
       const offset = (parseInt(page) - 1) * parseInt(limit);
 
-      // O primeiro parâmetro será sempre o companyId
-      let params = [companyId];
-      let whereClauses = ["company_id = $1"]; // Filtro base
+      const params = [];
+      const whereClauses = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
+      }
 
       // Filtros de Role
       if (role === "licenciado") {
@@ -45,10 +49,12 @@ module.exports = function (pool) {
       // Filtro de Categoria
       if (category) {
         params.push(category);
-        whereClauses.push(`category = $${params.length}`); // $2 se category existir
+        whereClauses.push(`category = $${params.length}`);
       }
 
-      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const whereString = whereClauses.length
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
 
       const countSql = `SELECT COUNT(*) FROM videos ${whereString}`;
 
@@ -85,21 +91,26 @@ module.exports = function (pool) {
     try {
       const companyId = await getCompanyId(company);
 
-      // Base da query com filtro de empresa
-      let baseSql =
-        "SELECT DISTINCT category FROM videos WHERE company_id = $1 AND category IS NOT NULL AND category != ''";
-      let whereClause = "";
-
-      if (role === "licenciado") {
-        whereClause =
-          "AND (visibility = 'todos' OR visibility = 'licenciados')";
-      } else if (role !== "admin") {
-        whereClause = "AND (visibility = 'todos' OR visibility = 'internos')";
+      const params = [];
+      const whereClauses = ["category IS NOT NULL", "category != ''"];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
       }
 
-      const finalSql = `${baseSql} ${whereClause} ORDER BY category ASC`;
+      if (role === "licenciado") {
+        whereClauses.push(
+          "(visibility = 'todos' OR visibility = 'licenciados')"
+        );
+      } else if (role !== "admin") {
+        whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
+      }
 
-      const result = await pool.query(finalSql, [companyId]);
+      const finalSql = `SELECT DISTINCT category FROM videos WHERE ${whereClauses.join(
+        " AND "
+      )} ORDER BY category ASC`;
+
+      const result = await pool.query(finalSql, params);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
       console.error("Erro ao buscar categorias de vídeos:", err);

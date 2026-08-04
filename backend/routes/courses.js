@@ -13,6 +13,7 @@ const path = require("path");
 module.exports = function (pool, cloudinary, upload) {
   // --- Helper para ID da Empresa ---
   const getCompanyId = async (slug) => {
+    if (slug === "all") return null; // "all" → sem filtro por empresa
     if (!slug || slug === "undefined" || slug === "null") return 1;
     try {
       const result = await pool.query(
@@ -43,6 +44,14 @@ module.exports = function (pool, cloudinary, upload) {
           "AND (c.visibility = 'todos' OR c.visibility = 'internos')";
       }
 
+      // Filtro de empresa (null = todas)
+      const params = [userId];
+      let companyFilter = "";
+      if (companyId !== null) {
+        params.push(companyId);
+        companyFilter = `AND c.company_id = $${params.length}`;
+      }
+
       const query = `
         SELECT
           c.*,
@@ -57,8 +66,8 @@ module.exports = function (pool, cloudinary, upload) {
         LEFT JOIN
           progress p ON p.lesson_id = l.id AND p.user_id = $1
         WHERE
-          c.is_active = TRUE 
-          AND c.company_id = $2 
+          c.is_active = TRUE
+          ${companyFilter}
           ${visibilityFilter}
         GROUP BY
           c.id
@@ -66,7 +75,7 @@ module.exports = function (pool, cloudinary, upload) {
           c.title ASC;
       `;
 
-      const result = await pool.query(query, [userId, companyId]);
+      const result = await pool.query(query, params);
       res.json(result.rows);
     } catch (err) {
       console.error("Erro ao buscar cursos públicos:", err);

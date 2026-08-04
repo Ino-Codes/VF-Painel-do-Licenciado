@@ -259,7 +259,7 @@
 
 .corp-user-card-info {
   padding: 10px;
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
   display: block;
   width: 100%;
   text-align: center;

@@ -4,10 +4,11 @@ import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import FileModal from "../../components/forms/FileModal.tsx";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
+import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import { FiEdit, FiTrash2, FiDownload } from "react-icons/fi";
 
 interface FileData {
@@ -24,23 +25,11 @@ type GroupedFiles = {
   [folderName: string]: FileData[];
 };
 
-const COMPANY_NAMES = {
-  "v-tax": "V-TAX",
-  "v-banking": "V-BANKING",
-  "v-business": "V-BUSINESS",
-  "v-corp": "V-CORP",
-  "v-tech": "V-TECH",
-};
-
 const Documentos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const [searchParams] = useSearchParams();
-
-  const companySlug =
-    (searchParams.get("company") as CompanySlug) || "v-tax";
-  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
+  const [company, setCompany] = useState<string>("all");
 
   const [groupedFiles, setGroupedFiles] = useState<GroupedFiles>({});
   const [categories, setCategories] = useState<string[]>([]);
@@ -66,7 +55,7 @@ const Documentos: React.FC = () => {
     if (!user) return;
     try {
       const res = await api.get("/api/files/categories", {
-        params: { company: companySlug },
+        params: { company },
       });
       setCategories(res.data);
 
@@ -85,7 +74,7 @@ const Documentos: React.FC = () => {
     } catch (err) {
       toast.error("Erro ao buscar categorias.");
     }
-  }, [user, category, companySlug]);
+  }, [user, category, company]);
 
   const fetchFiles = useCallback(async () => {
     if (!user || (!category && !searchQuery)) {
@@ -96,7 +85,7 @@ const Documentos: React.FC = () => {
     try {
       const params: any = {
         category,
-        company: companySlug,
+        company,
         _t: new Date().getTime(), // Evita cache
       };
 
@@ -116,13 +105,13 @@ const Documentos: React.FC = () => {
     } catch (err) {
       toast.error("Erro ao buscar arquivos.");
     }
-  }, [user, category, searchQuery, companySlug]);
+  }, [user, category, searchQuery, company]);
 
   useEffect(() => {
     if (user) {
       fetchCategories();
     }
-  }, [user, fetchCategories, companySlug]);
+  }, [user, fetchCategories, company]);
 
   useEffect(() => {
     fetchFiles();
@@ -215,18 +204,22 @@ const Documentos: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className={`content-area document-center company-${companySlug}`}>
+      <div className={`content-area document-center company-${company}`}>
         <div className="document-header">
           <div>
             <h2 className="content-title">Central de Documentos</h2>
-            <span className="content-subtitle">{companyName}</span>
           </div>
           {user?.role === "admin" && (
-            <button className="form-button" onClick={openModalForCreate}>
+            <button
+              className="form-button form-button--add"
+              onClick={openModalForCreate}
+            >
               + Adicionar Arquivo
             </button>
           )}
         </div>
+
+        <CompanyFilter value={company} onChange={setCompany} />
 
         <div className="tabs">
           {categories.map((cat) => (

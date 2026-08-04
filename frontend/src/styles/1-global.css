@@ -36,11 +36,21 @@
   --border-strong: #ccc; /* Bordas de inputs */
 
   /* cores de destaque */
-  --accent-color: #d09829;
+  --accent-color: #8a6c35;
   --action-primary: #04a146;
   --action-secondary: #778088;
   --action-edit: #2365c8;
   --action-danger: #c82333;
+
+  /* ── Novo padrão visual da marca (MIV): dourado + superfície de vidro ── */
+  --brand-gold: #8a6c35;
+  --glass-surface: linear-gradient(
+    127deg,
+    rgba(255, 255, 255, 0.075),
+    rgba(255, 255, 255, 0.025)
+  );
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-shadow: 0 8px 24px rgba(20, 18, 12, 0.06);
 
   /* status (badges / feedback visual) — mesmos valores nos dois temas */
   --status-success-bg: #f0fdf4;
@@ -112,11 +122,21 @@ body.dark-theme {
   --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 
   /* cores de destaque */
-  --accent-color: #d09829;
+  --accent-color: #8a6c35;
   --action-primary: #04a146;
   --action-secondary: #555;
   --action-edit: #2a62e2;
   --action-danger: #c82333;
+
+  /* ── Novo padrão visual da marca (MIV): dourado + superfície de vidro ── */
+  --brand-gold: #8a6c35;
+  --glass-surface: linear-gradient(
+    127deg,
+    rgba(255, 255, 255, 0.055),
+    rgba(255, 255, 255, 0.025)
+  );
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 
   /* status — idênticos ao tema claro (cores de status não variam por tema) */
   --status-success-bg: #f0fdf4;
@@ -177,9 +197,6 @@ body.dark-theme {
 }
 
 body {
-  background-image: url(https://d335luupugsy2.cloudfront.net/cms/files/342452/1698426778/$p8rdih6o8);
-  background-size: cover;
-  background-position: top;
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;

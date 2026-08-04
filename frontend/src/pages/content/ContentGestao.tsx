@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom"; // Importar useSearchParams
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
-import { CompanySlug } from "../../types.ts";
 
 import { MdPlayLesson, MdPlayCircle } from "react-icons/md";
 import { IoMdDocument } from "react-icons/io";
@@ -12,81 +11,63 @@ import { IoShareSocialSharp } from "react-icons/io5";
 import { HiSpeakerphone } from "react-icons/hi";
 import { FaArchive } from "react-icons/fa";
 
-// Configuração local para exibição (pode ser movida para utils/companies.ts depois)
-const COMPANIES_INFO = {
-  "v-tax": { name: "V-TAX", color: "var(--v-tax)" },
-  "v-banking": { name: "V-BANKING", color: "var(--v-banking)" },
-  "v-business": { name: "V-BUSINESS", color: "var(--v-business)" },
-  "v-corp": { name: "V-CORP", color: "var(--v-corp)" },
-  "v-tech": { name: "V-TECH", color: "var(--v-tech)" },
-};
-
 const ContentGestao: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); // Hook para ler a URL
-
-  // Pega o slug da URL ou usa 'valor-fiscal' como fallback
-  const companySlug =
-    (searchParams.get("company") as CompanySlug) || "v-tax";
-  const companyInfo =
-    COMPANIES_INFO[companySlug] || COMPANIES_INFO["v-tax"];
 
   if (loading) return <div className="tela-loading">Carregando...</div>;
 
-  // Definição dos módulos com os links atualizados para incluir o parâmetro
   const modules = [
     {
       title: "Arquivos",
       description: "Documentos arquivados e históricos de conteúdo",
       icon: <FaArchive />,
-      path: `/content/arquivos?company=${companySlug}`,
+      path: "/content/arquivos",
     },
     {
       title: "Avisos",
-      description: "Comunicados e anúncios oficiais da empresa",
+      description: "Comunicados e anúncios oficiais",
       icon: <HiSpeakerphone />,
-      path: `/content/avisos?company=${companySlug}`,
+      path: "/content/avisos",
     },
     {
       title: "Cursos",
-      description: `Trilhas de capacitação e treinamentos`,
+      description: "Trilhas de capacitação e treinamentos",
       icon: <MdPlayLesson />,
-      path: `/content/courses?company=${companySlug}`,
+      path: "/content/courses",
     },
     {
       title: "Documentos",
       description: "Arquivos oficiais e materiais de apoio",
       icon: <IoMdDocument />,
-      path: `/content/documentos?company=${companySlug}`,
+      path: "/content/documentos",
     },
     {
       title: "Mídias Sociais",
-      description: `Conteúdo oficial para redes sociais`,
+      description: "Conteúdo oficial para redes sociais",
       icon: <IoShareSocialSharp />,
-      path: `/content/midiassociais?company=${companySlug}`,
+      path: "/content/midiassociais",
     },
     {
       title: "FAQ",
       description: "Perguntas frequentes e respostas",
       icon: <RiQuestionnaireFill />,
-      path: `/faq?company=${companySlug}`,
+      path: "/faq",
     },
     {
       title: "Vídeos",
       description: "Vídeos institucionais e operacionais",
       icon: <MdPlayCircle />,
-      path: `/content/videos?company=${companySlug}`,
+      path: "/content/videos",
     },
   ];
 
   return (
     <div className="p-2">
       <Menu />
-      <div className={`content-area company-${companySlug}`}>
+      <div className="content-area">
         <div className="page-header">
-          {/* Título Dinâmico com a cor da empresa */}
-          <h2 className="content-title">Conteúdos da {companyInfo.name}</h2>
+          <h2 >Conteúdos</h2>
           
         </div>
 

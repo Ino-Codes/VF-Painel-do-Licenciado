@@ -66,6 +66,7 @@ import "./styles/16-Projects.css";
 import "./styles/17-Kanban.css";
 import "./styles/18-MeetingRecords.css";
 import "./styles/19-Tracking.css";
+import "./styles/20-Brand.css";
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />;
 

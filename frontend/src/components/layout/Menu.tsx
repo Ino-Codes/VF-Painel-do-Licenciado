@@ -1,43 +1,18 @@
 import api from "../../api.ts";
 import React, { useState, useEffect, useRef } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { useTheme } from "../../context/ThemeContext.tsx";
 import ThemeToggleButton from "../ui/ThemeToggleButton.tsx";
 // Logos
 import LogoVCorpClara from "../../img/textobranco.png";
 import LogoVCorpEscura from "../../img/textopreto.png";
-// import LogoValorFiscal from "../../img/valor-fiscal.png";
-// import LogoValorBanking from "../../img/valor-banking.png";
 
 import NotificationModal from "../ui/NotificationModal.tsx";
-import { CompanySlug } from "../../types.ts";
 
 import { HiOutlineUserCircle, HiOutlineBell } from "react-icons/hi";
 import { FaPeopleGroup, FaLock } from "react-icons/fa6";
-import { FaUsers } from "react-icons/fa";
-
-// Configuração das Empresas
-const COMPANIES_CONFIG = [
-  {
-    name: "V-BANKING",
-    slug: "v-banking" as CompanySlug,
-    color: "var(--v-banking)", // Azul
-    logo: "LogoVBanking",
-  },
-  // {
-  //   name: "V-BUSINESS",
-  //   slug: "v-business" as CompanySlug,
-  //   color: "var(--v-business)", // Verde
-  //   logo: "LogoVBusiness",
-  // },
-  {
-    name: "V-TAX",
-    slug: "v-tax" as CompanySlug,
-    color: "var(--v-tax)", // Dourado
-    logo: "LogoVTax",
-  },
-];
+import { FaUsers, FaFolderOpen } from "react-icons/fa";
 
 interface Notification {
   id: number;
@@ -48,11 +23,8 @@ interface Notification {
 }
 
 const Menu: React.FC = () => {
-  const { user, switchCompany } = useAuth();
+  const { user } = useAuth();
   const { theme } = useTheme();
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const currentCompanySlug = searchParams.get("company");
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -105,15 +77,6 @@ const Menu: React.FC = () => {
     }
   };
 
-  const handleCompanyClick = (slug: CompanySlug) => {
-    switchCompany(slug);
-    setIsMenuOpen(false);
-  };
-
-  const isCompanyActive = (slug: string) => {
-    return currentCompanySlug === slug;
-  };
-
   if (!user) {
     return null;
   }
@@ -140,34 +103,14 @@ const Menu: React.FC = () => {
           Home
         </NavLink>
 
-        {COMPANIES_CONFIG.map((company) => {
-          const active = isCompanyActive(company.slug);
-
-          return (
-            <Link
-              key={company.slug}
-              to={`/content/content-gestao?company=${company.slug}`}
-              className="menu-item dropdown-trigger"
-              onClick={() => {
-                switchCompany(company.slug);
-                setIsMenuOpen(false);
-              }}
-            >
-              {company.name}
-              {/* --- LOGO DAS EMPRESAS REMOVIDA TEMPORARIAMENTE ---
-              <img
-                src={
-                  company.logo === "LogoValorFiscal"
-                    ? LogoValorFiscal
-                    : LogoValorBanking
-                }
-                alt={`${company.name} Logo`}
-                className="menu-logo"
-              />
-              */}
-            </Link>
-          );
-        })}
+        <NavLink
+          to="/content/content-gestao"
+          className="menu-item dropdown-trigger"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <FaFolderOpen />
+          Conteúdos
+        </NavLink>
 
         {/* SEÇÃO ADMINISTRATIVA (RH e Admin Global) */}
         {(user.role === "admin" || user.role === "rh") && (

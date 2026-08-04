@@ -96,7 +96,7 @@ const Feedbacks: React.FC = () => {
 
           {(user.role === "admin" || user.role === "rh") && (
             <button
-              className="form-button"
+              className="form-button form-button--add"
               onClick={() => setIsInitiateModalOpen(true)}
             >
               + Coletar Feedback

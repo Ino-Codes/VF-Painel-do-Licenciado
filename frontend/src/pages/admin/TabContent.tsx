@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import BulkUserImport from "./BulkUserImport.tsx";
 import { useUnits } from "../../hooks/useUnits.ts";
 import { FiTrash2, FiEdit } from "react-icons/fi";
 
@@ -54,17 +53,16 @@ const TabContent: React.FC<TabContentProps> = ({
       <div className="page-header tab-content-header">
         <h3>
           {isLicenciadoTab
-            ? "Cadastrar ou Importar Licenciados"
+            ? "Cadastrar V-Partner"
             : "Cadastrar Colaborador"}
         </h3>
-        <button className="form-button" onClick={onAddClick}>
+        <button
+          className="form-button form-button--add"
+          onClick={onAddClick}
+        >
           + Adicionar Novo
         </button>
       </div>
-
-      {isLicenciadoTab && (
-        <BulkUserImport onImportSuccess={() => fetchUsers(tab)} />
-      )}
 
       <h2>Usuários Cadastrados</h2>
       <div className="search-bar">

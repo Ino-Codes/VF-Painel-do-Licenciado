@@ -277,7 +277,7 @@ const Projetos: React.FC = () => {
             {user?.role === "admin" && (
               <div className="projetos-toolbar">
                 <button
-                  className="form-button"
+                  className="form-button form-button--add"
                   onClick={() => {
                     setProjectToEdit(null);
                     setIsProjectModalOpen(true);
@@ -372,7 +372,7 @@ const Projetos: React.FC = () => {
 
               {user?.role === "admin" && selectedProjectId && (
                 <button
-                  className="form-button"
+                  className="form-button form-button--add"
                   onClick={() => {
                     setTaskToEdit(null);
                     setIsTaskModalOpen(true);
@@ -401,7 +401,7 @@ const Projetos: React.FC = () => {
                     <p>Nenhuma tarefa cadastrada para este projeto.</p>
                     {user?.role === "admin" && (
                       <button
-                        className="form-button"
+                        className="form-button form-button--add"
                         onClick={() => {
                           setTaskToEdit(null);
                           setIsTaskModalOpen(true);

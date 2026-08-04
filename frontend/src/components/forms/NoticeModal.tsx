@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
+import { COMPANY_OPTIONS } from "../ui/CompanyFilter.tsx";
 import { FiSearch, FiX } from "react-icons/fi";
 
 type Visibility = "todos" | "colaboradores" | "licenciados";
@@ -39,12 +40,19 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   companySlug,
 }) => {
   const [visibility, setVisibility] = useState<Visibility>("todos");
+  // Empresa-alvo do aviso ("all" = global, visível para todas as empresas).
+  const [company, setCompany] = useState<string>(companySlug || "all");
   const [sendEmail, setSendEmail] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [internalUsers, setInternalUsers] = useState<InternalUser[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [userSearch, setUserSearch] = useState("");
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  // Ao (re)abrir o modal, alinha a empresa-alvo com o filtro atual da tela.
+  useEffect(() => {
+    if (isOpen) setCompany(companySlug || "all");
+  }, [isOpen, companySlug]);
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -145,7 +153,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       message,
       visibility,
       sendEmail,
-      company: companySlug,
+      company,
       // Só envia selectedUserIds se a lista estiver visível
       selectedUserIds: showUserList ? selectedUserIds : [],
     };
@@ -209,6 +217,29 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
             )}
           </div>
         </div>
+
+        {/* Empresa-alvo (apenas na criação; o PUT não altera a empresa) */}
+        {!noticeToEdit && (
+          <>
+            <div className="form-row">
+              <label htmlFor="notice-company">Empresa:</label>
+            </div>
+            <div className="form-row">
+              <select
+                id="notice-company"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className="form-input"
+              >
+                {COMPANY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.value === "all" ? "Todas as empresas (global)" : opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
 
         {/* Visibilidade macro */}
         <div className="form-row">

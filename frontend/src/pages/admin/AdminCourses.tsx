@@ -139,7 +139,10 @@ const AdminCourses: React.FC = () => {
             </span>
           </div>
 
-          <button className="form-button" onClick={openModalForCreate}>
+          <button
+            className="form-button form-button--add"
+            onClick={openModalForCreate}
+          >
             + Adicionar Curso
           </button>
         </div>

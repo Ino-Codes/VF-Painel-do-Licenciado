@@ -1,7 +1,7 @@
 .profile-card {
   display: flex;
   gap: 40px;
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
   padding: 30px;
   border-radius: 8px;
   margin-top: 20px;
@@ -70,7 +70,7 @@
   display: flex;
   align-items: center;
   gap: 25px;
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 25px;
@@ -130,7 +130,7 @@
 }
 
 .profile-section {
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
   padding: 25px;
   border-radius: 8px;
   margin-bottom: 25px;
@@ -241,7 +241,7 @@
 }
 
 .certificate-card {
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
   border-radius: 10px;
   padding: 25px;
   box-shadow: var(--box-shadow);

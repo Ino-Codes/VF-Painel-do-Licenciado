@@ -6,27 +6,16 @@ import Footer from "../../components/layout/Footer.tsx";
 import SocialPostModal from "../../components/forms/SocialPostModal.tsx";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
+import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import { FiTrash2, FiCopy, FiImage, FiDownload } from "react-icons/fi";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-
-// Mapeamento idêntico ao do Documentos.tsx
-const COMPANY_NAMES: Record<string, string> = {
-  "v-tax": "V-TAX",
-  "v-banking": "V-BANKING",
-  "v-business": "V-BUSINESS",
-  "v-corp": "V-CORP",
-  "v-tech": "V-TECH",
-};
 
 const SocialMedia: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Lógica de captura do slug pela URL
-  const [searchParams] = useSearchParams();
-  const companySlug = searchParams.get("company") || "v-tax";
-  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
+  const [company, setCompany] = useState<string>("all");
 
   // Estados para dados e interface
   const [groupedPosts, setGroupedPosts] = useState<any>({});
@@ -97,9 +86,9 @@ const SocialMedia: React.FC = () => {
   const fetchSocialContent = useCallback(async () => {
     if (!user) return;
     try {
-      // Passa a empresa capturada da URL como filtro
+      // Passa a empresa selecionada como filtro
       const res = await api.get("/api/social", {
-        params: { company: companySlug },
+        params: { company },
       });
       setGroupedPosts(res.data);
 
@@ -117,12 +106,12 @@ const SocialMedia: React.FC = () => {
     } catch (err) {
       toast.error("Erro ao carregar conteúdos das redes sociais.");
     }
-  }, [user, activeCategory, companyName]);
+  }, [user, activeCategory, company]);
 
-  // Refaz a busca sempre que a URL (companyName) mudar
+  // Refaz a busca sempre que a empresa mudar
   useEffect(() => {
     if (user) fetchSocialContent();
-  }, [user, fetchSocialContent, companyName]);
+  }, [user, fetchSocialContent, company]);
 
   const handleSuccess = () => {
     setIsModalOpen(false);
@@ -135,23 +124,23 @@ const SocialMedia: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      {/* Aplica a classe dinâmica de tema da empresa, igual ao Documentos */}
-      <div className={`content-area document-center company-${companySlug}`}>
+      <div className={`content-area document-center company-${company}`}>
         <div className="document-header">
           <div>
             <h2 className="content-title">Conteúdos para Redes Sociais</h2>
-            <span className="content-subtitle">{companyName}</span>
           </div>
 
           {(user?.role === "admin" || user?.role === "rh") && (
             <button
-              className="form-button"
+              className="form-button form-button--add"
               onClick={() => setIsModalOpen(true)}
             >
               + Novo Conteúdo
             </button>
           )}
         </div>
+
+        <CompanyFilter value={company} onChange={setCompany} />
 
         {/* Tabs de Categoria */}
         {categories.length > 0 && (
@@ -235,7 +224,7 @@ const SocialMedia: React.FC = () => {
             <EmptyState
               imageKey="documentos"
               title="Nenhum post encontrado"
-              message={`Nenhum conteúdo foi publicado para a ${companyName} nesta categoria.`}
+              message="Nenhum conteúdo foi publicado nesta categoria."
             />
           )}
         </div>

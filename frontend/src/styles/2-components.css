@@ -711,3 +711,43 @@ input[type="radio"]:checked {
     color: var(--text-secondary);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Modificador tonal para botões de ADIÇÃO de conteúdo (form-button--add)
+   Fundo verde suave + texto verde, cantos macios. Menos "blocado".
+   Declarado após .form-button para vencer por ordem (mesma especificidade).
+   ═══════════════════════════════════════════════════════════════ */
+.form-button--add {
+  background-color: color-mix(in srgb, var(--action-primary) 14%, transparent);
+  color: var(--action-primary);
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 10px 16px;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.form-button--add:hover {
+  background-color: color-mix(in srgb, var(--action-primary) 24%, transparent);
+  opacity: 1;
+}
+
+/* Lista de anexos de chamado (acompanhamento público + interno) */
+.chamado-attachments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.chamado-attachments a {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-size: 14px;
+  word-break: break-word;
+}
+.chamado-attachments a:hover {
+  text-decoration: underline;
+}

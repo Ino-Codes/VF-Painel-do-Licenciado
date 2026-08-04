@@ -1,7 +1,7 @@
 // frontend/src/pages/content/MuralDeAvisos.tsx
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
@@ -9,8 +9,8 @@ import Footer from "../../components/layout/Footer.tsx";
 import NoticeModal from "../../components/forms/NoticeModal.tsx";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
+import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import toast from "react-hot-toast";
-import { CompanySlug } from "../../types.ts";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -24,27 +24,13 @@ interface Notice {
   creator_name?: string;
 }
 
-// ─── Mapa de nomes de empresa ─────────────────────────────────────────────────
-
-const COMPANY_NAMES: Record<CompanySlug, string> = {
-  "v-tax": "V-TAX",
-  "v-banking": "V-BANKING",
-  "v-business": "V-BUSINESS",
-  "v-corp": "V-CORP",
-  "v-tech": "V-TECH",
-};
-
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 const MuralDeAvisos: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
-  // Empresa vinda da URL (?company=valor-fiscal)
-  const companySlug =
-    (searchParams.get("company") as CompanySlug) || "v-tax";
-  const companyName = COMPANY_NAMES[companySlug] || "V-TAX";
+  const [company, setCompany] = useState<string>("all");
 
   // ─── Estado ─────────────────────────────────────────────────────────────────
 
@@ -79,7 +65,7 @@ const MuralDeAvisos: React.FC = () => {
     try {
       const res = await api.get("/api/notices", {
         params: {
-          company: companySlug,
+          company,
           page: currentPage,
           limit: ITEMS_PER_PAGE,
         },
@@ -95,7 +81,7 @@ const MuralDeAvisos: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user, companySlug, currentPage]);
+  }, [user, company, currentPage]);
 
   useEffect(() => {
     if (user) fetchNotices();
@@ -104,7 +90,7 @@ const MuralDeAvisos: React.FC = () => {
   // Reset de página ao trocar de empresa
   useEffect(() => {
     setCurrentPage(1);
-  }, [companySlug]);
+  }, [company]);
 
   // ─── Handlers de Modal ──────────────────────────────────────────────────────
 
@@ -164,20 +150,24 @@ const MuralDeAvisos: React.FC = () => {
     <div className="p-2">
       <Menu />
 
-      <div className={`content-area document-center company-${companySlug}`}>
+      <div className={`content-area document-center company-${company}`}>
         {/* ── Cabeçalho ── */}
         <div className="document-header">
           <div>
             <h2 className="content-title">Mural de Avisos</h2>
-            <span className="content-subtitle">{companyName}</span>
           </div>
 
           {canManage && (
-            <button className="form-button" onClick={handleOpenCreate}>
+            <button
+              className="form-button form-button--add"
+              onClick={handleOpenCreate}
+            >
               + Adicionar Aviso
             </button>
           )}
         </div>
+
+        <CompanyFilter value={company} onChange={setCompany} />
 
         {/* ── Contador de resultados ── */}
         {!isLoading && totalCount > 0 && (
@@ -239,7 +229,7 @@ const MuralDeAvisos: React.FC = () => {
           <EmptyState
             imageKey="avisos"
             title="Nenhum Aviso Publicado"
-            message={`Não há avisos publicados para a ${companyName} no momento. Verifique novamente mais tarde.`}
+            message="Não há avisos publicados no momento. Verifique novamente mais tarde."
           />
         )}
 
@@ -283,7 +273,7 @@ const MuralDeAvisos: React.FC = () => {
             fetchNotices();
           }}
           noticeToEdit={noticeToEdit}
-          companySlug={companySlug}
+          companySlug={company}
         />
       )}
 

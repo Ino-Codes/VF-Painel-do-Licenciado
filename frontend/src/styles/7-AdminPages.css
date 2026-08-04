@@ -38,7 +38,7 @@
 }
 
 .admin-form {
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
 
   border-radius: 8px;
 }
@@ -134,7 +134,7 @@
 }
 
 .on-screen-form {
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
   padding: 20px;
   border-radius: 8px;
   margin-top: 20px;

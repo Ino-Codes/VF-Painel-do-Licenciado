@@ -4,6 +4,7 @@ const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
   const getCompanyId = async (slug) => {
+    if (slug === "all") return null; // "all" → sem filtro por empresa
     if (!slug || slug === "undefined" || slug === "null") return 1;
     try {
       const result = await pool.query(
@@ -24,8 +25,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       const companyId = await getCompanyId(company);
 
-      const params = [companyId];
-      let whereClauses = ["company_id = $1"];
+      const params = [];
+      const whereClauses = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
+      }
 
       if (role === "licenciado") {
         whereClauses.push(
@@ -49,7 +54,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         );
       }
 
-      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const whereString = whereClauses.length
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
       const sql = `SELECT * FROM archives ${whereString} ORDER BY folder ASC, originalname ASC`;
 
       const result = await pool.query(sql, params);
@@ -76,8 +83,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       const companyId = await getCompanyId(company);
 
-      const params = [companyId];
-      let whereClauses = ["company_id = $1"];
+      const params = [];
+      const whereClauses = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
+      }
 
       if (role === "licenciado") {
         whereClauses.push(
@@ -89,7 +100,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         );
       }
 
-      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const whereString = whereClauses.length
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
       const query = `SELECT DISTINCT category FROM archives ${whereString} ORDER BY category ASC`;
 
       const result = await pool.query(query, params);

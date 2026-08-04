@@ -26,14 +26,19 @@ module.exports = function (pool, cloudinary, upload) {
 
     try {
       const offset = (page - 1) * limit;
-      const companyId = await getCompanyId(company);
+      const isAll = company === "all";
+      const companyId = isAll ? null : await getCompanyId(company);
 
-      if (companyId === null) {
+      if (!isAll && companyId === null) {
         return res.status(404).json({ error: "Empresa não encontrada.", faqs: [], totalCount: 0, totalPages: 0 });
       }
 
-      let whereClauses = ["company_id = $1"];
-      const params = [companyId];
+      const whereClauses = [];
+      const params = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
+      }
 
       if (userRole === "licenciado") {
         whereClauses.push(
@@ -84,13 +89,19 @@ module.exports = function (pool, cloudinary, upload) {
     const userRole = req.user ? req.user.role : null;
 
     try {
-      const companyId = await getCompanyId(company);
+      const isAll = company === "all";
+      const companyId = isAll ? null : await getCompanyId(company);
 
-      if (companyId === null) {
+      if (!isAll && companyId === null) {
         return res.json([]);
       }
 
-      let whereClauses = ["company_id = $1"];
+      const params = [];
+      const whereClauses = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
+      }
 
       if (userRole === "licenciado") {
         whereClauses.push(
@@ -100,11 +111,13 @@ module.exports = function (pool, cloudinary, upload) {
         whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
       }
 
-      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const whereString = whereClauses.length
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
 
       const query = `SELECT DISTINCT category FROM faq ${whereString} ORDER BY category ASC`;
 
-      const result = await pool.query(query, [companyId]);
+      const result = await pool.query(query, params);
       res.json(result.rows.map((row) => row.category));
     } catch (err) {
       console.error("Erro ao buscar categorias do FAQ:", err);

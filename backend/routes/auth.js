@@ -4,7 +4,79 @@ const crypto = require("crypto");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 
+// ── Configuração da verificação em duas etapas (2FA) ──────────────────────
+const TWO_FACTOR_TTL_MS = 2 * 60 * 1000; // 2 minutos
+const TWO_FACTOR_MAX_ATTEMPTS = 5;
+
+// Código de 6 dígitos, gerado de forma criptograficamente segura.
+const generateTwoFactorCode = () =>
+  String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+
+// Guardamos apenas o hash do código (nunca o código em texto puro).
+const hashTwoFactorCode = (code) =>
+  crypto.createHash("sha256").update(String(code)).digest("hex");
+
 module.exports = function (pool, resend, logActivity) {
+  // ── Helper: e-mail estilizado com o código de verificação ───────────────
+  const buildTwoFactorEmailHtml = (nome, code) => `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head><meta charset="utf-8" /></head>
+    <body style="margin:0;padding:0;background-color:#f4f4f4;font-family:'Segoe UI',Arial,sans-serif;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr><td align="center" style="padding:20px 0;">
+          <table width="600" border="0" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            <tr><td align="center" style="background:#111217;padding:20px 0;">
+              <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1782936553/textobranco_zxw32o.png" alt="V-CORP" style="width:200px;height:auto;">
+            </td></tr>
+            <tr><td style="padding:30px 40px;color:#2D2C2B;font-size:16px;line-height:1.6;">
+              <h2 style="font-size:22px;color:#0D0D0D;margin-top:0;">Seu código de acesso</h2>
+              <p>Olá, ${nome || "usuário"},</p>
+              <p>Use o código abaixo para concluir o seu login no Painel V-CORP:</p>
+              <div style="margin:28px 0;text-align:center;">
+                <span style="display:inline-block;font-size:34px;font-weight:700;letter-spacing:10px;color:#111217;background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 24px;">${code}</span>
+              </div>
+              <p style="font-size:14px;color:#6c757d;">Este código é válido por <strong>2 minutos</strong>. Se você não tentou fazer login, ignore este e-mail — sua conta continua segura.</p>
+            </td></tr>
+            <tr><td align="center" style="background:#f8f9fa;padding:20px;font-size:12px;color:#6c757d;">
+              <p>V-CORP Inteligência Tributária © ${new Date().getFullYear()}</p>
+              <p>Esta é uma mensagem automática. Por favor, não responda a este e-mail.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  // ── Helper: gera, salva e envia um novo código de verificação ────────────
+  const sendTwoFactorCode = async (user) => {
+    const code = generateTwoFactorCode();
+    const expires = new Date(Date.now() + TWO_FACTOR_TTL_MS);
+    await pool.query(
+      `UPDATE users
+         SET two_factor_code = $1, two_factor_expires = $2, two_factor_attempts = 0
+       WHERE id = $3`,
+      [hashTwoFactorCode(code), expires, user.id],
+    );
+    await resend.emails.send({
+      from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
+      to: user.email,
+      subject: "Seu código de acesso - Painel V-CORP",
+      html: buildTwoFactorEmailHtml(user.nome, code),
+    });
+  };
+
+  // ── Helper: limpa o estado de 2FA do usuário ─────────────────────────────
+  const clearTwoFactor = (userId) =>
+    pool.query(
+      `UPDATE users
+         SET two_factor_code = NULL, two_factor_expires = NULL, two_factor_attempts = 0
+       WHERE id = $1`,
+      [userId],
+    );
+
+  // ── POST /login — 1ª etapa: valida credenciais e dispara o código ────────
   router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -25,6 +97,86 @@ module.exports = function (pool, resend, logActivity) {
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
 
+      // Credenciais OK → envia o código de verificação por e-mail. O token só
+      // é emitido na 2ª etapa (POST /verify-2fa).
+      try {
+        await sendTwoFactorCode(user);
+      } catch (mailErr) {
+        console.error("Falha ao enviar código 2FA:", mailErr);
+        return res.status(500).json({
+          message:
+            "Não foi possível enviar o código de verificação. Tente novamente em instantes.",
+        });
+      }
+
+      logActivity(
+        user.id,
+        user.email,
+        "2FA Enviado",
+        "Código de verificação enviado por e-mail.",
+        req.ipAddress,
+      );
+
+      res.json({ twoFactorRequired: true, email: user.email });
+    } catch (err) {
+      console.error("Erro na rota /api/login:", err);
+      res.status(500).send({ error: "Erro no servidor" });
+    }
+  });
+
+  // ── POST /verify-2fa — 2ª etapa: valida o código e emite o token ─────────
+  router.post("/verify-2fa", async (req, res) => {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res
+        .status(400)
+        .json({ message: "E-mail e código são obrigatórios." });
+    }
+    try {
+      const result = await pool.query(
+        "SELECT *, must_change_password FROM users WHERE email = $1",
+        [email],
+      );
+      const user = result.rows[0];
+
+      if (!user || !user.two_factor_code || !user.two_factor_expires) {
+        return res.status(400).json({
+          message: "Nenhum código pendente. Faça o login novamente.",
+        });
+      }
+
+      if (new Date(user.two_factor_expires) < new Date()) {
+        await clearTwoFactor(user.id);
+        return res
+          .status(400)
+          .json({ message: "Código expirado. Faça o login novamente." });
+      }
+
+      if (user.two_factor_attempts >= TWO_FACTOR_MAX_ATTEMPTS) {
+        await clearTwoFactor(user.id);
+        return res.status(429).json({
+          message: "Muitas tentativas. Faça o login novamente.",
+        });
+      }
+
+      if (hashTwoFactorCode(code) !== user.two_factor_code) {
+        await pool.query(
+          "UPDATE users SET two_factor_attempts = two_factor_attempts + 1 WHERE id = $1",
+          [user.id],
+        );
+        logActivity(
+          user.id,
+          user.email,
+          "2FA Falhou",
+          "Código de verificação incorreto.",
+          req.ipAddress,
+        );
+        return res.status(401).json({ message: "Código incorreto." });
+      }
+
+      // Sucesso → limpa o 2FA e emite o token.
+      await clearTwoFactor(user.id);
+
       const tokenPayload = {
         id: user.id,
         email: user.email,
@@ -40,15 +192,47 @@ module.exports = function (pool, resend, logActivity) {
         user.id,
         user.email,
         "Login Bem-Sucedido",
-        "Usuário logado com sucesso.",
+        "Usuário logado com sucesso (verificação em duas etapas).",
         req.ipAddress,
       );
 
       delete user.password;
+      delete user.two_factor_code;
+      delete user.two_factor_expires;
+      delete user.two_factor_attempts;
 
       res.json({ user, token });
     } catch (err) {
-      console.error("Erro na rota /api/login:", err);
+      console.error("Erro na rota /api/auth/verify-2fa:", err);
+      res.status(500).send({ error: "Erro no servidor" });
+    }
+  });
+
+  // ── POST /resend-2fa — reenvia o código (apenas se houver login pendente) ─
+  router.post("/resend-2fa", async (req, res) => {
+    const { email } = req.body;
+    try {
+      const result = await pool.query(
+        "SELECT * FROM users WHERE email = $1",
+        [email],
+      );
+      const user = result.rows[0];
+
+      // Só reenvia quando já existe um 2FA pendente — evita usar a rota como
+      // oráculo de existência de e-mail ou como vetor de spam.
+      if (user && user.two_factor_expires) {
+        try {
+          await sendTwoFactorCode(user);
+        } catch (mailErr) {
+          console.error("Falha ao reenviar código 2FA:", mailErr);
+        }
+      }
+
+      res.json({
+        message: "Se houver um login pendente, um novo código foi enviado.",
+      });
+    } catch (err) {
+      console.error("Erro na rota /api/auth/resend-2fa:", err);
       res.status(500).send({ error: "Erro no servidor" });
     }
   });

@@ -5,6 +5,8 @@ const { isLoggedIn, checkRole } = require("../middleware/auth.js");
 module.exports = function (pool, cloudinary, upload, logActivity) {
   // --- HELPER: Busca ID da empresa pelo Slug ---
   const getCompanyId = async (slug) => {
+    // "all" → sem filtro por empresa (retorna todas)
+    if (slug === "all") return null;
     // Se não vier slug ou for undefined, assume ID 1 (V-CORP) como padrão
     if (!slug || slug === "undefined" || slug === "null") return 1;
 
@@ -26,13 +28,16 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     const { role } = req.user;
 
     try {
-      // 1. Resolve o ID da empresa
+      // 1. Resolve o ID da empresa (null = todas)
       const companyId = await getCompanyId(company);
 
       // 2. Inicia os arrays de parâmetros e cláusulas
-      // O primeiro parâmetro será sempre o company_id
-      const params = [companyId];
-      let whereClauses = ["company_id = $1"];
+      const params = [];
+      const whereClauses = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
+      }
 
       // Filtros de Role (Visibilidade)
       if (role === "licenciado") {
@@ -61,7 +66,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       }
 
       // Monta a query final
-      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const whereString = whereClauses.length
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
       const filesSql = `SELECT * FROM files ${whereString} ORDER BY folder ASC, originalname ASC`;
 
       const filesResult = await pool.query(filesSql, params);
@@ -89,9 +96,13 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       const companyId = await getCompanyId(company);
 
-      // Inicia com filtro de empresa e visibilidade
-      const params = [companyId];
-      let whereClauses = ["company_id = $1"];
+      // Inicia com filtro de empresa (null = todas) e visibilidade
+      const params = [];
+      const whereClauses = [];
+      if (companyId !== null) {
+        params.push(companyId);
+        whereClauses.push(`company_id = $${params.length}`);
+      }
 
       if (role === "licenciado") {
         whereClauses.push(
@@ -103,7 +114,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         );
       }
 
-      const whereString = `WHERE ${whereClauses.join(" AND ")}`;
+      const whereString = whereClauses.length
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
       const query = `SELECT DISTINCT category FROM files ${whereString} ORDER BY category ASC`;
 
       const result = await pool.query(query, params);

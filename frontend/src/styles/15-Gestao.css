@@ -6,7 +6,7 @@
 }
 
 .gestao-module-card {
-  background-color: var(--bg-secondary);
+  background-color: var(--glass-background);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 30px;

@@ -1,4 +1,4 @@
-require("dotenv").config();
+// require("dotenv").config();
 
 const migrationRunner = require("./migrationRunner.js");
 const express = require("express");
@@ -149,7 +149,12 @@ const widgetTenantsRoutes = require("./routes/widgetTenants.js")(
   pool,
   logActivity,
 );
-const ticketsRoutes = require("./routes/tickets.js")(pool, logActivity, resend);
+const ticketsRoutes = require("./routes/tickets.js")(
+  pool,
+  logActivity,
+  resend,
+  cloudinary,
+);
 const meetingRecordsRoutes = require("./routes/meetingRecords.js")(
   pool,
   cloudinary,

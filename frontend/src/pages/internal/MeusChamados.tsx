@@ -7,6 +7,13 @@ import Footer from "../../components/layout/Footer.tsx";
 import { FaBug, FaLifeRing, FaRegLightbulb } from "react-icons/fa";
 import { IconType } from "react-icons";
 
+interface TicketAttachment {
+  id: number;
+  file_url: string;
+  file_name: string | null;
+  file_type: string | null;
+}
+
 interface PublicTicket {
   id: number;
   type: "help" | "suggestion" | "bug";
@@ -16,6 +23,7 @@ interface PublicTicket {
   tenant_name: string | null;
   attendant_name: string | null;
   resolution_notes: string | null;
+  attachments?: TicketAttachment[];
 }
 
 const TYPE_CONFIG: Record<
@@ -173,6 +181,24 @@ const MeusChamados: React.FC = () => {
                       Instruções de resolução
                     </span>
                     <p>{ticket.resolution_notes}</p>
+                  </div>
+                )}
+                {ticket.attachments && ticket.attachments.length > 0 && (
+                  <div className="chamado-field">
+                    <span className="chamado-field-label">Anexos</span>
+                    <ul className="chamado-attachments">
+                      {ticket.attachments.map((att) => (
+                        <li key={att.id}>
+                          <a
+                            href={att.file_url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {att.file_name || "arquivo"}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
