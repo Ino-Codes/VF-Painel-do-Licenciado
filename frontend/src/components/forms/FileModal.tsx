@@ -140,6 +140,9 @@ const FileModal: React.FC<FileModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{fileToEdit ? "Editar Arquivo" : "Novo Arquivo"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">

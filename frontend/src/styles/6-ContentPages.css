@@ -249,7 +249,7 @@
 
 .lesson-sidebar {
   background: var(--glass-surface);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 15px;
 }
@@ -690,27 +690,33 @@
 }
 
 .company-filter-btn {
-  padding: 6px 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  background: var(--bg-secondary);
+  padding: 7px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-surface);
   color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .company-filter-btn:hover {
-  border-color: var(--border-strong);
-  color: var(--text-primary);
+  color: var(--brand-gold);
+  border-color: color-mix(in srgb, var(--brand-gold) 45%, transparent);
 }
 
 .company-filter-btn--active {
-  background: var(--text-primary);
-  border-color: var(--text-primary);
-  color: var(--bg-secondary);
+  background: var(--brand-gold);
+  border-color: var(--brand-gold);
+  color: #fff;
+}
+
+.company-filter-btn--active:hover {
+  color: #fff;
+  border-color: var(--brand-gold);
 }

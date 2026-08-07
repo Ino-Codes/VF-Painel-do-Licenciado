@@ -7,6 +7,11 @@
   display: flex;
   gap: 25px;
   border-bottom: solid 1px var(--border-color);
+  /* O menu tem backdrop-filter (glass), que cria um contexto de empilhamento.
+     Sem z-index, todo o subtree (inclusive o dropdown de notificações) ficaria
+     atrás do conteúdo, que vem depois no DOM. z-index abaixo dos modais (1000). */
+  position: relative;
+  z-index: 500;
 }
 
 .menu-left {
@@ -34,14 +39,16 @@
   color: var(--text-primary);
   font-weight: 500;
   font-size: 16px;
-  padding: 8px 12px;
-  border-radius: 5px;
+  padding: 8px 10px;
   transition: background-color 0.3s ease;
 }
 
-.menu-item:hover,
+.menu-item:hover {
+  color: #8a6c35;
+}
+
 .menu-item.active {
-  background-color: var(--bg-menu-hover);
+  color: #8a6c35;
 }
 
 .menu-logo-link:hover,
@@ -59,7 +66,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 8px 10px;
   font-family: "Montserrat", sans-serif;
   font-size: 16px;
   font-weight: 500;
@@ -137,6 +144,19 @@
 
 .profile-name {
   font-weight: 500;
+}
+
+.profile-image-container {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
 }
 
 .profile-image-container .profile-avatar-icon {

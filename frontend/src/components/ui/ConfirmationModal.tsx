@@ -22,6 +22,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content confirmation-modal">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{title}</h2>
         <p>{message}</p>
         <div className="modal-actions">

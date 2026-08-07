@@ -393,6 +393,9 @@ const WidgetTenantsPage: React.FC = () => {
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content widget-tenant-modal">
+            <button type="button" className="modal-close-button" aria-label="Fechar" onClick={closeModal}>
+              &times;
+            </button>
             <h2>
               {editTenant ? "Editar Integração" : "Novo Token de Integração"}
             </h2>

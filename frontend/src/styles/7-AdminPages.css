@@ -74,7 +74,7 @@
 .form-input {
   flex: 1;
   padding: 10px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-color);
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
   background-color: var(--bg-primary);

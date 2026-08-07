@@ -102,6 +102,9 @@ const CourseModal: React.FC<CourseModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{courseToEdit ? "Editar Curso" : "Novo Curso"}</h2>
         <form onSubmit={handleSubmit}>
           {!courseToEdit && (

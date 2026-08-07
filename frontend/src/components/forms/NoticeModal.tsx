@@ -191,6 +191,9 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}</h2>
 
         {/* Editor */}

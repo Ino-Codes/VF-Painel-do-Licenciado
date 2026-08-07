@@ -214,6 +214,9 @@ const EventModal: React.FC<EventModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{eventToEdit ? "Editar Evento" : "Criar Novo Evento"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">

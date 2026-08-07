@@ -31,7 +31,6 @@ const TabContent: React.FC<TabContentProps> = ({
   tab,
   state,
   currentUser,
-  onAddClick,
   handleSearch,
   setEditingUser,
   handleDeleteClick,
@@ -50,21 +49,6 @@ const TabContent: React.FC<TabContentProps> = ({
 
   return (
     <div>
-      <div className="page-header tab-content-header">
-        <h3>
-          {isLicenciadoTab
-            ? "Cadastrar V-Partner"
-            : "Cadastrar Colaborador"}
-        </h3>
-        <button
-          className="form-button form-button--add"
-          onClick={onAddClick}
-        >
-          + Adicionar Novo
-        </button>
-      </div>
-
-      <h2>Usuários Cadastrados</h2>
       <div className="search-bar">
         <input
           type="search"

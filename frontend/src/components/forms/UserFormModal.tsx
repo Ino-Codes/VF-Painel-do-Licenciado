@@ -13,6 +13,9 @@ const UserFormModal: React.FC<{
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <UserForm
           userToEdit={userToEdit}
           formType={formType}

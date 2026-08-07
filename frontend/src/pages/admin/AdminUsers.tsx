@@ -196,8 +196,23 @@ const AdminUsers: React.FC = () => {
   return (
     <div className="p-2">
       <Menu />
-      <div className="content-area">
-        <h2>Gestão de Usuários</h2>
+      <div className="content-area document-center">
+
+        <div className="document-header">
+          <div>
+            <h2 className="content-title">Gestão de Usuários</h2>
+          </div>
+          
+            <button
+            className="form-button form-button--add"
+            onClick={handleOpenCreateModal}
+          >
+            + Adicionar Novo
+          </button>
+          
+        </div>
+
+        
         <div className="tabs">
           <button
             className={`tab-item ${

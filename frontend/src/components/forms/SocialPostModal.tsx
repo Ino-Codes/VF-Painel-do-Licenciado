@@ -118,6 +118,9 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content social-post-modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>Adicionar Conteúdo Social</h2>
         <form onSubmit={handleSubmit}>
           {/* Empresa */}

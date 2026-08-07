@@ -197,7 +197,7 @@ const ChecklistTemplatesAdmin: React.FC = () => {
                           Salvar
                         </button>
                         <button
-                          className="delete-button"
+                          className="form-button-cancel"
                           onClick={() => setEditingTemplate(null)}
                         >
                           Cancelar

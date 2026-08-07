@@ -33,6 +33,9 @@ const OptionEditModal: React.FC<OptionEditModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{option.id ? "Editar Opção" : "Adicionar Nova Opção"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">

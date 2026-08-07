@@ -3,6 +3,8 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../ui/ConfirmationModal.tsx";
+import { FiCamera, FiX, FiTrash2 } from "react-icons/fi";
+import { HiOutlineUserCircle } from "react-icons/hi";
 
 interface AvatarModalProps {
   isOpen: boolean;
@@ -12,20 +14,15 @@ interface AvatarModalProps {
 const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
   const { user, login } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-
-  const defaultAvatar =
-    "https://res.cloudinary.com/dsgbgrll5/image/upload/v1758284145/user-dark_oxwuux.png";
 
   if (!isOpen || !user) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const MAX_SIZE_MB = 2;
     const MAX_WIDTH = 1500;
@@ -34,7 +31,7 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
 
     if (file.size > MAX_SIZE_BYTES) {
       toast.error(
-        `O arquivo é muito grande. O tamanho máximo é de ${MAX_SIZE_MB}MB.`
+        `O arquivo é muito grande. O tamanho máximo é de ${MAX_SIZE_MB}MB.`,
       );
       e.target.value = "";
       return;
@@ -46,11 +43,12 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
       img.onload = () => {
         if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
           toast.error(
-            `A imagem é muito grande em dimensões. O máximo permitido é ${MAX_WIDTH}x${MAX_HEIGHT} pixels.`
+            `A imagem é muito grande em dimensões. O máximo permitido é ${MAX_WIDTH}x${MAX_HEIGHT} pixels.`,
           );
           e.target.value = "";
         } else {
           setSelectedFile(file);
+          setPreviewUrl(URL.createObjectURL(file));
           toast.success("Imagem selecionada com sucesso!");
         }
       };
@@ -63,6 +61,12 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
     reader.readAsDataURL(file);
   };
 
+  const closeAndReset = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    onClose();
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) return;
     setIsUploading(true);
@@ -70,10 +74,10 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
     formData.append("avatar", selectedFile);
     try {
       const res = await api.post(`/api/users/${user.id}/avatar`, formData);
-      const updatedUser = { ...user, avatar_url: res.data.avatarUrl };
-      login(updatedUser);
+      // O backend responde { success, user, token }
+      login(res.data.user, res.data.token);
       toast.success("Foto de perfil atualizada!");
-      onClose();
+      closeAndReset();
     } catch (err) {
       toast.error("Erro ao atualizar a foto.");
     } finally {
@@ -86,9 +90,9 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
     setIsUploading(true);
     try {
       const res = await api.delete(`/api/users/${user.id}/avatar`);
-      login(res.data.user);
+      login(res.data.user, res.data.token);
       toast.success("Foto de perfil removida!");
-      onClose();
+      closeAndReset();
     } catch (err) {
       toast.error("Erro ao remover a foto.");
     } finally {
@@ -96,64 +100,87 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const currentImage = previewUrl || user.avatar_url;
+
   return (
     <>
-      <div className="modal-overlay">
-        <div className="modal-content avatar-modal">
-          <h2>Alterar Foto de Perfil</h2>
-          <div className="avatar-preview">
-            <img
-              src={
-                selectedFile
-                  ? URL.createObjectURL(selectedFile)
-                  : user.avatar_url || defaultAvatar
-              }
-              alt="Pré-visualização do Avatar"
-            />
+      <div className="modal-overlay modal-overlay--blur" onClick={closeAndReset}>
+        <div
+          className="avatar-modal-card"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="avatar-modal-close"
+            onClick={closeAndReset}
+            aria-label="Fechar"
+          >
+            <FiX />
+          </button>
+
+          <div className="avatar-modal-head">
+            <h2>Foto de perfil</h2>
+            <p>Envie uma imagem quadrada de até 2&nbsp;MB (JPG, PNG ou WEBP).</p>
           </div>
-          <div className="form-row avatar-modal-upload-row">
-            <div className="file-upload-wrapper">
-              <input
-                type="file"
-                accept="image/*"
-                id="file-upload"
-                className="file-upload-input"
-                onChange={handleFileChange}
-              />
-              <label htmlFor="file-upload" className="file-upload-label">
-                Escolher Arquivo
-              </label>
-              <span className="file-upload-filename">
-                {selectedFile ? selectedFile.name : "Nenhum arquivo escolhido"}
+
+          <label htmlFor="avatar-file-input" className="avatar-dropzone">
+            <span className="avatar-dropzone-ring">
+              {currentImage ? (
+                <img src={currentImage} alt="Pré-visualização do avatar" />
+              ) : (
+                <HiOutlineUserCircle className="avatar-dropzone-placeholder" />
+              )}
+              <span className="avatar-dropzone-overlay">
+                <FiCamera />
               </span>
-            </div>
-          </div>
+            </span>
+            <span className="avatar-dropzone-hint">
+              {selectedFile
+                ? selectedFile.name
+                : "Clique para escolher uma imagem"}
+            </span>
+            <input
+              id="avatar-file-input"
+              type="file"
+              accept="image/*"
+              className="file-upload-input"
+              onChange={handleFileChange}
+            />
+          </label>
 
-          <div className="modal-actions">
-            <button onClick={onClose} className="form-button-cancel">
-              Cancelar
-            </button>
-
+          <div className="avatar-modal-actions">
             {user.avatar_url && (
               <button
+                type="button"
+                className="avatar-btn avatar-btn--danger"
                 onClick={() => setIsConfirmOpen(true)}
-                className="delete-button"
                 disabled={isUploading}
               >
-                Remover Foto Atual
+                <FiTrash2 /> Remover foto
               </button>
             )}
 
-            <button
-              onClick={handleUpload}
-              className="form-button"
-              disabled={!selectedFile || isUploading}
-            >
-              {isUploading ? "Salvando..." : "Salvar"}
-            </button>
+            <div className="avatar-modal-actions-right">
+              <button
+                type="button"
+                className="avatar-btn avatar-btn--ghost"
+                onClick={closeAndReset}
+                disabled={isUploading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="avatar-btn avatar-btn--primary"
+                onClick={handleUpload}
+                disabled={!selectedFile || isUploading}
+              >
+                {isUploading ? "Salvando..." : "Salvar"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
       <ConfirmationModal
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}

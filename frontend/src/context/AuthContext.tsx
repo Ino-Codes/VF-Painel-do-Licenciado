@@ -19,7 +19,7 @@ interface AuthContextType {
   loading: boolean;
   currentCompany: CompanySlug;
   switchCompany: (slug: CompanySlug) => void;
-  login: (userData: User, token: string) => void;
+  login: (userData: User, token?: string) => void;
   logout: () => void;
 }
 
@@ -53,11 +53,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(false);
   }, []);
 
-  const login = (userData: User, token: string) => {
-    localStorage.setItem("token", token);
+  const login = (userData: User, token?: string) => {
+    // Preserva o token atual quando a chamada não envia um novo (ex.: apenas
+    // atualização de dados do usuário). Evita gravar "undefined" como token e
+    // corromper o cabeçalho Authorization.
+    const finalToken = token || localStorage.getItem("token") || "";
+    if (finalToken) {
+      localStorage.setItem("token", finalToken);
+      api.defaults.headers.common["Authorization"] = `Bearer ${finalToken}`;
+    }
     localStorage.setItem("userData", JSON.stringify(userData));
     setUser(userData);
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
     setCurrentCompany(userData.company_slug || "v-tax");
   };

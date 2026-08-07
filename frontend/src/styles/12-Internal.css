@@ -60,7 +60,7 @@
   padding: 12px 12px 12px 16px;
   background: var(--glass-surface);
   border-radius: 6px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--glass-border);
   position: relative;
   overflow: hidden;
 }

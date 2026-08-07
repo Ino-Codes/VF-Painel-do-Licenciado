@@ -774,7 +774,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         { expiresIn: "7d" },
       );
 
-      res.json({ success: true, user: updatedUser });
+      res.json({ success: true, user: updatedUser, token: newToken });
     } catch (err) {
       console.error("Erro ao remover avatar:", err);
       res.status(500).json({ error: "Erro no servidor" });

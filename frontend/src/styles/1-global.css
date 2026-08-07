@@ -43,14 +43,12 @@
   --action-danger: #c82333;
 
   /* ── Novo padrão visual da marca (MIV): dourado + superfície de vidro ── */
+  /* No tema claro a superfície precisa ser opaca (branco levemente
+     gradiente), senão os cards somem sobre o fundo claro. */
   --brand-gold: #8a6c35;
-  --glass-surface: linear-gradient(
-    127deg,
-    rgba(255, 255, 255, 0.075),
-    rgba(255, 255, 255, 0.025)
-  );
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glass-shadow: 0 8px 24px rgba(20, 18, 12, 0.06);
+  --glass-surface: linear-gradient(127deg, #ffffff, #f6f6f8);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 6px 20px rgba(20, 18, 12, 0.1);
 
   /* status (badges / feedback visual) — mesmos valores nos dois temas */
   --status-success-bg: #f0fdf4;

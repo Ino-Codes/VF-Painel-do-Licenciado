@@ -107,6 +107,9 @@ const VideoModal: React.FC<VideoModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{videoToEdit ? "Editar Vídeo" : "Adicionar Novo Vídeo"}</h2>
         <form onSubmit={handleSubmit}>
           {/* 4. Campo de Seleção de Empresa */}

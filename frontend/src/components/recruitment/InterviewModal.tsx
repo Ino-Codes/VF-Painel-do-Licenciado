@@ -178,6 +178,9 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{interviewToEdit ? "Editar Entrevista" : "Agendar Entrevista"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">

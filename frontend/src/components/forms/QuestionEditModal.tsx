@@ -33,6 +33,9 @@ const QuestionEditModal: React.FC<QuestionEditModalProps> = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
+          &times;
+        </button>
         <h2>{question.id ? "Editar Pergunta" : "Adicionar Nova Pergunta"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
