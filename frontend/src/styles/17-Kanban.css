@@ -22,7 +22,7 @@
 .hd-kanban-column {
   width: 300px;
   min-width: 300px;
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   border-radius: 14px;
   display: flex;
   flex-direction: column;
@@ -104,7 +104,7 @@
 /* ── Card ─────────────────────────────────────────────────────── */
 
 .ticket-card {
-  background: var(--bg-primary);
+  background: var(--glass-surface);
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
