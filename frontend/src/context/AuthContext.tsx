@@ -25,6 +25,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Verifica a expiração (claim `exp`) do JWT sem depender de biblioteca.
+// Retorna true se o token estiver expirado ou for inválido.
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (!payload?.exp) return false; // sem exp → não força expiração
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return true; // token malformado → tratar como expirado
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -39,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const userData = localStorage.getItem("userData");
     const savedCompany = localStorage.getItem("currentCompany") as CompanySlug;
 
-    if (token && userData) {
+    if (token && userData && !isTokenExpired(token)) {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -49,6 +61,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else if (parsedUser.company_slug) {
         setCurrentCompany(parsedUser.company_slug);
       }
+    } else if (token || userData) {
+      // Sessão ausente/expirada → limpa restos para cair no login limpo.
+      localStorage.removeItem("token");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("currentCompany");
     }
     setLoading(false);
   }, []);

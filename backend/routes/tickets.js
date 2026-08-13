@@ -339,6 +339,278 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     }
   });
 
+  // ── Ingestão de chamados por e-mail (webhook do Resend Inbound) ───────────
+  const INBOUND_TENANT_TOKEN = "__inbound_email__";
+
+  // Tenant "E-mail" dedicado: criado sob demanda (idempotente por token fixo).
+  const getOrCreateEmailTenant = async () => {
+    const found = await pool.query(
+      "SELECT id FROM widget_tenants WHERE token = $1 LIMIT 1",
+      [INBOUND_TENANT_TOKEN],
+    );
+    if (found.rowCount) return found.rows[0].id;
+    const created = await pool.query(
+      `INSERT INTO widget_tenants (name, token, created_by)
+       VALUES ($1, $2, NULL) RETURNING id`,
+      ["E-mail (suporte@)", INBOUND_TENANT_TOKEN],
+    );
+    return created.rows[0].id;
+  };
+
+  // Extrai nome/e-mail de um cabeçalho "From" (string "Nome <e@x>" ou objeto).
+  const parseFromHeader = (rawFrom) => {
+    if (!rawFrom) return { email: "", name: "" };
+    if (typeof rawFrom === "object") {
+      return {
+        email: String(rawFrom.address || rawFrom.email || "").trim(),
+        name: String(rawFrom.name || "").trim(),
+      };
+    }
+    const str = String(rawFrom).trim();
+    const m = str.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
+    if (m) return { name: m[1].trim(), email: m[2].trim() };
+    return { name: "", email: str };
+  };
+
+  // Remove tags HTML de forma básica (fallback quando não há texto puro).
+  const stripHtml = (html) =>
+    String(html || "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<\/(p|div|br|li|tr|h[1-6])>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+  // Verifica a assinatura do webhook (padrão Svix, usado pelo Resend).
+  // Só é exigida quando RESEND_WEBHOOK_SECRET está configurado.
+  const verifyResendSignature = (req) => {
+    const secret = process.env.RESEND_WEBHOOK_SECRET;
+    if (!secret) return true; // sem segredo → não valida (ambiente de teste)
+    try {
+      const id = req.headers["svix-id"];
+      const ts = req.headers["svix-timestamp"];
+      const sigHeader = req.headers["svix-signature"];
+      if (!id || !ts || !sigHeader || !req.rawBody) return false;
+      const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
+      const signed = `${id}.${ts}.${req.rawBody.toString("utf8")}`;
+      const expected = crypto
+        .createHmac("sha256", key)
+        .update(signed)
+        .digest("base64");
+      return String(sigHeader)
+        .split(" ")
+        .some((part) => {
+          const sig = part.split(",")[1];
+          if (!sig) return false;
+          try {
+            return crypto.timingSafeEqual(
+              Buffer.from(sig),
+              Buffer.from(expected),
+            );
+          } catch {
+            return false;
+          }
+        });
+    } catch {
+      return false;
+    }
+  };
+
+  // O webhook do Resend traz só METADADOS dos anexos. Para o conteúdo é preciso
+  // listar via API (retorna um download_url válido por ~1h) e baixar cada um,
+  // respeitando os limites atuais (quantidade, tipo e tamanho).
+  const downloadInboundAttachments = async (emailId) => {
+    const files = [];
+    if (!emailId) return files;
+    try {
+      const attRes = await resend.emails.receiving.attachments.list({ emailId });
+      const list = attRes?.data?.data || attRes?.data || [];
+      for (const att of Array.isArray(list) ? list : []) {
+        if (files.length >= ATTACHMENT_MAX_FILES) break;
+        const mimetype = att.content_type || att.contentType || "";
+        if (!ATTACHMENT_ALLOWED_MIMES.has(mimetype) || !att.download_url) {
+          continue;
+        }
+        try {
+          const resp = await fetch(att.download_url);
+          if (!resp.ok) continue;
+          const buffer = Buffer.from(await resp.arrayBuffer());
+          if (!buffer.length || buffer.length > ATTACHMENT_MAX_SIZE) continue;
+          files.push({
+            buffer,
+            originalname: att.filename || "anexo",
+            mimetype,
+          });
+        } catch (dlErr) {
+          console.warn("Falha ao baixar anexo (e-mail):", dlErr);
+        }
+      }
+    } catch (listErr) {
+      console.warn("Falha ao listar anexos (e-mail):", listErr);
+    }
+    return files;
+  };
+
+  // POST /api/ticket/inbound — recebe o e-mail parseado e abre o chamado.
+  router.post("/inbound", async (req, res) => {
+    if (!verifyResendSignature(req)) {
+      return res.status(401).json({ error: "Assinatura inválida." });
+    }
+
+    try {
+      const body = req.body || {};
+      const data = body.data || body;
+
+      // Ignora eventos que não sejam de e-mail recebido (quando o tipo vem).
+      const eventType = String(body.type || body.event || "").toLowerCase();
+      if (
+        eventType &&
+        !eventType.includes("received") &&
+        !eventType.includes("inbound")
+      ) {
+        return res.status(200).json({ ignored: true, reason: "evento-nao-inbound" });
+      }
+
+      const { email: senderEmail, name: senderName } = parseFromHeader(
+        data.from ?? data.sender ?? data.From,
+      );
+
+      if (!senderEmail || !senderEmail.includes("@")) {
+        return res.status(200).json({ ignored: true, reason: "remetente-ausente" });
+      }
+
+      // Proteção contra loop: ignora e-mails do próprio remetente automático.
+      const selfAddr = String(process.env.EMAIL_FROM || "").toLowerCase();
+      if (selfAddr && senderEmail.toLowerCase() === selfAddr) {
+        return res.status(200).json({ ignored: true, reason: "auto-remetente" });
+      }
+
+      const emailId = data.email_id || data.emailId || null;
+      const title =
+        String(data.subject || data.Subject || "").trim() || "(Sem assunto)";
+
+      // O corpo (text/html) NÃO vem no webhook — busca o e-mail completo pela
+      // API do Resend usando o email_id.
+      let bodyText = "";
+      let bodyHtml = "";
+      try {
+        const { data: full, error } = await resend.emails.receiving.get(emailId);
+        if (error) throw error;
+        bodyText = String(full?.text || "").trim();
+        bodyHtml = String(full?.html || "");
+      } catch (getErr) {
+        console.warn("Falha ao buscar corpo do e-mail recebido:", getErr);
+      }
+      const description = bodyText || stripHtml(bodyHtml) || "(Sem conteúdo)";
+
+      // Idempotência: se este e-mail já virou chamado, não duplica.
+      const messageId =
+        data.message_id ||
+        data.messageId ||
+        data.email_id ||
+        (data.headers &&
+          (data.headers["message-id"] || data.headers["Message-Id"])) ||
+        body.id ||
+        null;
+      if (messageId) {
+        const dup = await pool.query(
+          "SELECT id FROM tickets WHERE source_message_id = $1 LIMIT 1",
+          [String(messageId)],
+        );
+        if (dup.rowCount) {
+          return res.status(200).json({ duplicated: true, id: dup.rows[0].id });
+        }
+      }
+
+      const tenantId = await getOrCreateEmailTenant();
+      const trackingToken = crypto.randomBytes(32).toString("hex");
+
+      const ticket = await withTransaction(async (client) => {
+        const result = await client.query(
+          `INSERT INTO tickets
+             (tenant_id, type, title, description, origin_url, name, requester_email, tracking_token, source_message_id)
+           VALUES ($1, 'help', $2, $3, $4, $5, $6, $7, $8)
+           RETURNING *`,
+          [
+            tenantId,
+            title,
+            description,
+            "email:suporte@vcorporate.com.br",
+            senderName || senderEmail,
+            senderEmail,
+            trackingToken,
+            messageId ? String(messageId) : null,
+          ],
+        );
+        const created = result.rows[0];
+        await recordStatusChange(client, {
+          ticketId: created.id,
+          fromStatus: null,
+          toStatus: created.status,
+          userId: null,
+          userName: senderName || senderEmail,
+        });
+        return created;
+      });
+
+      // Anexos: lista via API, baixa e sobe pro Cloudinary (respeita limites).
+      const inboundFiles = await downloadInboundAttachments(emailId);
+      let savedCount = 0;
+      for (const file of inboundFiles) {
+        try {
+          const uploaded = await uploadBufferToCloudinary(file);
+          await pool.query(
+            `INSERT INTO ticket_attachments (ticket_id, file_url, file_name, file_type)
+             VALUES ($1, $2, $3, $4)`,
+            [ticket.id, uploaded.secure_url, file.originalname, file.mimetype],
+          );
+          savedCount += 1;
+        } catch (attErr) {
+          console.warn("Falha ao anexar arquivo (e-mail):", attErr);
+        }
+      }
+
+      // Confirmação ao remetente (não bloqueante).
+      try {
+        await resend.emails.send({
+          from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
+          to: senderEmail,
+          subject: `Chamado #${ticket.id} aberto - Painel V-CORP`,
+          html: buildEmailHtml({
+            heading: "Chamado aberto com sucesso",
+            greetingName: senderName || "solicitante",
+            bodyHtml: `
+              <p>Recebemos o seu e-mail e ele já foi registrado como um chamado no nosso sistema.</p>
+              <p style="background:#f8f9fa;border-left:4px solid #daa520;padding:12px 16px;border-radius:4px;">
+                <strong>Protocolo:</strong> #${ticket.id}<br/>
+                <strong>Título:</strong> ${escapeHtml(ticket.title)}${
+                  savedCount > 0
+                    ? `<br/><strong>Anexos:</strong> ${savedCount} arquivo(s)`
+                    : ""
+                }
+              </p>
+              <p>Nossa equipe irá analisá-lo em breve. Acompanhe o andamento pelo botão abaixo ou guarde o número do protocolo.</p>
+              ${trackButtonHtml(ticket.tracking_token)}
+            `,
+          }),
+        });
+      } catch (mailErr) {
+        console.warn("Falha ao enviar confirmação (e-mail):", mailErr);
+      }
+
+      return res
+        .status(201)
+        .json({ success: true, id: ticket.id, attachments: savedCount });
+    } catch (err) {
+      console.error("Erro ao processar e-mail de entrada:", err);
+      // 500 → o provedor reentrega; a idempotência (source_message_id) evita
+      // duplicar caso o chamado já tenha sido criado antes da falha.
+      return res.status(500).json({ error: "Falha ao processar o e-mail." });
+    }
+  });
+
   // ── GET /api/ticket/track/:token (público — acompanhamento por link) ─────
   router.get("/track/:token", async (req, res) => {
     const { token } = req.params;

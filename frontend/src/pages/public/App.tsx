@@ -14,7 +14,7 @@ const App: React.FC = () => {
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, logout } = useAuth();
+  const { login, logout, user, loading } = useAuth();
   const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
 
   // ── Verificação em duas etapas (2FA) ──
@@ -30,6 +30,15 @@ const App: React.FC = () => {
     }, 1000);
     return () => clearInterval(id);
   }, [step]);
+
+  // Se já existe sessão autenticada (token válido no localStorage), pula a tela
+  // de login e vai direto para a Home — a não ser que o usuário precise trocar
+  // a senha obrigatoriamente.
+  useEffect(() => {
+    if (!loading && user && !needsPasswordReset) {
+      navigate("/home", { replace: true });
+    }
+  }, [loading, user, needsPasswordReset, navigate]);
 
   const formattedTime = `${Math.floor(secondsLeft / 60)}:${String(
     secondsLeft % 60,
@@ -150,6 +159,12 @@ const App: React.FC = () => {
     : step === "2fa"
       ? "Verificação em duas etapas"
       : "Painel da V-CORP";
+
+  // Evita exibir a tela de login enquanto a sessão é lida (loading) ou quando
+  // já há sessão e o redirecionamento para /home está prestes a acontecer.
+  if (loading || (user && !needsPasswordReset)) {
+    return <div className="tela-loading">Carregando...</div>;
+  }
 
   return (
     <>

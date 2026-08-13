@@ -398,7 +398,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             data_admissao: updatedUser.data_admissao,
           },
           process.env.JWT_SECRET,
-          { expiresIn: "7d" },
+          { expiresIn: "12h" },
         );
         responsePayload.token = newToken;
       }
@@ -732,7 +732,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             avatar_url: updatedUser.avatar_url,
           },
           process.env.JWT_SECRET,
-          { expiresIn: "7d" },
+          { expiresIn: "12h" },
         );
 
         res.json({ success: true, user: updatedUser, token: newToken });
@@ -771,7 +771,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           avatar_url: null,
         },
         process.env.JWT_SECRET,
-        { expiresIn: "7d" },
+        { expiresIn: "12h" },
       );
 
       res.json({ success: true, user: updatedUser, token: newToken });

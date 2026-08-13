@@ -185,7 +185,7 @@ module.exports = function (pool, resend, logActivity) {
         must_change_password: user.must_change_password,
       };
       const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-        expiresIn: "24h",
+        expiresIn: "12h",
       });
 
       logActivity(

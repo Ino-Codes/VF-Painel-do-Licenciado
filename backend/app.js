@@ -47,7 +47,17 @@ const corsAberto = cors({
 // Nenhum cors() aqui — cada rota aplica o seu próprio
 
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.json());
+// `verify` guarda o corpo bruto p/ validar a assinatura do webhook (Svix/Resend).
+// O webhook de e-mail de entrada traz só metadados (corpo/anexos são buscados
+// pela API), então um limite modesto é suficiente.
+app.use(
+  express.json({
+    limit: "2mb",
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 app.use((req, res, next) => {
   req.ipAddress =
     req.headers["x-forwarded-for"] || req.connection.remoteAddress;

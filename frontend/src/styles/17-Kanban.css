@@ -289,6 +289,10 @@
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.65;
+  /* Preserva as quebras de linha e a formatação digitada na abertura do
+     chamado (listas, parágrafos), em vez de colapsar tudo em uma linha. */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 /* Metadados (rodapé da coluna esquerda) */
