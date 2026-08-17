@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
+import { HiOutlineUserCircle } from "react-icons/hi";
 
 interface User {
   id: number;
@@ -14,17 +15,12 @@ interface Props {
 }
 
 const CorporatePhotoUploader: React.FC<Props> = ({ user, onUploadSuccess }) => {
-  const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = async () => {
+  // Envia imediatamente ao escolher o arquivo (fluxo "Alterar foto").
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
     setIsUploading(true);
     const formData = new FormData();
@@ -37,7 +33,7 @@ const CorporatePhotoUploader: React.FC<Props> = ({ user, onUploadSuccess }) => {
       toast.error("Erro ao enviar a foto.");
     } finally {
       setIsUploading(false);
-      setFile(null);
+      e.target.value = "";
     }
   };
 
@@ -57,40 +53,36 @@ const CorporatePhotoUploader: React.FC<Props> = ({ user, onUploadSuccess }) => {
 
   return (
     <>
-      <div className="corporate-photo-uploader">
-        <h4>Foto Corporativa</h4>
-        <div className="form-row">
+      <div className="corp-photo">
+        <span className="corp-photo-avatar">
+          {user.corporate_photo_url ? (
+            <img src={user.corporate_photo_url} alt="Foto corporativa" />
+          ) : (
+            <HiOutlineUserCircle className="corp-photo-placeholder" />
+          )}
+        </span>
+
+        <div className="corp-photo-actions">
           <input
             type="file"
             accept="image/*"
             id="corporate-photo-upload"
             className="file-upload-input"
             onChange={handleFileChange}
+            disabled={isUploading}
           />
-          <label htmlFor="corporate-photo-upload" className="file-upload-label">
-            Escolher Foto
+          <label htmlFor="corporate-photo-upload" className="corp-photo-btn">
+            {isUploading ? "Enviando..." : "Alterar foto"}
           </label>
-          <span className="file-upload-filename">
-            {file ? file.name : "Nenhuma imagem selecionada"}
-          </span>
-        </div>
-        <div className="form-row corporate-photo-actions-row">
-          <button
-            onClick={handleUpload}
-            disabled={!file || isUploading}
-            className="form-button"
-          >
-            {isUploading ? "Enviando..." : "Enviar Foto"}
-          </button>
 
           {user.corporate_photo_url && (
             <button
               type="button"
               onClick={() => setIsConfirmOpen(true)}
-              className="delete-button"
+              className="corp-photo-remove"
               disabled={isUploading}
             >
-              Remover Foto Atual
+              Remover
             </button>
           )}
         </div>

@@ -135,6 +135,8 @@
 
 .on-screen-form {
   background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
@@ -769,4 +771,228 @@
 /* TabContent: célula "Tipo" (role) capitalizada */
 .tab-users-role-cell {
   text-transform: capitalize;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Modal de cadastro/edição de usuário — seções + rótulos (Opção B)
+   ═══════════════════════════════════════════════════════════════ */
+.userform h3 {
+  margin: 0;
+  font-size: 19px;
+  color: var(--text-primary);
+}
+.userform-sub {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.userform-section {
+  margin-top: 20px;
+}
+.userform-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.userform-section-title::before {
+  content: "";
+  width: 3px;
+  height: 14px;
+  background: var(--brand-gold);
+  border-radius: 2px;
+}
+
+.userform .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+}
+.userform .form-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.userform .form-field label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+.userform .form-input,
+.userform .form-select {
+  width: 100%;
+}
+.userform .date-picker-wrapper {
+  width: 100%;
+}
+
+@media (max-width: 620px) {
+  .userform .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Foto corporativa — avatar compacto + "Alterar foto" */
+.corp-photo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.corp-photo-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 3px solid var(--brand-gold);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-gold) 20%, transparent);
+}
+.corp-photo-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.corp-photo-placeholder {
+  width: 40px;
+  height: 40px;
+  color: var(--text-secondary);
+}
+.corp-photo-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.corp-photo-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-gold);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--brand-gold) 45%, transparent);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+.corp-photo-btn:hover {
+  background: color-mix(in srgb, var(--brand-gold) 12%, transparent);
+}
+.corp-photo-remove {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--action-danger);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+.corp-photo-remove:hover {
+  text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABELAS — visual unificado (glass + dourado)
+   Vale para .admin-table (Usuários/Estatísticas), .logs-table (Logs)
+   e .table (Checklists). Escopado a desktop (min-width: 901px) para
+   NÃO interferir nos layouts em "cartão" do mobile já existentes.
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 901px) {
+  /* Contêiner: card de vidro com cantos arredondados */
+  .table-container,
+  .logs-table-container {
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--glass-surface);
+    box-shadow: var(--glass-shadow);
+  }
+  .logs-table-container {
+    overflow-x: auto;
+  }
+
+  .admin-table,
+  .logs-table,
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+    border: none;
+    margin: 0;
+    font-size: 14px;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  /* Cabeçalho: leve tom dourado + fio dourado embaixo */
+  .admin-table thead,
+  .logs-table thead,
+  .table thead {
+    background: color-mix(in srgb, var(--brand-gold) 8%, var(--bg-secondary));
+  }
+  .admin-table thead th,
+  .logs-table thead th,
+  .table thead th {
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    border: none;
+    border-bottom: 2px solid
+      color-mix(in srgb, var(--brand-gold) 55%, transparent);
+    white-space: nowrap;
+  }
+
+  /* Corpo: separadores suaves de vidro */
+  .admin-table tbody td,
+  .logs-table tbody td,
+  .table tbody td {
+    padding: 12px 16px;
+    text-align: left;
+    color: var(--text-primary);
+    border: none;
+    border-bottom: 1px solid var(--glass-border);
+    vertical-align: middle;
+  }
+  .admin-table tbody tr:last-child td,
+  .logs-table tbody tr:last-child td,
+  .table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Zebra bem sutil + hover dourado (sobrescreve o zebra antigo) */
+  .admin-table tbody tr:nth-of-type(even),
+  .logs-table tbody tr:nth-of-type(even),
+  .table tbody tr:nth-of-type(even) {
+    background: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  }
+  .admin-table tbody tr:hover,
+  .admin-table tbody tr:nth-of-type(even):hover,
+  .logs-table tbody tr:hover,
+  .logs-table tbody tr:nth-of-type(even):hover,
+  .table tbody tr:hover,
+  .table tbody tr:nth-of-type(even):hover {
+    background: color-mix(in srgb, var(--brand-gold) 12%, transparent);
+    transition: background-color 0.15s ease;
+  }
+
+  /* Cabeçalho ordenável (tela de Usuários) */
+  .admin-table th.sortable-header:hover {
+    background: color-mix(in srgb, var(--brand-gold) 16%, transparent);
+  }
 }

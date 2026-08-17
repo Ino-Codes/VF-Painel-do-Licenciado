@@ -2,6 +2,8 @@
   padding: 20px;
   border-radius: 0 8px 8px 8px;
   background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .analytics-tabs {
@@ -121,7 +123,9 @@
 }
 
 .chart-container-stats {
-  background: var(--bg-primary);
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 25px;
@@ -210,7 +214,7 @@
 /* --- Dashboards de Estatísticas --- */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
 }
@@ -262,6 +266,204 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* ---------------------------------------------------------------------------
+   Aba "Desenvolvimento" (integração Jira)
+   --------------------------------------------------------------------------- */
+
+.jira-sprint-card {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 25px;
+}
+
+.jira-sprint-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.jira-sprint-head h3 {
+  margin: 4px 0 0 0;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+}
+
+.jira-sprint-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brand-gold);
+}
+
+.jira-sprint-goal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.jira-board-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--brand-gold);
+  text-decoration: none;
+}
+
+.jira-board-link:hover {
+  text-decoration: underline;
+}
+
+.jira-sprint-meta {
+  margin: 16px 0 10px 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.jira-sprint-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.jira-sprint-meta strong {
+  color: var(--text-primary);
+}
+
+.jira-sprint-meta em {
+  font-style: normal;
+  color: var(--brand-gold);
+  font-weight: 600;
+}
+
+.jira-progress-track {
+  width: 100%;
+  height: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.jira-progress-fill {
+  width: var(--bar-width, 0%);
+  height: 100%;
+  background: var(--action-primary);
+  border-radius: 100px;
+  transition: width 0.5s ease;
+}
+
+.jira-progress-label {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Barras horizontais (cards por status) */
+.jira-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.jira-bar-row:last-child {
+  margin-bottom: 0;
+}
+
+.jira-bar-label {
+  width: 170px;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jira-bar-track {
+  flex: 1;
+  height: 20px;
+  background: var(--bg-secondary);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.jira-bar-fill {
+  display: block;
+  width: var(--bar-width, 0%);
+  height: 100%;
+  background: var(--brand-gold);
+  border-radius: 100px;
+  transition: width 0.5s ease;
+}
+
+.jira-bar-fill.cat-todo {
+  background: var(--text-secondary);
+}
+
+.jira-bar-fill.cat-inProgress {
+  background: var(--brand-gold);
+}
+
+.jira-bar-fill.cat-done {
+  background: var(--action-primary);
+}
+
+.jira-bar-value {
+  width: 34px;
+  flex-shrink: 0;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.jira-dev-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.jira-not-configured {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.jira-not-configured h3 {
+  margin: 14px 0 8px 0;
+  color: var(--text-primary);
+}
+
+.jira-not-configured p {
+  color: var(--text-secondary);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.jira-not-configured code {
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 0.85em;
 }
 
 /* ---------------------------------------------------------------------------

@@ -176,15 +176,13 @@ const Empresa: React.FC = () => {
         <section className="info-section">
           <div className="page-header">
             <h2>Nossa Equipe</h2>
-            <p>
-              Com atuação nacional, a matriz da V-CORP está localizada em Porto
-              Alegre/RS, e conta com uma unidade em São Paulo/SP.
-            </p>
             {/* <p>
               Selecione um estado no mapa para ver a equipe local ou veja todos
               os colaboradores.
             </p> */}
           </div>
+
+          
 
           <div className="equipe-layout">
             {/* <div className="equipe-sidebar">
@@ -205,17 +203,7 @@ const Empresa: React.FC = () => {
             </div> */}
 
             <div className="equipe-main-content">
-              {selectedState !== "todos" && (
-                <h3 className="equipe-local-title">
-                  Colaboradores da {stateNames[selectedState]}
-                </h3>
-              )}
-
-              {selectedState === "todos" && (
-                <h3 className="equipe-local-title">
-                  Todos os colaboradores da V-CORP
-                </h3>
-              )}
+              
 
               <div className="user-grid">
                 {filteredUsers.map((internalUser) => (

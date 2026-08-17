@@ -101,6 +101,7 @@ const MeusChamados: React.FC = () => {
       <div className="content-area">
         <div className="page-header">
           <h2>Meus Chamados</h2>
+        
           <p>
             Informe o número do protocolo e o e-mail usado na abertura para
             consultar o andamento.

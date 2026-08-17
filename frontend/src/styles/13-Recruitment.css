@@ -12,7 +12,9 @@
 }
 
 .kanban-column {
-  background: var(--bg-secondary);
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   border-radius: 8px;
   min-width: 300px;
   max-width: 300px;

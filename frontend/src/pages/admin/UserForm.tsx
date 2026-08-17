@@ -98,189 +98,235 @@ const UserForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="admin-form">
+    <form onSubmit={handleSubmit} className="admin-form userform">
       {/* --- FORMULÁRIO PARA COLABORADORES --- */}
       {formType === "interno" && (
         <div>
-          <h3>
+          <h3>{userToEdit ? "Editar Colaborador" : "Cadastrar Novo Colaborador"}</h3>
+          <p className="userform-sub">
             {userToEdit
-              ? `Editando: ${userToEdit.nome}`
-              : `Cadastrar Novo Colaborador`}
-          </h3>
+              ? `Atualize os dados de ${userToEdit.nome}.`
+              : "Preencha os dados do novo colaborador."}
+          </p>
 
-          <div className="form-row">
-            <input
-              name="nome"
-              value={formData.nome || ""}
-              onChange={handleChange}
-              placeholder="Nome Completo"
-              required
-              className="form-input"
-            />
-            <input
-              name="email"
-              value={formData.email || ""}
-              onChange={handleChange}
-              placeholder="Email"
-              type="email"
-              required
-              className="form-input"
-            />
-          </div>
+          {/* Identificação */}
+          <div className="userform-section">
+            <span className="userform-section-title">Identificação</span>
 
-          {!userToEdit && (
-            <div className="form-row">
-              <input
-                name="password"
-                onChange={handleChange}
-                placeholder="Senha"
-                type="password"
-                required
-                className="form-input"
+            {userToEdit && (
+              <CorporatePhotoUploader
+                user={userToEdit}
+                onUploadSuccess={onSuccess}
               />
-            </div>
-          )}
-
-          <div className="form-row">
-            <input
-              name="cargo"
-              value={formData.cargo || ""}
-              onChange={handleChange}
-              placeholder="Cargo"
-              required
-              className="form-input"
-            />
-            <input
-              name="setor"
-              value={formData.setor || ""}
-              onChange={handleChange}
-              placeholder="Setor"
-              required
-              className="form-input"
-            />
-          </div>
-
-          <div className="form-row">
-            <select
-              name="unidade_id"
-              value={formData.unidade_id ?? ""}
-              onChange={handleUnitChange}
-              required
-              className="form-select"
-              disabled={loading}
-            >
-              <option value="">
-                {loading ? "Carregando..." : "Selecione a Unidade"}
-              </option>
-              {!loading &&
-                units.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.name}
-                  </option>
-                ))}
-            </select>
-            {userToEdit?.role !== "licenciado" && (
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="form-select"
-              >
-                <option value="">
-                  {loading ? "Carregando..." : "Selecione a Permissão"}
-                </option>
-                <option value="comercial">Comercial</option>
-                <option value="rh">RH</option>
-                <option value="operacional">Operacional</option>
-                <option value="admin">Admin</option>
-              </select>
             )}
+
+            <div className="form-grid">
+              <div className="form-field">
+                <label htmlFor="uf-nome">Nome completo</label>
+                <input
+                  id="uf-nome"
+                  name="nome"
+                  value={formData.nome || ""}
+                  onChange={handleChange}
+                  placeholder="Nome completo"
+                  required
+                  className="form-input"
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="uf-email">E-mail</label>
+                <input
+                  id="uf-email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  placeholder="email@empresa.com"
+                  type="email"
+                  required
+                  className="form-input"
+                />
+              </div>
+              {!userToEdit && (
+                <div className="form-field">
+                  <label htmlFor="uf-senha">Senha inicial</label>
+                  <input
+                    id="uf-senha"
+                    name="password"
+                    onChange={handleChange}
+                    placeholder="Defina uma senha"
+                    type="password"
+                    required
+                    className="form-input"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Data de Nascimento</label>
-              {/* ATUALIZADO AQUI: includeWeekends={true} */}
-              <DatePicker
-                value={
-                  formData.birth_date
-                    ? formData.birth_date.substring(0, 10)
-                    : ""
-                }
-                onChange={(date) =>
-                  setFormData((prev) => ({ ...prev, birth_date: date }))
-                }
-                includeWeekends={true}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Data de Admissão</label>
-              {/* ATUALIZADO AQUI: includeWeekends={true} */}
-              <DatePicker
-                value={
-                  formData.data_admissao
-                    ? formData.data_admissao.substring(0, 10)
-                    : ""
-                }
-                onChange={(date) =>
-                  setFormData((prev) => ({ ...prev, data_admissao: date }))
-                }
-                includeWeekends={true}
-              />
+          {/* Dados profissionais */}
+          <div className="userform-section">
+            <span className="userform-section-title">Dados profissionais</span>
+            <div className="form-grid">
+              <div className="form-field">
+                <label htmlFor="uf-cargo">Cargo</label>
+                <input
+                  id="uf-cargo"
+                  name="cargo"
+                  value={formData.cargo || ""}
+                  onChange={handleChange}
+                  placeholder="Cargo"
+                  required
+                  className="form-input"
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="uf-setor">Setor</label>
+                <input
+                  id="uf-setor"
+                  name="setor"
+                  value={formData.setor || ""}
+                  onChange={handleChange}
+                  placeholder="Setor"
+                  required
+                  className="form-input"
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="uf-unidade">Unidade</label>
+                <select
+                  id="uf-unidade"
+                  name="unidade_id"
+                  value={formData.unidade_id ?? ""}
+                  onChange={handleUnitChange}
+                  required
+                  className="form-select"
+                  disabled={loading}
+                >
+                  <option value="">
+                    {loading ? "Carregando..." : "Selecione a Unidade"}
+                  </option>
+                  {!loading &&
+                    units.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              {userToEdit?.role !== "licenciado" && (
+                <div className="form-field">
+                  <label htmlFor="uf-role">Permissão</label>
+                  <select
+                    id="uf-role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="form-select"
+                  >
+                    <option value="">
+                      {loading ? "Carregando..." : "Selecione a Permissão"}
+                    </option>
+                    <option value="comercial">Comercial</option>
+                    <option value="rh">RH</option>
+                    <option value="operacional">Operacional</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 
-          {userToEdit && (
-            <CorporatePhotoUploader
-              user={userToEdit}
-              onUploadSuccess={onSuccess}
-            />
-          )}
+          {/* Datas */}
+          <div className="userform-section">
+            <span className="userform-section-title">Datas</span>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Data de Nascimento</label>
+                <DatePicker
+                  value={
+                    formData.birth_date
+                      ? formData.birth_date.substring(0, 10)
+                      : ""
+                  }
+                  onChange={(date) =>
+                    setFormData((prev) => ({ ...prev, birth_date: date }))
+                  }
+                  includeWeekends={true}
+                />
+              </div>
+              <div className="form-field">
+                <label>Data de Admissão</label>
+                <DatePicker
+                  value={
+                    formData.data_admissao
+                      ? formData.data_admissao.substring(0, 10)
+                      : ""
+                  }
+                  onChange={(date) =>
+                    setFormData((prev) => ({ ...prev, data_admissao: date }))
+                  }
+                  includeWeekends={true}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* --- FORMULÁRIO PARA LICENCIADOS --- */}
       {formType !== "interno" && (
         <div>
-          <h3>
+          <h3>{userToEdit ? "Editar Licenciado" : "Cadastrar Novo Licenciado"}</h3>
+          <p className="userform-sub">
             {userToEdit
-              ? `Editando: ${userToEdit.nome}`
-              : `Cadastrar Novo Licenciado`}
-          </h3>
+              ? `Atualize os dados de ${userToEdit.nome}.`
+              : "Preencha os dados do novo licenciado."}
+          </p>
 
-          <div className="form-row">
-            <input
-              name="nome"
-              value={formData.nome || ""}
-              onChange={handleChange}
-              placeholder="Nome Completo"
-              required
-              className="form-input"
-            />
-            <input
-              name="email"
-              value={formData.email || ""}
-              onChange={handleChange}
-              placeholder="Email"
-              type="email"
-              required
-              className="form-input"
-            />
-          </div>
-
-          {!userToEdit && (
-            <div className="form-row">
-              <input
-                name="password"
-                onChange={handleChange}
-                placeholder="Senha"
-                type="password"
-                required
-                className="form-input"
-              />
+          <div className="userform-section">
+            <span className="userform-section-title">Identificação</span>
+            <div className="form-grid">
+              <div className="form-field">
+                <label htmlFor="uf-l-nome">Nome completo</label>
+                <input
+                  id="uf-l-nome"
+                  name="nome"
+                  value={formData.nome || ""}
+                  onChange={handleChange}
+                  placeholder="Nome completo"
+                  required
+                  className="form-input"
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="uf-l-email">E-mail</label>
+                <input
+                  id="uf-l-email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  placeholder="email@empresa.com"
+                  type="email"
+                  required
+                  className="form-input"
+                />
+              </div>
+              {!userToEdit && (
+                <div className="form-field">
+                  <label htmlFor="uf-l-senha">Senha inicial</label>
+                  <input
+                    id="uf-l-senha"
+                    name="password"
+                    onChange={handleChange}
+                    placeholder="Defina uma senha"
+                    type="password"
+                    required
+                    className="form-input"
+                  />
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
 

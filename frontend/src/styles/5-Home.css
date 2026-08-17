@@ -128,8 +128,9 @@
 }
 
 .notice-card {
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
   border-left: 4px solid var(--accent-color);
+  box-shadow: var(--glass-shadow);
   border-radius: 5px;
   padding: 15px;
 }

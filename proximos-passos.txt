@@ -1,4 +1,0 @@
-- Central de Chamados
-    1. Habilitar o anexo de arquivos na abertura de Chamados
-    2. Habilitar o anexo de arquivos nas instruções de resolução dos Chamados
-    3. Habilitar a abertura de chamados via email (este tópico precisamos debater sobre como fazer, discutir ideias antes de começar a desenvolver)

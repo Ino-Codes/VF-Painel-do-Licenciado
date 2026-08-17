@@ -240,6 +240,8 @@
 
 .lesson-content-text {
   background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   padding: 25px;
   border-radius: 8px;
   line-height: 1.6;

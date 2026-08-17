@@ -40,15 +40,18 @@
 }
 
 .result-summary {
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
   border-left: 5px solid var(--accent-color);
+  box-shadow: var(--glass-shadow);
   padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
 }
 
 .quiz-container {
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   padding: 25px;
   border-radius: 8px;
   margin-top: 20px;
@@ -107,7 +110,9 @@
 }
 
 .text-block {
-  background-color: var(--bg-secondary);
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   padding: 20px;
   border-radius: 8px;
 }

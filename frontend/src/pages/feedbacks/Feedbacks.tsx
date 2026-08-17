@@ -92,7 +92,6 @@ const Feedbacks: React.FC = () => {
       <div className="content-area">
         <div className="page-header">
           <h2>Gestão de Feedbacks</h2>
-          <p>Acompanhe e realize os processos de feedback da equipe.</p>
 
           {(user.role === "admin" || user.role === "rh") && (
             <button
