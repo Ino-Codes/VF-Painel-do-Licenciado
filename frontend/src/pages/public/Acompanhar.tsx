@@ -37,7 +37,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   novo: { label: "Recebido", color: "#6366f1" },
   andamento: { label: "Em atendimento", color: "#f59e0b" },
   concluido: { label: "Concluído", color: "#22c55e" },
-  arquivado: { label: "Arquivado", color: "#94a3b8" },
+  pausado: { label: "Pausado", color: "#94a3b8" },
 };
 
 const Acompanhar: React.FC = () => {

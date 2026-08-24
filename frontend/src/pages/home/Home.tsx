@@ -17,7 +17,6 @@ interface Notice {
   id: number;
   message: string;
   created_at: string;
-  visibility: "todos" | "internos" | "licenciados";
   creator_name?: string;
 }
 
@@ -36,7 +35,7 @@ interface QuickLink {
 }
 
 const Home: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
   const firstName = user?.nome?.split(" ")[0] || "";
   const [monthlyEvents, setMonthlyEvents] = useState<MonthlyEvent[]>([]);
@@ -63,7 +62,7 @@ const Home: React.FC = () => {
   }, [user]);
 
   const fetchMonthlyEvents = useCallback(async () => {
-    if (!user || user.role === "licenciado") return;
+    if (!user || !hasPermission("internal_access")) return;
     try {
       const res = await api.get("/api/events/current-month");
       setMonthlyEvents(res.data);
@@ -87,8 +86,8 @@ const Home: React.FC = () => {
     return null;
   }
 
-  const isLicenciado = user.role === "licenciado";
-  const canManageNotices = user.role === "admin" || user.role === "rh";
+  const isLicenciado = !hasPermission("internal_access");
+  const canManageNotices = hasPermission("notices.manage");
 
   const quickLinks: QuickLink[] = [
     { label: "Documentos", icon: <IoMdDocument />, path: "/content/documentos" },

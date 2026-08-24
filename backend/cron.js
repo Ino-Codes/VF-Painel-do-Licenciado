@@ -8,68 +8,6 @@ const initializeCron = (dbPool, resendInstance) => {
   resend = resendInstance;
 };
 
-// Evento periódico de cálculo do saldo de férias de cada colaborador
-const updateVacationBalance = async () => {
-  if (!pool) return console.error("CRON: Pool de conexão não inicializado.");
-  console.log("CRON: Iniciando verificação de aniversário de admissão...");
-
-  let client;
-  try {
-    client = await pool.connect();
-    const today = new Date();
-    const currentMonth = today.getMonth() + 1; // Mês atual (1-12)
-    const currentDay = today.getDate(); // Dia atual
-
-    // Seleciona utilizadores (não licenciados) que fazem aniversário de admissão HOJE
-    // e que foram admitidos há pelo menos 11 meses (para garantir o primeiro ano)
-    const query = `
-      SELECT id, nome, data_admissao, saldo_ferias 
-      FROM users 
-      WHERE role != 'licenciado' 
-        AND EXTRACT(MONTH FROM data_admissao) = $1 
-        AND EXTRACT(DAY FROM data_admissao) = $2
-        AND data_admissao <= NOW() - INTERVAL '11 months'; 
-    `;
-
-    const result = await client.query(query, [currentMonth, currentDay]);
-    const usersToUpdate = result.rows;
-
-    if (usersToUpdate.length === 0) {
-      console.log("CRON: Nenhum colaborador completando ano de casa hoje.");
-      return;
-    }
-
-    console.log(
-      `CRON: Encontrados ${usersToUpdate.length} colaboradores para atualizar saldo de férias.`,
-    );
-
-    await client.query("BEGIN");
-    for (const user of usersToUpdate) {
-      // Calcula quantos anos de casa completos
-      const yearsSinceAdmission =
-        today.getFullYear() - new Date(user.data_admissao).getFullYear();
-
-      // Adiciona 30 dias ao saldo atual
-      const newBalance = (user.saldo_ferias || 0) + 30;
-
-      await client.query("UPDATE users SET saldo_ferias = $1 WHERE id = $2", [
-        newBalance,
-        user.id,
-      ]);
-      console.log(
-        `CRON: Saldo de férias atualizado para ${user.nome} (ID: ${user.id}). Novo saldo: ${newBalance}`,
-      );
-    }
-    await client.query("COMMIT");
-    console.log("CRON: Atualização de saldos de férias concluída.");
-  } catch (err) {
-    if (client) await client.query("ROLLBACK");
-    console.error("CRON: Erro ao atualizar saldo de férias:", err);
-  } finally {
-    if (client) client.release();
-  }
-};
-
 // Envio de email de eventos do dia (Com envio em Lotes / Rate Limiting)
 const sendEventNotifications = async (resend) => {
   if (!pool)
@@ -265,5 +203,4 @@ const sendEventNotifications = async (resend) => {
 module.exports = {
   initializeCron,
   sendEventNotifications,
-  updateVacationBalance,
 };

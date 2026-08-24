@@ -41,14 +41,7 @@ const RecruitmentInterviews: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
-      toast.error("Acesso restrito aos administradores.");
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
-
-  useEffect(() => {
-    if (user && (user.role === "admin" || user.role === "rh")) {
+    if (user) {
       fetchInterviews();
     }
   }, [user, fetchInterviews]);
@@ -102,7 +95,7 @@ const RecruitmentInterviews: React.FC = () => {
     fetchInterviews();
   };
 
-  if (loading || !user || (user.role !== "admin" && user.role !== "rh")) {
+  if (loading || !user) {
     return <div className="tela-loading">Carregando...</div>;
   }
 

@@ -8,7 +8,6 @@ interface FileData {
   originalname: string;
   category: string;
   folder?: string;
-  visibility: "todos" | "licenciados" | "colaboradores";
   // O backend pode retornar company_id, mas lidamos com slugs no front
 }
 
@@ -27,6 +26,7 @@ const COMPANIES_OPTIONS = [
   { slug: "v-business", name: "V-BUSINESS" },
   { slug: "v-corp", name: "V-CORP" },
   { slug: "v-tech", name: "V-TECH" },
+  { slug: "v-partner", name: "V-PARTNER" },
 ];
 
 const FileModal: React.FC<FileModalProps> = ({
@@ -43,9 +43,6 @@ const FileModal: React.FC<FileModalProps> = ({
   const [originalname, setOriginalname] = useState("");
   const [category, setCategory] = useState("");
   const [folder, setFolder] = useState("");
-  const [visibility, setVisibility] = useState<
-    "todos" | "licenciados" | "colaboradores"
-  >("todos");
 
   // 2. Novo estado para a Empresa
   const [company, setCompany] = useState(currentCompanySlug);
@@ -57,7 +54,6 @@ const FileModal: React.FC<FileModalProps> = ({
       setOriginalname(fileToEdit.originalname);
       setCategory(fileToEdit.category);
       setFolder(fileToEdit.folder || "");
-      setVisibility(fileToEdit.visibility || "todos");
       // Na edição, mantemos a empresa atual da navegação ou
       // idealmente viria do objeto fileToEdit se o backend retornasse o slug.
       // Por enquanto, assume a empresa da URL.
@@ -66,7 +62,6 @@ const FileModal: React.FC<FileModalProps> = ({
       setOriginalname("");
       setCategory("");
       setFolder("");
-      setVisibility("todos");
       setFile(null);
       // Ao criar novo, reseta para a empresa da URL
       setCompany(currentCompanySlug);
@@ -103,7 +98,6 @@ const FileModal: React.FC<FileModalProps> = ({
           originalname,
           category,
           folder,
-          visibility,
           company, // Envia a empresa selecionada (requer suporte no backend PUT)
         });
         toast.success("Arquivo atualizado com sucesso!");
@@ -118,7 +112,6 @@ const FileModal: React.FC<FileModalProps> = ({
         formData.append("originalname", originalname);
         formData.append("category", category);
         formData.append("folder", folder);
-        formData.append("visibility", visibility);
 
         // 3. Anexa a empresa escolhida ao FormData
         formData.append("company", company);
@@ -213,26 +206,6 @@ const FileModal: React.FC<FileModalProps> = ({
               className="form-input"
               required
             />
-          </div>
-
-          <div className="form-row">
-            <label htmlFor="visibility" className="content-modal-label">
-              Visibilidade:
-            </label>
-          </div>
-          <div className="form-row">
-            <select
-              id="visibility"
-              value={visibility}
-              onChange={(e) =>
-                setVisibility(e.target.value as FileData["visibility"])
-              }
-              className="form-select"
-            >
-              <option value="todos">Visível para Todos</option>
-              <option value="licenciados">Apenas para Licenciados</option>
-              <option value="colaboradores">Apenas para Colaboradores</option>
-            </select>
           </div>
 
           {!fileToEdit && (

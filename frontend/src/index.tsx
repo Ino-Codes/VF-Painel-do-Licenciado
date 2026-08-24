@@ -27,8 +27,6 @@ import InterviewsCalendar from "./pages/admin/InterviewsCalendar.tsx";
 import EnneagramPage from "./pages/profile/EnneagramPage.tsx";
 import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
 import Empresa from "./pages/company/Empresa.tsx";
-import GestaoFerias from "./pages/admin/GestaoFerias.tsx";
-import SolicitarFerias from "./pages/internal/SolicitarFerias.tsx";
 import Recruitment from "./pages/admin/Recruitment.tsx";
 import ChecklistTemplatesAdmin from "./pages/admin/ChecklistTemplatesAdmin.tsx";
 import RhGestao from "./pages/admin/RhGestao.tsx";
@@ -45,6 +43,8 @@ import Arquivos from "./pages/archives/Arquivos.tsx";
 import SupportWidget from "./components/layout/SupportWidget.tsx";
 import Acompanhar from "./pages/public/Acompanhar.tsx";
 import MeusChamados from "./pages/internal/MeusChamados.tsx";
+import GroupsManagement from "./pages/admin/GroupsManagement.tsx";
+import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
@@ -92,67 +92,310 @@ const AppRouter: React.FC = () => {
           }}
         />
         <Routes>
+          {/* Rotas públicas */}
           <Route path="/" element={<App />} />
-          <Route path="/reset-password" element={<ResetPassword />} />{" "}
-          <Route path="/acompanhar" element={<Acompanhar />} />{" "}
-          <Route path="/home" element={<Home />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/content/documentos" element={<Documentos />} />
-          <Route path="/content/arquivos" element={<Arquivos />} />
-          <Route path="/content/midiassociais" element={<MidiasSociais />} />
-          <Route path="/content/videos" element={<Videos />} />
-          <Route path="/faq" element={<Faq />} />
-          <Route path="/content/courses" element={<CoursesPage />} />
-          <Route path="/content/courses/:courseId" element={<LessonPlayer />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/acompanhar" element={<Acompanhar />} />
+
+          {/* Baseline (basta estar logado) */}
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/perfil"
+            element={
+              <ProtectedRoute>
+                <Perfil />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Conteúdo */}
+          <Route
+            path="/content/documentos"
+            element={
+              <ProtectedRoute permission="files.view">
+                <Documentos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/content/arquivos"
+            element={
+              <ProtectedRoute permission="archives.view">
+                <Arquivos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/content/midiassociais"
+            element={
+              <ProtectedRoute permission="social.view">
+                <MidiasSociais />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/content/videos"
+            element={
+              <ProtectedRoute permission="videos.view">
+                <Videos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/faq"
+            element={
+              <ProtectedRoute permission="faq.view">
+                <Faq />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/content/courses"
+            element={
+              <ProtectedRoute permission="courses.view">
+                <CoursesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/content/courses/:courseId"
+            element={
+              <ProtectedRoute permission="courses.view">
+                <LessonPlayer />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/content/courses/:courseId/quiz"
-            element={<QuizPlayer />}
+            element={
+              <ProtectedRoute permission="courses.view">
+                <QuizPlayer />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/enneagram" element={<EnneagramPage />} />
+          <Route
+            path="/enneagram"
+            element={
+              <ProtectedRoute permission="enneagram.view">
+                <EnneagramPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/perfil/enneagram-results"
-            element={<EnneagramResultsPage />}
+            element={
+              <ProtectedRoute permission="enneagram.view">
+                <EnneagramResultsPage />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/content/content-gestao" element={<ContentGestao />} />
-          <Route path="/content/avisos" element={<MuralDeAvisos />} />
-          {/* Rotas da Área Interna */}
+          <Route
+            path="/content/content-gestao"
+            element={
+              <ProtectedRoute permission="content_hub.view">
+                <ContentGestao />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/content/avisos"
+            element={
+              <ProtectedRoute permission="notices.view">
+                <MuralDeAvisos />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Área Interna */}
           <Route
             path="/internal/internal-gestao"
-            element={<InternalGestao />}
+            element={
+              <ProtectedRoute permission="internal_access">
+                <InternalGestao />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/internal/ferias" element={<SolicitarFerias />} />
-          <Route path="/internal/meus-chamados" element={<MeusChamados />} />
-          <Route path="/internal/empresa" element={<Empresa />} />
+          <Route
+            path="/internal/meus-chamados"
+            element={
+              <ProtectedRoute permission="internal_access">
+                <MeusChamados />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/internal/empresa"
+            element={
+              <ProtectedRoute permission="internal_access">
+                <Empresa />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/internal/meeting-records"
-            element={<MeetingRecords />}
+            element={
+              <ProtectedRoute permission="meeting_records.view">
+                <MeetingRecords />
+              </ProtectedRoute>
+            }
           />
-          {/* Rotas de Admin */}
-          <Route path="/admin/logs" element={<ActivityLogs />} />
-          <Route path="/admin/courses" element={<AdminCourses />} />
+
+          {/* Admin */}
+          <Route
+            path="/admin/logs"
+            element={
+              <ProtectedRoute permission="logs.view">
+                <ActivityLogs />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/courses"
+            element={
+              <ProtectedRoute permission="courses.manage">
+                <AdminCourses />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/courses/:courseId"
-            element={<AdminCourseEditor />}
+            element={
+              <ProtectedRoute permission="courses.manage">
+                <AdminCourseEditor />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/admin/calendar" element={<AdminCalendar />} />
-          <Route path="/admin/ferias" element={<GestaoFerias />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/dashboards" element={<Dashboards />} />
+          <Route
+            path="/admin/calendar"
+            element={
+              <ProtectedRoute permission="events.manage">
+                <AdminCalendar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute permission="users.view">
+                <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/groups"
+            element={
+              <ProtectedRoute permission="groups.view">
+                <GroupsManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboards"
+            element={
+              <ProtectedRoute permission="analytics.view">
+                <Dashboards />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/recrutamento/entrevistas"
-            element={<InterviewsCalendar />}
+            element={
+              <ProtectedRoute permission="recruitment.view">
+                <InterviewsCalendar />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/admin/recrutamento" element={<Recruitment />} />
+          <Route
+            path="/admin/recrutamento"
+            element={
+              <ProtectedRoute permission="recruitment.view">
+                <Recruitment />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/checklist-templates"
-            element={<ChecklistTemplatesAdmin />}
+            element={
+              <ProtectedRoute permission="recruitment.view">
+                <ChecklistTemplatesAdmin />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/admin/rh-gestao" element={<RhGestao />} />
-          <Route path="/admin/feedbacks" element={<Feedbacks />} />
-          <Route path="/admin/admin-gestao" element={<AdminGestao />} />
-          <Route path="/admin/statistics" element={<AdminStatistics />} />
-          <Route path="/admin/helpdesk" element={<HelpDeskKanban />} />
-          <Route path="/admin/widget-tenants" element={<WidgetTenants />} />
+          <Route
+            path="/admin/rh-gestao"
+            element={
+              <ProtectedRoute
+                anyOf={[
+                  "users.view",
+                  "recruitment.view",
+                  "feedbacks.view",
+                  "analytics.view",
+                  "meeting_records.view",
+                  "courses.manage",
+                  "events.manage",
+                ]}
+              >
+                <RhGestao />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/feedbacks"
+            element={
+              <ProtectedRoute permission="feedbacks.view">
+                <Feedbacks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/admin-gestao"
+            element={
+              <ProtectedRoute
+                anyOf={[
+                  "groups.view",
+                  "logs.view",
+                  "widget_tenants.view",
+                  "analytics.view",
+                  "projects.view",
+                  "units.view",
+                ]}
+              >
+                <AdminGestao />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/statistics"
+            element={
+              <ProtectedRoute permission="analytics.view">
+                <AdminStatistics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/helpdesk"
+            element={
+              <ProtectedRoute permission="tickets.view">
+                <HelpDeskKanban />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/widget-tenants"
+            element={
+              <ProtectedRoute permission="widget_tenants.view">
+                <WidgetTenants />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Rota 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

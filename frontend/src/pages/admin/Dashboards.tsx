@@ -9,18 +9,12 @@ import EnneagramStats from "./EnneagramStats.tsx";
 import CourseEngagementDash from "./CourseEngagementDash.tsx";
 
 const Dashboard: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const [activeReportTab, setActiveReportTab] = useState(
-    user?.role === "admin" ? "eneagrama" : "cursos"
+    hasPermission("analytics.view") ? "eneagrama" : "cursos"
   );
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/");
-    }
-  }, [user, loading, navigate]);
 
   if (loading) {
     return <div className="tela-loading">Carregando...</div>;
@@ -39,7 +33,7 @@ const Dashboard: React.FC = () => {
 
         <div className="dashboard-elements">
           <div className="analytics-tabs">
-            {(user.role === "admin" || user.role === "rh") && (
+            {hasPermission("analytics.view") && (
               <button
                 className={`analytics-tab ${
                   activeReportTab === "eneagrama" ? "active" : ""

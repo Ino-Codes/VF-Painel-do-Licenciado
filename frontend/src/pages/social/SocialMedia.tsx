@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const SocialMedia: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const [company, setCompany] = useState<string>("all");
@@ -130,7 +130,7 @@ const SocialMedia: React.FC = () => {
             <h2 className="content-title">Conteúdos para Redes Sociais</h2>
           </div>
 
-          {(user?.role === "admin" || user?.role === "rh") && (
+          {hasPermission("social.manage") && (
             <button
               className="form-button form-button--add"
               onClick={() => setIsModalOpen(true)}
@@ -208,7 +208,7 @@ const SocialMedia: React.FC = () => {
                       </button>
                     </div>
 
-                    {(user?.role === "admin" || user?.role === "rh") && (
+                    {hasPermission("social.manage") && (
                       <button
                         className="form-icon-delete"
                         onClick={() => handleDeleteClick(post.id)}

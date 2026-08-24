@@ -8,13 +8,10 @@ import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
 import { COMPANY_OPTIONS } from "../ui/CompanyFilter.tsx";
 import { FiSearch, FiX } from "react-icons/fi";
 
-type Visibility = "todos" | "colaboradores" | "licenciados";
-
 interface Notice {
   id: number;
   message: string;
   created_at: string;
-  visibility: Visibility;
 }
 
 interface InternalUser {
@@ -39,7 +36,6 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   noticeToEdit,
   companySlug,
 }) => {
-  const [visibility, setVisibility] = useState<Visibility>("todos");
   // Empresa-alvo do aviso ("all" = global, visível para todas as empresas).
   const [company, setCompany] = useState<string>(companySlug || "all");
   const [sendEmail, setSendEmail] = useState(false);
@@ -79,7 +75,6 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
 
       if (noticeToEdit) {
         editor.commands.setContent(noticeToEdit.message, { emitUpdate: false });
-        setVisibility(noticeToEdit.visibility || "todos");
         setSendEmail(false);
 
         if (noticeToEdit.id) {
@@ -90,7 +85,6 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
         }
       } else {
         editor.commands.clearContent();
-        setVisibility("todos");
         setSelectedUserIds([]);
         setSendEmail(false);
       }
@@ -140,8 +134,8 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
       (u.setor || "").toLowerCase().includes(userSearch.toLowerCase()),
   );
 
-  // A lista de usuários só é exibida quando visibilidade != "licenciados"
-  const showUserList = visibility !== "licenciados";
+  // A lista de usuários é exibida para empresas internas e some para V-PARTNER
+  const showUserList = company !== "v-partner";
 
   const handleSubmit = async () => {
     if (!editor || editor.isEmpty) {
@@ -151,7 +145,6 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
     const message = editor.getHTML();
     const payload = {
       message,
-      visibility,
       sendEmail,
       company,
       // Só envia selectedUserIds se a lista estiver visível
@@ -244,28 +237,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
           </>
         )}
 
-        {/* Visibilidade macro */}
-        <div className="form-row">
-          <label htmlFor="visibility">Visível para:</label>
-        </div>
-        <div className="form-row">
-          <select
-            id="visibility"
-            value={visibility}
-            onChange={(e) => {
-              setVisibility(e.target.value as Visibility);
-              // Limpa seleção se mudar para licenciados (lista some)
-              if (e.target.value === "licenciados") setSelectedUserIds([]);
-            }}
-            className="form-input"
-          >
-            <option value="todos">Todos</option>
-            <option value="colaboradores">Apenas Internos</option>
-            <option value="licenciados">Apenas Licenciados</option>
-          </select>
-        </div>
-
-        {/* Seletor de destinatários (só aparece quando não é "licenciados") */}
+        {/* Seletor de destinatários (some para V-PARTNER) */}
         {showUserList && (
           <>
             <div className="form-row">

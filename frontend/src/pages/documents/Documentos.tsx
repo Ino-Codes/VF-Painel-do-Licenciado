@@ -17,7 +17,6 @@ interface FileData {
   filename: string;
   category: string;
   folder?: string;
-  visibility: "todos" | "licenciados" | "colaboradores";
   uploaded_at: string;
 }
 
@@ -26,7 +25,7 @@ type GroupedFiles = {
 };
 
 const Documentos: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const [company, setCompany] = useState<string>("all");
@@ -209,7 +208,7 @@ const Documentos: React.FC = () => {
           <div>
             <h2 className="content-title">Central de Documentos</h2>
           </div>
-          {user?.role === "admin" && (
+          {hasPermission("files.manage") && (
             <button
               className="form-button form-button--add"
               onClick={openModalForCreate}
@@ -276,7 +275,7 @@ const Documentos: React.FC = () => {
                             <FiDownload />
                           </button>
 
-                          {user?.role === "admin" && (
+                          {hasPermission("files.manage") && (
                             <>
                               <button
                                 className="form-icon-edit"

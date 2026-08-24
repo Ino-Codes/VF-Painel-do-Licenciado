@@ -30,7 +30,7 @@ Prover um ambiente unificado e seguro onde colaboradores e licenciados possam ac
 ### 🎫 Central de Chamados (Suporte / ITSM)
 
 - **Widget de abertura de chamados:** botão flutuante embutível em qualquer site de terceiro via _snippet_ `<script>` (ver [Widget de chamados](#-widget-de-chamados-embed)).
-- **Quadro de atendimento (Kanban):** fluxo _Novo → Em Andamento → Concluído / Arquivado_, com atribuição de atendente, observações internas e instruções de resolução.
+- **Quadro de atendimento (Kanban):** fluxo _Novo → Em Andamento → Concluído / Pausado_, com atribuição de atendente, observações internas e instruções de resolução.
 - **E-mails automáticos:** confirmação de abertura e de conclusão para o solicitante, com link direto de acompanhamento.
 - **Acompanhamento público (`/acompanhar`):** o solicitante externo consulta o status por _magic link_ ou por protocolo + e-mail — sem login.
 - **Meus Chamados:** consulta interna de chamados (protocolo + e-mail).
@@ -42,7 +42,6 @@ Prover um ambiente unificado e seguro onde colaboradores e licenciados possam ac
 - **Feedbacks 360:** criação, agendamento e resposta de convites.
 - **Recrutamento:** gestão de candidatos e calendário de entrevistas.
 - **Eneagrama:** teste comportamental com estatísticas da equipe.
-- **Férias:** solicitação e gestão de períodos de férias.
 - **Projetos:** acompanhamento de projetos e tarefas.
 - **Calendário Corporativo:** eventos e aniversariantes do mês.
 

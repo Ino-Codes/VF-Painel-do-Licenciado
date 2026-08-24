@@ -13,7 +13,8 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  role: "admin" | "licenciado" | "comercial" | "rh" | "operacional";
+  role?: string;
+  group_id?: number | null;
   birth_date?: string | null;
   cargo?: string;
   setor?: string;
@@ -60,14 +61,13 @@ const AdminUsers: React.FC = () => {
 
     const isLicenciadoTab = activeTab === "licenciados";
     const state = isLicenciadoTab ? licenciadoState : colaboradorState;
-    const roles = isLicenciadoTab
-      ? "licenciado"
-      : "comercial,rh,operacional,admin";
 
     const params = {
       page: state.currentPage,
       limit: 10,
-      roles,
+      // Interno vs licenciado agora é definido pela permissão internal_access
+      // do grupo, não por uma lista fixa de roles.
+      internal: isLicenciadoTab ? "false" : "true",
       search: state.searchQuery,
       sortBy: state.sortConfig.key,
       sortOrder: state.sortConfig.order,

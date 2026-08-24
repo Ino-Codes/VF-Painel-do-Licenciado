@@ -2,13 +2,13 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (pool, logActivity) {
-  const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+  const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
   // Rota para listar todas as etapas do processo seletivo
   router.get(
     "/stages",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.view"),
     async (req, res) => {
       try {
         const result = await pool.query(
@@ -28,7 +28,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/stages",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { name, stage_order, pipeline_type } = req.body;
       try {
@@ -67,7 +67,7 @@ module.exports = function (pool, logActivity) {
   router.delete(
     "/stage/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       const client = await pool.connect();
@@ -143,7 +143,7 @@ module.exports = function (pool, logActivity) {
   router.put(
     "/stages/reorder",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { stages } = req.body; // Array de { id, stage_order }
       const client = await pool.connect();
@@ -177,7 +177,7 @@ module.exports = function (pool, logActivity) {
   router.get(
     "/candidates",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.view"),
     async (req, res) => {
       const {
         search,
@@ -280,7 +280,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/candidates",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { name, email, phone, role_applied_for, stage_id, user_id, tasks } =
         req.body;
@@ -372,7 +372,7 @@ module.exports = function (pool, logActivity) {
   router.put(
     "/candidates/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       const {
@@ -430,7 +430,7 @@ module.exports = function (pool, logActivity) {
   router.put(
     "/candidates/:id/move",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       const { stage_id } = req.body;
@@ -465,7 +465,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/candidates/:id/tasks",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       const { task_name, responsible_user_id, due_date } = req.body;
@@ -491,7 +491,7 @@ module.exports = function (pool, logActivity) {
   router.delete(
     "/candidates/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       const client = await pool.connect();
@@ -541,7 +541,7 @@ module.exports = function (pool, logActivity) {
   router.put(
     "/tasks/:taskId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { taskId } = req.params;
       const { is_completed } = req.body;
@@ -568,7 +568,7 @@ module.exports = function (pool, logActivity) {
   router.delete(
     "/tasks/:taskId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { taskId } = req.params;
       try {
@@ -595,7 +595,7 @@ module.exports = function (pool, logActivity) {
   router.get(
     "/checklist-templates",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.view"),
     async (req, res) => {
       try {
         const result = await pool.query(
@@ -613,7 +613,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/checklist-templates",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { name, is_default } = req.body;
       const client = await pool.connect();
@@ -651,7 +651,7 @@ module.exports = function (pool, logActivity) {
   router.put(
     "/checklist-templates/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       const { name, is_default } = req.body;
@@ -695,7 +695,7 @@ module.exports = function (pool, logActivity) {
   router.delete(
     "/checklist-templates/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -724,7 +724,7 @@ module.exports = function (pool, logActivity) {
   router.get(
     "/checklist-templates/:id/items",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.view"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -743,7 +743,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/checklist-templates/:id/items",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       const { task_name, due_days } = req.body;
@@ -770,7 +770,7 @@ module.exports = function (pool, logActivity) {
   router.put(
     "/checklist-templates/items/:itemId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { itemId } = req.params;
       const { task_name, due_days } = req.body;
@@ -799,7 +799,7 @@ module.exports = function (pool, logActivity) {
   router.delete(
     "/checklist-templates/items/:itemId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { itemId } = req.params;
       try {
@@ -830,7 +830,7 @@ module.exports = function (pool, logActivity) {
   router.get(
     "/interviews",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.view"),
     async (req, res) => {
       try {
         const { start, end, candidate_id, interviewer_id, stage_id } =
@@ -896,7 +896,7 @@ module.exports = function (pool, logActivity) {
   router.get(
     "/interviews/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.view"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -923,7 +923,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/interviews",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       // Accept either candidate_id or candidate details to create a candidate on the fly
       const {
@@ -1070,7 +1070,7 @@ module.exports = function (pool, logActivity) {
   router.put(
     "/interviews/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       const {
@@ -1184,7 +1184,7 @@ module.exports = function (pool, logActivity) {
   router.delete(
     "/interviews/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("recruitment.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {

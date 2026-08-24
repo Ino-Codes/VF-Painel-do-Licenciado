@@ -26,15 +26,7 @@ const ActivityLogs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
-      toast.error("Acesso restrito aos administradores.");
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
-
   const fetchLogs = useCallback(async () => {
-    if (user?.role !== "admin") return;
     try {
       const params: any = {
         page: currentPage,
@@ -63,7 +55,7 @@ const ActivityLogs: React.FC = () => {
     setSearchQuery(searchTerm.trim());
   };
 
-  if (loading || !user || user.role !== "admin") {
+  if (loading || !user) {
     return <div className="tela-loading">Carregando...</div>;
   }
 

@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
 module.exports = function (pool, logActivity) {
   // Gera token seguro e único
   const generateToken = () => crypto.randomBytes(32).toString("hex");
 
   // ── GET /api/widget-tenants ───────────────────────────────────────────────
-  router.get("/", isLoggedIn, checkRole(["admin"]), async (req, res) => {
+  router.get("/", isLoggedIn, checkPermission("widget_tenants.view"), async (req, res) => {
     try {
       const result = await pool.query(
         `SELECT wt.*, u.nome AS created_by_name
@@ -24,7 +24,7 @@ module.exports = function (pool, logActivity) {
   });
 
   // ── POST /api/widget-tenants ──────────────────────────────────────────────
-  router.post("/", isLoggedIn, checkRole(["admin"]), async (req, res) => {
+  router.post("/", isLoggedIn, checkPermission("widget_tenants.manage"), async (req, res) => {
     const { name } = req.body;
 
     if (!name || !name.trim()) {
@@ -61,7 +61,7 @@ module.exports = function (pool, logActivity) {
   });
 
   // ── PUT /api/widget-tenants/:id ───────────────────────────────────────────
-  router.put("/:id", isLoggedIn, checkRole(["admin"]), async (req, res) => {
+  router.put("/:id", isLoggedIn, checkPermission("widget_tenants.manage"), async (req, res) => {
     const { id } = req.params;
     const { name, active } = req.body;
 
@@ -98,7 +98,7 @@ module.exports = function (pool, logActivity) {
   });
 
   // ── DELETE /api/widget-tenants/:id ────────────────────────────────────────
-  router.delete("/:id", isLoggedIn, checkRole(["admin"]), async (req, res) => {
+  router.delete("/:id", isLoggedIn, checkPermission("widget_tenants.manage"), async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -139,7 +139,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/:id/regenerate-token",
     isLoggedIn,
-    checkRole(["admin"]),
+    checkPermission("widget_tenants.manage"),
     async (req, res) => {
       const { id } = req.params;
       const newToken = generateToken();

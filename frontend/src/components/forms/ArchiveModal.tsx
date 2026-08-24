@@ -8,7 +8,6 @@ interface ArchiveData {
   originalname: string;
   category: string;
   folder?: string;
-  visibility: "todos" | "licenciados" | "colaboradores";
 }
 
 interface ArchiveModalProps {
@@ -25,6 +24,7 @@ const COMPANIES_OPTIONS = [
   { slug: "v-business", name: "V-BUSINESS" },
   { slug: "v-corp", name: "V-CORP" },
   { slug: "v-tech", name: "V-TECH" },
+  { slug: "v-partner", name: "V-PARTNER" },
 ];
 
 const ArchiveModal: React.FC<ArchiveModalProps> = ({
@@ -40,9 +40,6 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
   const [originalname, setOriginalname] = useState("");
   const [category, setCategory] = useState("");
   const [folder, setFolder] = useState("");
-  const [visibility, setVisibility] = useState<
-    "todos" | "licenciados" | "colaboradores"
-  >("todos");
   const [company, setCompany] = useState(currentCompanySlug);
   const [file, setFile] = useState<File | null>(null);
 
@@ -51,13 +48,11 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
       setOriginalname(archiveToEdit.originalname);
       setCategory(archiveToEdit.category);
       setFolder(archiveToEdit.folder || "");
-      setVisibility(archiveToEdit.visibility || "todos");
       setCompany(currentCompanySlug);
     } else {
       setOriginalname("");
       setCategory("");
       setFolder("");
-      setVisibility("todos");
       setFile(null);
       setCompany(currentCompanySlug);
     }
@@ -92,7 +87,6 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
           originalname,
           category,
           folder,
-          visibility,
           company,
         });
         toast.success("Arquivo atualizado com sucesso!");
@@ -106,7 +100,6 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
         formData.append("originalname", originalname);
         formData.append("category", category);
         formData.append("folder", folder);
-        formData.append("visibility", visibility);
         formData.append("company", company);
 
         await api.post("/api/archives", formData);
@@ -199,26 +192,6 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
               className="form-input"
               required
             />
-          </div>
-
-          <div className="form-row">
-            <label htmlFor="visibility" className="content-modal-label">
-              Visibilidade:
-            </label>
-          </div>
-          <div className="form-row">
-            <select
-              id="visibility"
-              value={visibility}
-              onChange={(e) =>
-                setVisibility(e.target.value as ArchiveData["visibility"])
-              }
-              className="form-select"
-            >
-              <option value="todos">Visível para Todos</option>
-              <option value="licenciados">Apenas para Licenciados</option>
-              <option value="colaboradores">Apenas para Colaboradores</option>
-            </select>
           </div>
 
           {!archiveToEdit && (

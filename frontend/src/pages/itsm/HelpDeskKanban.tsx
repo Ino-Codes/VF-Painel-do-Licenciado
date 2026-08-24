@@ -9,7 +9,7 @@ import {
   FiMonitor,
   FiUser,
   FiSave,
-  FiArchive,
+  FiPauseCircle,
   FiRotateCcw,
 } from "react-icons/fi";
 import { IoCloseSharp } from "react-icons/io5";
@@ -61,7 +61,7 @@ const COLUMNS: { key: string; label: string }[] = [
   { key: "novo", label: "Novo" },
   { key: "andamento", label: "Em Andamento" },
   { key: "concluido", label: "Concluído" },
-  { key: "arquivado", label: "Arquivado" },
+  { key: "pausado", label: "Pausado" },
 ];
 
 const getInitials = (name: string): string =>
@@ -253,7 +253,7 @@ const TicketKanbanPage: React.FC = () => {
     }
   };
 
-  // Movimentações simples de status (arquivar / desarquivar)
+  // Movimentações simples de status (pausar / retomar)
   const changeStatus = async (newStatus: string, successMsg: string) => {
     if (!detailTicket) return;
     setMoving(true);
@@ -270,9 +270,9 @@ const TicketKanbanPage: React.FC = () => {
     }
   };
 
-  const handleArchive = () => changeStatus("arquivado", "Chamado arquivado.");
-  const handleUnarchive = () =>
-    changeStatus("andamento", "Chamado desarquivado.");
+  const handlePause = () => changeStatus("pausado", "Chamado pausado.");
+  const handleResume = () =>
+    changeStatus("andamento", "Chamado retomado.");
 
   const closeDetail = () => {
     const ticket = detailTicket;
@@ -292,8 +292,16 @@ const TicketKanbanPage: React.FC = () => {
     }
   };
 
+  // Ordena os cards por data de criação: mais antigos primeiro em todas as
+  // etapas, exceto "Concluído", que mostra os mais recentes primeiro.
   const ticketsByStatus = (status: string) =>
-    tickets.filter((f) => f.status === status);
+    tickets
+      .filter((f) => f.status === status)
+      .sort((a, b) => {
+        const diff =
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        return status === "concluido" ? -diff : diff;
+      });
 
   const isBeingAttended = detailTicket?.attendant_id != null;
   const DetailTypeIcon = detailTicket
@@ -523,11 +531,11 @@ const TicketKanbanPage: React.FC = () => {
                       </button>
                       <button
                         className="ticket-modal-action-btn ticket-modal-action-btn--secondary btn-icon-text"
-                        onClick={handleArchive}
+                        onClick={handlePause}
                         disabled={closing || moving}
                       >
-                        <FiArchive />
-                        Arquivar chamado
+                        <FiPauseCircle />
+                        Pausar atendimento
                       </button>
                     </div>
                   )}
@@ -539,14 +547,14 @@ const TicketKanbanPage: React.FC = () => {
                     </div>
                   )}
 
-                  {detailTicket.status === "arquivado" && (
+                  {detailTicket.status === "pausado" && (
                     <button
                       className="ticket-modal-action-btn ticket-modal-action-btn--secondary btn-icon-text"
-                      onClick={handleUnarchive}
+                      onClick={handleResume}
                       disabled={moving}
                     >
                       <FiRotateCcw />
-                      Desarquivar card
+                      Retomar atendimento
                     </button>
                   )}
 

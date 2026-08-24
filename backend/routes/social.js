@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
+const { resolveVpartnerId, isLicenciado } = require("../companyAccess.js");
 
 const COMPANIES_MAP = {
   "v-tax": 1,
@@ -15,26 +16,14 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   const getCompanyId = (slug) =>
     slug === "all" ? null : COMPANIES_MAP[slug] || 1;
 
-  const VALID_VISIBILITIES = ["todos", "colaboradores", "licenciados"];
-
   // ── 1. CREATE ────────────────────────────────────────────────
   router.post(
     "/",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("social.manage"),
     upload.array("files", 5),
     async (req, res) => {
-      const {
-        title,
-        category,
-        caption,
-        company,
-        visibility = "todos",
-      } = req.body;
-
-      if (!VALID_VISIBILITIES.includes(visibility)) {
-        return res.status(400).json({ error: "Visibilidade inválida." });
-      }
+      const { title, category, caption, company } = req.body;
 
       try {
         const companyId = getCompanyId(company);
@@ -58,18 +47,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         const result = await pool.query(
           `INSERT INTO social_posts
-            (title, category, caption, images, created_by, company_id, visibility)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+            (title, category, caption, images, created_by, company_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING *`,
-          [
-            title,
-            category,
-            caption,
-            imageUrls,
-            req.user.id,
-            companyId,
-            visibility,
-          ],
+          [title, category, caption, imageUrls, req.user.id, companyId],
         );
 
         res.status(201).json(result.rows[0]);
@@ -81,28 +62,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   );
 
   // ── 2. READ ──────────────────────────────────────────────────
-  router.get("/", isLoggedIn, async (req, res) => {
+  router.get("/", isLoggedIn, checkPermission("social.view"), async (req, res) => {
     const { company } = req.query;
-    const { role } = req.user;
 
     try {
-      const companyId = getCompanyId(company); // SEM await — função síncrona
+      let companyId = getCompanyId(company);
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
 
       const params = [];
       const whereClauses = [];
       if (companyId !== null) {
         params.push(companyId);
         whereClauses.push(`company_id = $${params.length}`);
-      }
-
-      if (role === "licenciado") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')",
-        );
-      } else if (role !== "admin") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'colaboradores')",
-        );
       }
 
       const whereString = whereClauses.length
@@ -134,30 +105,20 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.put(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("social.manage"),
     async (req, res) => {
       const { id } = req.params;
-      const {
-        title,
-        category,
-        caption,
-        company,
-        visibility = "todos",
-      } = req.body;
-
-      if (!VALID_VISIBILITIES.includes(visibility)) {
-        return res.status(400).json({ error: "Visibilidade inválida." });
-      }
+      const { title, category, caption, company } = req.body;
 
       try {
         const companyId = getCompanyId(company);
 
         const result = await pool.query(
           `UPDATE social_posts
-           SET title = $1, category = $2, caption = $3, company_id = $4, visibility = $5
-           WHERE id = $6
+           SET title = $1, category = $2, caption = $3, company_id = $4
+           WHERE id = $5
            RETURNING *`,
-          [title, category, caption, companyId, visibility, id],
+          [title, category, caption, companyId, id],
         );
 
         if (result.rowCount === 0) {
@@ -186,10 +147,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   );
 
   // ── 4. DOWNLOAD ──────────────────────────────────────────────
-  router.get("/download/:id", isLoggedIn, async (req, res) => {
+  router.get("/download/:id", isLoggedIn, checkPermission("social.view"), async (req, res) => {
     try {
       const postResult = await pool.query(
-        "SELECT title, category, images, visibility FROM social_posts WHERE id = $1",
+        "SELECT title, category, images, company_id FROM social_posts WHERE id = $1",
         [req.params.id],
       );
 
@@ -197,14 +158,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         return res.status(404).send("Post não encontrado.");
       }
 
-      const { images, title, visibility } = postResult.rows[0];
+      const { images, title, company_id } = postResult.rows[0];
 
-      const userRole = req.user.role;
-      const isLicenciado = userRole === "licenciado";
+      // Licenciado só baixa conteúdo da V-PARTNER; interno baixa qualquer um.
       const allowed =
-        visibility === "todos" ||
-        (visibility === "licenciados" && isLicenciado) ||
-        (visibility === "colaboradores" && !isLicenciado);
+        !isLicenciado(req) || company_id === (await resolveVpartnerId(pool));
 
       if (!allowed) {
         return res
@@ -274,7 +232,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("social.manage"),
     async (req, res) => {
       const { id } = req.params;
 

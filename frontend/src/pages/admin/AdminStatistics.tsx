@@ -121,12 +121,7 @@ const AdminStatistics: React.FC = () => {
   const [jiraStats, setJiraStats] = useState<JiraStats | null>(null);
   const [isLoadingJira, setIsLoadingJira] = useState(true);
 
-  useEffect(() => {
-    if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
-      toast.error("Acesso restrito.");
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
+  // Acesso é garantido centralmente pelo ProtectedRoute (analytics.view).
 
   const fetchStats = async () => {
     setIsLoadingData(true);

@@ -45,7 +45,7 @@ export interface MeetingRecord {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 const MeetingRecords: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const [meetings, setMeetings] = useState<MeetingRecord[]>([]);
@@ -139,7 +139,7 @@ const MeetingRecords: React.FC = () => {
   if (loading) return <div className="tela-loading">Carregando...</div>;
   if (!user) return null;
 
-  const canManage = user.role === "admin" || user.role === "rh";
+  const canManage = hasPermission("meeting_records.manage");
 
   return (
     <div className="p-2">

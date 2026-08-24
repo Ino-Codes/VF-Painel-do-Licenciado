@@ -17,25 +17,7 @@ const COMPANIES_OPTIONS = [
   { slug: "v-business", name: "V-BUSINESS" },
   { slug: "v-corp", name: "V-CORP" },
   { slug: "v-tech", name: "V-TECH" },
-];
-
-// Opções de visibilidade
-const VISIBILITY_OPTIONS = [
-  {
-    value: "todos",
-    label: "Todos",
-    description: "Visível para qualquer usuário",
-  },
-  {
-    value: "colaboradores",
-    label: "Apenas Internos",
-    description: "Visível apenas para colaboradores e admins",
-  },
-  {
-    value: "licenciados",
-    label: "Apenas Externos",
-    description: "Visível apenas para licenciados e admins",
-  },
+  { slug: "v-partner", name: "V-PARTNER" },
 ];
 
 const SocialPostModal: React.FC<SocialPostModalProps> = ({
@@ -50,9 +32,6 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
   const [category, setCategory] = useState("");
   const [caption, setCaption] = useState("");
   const [company, setCompany] = useState(currentCompanySlug);
-  const [visibility, setVisibility] = useState<
-    "todos" | "colaboradores" | "licenciados"
-  >("todos");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
 
@@ -94,7 +73,6 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
     formData.append("category", category);
     formData.append("caption", caption);
     formData.append("company", company);
-    formData.append("visibility", visibility);
     selectedFiles.forEach((file) => formData.append("files", file));
 
     toast.loading("Fazendo upload do conteúdo...");
@@ -138,24 +116,6 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
                   {opt.name}
                 </option>
               ))}
-            </select>
-          </div>
-
-          {/* Visibilidade */}
-          <div className="form-row">
-            <label>Visibilidade:</label>
-          </div>
-          <div className="form-row">
-            <select
-              value={visibility}
-              onChange={(e) =>
-                setVisibility(e.target.value as typeof visibility)
-              }
-              className="form-select"
-            >
-              <option value="todos">Visível para Todos</option>
-              <option value="colaboradores">Apenas para Colaboradores</option>
-              <option value="licenciados">Apenas para Licenciados</option>
             </select>
           </div>
 

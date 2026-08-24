@@ -19,7 +19,6 @@ interface Notice {
   id: number;
   message: string;
   created_at: string;
-  visibility: "todos" | "internos" | "licenciados";
   company_id: number | null;
   creator_name?: string;
 }
@@ -27,7 +26,7 @@ interface Notice {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 const MuralDeAvisos: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const [company, setCompany] = useState<string>("all");
@@ -144,7 +143,7 @@ const MuralDeAvisos: React.FC = () => {
   if (loading) return <div className="tela-loading">Carregando...</div>;
   if (!user) return null;
 
-  const canManage = user.role === "admin" || user.role === "rh";
+  const canManage = hasPermission("notices.manage");
 
   return (
     <div className="p-2">

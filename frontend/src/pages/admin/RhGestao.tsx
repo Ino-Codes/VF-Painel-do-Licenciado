@@ -10,21 +10,15 @@ import {
   FaCalendarDay,
   FaUserPlus,
 } from "react-icons/fa";
-import { PiIslandFill } from "react-icons/pi";
 import { MdFeedback } from "react-icons/md";
 
 const RhGestao: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   if (loading) return <div className="tela-loading">Carregando...</div>;
 
-  // Proteção de rota simples
-  if (!user || (user.role !== "admin" && user.role !== "rh")) {
-    navigate("/dashboard");
-    return null;
-  }
-
+  // Cada card só aparece para quem tem o `.view` da tela correspondente.
   const modules = [
     {
       title: "Cursos",
@@ -32,41 +26,39 @@ const RhGestao: React.FC = () => {
         "Crie, edite ou exclua cursos para os demais usuários do Painel",
       icon: <FaGraduationCap />,
       path: "/admin/courses",
+      permission: "courses.manage",
     },
     {
       title: "Dashboards",
       description: "Visualize gráficos sobre o uso dos usuários no Painel",
       icon: <FaChartLine />,
       path: "/admin/dashboards",
+      permission: "analytics.view",
     },
     {
       title: "Eventos",
       description: "Crie, edite ou exclua eventos para colaboradores internos",
       icon: <FaCalendarDay />,
       path: "/admin/calendar",
+      permission: "events.manage",
     },
-    // {
-    //   title: "Férias",
-    //   description:
-    //     "Gerencie solicitações e aprovações de férias dos colaboradores",
-    //   icon: <PiIslandFill />,
-    //   path: "/admin/ferias",
-    // },
-    // {
-    //   title: "Feedbacks",
-    //   description:
-    //     "Convide colaboradores a enviar feedbacks sobre colegas e lideranças e gerencie feedbacks recebidos",
-    //   icon: <MdFeedback />,
-    //   path: "/admin/feedbacks",
-    // },
+    {
+      title: "Feedbacks",
+      description:
+        "Convide colaboradores a enviar feedbacks e gerencie os recebidos",
+      icon: <MdFeedback />,
+      path: "/admin/feedbacks",
+      permission: "feedbacks.view",
+    },
     {
       title: "Recrutamento",
       description:
         "Gerencie processos seletivos e candidatos para vagas abertas",
       icon: <FaUserPlus />,
       path: "/admin/recrutamento",
+      permission: "recruitment.view",
     },
-  ];
+  ].filter((m) => hasPermission(m.permission));
 
   return (
     <div className="p-2">

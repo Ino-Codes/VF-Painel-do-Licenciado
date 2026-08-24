@@ -12,12 +12,6 @@ const InternalGestao: React.FC = () => {
 
   if (loading) return <div className="tela-loading">Carregando...</div>;
 
-  // Proteção de rota simples
-  if (!user || user.role === "licenciado") {
-    navigate("/dashboard");
-    return null;
-  }
-
   const modules = [
     {
       title: "Atas de Reuniões",

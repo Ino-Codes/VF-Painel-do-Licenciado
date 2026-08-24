@@ -210,8 +210,9 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   width: 90%;
-  max-width: 900px;
-  max-height: 90vh;
+  height: 90%;
+  max-width: 1200px;
+  max-height: 800px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -245,7 +246,7 @@
 }
 
 .kanban-modal-left {
-  flex: 1;
+  flex: 2;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -446,14 +447,14 @@
   cursor: not-allowed;
 }
 
-/* Grupo de ações (Em Andamento: concluir + arquivar) */
+/* Grupo de ações (Em Andamento: concluir + pausar) */
 .ticket-modal-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* Botão de ação secundário (arquivar / desarquivar) */
+/* Botão de ação secundário (pausar / retomar) */
 .ticket-modal-action-btn--secondary {
   background: transparent;
   color: var(--text-secondary);

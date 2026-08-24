@@ -16,7 +16,6 @@ interface VideoData {
   title: string;
   description: string;
   youtube_url: string;
-  visibility: "todos" | "internos" | "licenciados";
   category: string;
 }
 
@@ -43,7 +42,7 @@ const getYoutubeEmbedUrl = (url: string): string => {
 };
 
 const Videos: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const [company, setCompany] = useState<string>("all");
@@ -199,7 +198,7 @@ const Videos: React.FC = () => {
             <h2 className="content-title">Vídeos</h2>
           </div>
 
-          {user.role === "admin" && (
+          {hasPermission("videos.manage") && (
             <button
               className="form-button form-button--add"
               onClick={() => setIsModalOpen(true)}
@@ -249,7 +248,7 @@ const Videos: React.FC = () => {
                     <div className="video-info">
                       <h3>{video.title}</h3>
                       <p>{video.description}</p>
-                      {user.role === "admin" && (
+                      {hasPermission("videos.manage") && (
                         <div className="video-actions">
                           <button
                             className="form-icon-edit"

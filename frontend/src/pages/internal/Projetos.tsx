@@ -54,8 +54,6 @@ const MONTHS_PT = [
   "Dez",
 ];
 
-const INTERNAL_ROLES = ["admin", "rh", "comercial", "operacional"];
-
 // ─── Helpers do Cronograma ────────────────────────────────────────────────────
 
 /**
@@ -134,7 +132,10 @@ const groupByYear = (columns: { year: number; month: number }[]) => {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 const Projetos: React.FC = () => {
-  const { user } = useAuth() as { user: any };
+  const { user, hasPermission } = useAuth() as {
+    user: any;
+    hasPermission: (key: string) => boolean;
+  };
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"projects" | "schedule">(
@@ -157,14 +158,6 @@ const Projetos: React.FC = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<ProjectTask | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<ProjectTask | null>(null);
-
-  // ─── Guard: apenas roles internas ────────────────────────────────────────
-
-  useEffect(() => {
-    if (!user || !INTERNAL_ROLES.includes(user.role)) {
-      navigate("/home");
-    }
-  }, [user, navigate]);
 
   // ─── Fetch: Projetos ─────────────────────────────────────────────────────
 
@@ -274,7 +267,7 @@ const Projetos: React.FC = () => {
         {/* ══════════════════════════════════════════════════════════════════ */}
         {activeTab === "projects" && (
           <div className="projetos-tab-content">
-            {user?.role === "admin" && (
+            {hasPermission("projects.manage") && (
               <div className="projetos-toolbar">
                 <button
                   className="form-button form-button--add"
@@ -304,7 +297,7 @@ const Projetos: React.FC = () => {
                       <th>Nome</th>
                       <th>Time Responsável</th>
                       <th>Descrição</th>
-                      {user?.role === "admin" && <th>Ações</th>}
+                      {hasPermission("projects.manage") && <th>Ações</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -315,7 +308,7 @@ const Projetos: React.FC = () => {
                         <td className="projeto-descricao">
                           {project.description || "—"}
                         </td>
-                        {user?.role === "admin" && (
+                        {hasPermission("projects.manage") && (
                           <td className="projeto-acoes">
                             <div className="projeto-acoes-inner">
                               <button
@@ -370,7 +363,7 @@ const Projetos: React.FC = () => {
                 ))}
               </select>
 
-              {user?.role === "admin" && selectedProjectId && (
+              {hasPermission("projects.manage") && selectedProjectId && (
                 <button
                   className="form-button form-button--add"
                   onClick={() => {
@@ -399,7 +392,7 @@ const Projetos: React.FC = () => {
                 {tasks.length === 0 ? (
                   <div className="cronograma-empty">
                     <p>Nenhuma tarefa cadastrada para este projeto.</p>
-                    {user?.role === "admin" && (
+                    {hasPermission("projects.manage") && (
                       <button
                         className="form-button form-button--add"
                         onClick={() => {
@@ -458,7 +451,7 @@ const Projetos: React.FC = () => {
                               <span className="gantt-task-label-text">
                                 {task.name}
                               </span>
-                              {user?.role === "admin" && (
+                              {hasPermission("projects.manage") && (
                                 <span className="gantt-task-actions">
                                   <button
                                     className="gantt-icon-btn"

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
+const { resolveVpartnerId, isLicenciado } = require("../companyAccess.js");
 
 module.exports = function (pool, createNotification, logActivity, resend) {
   // ─── Helper: resolve company_id pelo slug ─────────────────────────────────
@@ -19,63 +20,30 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     }
   };
 
-  // ─── Visibilidades válidas ─────────────────────────────────────────────────
-  const VALID_VISIBILITIES = ["todos", "colaboradores", "licenciados"];
-
-  // ─── Helper: cláusula de visibilidade para o GET ───────────────────────────
-  // Define o que cada role pode ver no painel
-  const getVisibilityClause = (role, userId, params) => {
-    if (role === "admin") {
-      // Admin vê tudo — sem cláusula extra
-      return null;
-    }
-
-    if (role === "licenciado") {
-      // Licenciados veem: todos + licenciados
-      return "(n.visibility = 'todos' OR n.visibility = 'licenciados')";
-    }
-
-    // Colaboradores internos (rh, comercial, operacional, etc.) veem:
-    // todos + colaboradores + avisos onde foram especificamente selecionados
-    params.push(userId);
-    return `(
-      n.visibility = 'todos'
-      OR n.visibility = 'colaboradores'
-      OR EXISTS (
-        SELECT 1 FROM notice_recipients nr
-        WHERE nr.notice_id = n.id AND nr.user_id = $${params.length}
-      )
-    )`;
-  };
-
   // ─── Helper: busca usuários alvo para notificação/email ───────────────────
-  // Retorna usuários com base na visibilidade macro
-  const getTargetUsers = async (visibility, creatorId) => {
-    if (visibility === "todos") {
+  // Audiência derivada da EMPRESA do aviso: V-PARTNER → licenciados;
+  // empresa interna → internos; global (NULL) → todos.
+  const getTargetUsers = async (companyId, creatorId) => {
+    const vpartnerId = await resolveVpartnerId(pool);
+    if (companyId === null) {
       const r = await pool.query(
         "SELECT id, nome, email FROM users WHERE id != $1",
         [creatorId],
       );
       return r.rows;
     }
-
-    if (visibility === "colaboradores") {
-      const r = await pool.query(
-        "SELECT id, nome, email FROM users WHERE role != 'licenciado' AND id != $1",
-        [creatorId],
-      );
-      return r.rows;
-    }
-
-    if (visibility === "licenciados") {
+    if (companyId === vpartnerId) {
       const r = await pool.query(
         "SELECT id, nome, email FROM users WHERE role = 'licenciado' AND id != $1",
         [creatorId],
       );
       return r.rows;
     }
-
-    return [];
+    const r = await pool.query(
+      "SELECT id, nome, email FROM users WHERE role != 'licenciado' AND id != $1",
+      [creatorId],
+    );
+    return r.rows;
   };
 
   // ─── Helper: template de e-mail ───────────────────────────────────────────
@@ -180,7 +148,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   router.get(
     "/internal-users",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("notices.view"),
     async (req, res) => {
       try {
         const result = await pool.query(
@@ -198,12 +166,13 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   );
 
   // ─── GET /api/notices ──────────────────────────────────────────────────────
-  router.get("/", isLoggedIn, async (req, res) => {
-    const { role, id: userId } = req.user;
+  router.get("/", isLoggedIn, checkPermission("notices.view"), async (req, res) => {
     const { company, page = 1, limit = 10 } = req.query;
 
     try {
-      const companyId = await getCompanyId(company);
+      // Licenciado é forçado à V-PARTNER; interno honra o param (all = todas).
+      let companyId = await getCompanyId(company);
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
       const pageNum = parseInt(page, 10) || 1;
       const limitNum = parseInt(limit, 10) || 10;
       const offset = (pageNum - 1) * limitNum;
@@ -215,12 +184,6 @@ module.exports = function (pool, createNotification, logActivity, resend) {
         whereClauses.push(
           `(n.company_id = $${params.length} OR n.company_id IS NULL)`,
         );
-      }
-
-      // Aplica filtro de visibilidade conforme role
-      const visibilityClause = getVisibilityClause(role, userId, params);
-      if (visibilityClause) {
-        whereClauses.push(visibilityClause);
       }
 
       const whereString = whereClauses.length
@@ -256,37 +219,27 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   });
 
   // ─── POST /api/notices ─────────────────────────────────────────────────────
-  router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
-    const {
-      message,
-      visibility,
-      sendEmail,
-      company,
-      selectedUserIds = [],
-    } = req.body;
+  router.post("/", isLoggedIn, checkPermission("notices.manage"), async (req, res) => {
+    const { message, sendEmail, company, selectedUserIds = [] } = req.body;
     const creatorId = req.user.id;
-
-    if (!VALID_VISIBILITIES.includes(visibility)) {
-      return res.status(400).json({ error: "Visibilidade inválida." });
-    }
 
     try {
       const companyId = await getCompanyId(company);
+      const vpartnerId = await resolveVpartnerId(pool);
       const client = await pool.connect();
 
       try {
         await client.query("BEGIN");
 
-        // 1. Insere o aviso com a visibilidade macro escolhida
+        // 1. Insere o aviso na empresa escolhida
         const result = await client.query(
-          "INSERT INTO notices (message, visibility, company_id, created_by) VALUES ($1, $2, $3, $4) RETURNING *",
-          [message, visibility, companyId, creatorId],
+          "INSERT INTO notices (message, company_id, created_by) VALUES ($1, $2, $3) RETURNING *",
+          [message, companyId, creatorId],
         );
         const noticeId = result.rows[0].id;
 
-        // 2. Salva destinatários específicos de email (se houver)
-        //    Apenas quando visibilidade != licenciados (lista não é exibida para licenciados)
-        if (visibility !== "licenciados" && selectedUserIds.length > 0) {
+        // 2. Salva destinatários específicos de email (avisos internos, não V-PARTNER)
+        if (companyId !== vpartnerId && selectedUserIds.length > 0) {
           for (const uid of selectedUserIds) {
             await client.query(
               "INSERT INTO notice_recipients (notice_id, user_id) VALUES ($1, $2)",
@@ -308,8 +261,8 @@ module.exports = function (pool, createNotification, logActivity, resend) {
 
         // ── Notificações internas + e-mails (background) ──────────────────
         try {
-          // Busca todos os usuários que têm permissão de ver o aviso
-          const targetUsers = await getTargetUsers(visibility, creatorId);
+          // Busca os usuários-alvo conforme a empresa do aviso
+          const targetUsers = await getTargetUsers(companyId, creatorId);
 
           // Notificações internas no painel para todos que podem ver
           for (const u of targetUsers) {
@@ -324,8 +277,8 @@ module.exports = function (pool, createNotification, logActivity, resend) {
           if (sendEmail && resend) {
             let emailTargets;
 
-            if (visibility === "licenciados") {
-              // Para licenciados: envia para todos os licenciados (sem seleção individual)
+            if (companyId === vpartnerId) {
+              // V-PARTNER: envia para todos os licenciados (sem seleção individual)
               emailTargets = targetUsers.filter((u) => u.email);
             } else if (selectedUserIds.length > 0) {
               // Há seleção específica: envia só para os selecionados
@@ -388,7 +341,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
             req.user?.id || null,
             req.user?.email || "desconhecido",
             "Aviso Criado",
-            `Novo aviso postado. Visibilidade: ${visibility}. E-mail: ${sendEmail ? "Sim" : "Não"}. Destinatários específicos: ${selectedUserIds.length || "nenhum (todos da visibilidade)"}.`,
+            `Novo aviso postado. Empresa ID: ${companyId ?? "global"}. E-mail: ${sendEmail ? "Sim" : "Não"}. Destinatários específicos: ${selectedUserIds.length || "nenhum (toda a audiência da empresa)"}.`,
             req.ipAddress,
           );
         } catch (e) {
@@ -412,22 +365,18 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   router.put(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("notices.manage"),
     async (req, res) => {
       const { id } = req.params;
-      const { message, visibility, selectedUserIds = [] } = req.body;
-
-      if (!VALID_VISIBILITIES.includes(visibility)) {
-        return res.status(400).json({ error: "Visibilidade inválida." });
-      }
+      const { message, selectedUserIds = [] } = req.body;
 
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
 
         const result = await client.query(
-          "UPDATE notices SET message = $1, visibility = $2 WHERE id = $3 RETURNING *",
-          [message, visibility, id],
+          "UPDATE notices SET message = $1 WHERE id = $2 RETURNING *",
+          [message, id],
         );
         if (result.rowCount === 0) {
           await client.query("ROLLBACK");
@@ -439,7 +388,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
           "DELETE FROM notice_recipients WHERE notice_id = $1",
           [id],
         );
-        if (visibility !== "licenciados" && selectedUserIds.length > 0) {
+        if (selectedUserIds.length > 0) {
           for (const uid of selectedUserIds) {
             await client.query(
               "INSERT INTO notice_recipients (notice_id, user_id) VALUES ($1, $2)",
@@ -455,7 +404,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
             req.user?.id || null,
             req.user?.email || "desconhecido",
             "Aviso Editado",
-            `Aviso ID ${id} editado. Visibilidade: ${visibility}.`,
+            `Aviso ID ${id} editado.`,
             req.ipAddress,
           );
         } catch (e) {
@@ -477,7 +426,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   router.get(
     "/:id/recipients",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("notices.view"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -497,7 +446,7 @@ module.exports = function (pool, createNotification, logActivity, resend) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("notices.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {

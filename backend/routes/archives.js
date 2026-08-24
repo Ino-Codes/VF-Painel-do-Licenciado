@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
+const { resolveVpartnerId, isLicenciado } = require("../companyAccess.js");
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
   const getCompanyId = async (slug) => {
@@ -18,28 +19,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   };
 
   // --- LISTAR ARQUIVOS ---
-  router.get("/", isLoggedIn, async (req, res) => {
+  router.get("/", isLoggedIn, checkPermission("archives.view"), async (req, res) => {
     const { category, search, company } = req.query;
-    const { role } = req.user;
 
     try {
-      const companyId = await getCompanyId(company);
+      let companyId = await getCompanyId(company);
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
 
       const params = [];
       const whereClauses = [];
       if (companyId !== null) {
         params.push(companyId);
         whereClauses.push(`company_id = $${params.length}`);
-      }
-
-      if (role === "licenciado") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')",
-        );
-      } else if (role !== "admin") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'colaboradores')",
-        );
       }
 
       if (category) {
@@ -76,28 +67,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   // --- LISTAR CATEGORIAS ---
-  router.get("/categories", isLoggedIn, async (req, res) => {
-    const { role } = req.user;
+  router.get("/categories", isLoggedIn, checkPermission("archives.view"), async (req, res) => {
     const { company } = req.query;
 
     try {
-      const companyId = await getCompanyId(company);
+      let companyId = await getCompanyId(company);
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
 
       const params = [];
       const whereClauses = [];
       if (companyId !== null) {
         params.push(companyId);
         whereClauses.push(`company_id = $${params.length}`);
-      }
-
-      if (role === "licenciado") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')",
-        );
-      } else if (role !== "admin") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'colaboradores')",
-        );
       }
 
       const whereString = whereClauses.length
@@ -117,10 +98,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.post(
     "/",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("archives.manage"),
     upload.single("file"),
     async (req, res) => {
-      const { originalname, category, folder, visibility, company } = req.body;
+      const { originalname, category, folder, company } = req.body;
 
       if (!req.file)
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
@@ -159,10 +140,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         const result = await pool.query(
           `INSERT INTO archives
-           (filename, originalname, category, folder, visibility, public_id, company_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           (filename, originalname, category, folder, public_id, company_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING *`,
-          [fileUrl, originalname, category, folder, visibility, publicId, companyId],
+          [fileUrl, originalname, category, folder, publicId, companyId],
         );
 
         try {
@@ -189,15 +170,15 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.put(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("archives.manage"),
     async (req, res) => {
       const { id } = req.params;
-      const { originalname, category, folder, visibility } = req.body;
+      const { originalname, category, folder } = req.body;
 
       try {
         const result = await pool.query(
-          "UPDATE archives SET originalname = $1, category = $2, folder = $3, visibility = $4 WHERE id = $5 RETURNING *",
-          [originalname, category, folder, visibility, id],
+          "UPDATE archives SET originalname = $1, category = $2, folder = $3 WHERE id = $4 RETURNING *",
+          [originalname, category, folder, id],
         );
         if (result.rowCount === 0)
           return res.status(404).json({ error: "Arquivo não encontrado." });
@@ -226,7 +207,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("archives.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -273,10 +254,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   );
 
   // --- DOWNLOAD ---
-  router.get("/download/:id", isLoggedIn, async (req, res) => {
+  router.get("/download/:id", isLoggedIn, checkPermission("archives.view"), async (req, res) => {
     try {
       const fileResult = await pool.query(
-        "SELECT public_id, originalname, filename, visibility FROM archives WHERE id = $1",
+        "SELECT public_id, originalname, filename, company_id FROM archives WHERE id = $1",
         [req.params.id],
       );
 
@@ -285,13 +266,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       }
 
       const file = fileResult.rows[0];
-      const { role } = req.user;
-
+      // Licenciado só baixa conteúdo da V-PARTNER; interno baixa qualquer um.
       const isAllowed =
-        role === "admin" ||
-        file.visibility === "todos" ||
-        (role === "licenciado" && file.visibility === "licenciados") ||
-        (role !== "licenciado" && file.visibility === "colaboradores");
+        !isLicenciado(req) || file.company_id === (await resolveVpartnerId(pool));
 
       if (!isAllowed) {
         return res.status(403).send("Você não tem permissão para baixar este arquivo.");

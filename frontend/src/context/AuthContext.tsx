@@ -2,12 +2,17 @@ import React, { createContext, useState, useEffect, useContext } from "react";
 import api from "../api.ts";
 import { CompanySlug } from "../types.ts";
 
-interface User {
+export interface User {
   id: number;
   email: string;
   nome: string;
   nickname: string;
-  role: "admin" | "licenciado" | "rh";
+  // role é mantido apenas como espelho legado do grupo; a autorização usa
+  // `permissions`. Pode ser qualquer slug de grupo (inclusive customizados).
+  role: string;
+  group_id?: number | null;
+  group_name?: string | null;
+  permissions?: string[];
   avatar_url?: string;
   must_change_password?: boolean;
   company_slug: CompanySlug;
@@ -21,6 +26,8 @@ interface AuthContextType {
   switchCompany: (slug: CompanySlug) => void;
   login: (userData: User, token?: string) => void;
   logout: () => void;
+  hasPermission: (key: string) => boolean;
+  hasAnyPermission: (keys: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +53,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentCompany, setCurrentCompany] =
     useState<CompanySlug>("v-tax");
 
+  // Busca dados atualizados do usuário (inclui permissões) sem exigir login.
+  // Mantém a UI em sincronia quando o admin edita permissões de um grupo.
+  const refreshUser = async () => {
+    try {
+      const res = await api.get("/api/auth/me");
+      if (res.data?.user) {
+        setUser(res.data.user);
+        localStorage.setItem("userData", JSON.stringify(res.data.user));
+      }
+    } catch {
+      // silencioso: se falhar (ex.: token expirado), o fluxo normal trata
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("userData");
@@ -61,6 +82,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else if (parsedUser.company_slug) {
         setCurrentCompany(parsedUser.company_slug);
       }
+      // Atualiza permissões em segundo plano.
+      refreshUser();
     } else if (token || userData) {
       // Sessão ausente/expirada → limpa restos para cair no login limpo.
       localStorage.removeItem("token");
@@ -68,6 +91,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.removeItem("currentCompany");
     }
     setLoading(false);
+  }, []);
+
+  // Ressincroniza as permissões quando a aba volta ao foco.
+  useEffect(() => {
+    const onFocus = () => {
+      const token = localStorage.getItem("token");
+      if (token && !isTokenExpired(token)) refreshUser();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   const login = (userData: User, token?: string) => {
@@ -99,6 +132,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("currentCompany", slug);
   };
 
+  const hasPermission = (key: string): boolean =>
+    Array.isArray(user?.permissions) && user!.permissions.includes(key);
+
+  const hasAnyPermission = (keys: string[]): boolean =>
+    Array.isArray(user?.permissions) &&
+    keys.some((k) => user!.permissions!.includes(k));
+
   return (
     <AuthContext.Provider
       value={{
@@ -108,6 +148,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         logout,
         currentCompany,
         switchCompany,
+        hasPermission,
+        hasAnyPermission,
       }}
     >
       {children}

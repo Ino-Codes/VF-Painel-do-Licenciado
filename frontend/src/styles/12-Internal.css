@@ -38,68 +38,6 @@
   margin-bottom: 20px;
 }
 
-/* Espaçamento superior do calendário na Gestão de Férias (GestaoFerias.tsx) */
-.ferias-calendar {
-  margin-top: 20px;
-}
-
-/* --- Estilos para a Lista de Histórico --- */
-.vacation-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 400px;
-  overflow-y: auto;
-  padding-right: 10px;
-}
-
-.vacation-history-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 12px 12px 16px;
-  background: var(--glass-surface);
-  border-radius: 6px;
-  border: 1px solid var(--glass-border);
-  position: relative;
-  overflow: hidden;
-}
-
-.vacation-history-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 5px;
-}
-
-.vacation-history-item.status-pending::before {
-  background-color: var(--accent-color);
-}
-
-.vacation-history-item.status-approved::before {
-  background-color: var(--action-primary);
-}
-
-.vacation-history-item.status-declined::before {
-  background-color: var(--action-danger);
-}
-
-.vacation-history-item-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.vacation-history-item-info strong {
-  color: var(--text-primary);
-}
-
-.vacation-history-item-info small {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
 /* --- Ajuste Responsivo para Telas Menores --- */
 @media (max-width: 900px) {
   .admin-section-main-columns {

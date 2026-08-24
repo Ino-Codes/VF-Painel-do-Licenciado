@@ -22,8 +22,26 @@ interface Notification {
   created_at: string;
 }
 
+const RH_SCREENS = [
+  "users.view",
+  "recruitment.view",
+  "feedbacks.view",
+  "analytics.view",
+  "meeting_records.view",
+  "courses.manage",
+  "events.manage",
+];
+const ADMIN_SCREENS = [
+  "groups.view",
+  "logs.view",
+  "widget_tenants.view",
+  "analytics.view",
+  "projects.view",
+  "units.view",
+];
+
 const Menu: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission, hasAnyPermission } = useAuth();
   const { theme } = useTheme();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -103,50 +121,49 @@ const Menu: React.FC = () => {
           Home
         </NavLink>
 
-        <NavLink
-          to="/content/content-gestao"
-          className="menu-item dropdown-trigger"
-          onClick={() => setIsMenuOpen(false)}
-        >
-          <FaFolderOpen />
-          Conteúdos
-        </NavLink>
+        {hasPermission("content_hub.view") && (
+          <NavLink
+            to="/content/content-gestao"
+            className="menu-item dropdown-trigger"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <FaFolderOpen />
+            Conteúdos
+          </NavLink>
+        )}
 
         {/* SEÇÃO ADMINISTRATIVA (RH e Admin Global) */}
-        {(user.role === "admin" || user.role === "rh") && (
-          <>
-            <NavLink
-              to="/admin/rh-gestao"
-              className="menu-item dropdown-trigger"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <FaPeopleGroup />
-              RH
-            </NavLink>
-
-            {user.role === "admin" && (
-              <NavLink
-                to="/admin/admin-gestao"
-                className="menu-item dropdown-trigger"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FaLock />
-                Admin
-              </NavLink>
-            )}
-          </>
+        {hasAnyPermission(RH_SCREENS) && (
+          <NavLink
+            to="/admin/rh-gestao"
+            className="menu-item dropdown-trigger"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <FaPeopleGroup />
+            RH
+          </NavLink>
         )}
-        {user.role !== "licenciado" && (
-          <>
-            <NavLink
-              to="/internal/internal-gestao"
-              className="menu-item dropdown-trigger"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <FaUsers />
-              Área Interna
-            </NavLink>
-          </>
+
+        {hasAnyPermission(ADMIN_SCREENS) && (
+          <NavLink
+            to="/admin/admin-gestao"
+            className="menu-item dropdown-trigger"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <FaLock />
+            Admin
+          </NavLink>
+        )}
+
+        {hasPermission("internal_access") && (
+          <NavLink
+            to="/internal/internal-gestao"
+            className="menu-item dropdown-trigger"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <FaUsers />
+            Área Interna
+          </NavLink>
         )}
 
         {/* <NavLink
@@ -178,7 +195,8 @@ const Menu: React.FC = () => {
           <NavLink to="/perfil" className="profile-info-container">
             <div className="profile-text">
               <span className="profile-role">
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                {user.group_name ||
+                  user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>
               <span className="profile-name">{user.nickname || firstName}</span>
             </div>

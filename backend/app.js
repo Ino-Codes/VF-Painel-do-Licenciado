@@ -1,6 +1,8 @@
 //require("dotenv").config();
 
 const migrationRunner = require("./migrationRunner.js");
+const { seedGroups } = require("./seedGroups.js");
+const { initAuth } = require("./middleware/auth.js");
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -73,6 +75,9 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+// Injeta o pool no middleware de auth para resolução de permissões (RBAC).
+initAuth(pool);
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -115,6 +120,7 @@ const createNotification = async (userId, message, linkTo) => {
 
 const cronFunctions = require("./cron.js");
 const authRoutes = require("./routes/auth.js")(pool, resend, logActivity);
+const groupRoutes = require("./routes/groups.js")(pool, logActivity);
 const userRoutes = require("./routes/users.js")(
   pool,
   cloudinary,
@@ -146,10 +152,6 @@ const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(
   resend,
 );
 const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
-const vacationRoutes = require("./routes/vacations.js")(
-  pool,
-  createNotification,
-);
 const notificationRoutes = require("./routes/notifications.js")(pool);
 const recruitmentRoutes = require("./routes/recruitment.js")(pool, logActivity);
 const unitsRoutes = require("./routes/units.js")(pool);
@@ -186,6 +188,7 @@ cronFunctions.initializeCron(pool, resend);
 // A rota pública do widget recebe corsAberto.
 
 app.use("/api/auth", corsRestrito, authRoutes);
+app.use("/api/groups", corsRestrito, groupRoutes);
 app.use("/api/users", corsRestrito, userRoutes);
 app.use("/api/notices", corsRestrito, noticeRoutes);
 app.use("/api/files", corsRestrito, filesRoutes);
@@ -201,7 +204,6 @@ app.use("/api/events", corsRestrito, eventRoutes);
 app.use("/api/enneagram", corsRestrito, enneagramRoutes);
 app.use("/api/admin/analytics", corsRestrito, adminAnalyticsRoutes);
 app.use("/api/cron", corsRestrito, cronTriggerRoutes);
-app.use("/api/vacations", corsRestrito, vacationRoutes);
 app.use("/api/notifications", corsRestrito, notificationRoutes);
 app.use("/api/recruitment", corsRestrito, recruitmentRoutes);
 app.use("/api/units", corsRestrito, unitsRoutes);
@@ -220,6 +222,7 @@ app.listen(port, async () => {
   console.log(`Servidor rodando na porta ${port}`);
   try {
     await migrationRunner(pool);
+    await seedGroups(pool);
   } catch (err) {
     console.error("[migrations] Falha crítica:", err.message);
   }

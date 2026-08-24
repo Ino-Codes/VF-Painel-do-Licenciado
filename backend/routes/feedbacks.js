@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
 module.exports = function (pool, createNotification, logActivity) {
   // Busca os temas de feedback
-  router.get("/themes", isLoggedIn, async (req, res) => {
+  router.get("/themes", isLoggedIn, checkPermission("feedbacks.view"), async (req, res) => {
     try {
       const result = await pool.query(
         "SELECT * FROM feedback_themes ORDER BY name ASC",
@@ -20,7 +20,7 @@ module.exports = function (pool, createNotification, logActivity) {
   router.post(
     "/themes",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("feedbacks.manage"),
     async (req, res) => {
       const { name, description } = req.body;
       try {
@@ -43,26 +43,29 @@ module.exports = function (pool, createNotification, logActivity) {
   );
 
   // Busca todos os feedbacks
-  router.get("/", isLoggedIn, async (req, res) => {
-    const { id: userId, role } = req.user;
+  router.get("/", isLoggedIn, checkPermission("feedbacks.view"), async (req, res) => {
+    const { id: userId } = req.user;
+    const canManageAll =
+      Array.isArray(req.user.permissions) &&
+      req.user.permissions.includes("feedbacks.manage");
     const { type, status } = req.query;
 
     try {
       let query = `
-        SELECT f.*, 
-               creator.nome as creator_name, 
-               evaluator.nome as evaluator_name, 
+        SELECT f.*,
+               creator.nome as creator_name,
+               evaluator.nome as evaluator_name,
                target.nome as target_name
         FROM feedbacks f
         JOIN users creator ON f.created_by_user_id = creator.id
-        JOIN users evaluator ON f.evaluator_user_id = evaluator.id 
-        LEFT JOIN users target ON f.target_user_id = target.id 
+        JOIN users evaluator ON f.evaluator_user_id = evaluator.id
+        LEFT JOIN users target ON f.target_user_id = target.id
       `;
 
       const params = [];
       const conditions = [];
 
-      if (role !== "admin" && role !== "rh") {
+      if (!canManageAll) {
         // Colaborador vê se for o Criador, o Alvo OU o Avaliador
         conditions.push(
           `(f.target_user_id = $${
@@ -99,9 +102,12 @@ module.exports = function (pool, createNotification, logActivity) {
   });
 
   // Busca o preenchimento do feedback
-  router.get("/:id", isLoggedIn, async (req, res) => {
+  router.get("/:id", isLoggedIn, checkPermission("feedbacks.view"), async (req, res) => {
     const { id } = req.params;
-    const { id: userId, role } = req.user;
+    const { id: userId } = req.user;
+    const canManageAll =
+      Array.isArray(req.user.permissions) &&
+      req.user.permissions.includes("feedbacks.manage");
 
     try {
       const feedbackResult = await pool.query(
@@ -125,8 +131,7 @@ module.exports = function (pool, createNotification, logActivity) {
       const feedback = feedbackResult.rows[0];
 
       if (
-        role !== "admin" &&
-        role !== "rh" &&
+        !canManageAll &&
         feedback.target_user_id !== userId &&
         feedback.evaluator_user_id !== userId
       ) {
@@ -151,7 +156,7 @@ module.exports = function (pool, createNotification, logActivity) {
   });
 
   // Cria o convite de feedback por parte do RH
-  router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
+  router.post("/", isLoggedIn, checkPermission("feedbacks.manage"), async (req, res) => {
     const { evaluator_user_id, scheduled_at, message, type } = req.body;
     const created_by = req.user.id;
 
@@ -219,7 +224,7 @@ module.exports = function (pool, createNotification, logActivity) {
   router.put(
     "/:id/submit",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("feedbacks.manage"),
     async (req, res) => {
       const { id } = req.params;
       const { target_user_id, general_comments, entries } = req.body;
@@ -308,7 +313,7 @@ module.exports = function (pool, createNotification, logActivity) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("feedbacks.manage"),
     async (req, res) => {
       const { id } = req.params;
       const client = await pool.connect();

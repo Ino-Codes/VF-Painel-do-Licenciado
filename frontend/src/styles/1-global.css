@@ -81,6 +81,8 @@
   --bg-v-corp: rgba(34, 34, 34, 0.3);
   --v-tech: #7c3aed;
   --bg-v-tech: rgba(124, 58, 237, 0.3);
+  --v-partner: #0e7490;
+  --bg-v-partner: rgba(14, 116, 144, 0.3);
 }
 
 body.dark-theme {
@@ -166,6 +168,8 @@ body.dark-theme {
   --bg-v-corp: rgba(68, 68, 68, 0.4);
   --v-tech: #9f5df0;
   --bg-v-tech: rgba(159, 93, 240, 0.4);
+  --v-partner: #159fbd;
+  --bg-v-partner: rgba(21, 159, 189, 0.4);
 }
 
 .company-v-tax {

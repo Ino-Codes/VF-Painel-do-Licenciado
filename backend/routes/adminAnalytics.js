@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 const { sendEventNotifications } = require("../cron.js");
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -205,7 +205,7 @@ module.exports = function (pool, resend) {
   router.get(
     "/system-usage",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("analytics.view"),
     async (req, res) => {
       try {
         // 1. Logins hoje
@@ -279,7 +279,7 @@ module.exports = function (pool, resend) {
   router.get(
     "/enneagram-stats",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("analytics.view"),
     async (req, res) => {
       try {
         const typeCountsQuery = pool.query(
@@ -340,7 +340,7 @@ module.exports = function (pool, resend) {
   router.get(
     "/trigger-email-test",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("analytics.view"),
     async (req, res) => {
       console.log(
         "ROTA DE TESTE: Disparando manualmente o envio de emails de eventos...",
@@ -365,7 +365,7 @@ module.exports = function (pool, resend) {
   router.get(
     "/course-engagement",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("analytics.view"),
     async (req, res) => {
       try {
         const query = `
@@ -399,7 +399,7 @@ module.exports = function (pool, resend) {
   router.get(
     "/helpdesk",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("analytics.view"),
     async (req, res) => {
       try {
         const totalQuery = pool.query(
@@ -491,7 +491,7 @@ module.exports = function (pool, resend) {
   router.get(
     "/jira",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("analytics.view"),
     async (req, res) => {
       // Sem credenciais configuradas: responde 200 com configured=false
       // para o frontend exibir instruções em vez de um erro.

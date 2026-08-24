@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
+const { isLoggedIn } = require("../middleware/auth.js");
+const { getGroupPermissions } = require("../permissionCache.js");
 
 // ── Configuração da verificação em duas etapas (2FA) ──────────────────────
 const TWO_FACTOR_TTL_MS = 2 * 60 * 1000; // 2 minutos
@@ -177,11 +179,25 @@ module.exports = function (pool, resend, logActivity) {
       // Sucesso → limpa o 2FA e emite o token.
       await clearTwoFactor(user.id);
 
+      // Resolve grupo e permissões (RBAC).
+      let groupName = null;
+      let permissions = [];
+      if (user.group_id) {
+        const gRes = await pool.query(
+          "SELECT name FROM user_groups WHERE id = $1",
+          [user.group_id],
+        );
+        groupName = gRes.rows[0] ? gRes.rows[0].name : null;
+        permissions = await getGroupPermissions(pool, user.group_id);
+      }
+
       const tokenPayload = {
         id: user.id,
         email: user.email,
         role: user.role,
         nome: user.nome,
+        group_id: user.group_id || null,
+        group_name: groupName,
         must_change_password: user.must_change_password,
       };
       const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
@@ -200,6 +216,9 @@ module.exports = function (pool, resend, logActivity) {
       delete user.two_factor_code;
       delete user.two_factor_expires;
       delete user.two_factor_attempts;
+
+      user.group_name = groupName;
+      user.permissions = permissions;
 
       res.json({ user, token });
     } catch (err) {
@@ -383,5 +402,45 @@ module.exports = function (pool, resend, logActivity) {
       res.status(500).send({ error: "Erro no servidor" });
     }
   });
+
+  // ── GET /me — dados atualizados do usuário logado (inclui permissões) ──────
+  // Usado pelo frontend para manter as permissões em sincronia sem exigir
+  // novo login quando o admin edita as permissões de um grupo.
+  router.get("/me", isLoggedIn, async (req, res) => {
+    try {
+      const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+        req.user.id,
+      ]);
+      const user = result.rows[0];
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado." });
+      }
+      delete user.password;
+      delete user.two_factor_code;
+      delete user.two_factor_expires;
+      delete user.two_factor_attempts;
+      delete user.reset_token;
+      delete user.reset_token_expires;
+
+      let groupName = null;
+      if (user.group_id) {
+        const gRes = await pool.query(
+          "SELECT name FROM user_groups WHERE id = $1",
+          [user.group_id],
+        );
+        groupName = gRes.rows[0] ? gRes.rows[0].name : null;
+      }
+      user.group_name = groupName;
+      // Permissões resolvidas pelo isLoggedIn (base no group_id do token) —
+      // mantém a UI alinhada ao que o backend efetivamente autoriza.
+      user.permissions = req.user.permissions || [];
+
+      res.json({ user });
+    } catch (err) {
+      console.error("Erro na rota /api/auth/me:", err);
+      res.status(500).send({ error: "Erro no servidor" });
+    }
+  });
+
   return router;
 };

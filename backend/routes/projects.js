@@ -1,23 +1,11 @@
 // backend/routes/projects.js
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
 module.exports = function (pool, logActivity) {
-  // ─── Helper: roles com acesso à Área Interna ─────────────────────────────
-  const INTERNAL_ROLES = ["admin", "rh", "comercial", "operacional"];
-
-  const isInternal = (role) => INTERNAL_ROLES.includes(role);
-
   // ─── GET /api/projects ────────────────────────────────────────────────────
-  // Todos os internos podem listar
-  router.get("/", isLoggedIn, async (req, res) => {
-    const { role } = req.user;
-
-    if (!isInternal(role)) {
-      return res.status(403).json({ error: "Acesso negado." });
-    }
-
+  router.get("/", isLoggedIn, checkPermission("projects.view"), async (req, res) => {
     try {
       const result = await pool.query(`
         SELECT
@@ -38,13 +26,8 @@ module.exports = function (pool, logActivity) {
   });
 
   // ─── GET /api/projects/:id ────────────────────────────────────────────────
-  router.get("/:id", isLoggedIn, async (req, res) => {
-    const { role } = req.user;
+  router.get("/:id", isLoggedIn, checkPermission("projects.view"), async (req, res) => {
     const { id } = req.params;
-
-    if (!isInternal(role)) {
-      return res.status(403).json({ error: "Acesso negado." });
-    }
 
     try {
       const result = await pool.query(
@@ -75,7 +58,7 @@ module.exports = function (pool, logActivity) {
 
   // ─── POST /api/projects ───────────────────────────────────────────────────
   // Apenas admin pode criar
-  router.post("/", isLoggedIn, checkRole(["admin"]), async (req, res) => {
+  router.post("/", isLoggedIn, checkPermission("projects.manage"), async (req, res) => {
     const { name, team, description, company_id } = req.body;
     const createdBy = req.user.id;
 
@@ -122,7 +105,7 @@ module.exports = function (pool, logActivity) {
 
   // ─── PUT /api/projects/:id ────────────────────────────────────────────────
   // Apenas admin pode editar
-  router.put("/:id", isLoggedIn, checkRole(["admin"]), async (req, res) => {
+  router.put("/:id", isLoggedIn, checkPermission("projects.manage"), async (req, res) => {
     const { id } = req.params;
     const { name, team, description, company_id } = req.body;
 
@@ -179,7 +162,7 @@ module.exports = function (pool, logActivity) {
 
   // ─── DELETE /api/projects/:id ─────────────────────────────────────────────
   // Apenas admin pode excluir
-  router.delete("/:id", isLoggedIn, checkRole(["admin"]), async (req, res) => {
+  router.delete("/:id", isLoggedIn, checkPermission("projects.manage"), async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -217,13 +200,8 @@ module.exports = function (pool, logActivity) {
   // ═══════════════════════════════════════════════════════════════════════════
 
   // ─── GET /api/projects/:id/tasks ─────────────────────────────────────────
-  router.get("/:id/tasks", isLoggedIn, async (req, res) => {
-    const { role } = req.user;
+  router.get("/:id/tasks", isLoggedIn, checkPermission("projects.view"), async (req, res) => {
     const { id } = req.params;
-
-    if (!isInternal(role)) {
-      return res.status(403).json({ error: "Acesso negado." });
-    }
 
     try {
       const result = await pool.query(
@@ -247,7 +225,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/:id/tasks",
     isLoggedIn,
-    checkRole(["admin"]),
+    checkPermission("projects.manage"),
     async (req, res) => {
       const { id } = req.params;
       const {
@@ -314,7 +292,7 @@ module.exports = function (pool, logActivity) {
   router.put(
     "/:id/tasks/:taskId",
     isLoggedIn,
-    checkRole(["admin"]),
+    checkPermission("projects.manage"),
     async (req, res) => {
       const { taskId } = req.params;
       const {
@@ -383,7 +361,7 @@ module.exports = function (pool, logActivity) {
   router.delete(
     "/:id/tasks/:taskId",
     isLoggedIn,
-    checkRole(["admin"]),
+    checkPermission("projects.manage"),
     async (req, res) => {
       const { taskId } = req.params;
 

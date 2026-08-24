@@ -18,7 +18,6 @@ interface Course {
   description: string;
   thumbnail_url: string;
   is_active: boolean;
-  visibility: "todos" | "licenciados" | "internos";
   certificate_template_url?: string;
   company_name?: string; // Campo novo vindo do backend
 }
@@ -28,13 +27,6 @@ const AdminCourses: React.FC = () => {
   const navigate = useNavigate();
 
   // Não lemos mais a URL para filtro
-
-  useEffect(() => {
-    if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
-      toast.error("Acesso restrito aos administradores.");
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,10 +111,12 @@ const AdminCourses: React.FC = () => {
       return "var(--v-business)";
     if (name.includes("CORP") || name === "V-CORP") return "var(--v-corp)";
     if (name.includes("TECH") || name === "V-TECH") return "var(--v-tech)";
+    if (name.includes("PARTNER") || name === "V-PARTNER")
+      return "var(--v-partner)";
     return "var(--action-secondary)";
   };
 
-  if (loading || !user || (user.role !== "admin" && user.role !== "rh")) {
+  if (loading || !user) {
     return <LoadingSpinner />;
   }
 
@@ -175,10 +169,6 @@ const AdminCourses: React.FC = () => {
                     )}
                     <br />
                     <strong>{course.title}</strong>
-                    <br />
-                    <span className="course-visibility-text">
-                      Visível para: {course.visibility}
-                    </span>
                   </div>
                 </div>
                 <div className="user-actions">

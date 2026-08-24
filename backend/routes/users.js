@@ -4,6 +4,33 @@ const csv = require("csv-parser");
 const { Readable } = require("stream");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
+const { ROLE_TO_SLUG, SLUG_TO_ROLE } = require("../permissions.js");
+
+// Resolve group_id/role a partir do corpo da requisição, espelhando um no
+// outro para compatibilidade (role continua preenchido; group_id é a fonte).
+async function resolveGroupAndRole(pool, body) {
+  let effectiveRole = body.role || "licenciado";
+  let effectiveGroupId = body.group_id || null;
+  if (body.group_id) {
+    const g = await pool.query(
+      "SELECT slug, is_system FROM user_groups WHERE id = $1",
+      [body.group_id],
+    );
+    if (g.rows.length === 0) return { error: "Grupo inválido." };
+    const { slug, is_system } = g.rows[0];
+    effectiveRole = is_system ? SLUG_TO_ROLE[slug] || slug : slug;
+  } else if (effectiveRole) {
+    const slug = ROLE_TO_SLUG[effectiveRole];
+    if (slug) {
+      const g = await pool.query(
+        "SELECT id FROM user_groups WHERE slug = $1",
+        [slug],
+      );
+      effectiveGroupId = g.rows[0] ? g.rows[0].id : null;
+    }
+  }
+  return { effectiveRole, effectiveGroupId };
+}
 
 // Função para capitalizar nomes
 const capitalizeNameWithPrepositions = (name) => {
@@ -30,7 +57,7 @@ const capitalizeNameWithPrepositions = (name) => {
 };
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
-  const { isAdmin, isLoggedIn, checkRole } = require("../middleware/auth.js");
+  const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
   // --- Rotas de Admin (Listar, Criar, Editar, Excluir) ---
 
@@ -38,7 +65,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.get(
     "/admin",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("users.view"),
     async (req, res) => {
       const {
         search,
@@ -57,6 +84,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           const roleList = roles.split(",");
           params.push(roleList);
           whereClauses.push(`role = ANY($${params.length})`);
+        }
+
+        // Filtro por acesso interno (RBAC): distingue colaboradores de licenciados
+        // pelo grupo (permissão internal_access), independente do role legado.
+        if (req.query.internal === "true") {
+          whereClauses.push(
+            `EXISTS (SELECT 1 FROM group_permissions gp WHERE gp.group_id = users.group_id AND gp.permission_key = 'internal_access')`,
+          );
+        } else if (req.query.internal === "false") {
+          whereClauses.push(
+            `NOT EXISTS (SELECT 1 FROM group_permissions gp WHERE gp.group_id = users.group_id AND gp.permission_key = 'internal_access')`,
+          );
         }
 
         if (search) {
@@ -81,7 +120,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           orderByClause = `ORDER BY "${sortBy}" ${sortOrder.toUpperCase()}`;
         }
 
-        const usersSql = `SELECT id, nome, nickname, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
+        const usersSql = `SELECT id, nome, nickname, email, role, group_id, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 
@@ -107,13 +146,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.post(
     "/admin",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("users.manage"),
     async (req, res) => {
       const {
         nome: nomeOriginal, // CORREÇÃO AQUI
         email: emailOriginal, // CORREÇÃO AQUI
         password,
-        role,
         birth_date,
         cargo,
         setor,
@@ -126,6 +164,15 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
       const nome = capitalizeNameWithPrepositions(nomeOriginal);
       const email = emailOriginal ? emailOriginal.toLowerCase().trim() : "";
+
+      // Resolve grupo e espelha o role (compat).
+      const resolved = await resolveGroupAndRole(pool, req.body);
+      if (resolved.error) {
+        return res.status(400).json({ error: resolved.error });
+      }
+      const role = resolved.effectiveRole;
+      const groupId = resolved.effectiveGroupId;
+
       const client = await pool.connect();
 
       try {
@@ -151,12 +198,13 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         const hash = await bcrypt.hash(password, 10);
 
         const userResult = await client.query(
-          "INSERT INTO users (nome, email, password, role, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao, nickname) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
+          "INSERT INTO users (nome, email, password, role, group_id, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao, nickname) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id",
           [
             nome,
             email,
             hash,
             role,
+            groupId,
             birth_date || null,
             cargo || null,
             setor || null,
@@ -220,7 +268,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     const { id } = req.params;
     const isSelfUpdate = req.user.id == id;
     const hasPrivilegedRole =
-      req.user.role === "admin" || req.user.role === "rh";
+      Array.isArray(req.user.permissions) &&
+      req.user.permissions.includes("users.manage");
 
     if (!hasPrivilegedRole && !isSelfUpdate) {
       return res.status(403).json({
@@ -258,6 +307,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
       let finalNome = currentUser.nome;
       let finalRole = currentUser.role;
+      let finalGroupId = currentUser.group_id;
       let finalEmail = currentUser.email;
       let finalCargo = currentUser.cargo;
       let finalSetor = currentUser.setor;
@@ -280,6 +330,17 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           unidade_id !== undefined ? unidade_id : currentUser.unidade_id;
         finalDataAdmissao = data_admissao;
         finalBirthDate = birth_date;
+
+        // Grupo (RBAC): resolve e espelha o role quando informado.
+        if (req.body.group_id || role) {
+          const resolved = await resolveGroupAndRole(pool, req.body);
+          if (resolved.error) {
+            client.release();
+            return res.status(400).json({ error: resolved.error });
+          }
+          finalRole = resolved.effectiveRole;
+          finalGroupId = resolved.effectiveGroupId;
+        }
       }
 
       const finalNickname = nickname ? nickname.trim() : null;
@@ -299,19 +360,20 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       await client.query("BEGIN");
 
       await client.query(
-        `UPDATE users SET 
-          nome = $1, 
-          email = $2, 
-          role = $3, 
-          birth_date = $4, 
-          cargo = $5, 
-          setor = $6, 
-          unidade = $7, 
-          unidade_id = $8, 
-          telefone = $9, 
+        `UPDATE users SET
+          nome = $1,
+          email = $2,
+          role = $3,
+          birth_date = $4,
+          cargo = $5,
+          setor = $6,
+          unidade = $7,
+          unidade_id = $8,
+          telefone = $9,
           data_admissao = $10,
-          nickname = $11 
-        WHERE id = $12`,
+          nickname = $11,
+          group_id = $12
+        WHERE id = $13`,
         [
           finalNome,
           finalEmail,
@@ -322,8 +384,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           finalUnidade,
           finalUnidadeId || null,
           finalTelefone,
-          role === "licenciado" ? null : finalDataAdmissao,
+          finalRole === "licenciado" ? null : finalDataAdmissao,
           finalNickname,
+          finalGroupId,
           id,
         ],
       );
@@ -387,6 +450,14 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       let responsePayload = { success: true, user: updatedUser };
 
       if (req.user.id == id) {
+        let groupName = null;
+        if (updatedUser.group_id) {
+          const gRes = await pool.query(
+            "SELECT name FROM user_groups WHERE id = $1",
+            [updatedUser.group_id],
+          );
+          groupName = gRes.rows[0] ? gRes.rows[0].name : null;
+        }
         const newToken = jwt.sign(
           {
             id: updatedUser.id,
@@ -396,6 +467,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             nickname: updatedUser.nickname,
             avatar_url: updatedUser.avatar_url,
             data_admissao: updatedUser.data_admissao,
+            group_id: updatedUser.group_id || null,
+            group_name: groupName,
           },
           process.env.JWT_SECRET,
           { expiresIn: "12h" },
@@ -422,7 +495,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.delete(
     "/admin/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("users.manage"),
     async (req, res) => {
       const { id } = req.params;
       const client = await pool.connect();
@@ -468,7 +541,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.post(
     "/admin/bulk-upload",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("users.manage"),
     upload.single("file"),
     async (req, res) => {
       if (!req.file) {
@@ -534,7 +607,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.put(
     "/admin/:id/corporate-photo",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("users.manage"),
     upload.single("corporate_photo"),
     async (req, res) => {
       const { id } = req.params;
@@ -596,7 +669,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.delete(
     "/admin/:id/corporate-photo",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("users.manage"),
     async (req, res) => {
       const { id } = req.params;
       const client = await pool.connect();
@@ -642,11 +715,15 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   router.get("/internal", isLoggedIn, async (req, res) => {
     try {
+      // "Internos" = usuários cujo grupo tem a permissão internal_access.
       const internalUsersSql = `
-      SELECT id, nome, nickname, email, role, avatar_url, corporate_photo_url, cargo, setor, unidade, unidade_id, telefone, birth_date, data_admissao 
-      FROM users 
-      WHERE role IN ('admin', 'rh', 'comercial', 'operacional') 
-      ORDER BY nome ASC
+      SELECT u.id, u.nome, u.nickname, u.email, u.role, u.group_id, u.avatar_url, u.corporate_photo_url, u.cargo, u.setor, u.unidade, u.unidade_id, u.telefone, u.birth_date, u.data_admissao
+      FROM users u
+      WHERE EXISTS (
+        SELECT 1 FROM group_permissions gp
+        WHERE gp.group_id = u.group_id AND gp.permission_key = 'internal_access'
+      )
+      ORDER BY u.nome ASC
     `;
 
       const result = await pool.query(internalUsersSql);
@@ -730,6 +807,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             nome: updatedUser.nome,
             nickname: updatedUser.nickname,
             avatar_url: updatedUser.avatar_url,
+            group_id: req.user.group_id || null,
+            group_name: req.user.group_name || null,
           },
           process.env.JWT_SECRET,
           { expiresIn: "12h" },
@@ -769,6 +848,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           nome: updatedUser.nome,
           nickname: updatedUser.nickname,
           avatar_url: null,
+          group_id: req.user.group_id || null,
+          group_name: req.user.group_name || null,
         },
         process.env.JWT_SECRET,
         { expiresIn: "12h" },

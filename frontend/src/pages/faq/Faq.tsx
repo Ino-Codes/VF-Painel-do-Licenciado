@@ -20,7 +20,7 @@ interface FaqData {
 }
 
 const Faq: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const [company, setCompany] = useState<string>("all");
@@ -137,7 +137,7 @@ const Faq: React.FC = () => {
             <h2 className="content-title">Perguntas Frequentes (FAQ)</h2>
           </div>
 
-          {user.role === "admin" && (
+          {hasPermission("faq.manage") && (
             <button
               className="form-button form-button--add"
               onClick={() => setIsModalOpen(true)}
@@ -207,7 +207,7 @@ const Faq: React.FC = () => {
                         Baixar Documento: {faq.document_originalname}
                       </a>
                     )}
-                    {user.role === "admin" && (
+                    {hasPermission("faq.manage") && (
                       <div className="faq-actions">
                         <button
                           className="delete-button"

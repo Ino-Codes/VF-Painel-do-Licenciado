@@ -8,7 +8,6 @@ interface VideoData {
   title: string;
   description: string;
   youtube_url: string;
-  visibility: "todos" | "licenciados" | "colaboradores";
   category: string;
 }
 
@@ -26,6 +25,7 @@ const COMPANIES_OPTIONS = [
   { slug: "v-business", name: "V-BUSINESS" },
   { slug: "v-corp", name: "V-CORP" },
   { slug: "v-tech", name: "V-TECH" },
+  { slug: "v-partner", name: "V-PARTNER" },
 ];
 
 const VideoModal: React.FC<VideoModalProps> = ({
@@ -41,9 +41,6 @@ const VideoModal: React.FC<VideoModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [youtube_url, setYoutubeUrl] = useState("");
-  const [visibility, setVisibility] = useState<
-    "todos" | "licenciados" | "colaboradores"
-  >("todos");
   const [category, setCategory] = useState("");
 
   // 2. Estado para a empresa selecionada
@@ -54,7 +51,6 @@ const VideoModal: React.FC<VideoModalProps> = ({
       setTitle(videoToEdit.title);
       setDescription(videoToEdit.description);
       setYoutubeUrl(videoToEdit.youtube_url);
-      setVisibility(videoToEdit.visibility || "todos");
       setCategory(videoToEdit.category || "");
       // Na edição, mantemos a empresa atual da navegação
       setCompany(currentCompanySlug);
@@ -62,7 +58,6 @@ const VideoModal: React.FC<VideoModalProps> = ({
       setTitle("");
       setDescription("");
       setYoutubeUrl("");
-      setVisibility("todos");
       setCategory("");
       // Reseta para a empresa da URL
       setCompany(currentCompanySlug);
@@ -81,7 +76,6 @@ const VideoModal: React.FC<VideoModalProps> = ({
       title,
       description,
       youtube_url,
-      visibility,
       category,
       company, // Importante para o backend salvar o ID correto
     };
@@ -185,26 +179,6 @@ const VideoModal: React.FC<VideoModalProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               className="form-input"
             />
-          </div>
-
-          <div className="form-row">
-            <label htmlFor="visibility" className="content-modal-label">
-              Visibilidade:
-            </label>
-          </div>
-          <div className="form-row">
-            <select
-              id="visibility"
-              value={visibility}
-              onChange={(e) =>
-                setVisibility(e.target.value as VideoData["visibility"])
-              }
-              className="form-select"
-            >
-              <option value="todos">Visível para Todos</option>
-              <option value="licenciados">Apenas para Licenciados</option>
-              <option value="colaboradores">Apenas para Colaboradores</option>
-            </select>
           </div>
 
           <div className="modal-actions">

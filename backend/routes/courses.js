@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
+const { resolveVpartnerId, isLicenciado } = require("../companyAccess.js");
 const puppeteer = require("puppeteer-core");
 const chromium = require("@sparticuz/chromium");
 const { JSDOM } = require("jsdom");
@@ -28,21 +29,14 @@ module.exports = function (pool, cloudinary, upload) {
   };
 
   // --- ROTAS PÚBLICAS (Aluno) ---
-  router.get("/public", isLoggedIn, async (req, res) => {
-    const { id: userId, role } = req.user;
+  router.get("/public", isLoggedIn, checkPermission("courses.view"), async (req, res) => {
+    const { id: userId } = req.user;
     const { company } = req.query;
 
     try {
-      const companyId = await getCompanyId(company);
-
-      let visibilityFilter = "";
-      if (role === "licenciado") {
-        visibilityFilter =
-          "AND (c.visibility = 'todos' OR c.visibility = 'licenciados')";
-      } else if (role !== "licenciado") {
-        visibilityFilter =
-          "AND (c.visibility = 'todos' OR c.visibility = 'internos')";
-      }
+      // Licenciado é forçado à V-PARTNER; interno honra o param (null = todas).
+      let companyId = await getCompanyId(company);
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
 
       // Filtro de empresa (null = todas)
       const params = [userId];
@@ -68,7 +62,6 @@ module.exports = function (pool, cloudinary, upload) {
         WHERE
           c.is_active = TRUE
           ${companyFilter}
-          ${visibilityFilter}
         GROUP BY
           c.id
         ORDER BY
@@ -84,7 +77,7 @@ module.exports = function (pool, cloudinary, upload) {
   });
 
   // Rota de detalhe público (Mantida, busca por ID direto)
-  router.get("/public/:id", isLoggedIn, async (req, res) => {
+  router.get("/public/:id", isLoggedIn, checkPermission("courses.view"), async (req, res) => {
     const { id: courseId } = req.params;
     const { id: userId } = req.user;
     try {
@@ -189,7 +182,7 @@ module.exports = function (pool, cloudinary, upload) {
   // --- ROTAS DE ADMINISTRAÇÃO ---
 
   // Listar Cursos (Admin) - Agora filtra por Empresa
-  router.get("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
+  router.get("/", isLoggedIn, checkPermission("courses.manage"), async (req, res) => {
     try {
       const query = `
         SELECT c.*, comp.name as company_name 
@@ -210,7 +203,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.get(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -270,8 +263,8 @@ module.exports = function (pool, cloudinary, upload) {
     },
   );
 
-  router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
-    const { title, description, visibility = "todos", company } = req.body;
+  router.post("/", isLoggedIn, checkPermission("courses.manage"), async (req, res) => {
+    const { title, description, company } = req.body;
 
     if (!title) {
       return res.status(400).json({ error: "O título é obrigatório." });
@@ -280,8 +273,8 @@ module.exports = function (pool, cloudinary, upload) {
       const companyId = await getCompanyId(company);
 
       const result = await pool.query(
-        "INSERT INTO courses (title, description, visibility, company_id) VALUES ($1, $2, $3, $4) RETURNING *",
-        [title, description, visibility, companyId],
+        "INSERT INTO courses (title, description, company_id) VALUES ($1, $2, $3) RETURNING *",
+        [title, description, companyId],
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -296,14 +289,14 @@ module.exports = function (pool, cloudinary, upload) {
   router.put(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { id } = req.params;
-      const { title, description, is_active, visibility } = req.body;
+      const { title, description, is_active } = req.body;
       try {
         const result = await pool.query(
-          "UPDATE courses SET title = $1, description = $2, is_active = $3, visibility = $4 WHERE id = $5 RETURNING *",
-          [title, description, is_active, visibility, id],
+          "UPDATE courses SET title = $1, description = $2, is_active = $3 WHERE id = $4 RETURNING *",
+          [title, description, is_active, id],
         );
         if (result.rowCount === 0) {
           return res.status(404).json({ error: "Curso não encontrado." });
@@ -319,7 +312,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -341,7 +334,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/:courseId/quiz",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { courseId } = req.params;
       const { title, passing_score } = req.body;
@@ -373,7 +366,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/:courseId/thumbnail",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     upload.single("thumbnail"),
     async (req, res) => {
       const { courseId } = req.params;
@@ -634,7 +627,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/:courseId/certificate-template",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     upload.single("template"),
     async (req, res) => {
       const { courseId } = req.params;
@@ -670,7 +663,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/:courseId/modules",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { courseId } = req.params;
       const { title, module_order } = req.body;
@@ -690,7 +683,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.delete(
     "/modules/:moduleId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { moduleId } = req.params;
       try {
@@ -706,7 +699,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.put(
     "/:courseId/modules/order",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { orderedModuleIds } = req.body;
       try {
@@ -734,7 +727,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/modules/:moduleId/lessons",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { moduleId } = req.params;
       const { title, video_url, text_content, lesson_order } = req.body;
@@ -757,7 +750,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.put(
     "/lessons/:lessonId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { lessonId } = req.params;
       const { title, video_url, text_content } = req.body;
@@ -783,7 +776,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.delete(
     "/lessons/:lessonId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { lessonId } = req.params;
       try {
@@ -799,7 +792,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.put(
     "/modules/:moduleId/lessons/order",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { orderedLessonIds } = req.body;
       try {

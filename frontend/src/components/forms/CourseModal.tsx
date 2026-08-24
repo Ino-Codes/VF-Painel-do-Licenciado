@@ -9,7 +9,6 @@ interface Course {
   description: string;
   thumbnail_url: string;
   is_active: boolean;
-  visibility: "todos" | "licenciados" | "internos";
   certificate_template_url?: string;
   company_id?: number;
 }
@@ -26,6 +25,7 @@ const COMPANIES_OPTIONS = [
   { slug: "v-business", name: "V-BUSINESS" },
   { slug: "v-corp", name: "V-CORP" },
   { slug: "v-tech", name: "V-TECH" },
+  { slug: "v-partner", name: "V-PARTNER" },
 ];
 
 const CourseModal: React.FC<CourseModalProps> = ({
@@ -38,7 +38,6 @@ const CourseModal: React.FC<CourseModalProps> = ({
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState<Course["visibility"]>("todos");
   const [company, setCompany] = useState(currentCompanySlug);
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -47,11 +46,9 @@ const CourseModal: React.FC<CourseModalProps> = ({
     if (courseToEdit) {
       setTitle(courseToEdit.title);
       setDescription(courseToEdit.description);
-      setVisibility(courseToEdit.visibility);
     } else {
       setTitle("");
       setDescription("");
-      setVisibility("todos");
       setCompany(currentCompanySlug);
       setThumbnailFile(null);
     }
@@ -65,7 +62,6 @@ const CourseModal: React.FC<CourseModalProps> = ({
         await api.put(`/api/admin/courses/${courseToEdit.id}`, {
           title,
           description,
-          visibility,
           is_active: courseToEdit.is_active,
         });
 
@@ -83,7 +79,6 @@ const CourseModal: React.FC<CourseModalProps> = ({
         await api.post("/api/admin/courses", {
           title,
           description,
-          visibility,
           company,
         });
         toast.success(
@@ -149,23 +144,6 @@ const CourseModal: React.FC<CourseModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-          </div>
-
-          <div className="form-row">
-            <label>Visibilidade:</label>
-          </div>
-          <div className="form-row">
-            <select
-              className="form-select"
-              value={visibility}
-              onChange={(e) =>
-                setVisibility(e.target.value as Course["visibility"])
-              }
-            >
-              <option value="todos">Todos</option>
-              <option value="licenciados">Apenas Licenciados</option>
-              <option value="internos">Apenas Internos</option>
-            </select>
           </div>
 
           {/* --- Upload de Thumbnail (Apenas na Edição) ---

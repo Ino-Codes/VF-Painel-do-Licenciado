@@ -262,10 +262,17 @@
   color: var(--text-secondary);
 }
 
-.file-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Célula com ícone + texto. Mantida como table-cell (sem flex) para que a
+   borda inferior alinhe com as demais colunas da linha; o ícone é centralizado
+   verticalmente via vertical-align em vez de um contêiner flex. */
+.file-cell svg {
+  vertical-align: middle;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.file-cell .group-system-badge {
+  vertical-align: middle;
 }
 
 /* ---------------------------------------------------------------------------

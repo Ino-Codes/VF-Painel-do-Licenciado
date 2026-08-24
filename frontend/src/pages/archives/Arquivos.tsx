@@ -17,7 +17,6 @@ interface ArchiveData {
   filename: string;
   category: string;
   folder?: string;
-  visibility: "todos" | "licenciados" | "colaboradores";
   uploaded_at: string;
 }
 
@@ -26,7 +25,7 @@ type GroupedArchives = {
 };
 
 const Arquivos: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const [company, setCompany] = useState<string>("all");
@@ -204,7 +203,7 @@ const Arquivos: React.FC = () => {
           <div>
             <h2 className="content-title">Arquivos</h2>
           </div>
-          {user?.role === "admin" && (
+          {hasPermission("archives.manage") && (
             <button
               className="form-button form-button--add"
               onClick={openModalForCreate}
@@ -271,7 +270,7 @@ const Arquivos: React.FC = () => {
                             <FiDownload />
                           </button>
 
-                          {user?.role === "admin" && (
+                          {hasPermission("archives.manage") && (
                             <>
                               <button
                                 className="form-icon-edit"

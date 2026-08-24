@@ -2,7 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 const multer = require("multer");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
 // ── Anexos do chamado ──────────────────────────────────────────────────────
 const ATTACHMENT_MAX_FILES = 3;
@@ -39,7 +39,7 @@ const VALID_STATUSES = [
   "analise",
   "andamento",
   "concluido",
-  "arquivado",
+  "pausado",
 ];
 const VALID_TYPES = ["help", "suggestion", "bug"];
 
@@ -52,9 +52,9 @@ const TYPE_LABELS = {
 // Fluxo de status permitido — deve espelhar o ALLOWED_TRANSITIONS do frontend.
 const ALLOWED_TRANSITIONS = {
   novo: ["andamento"],
-  andamento: ["concluido", "arquivado"],
+  andamento: ["concluido", "pausado"],
   concluido: [],
-  arquivado: ["andamento"],
+  pausado: ["andamento"],
 };
 
 const isAllowedTransition = (from, to) =>
@@ -668,7 +668,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
   });
 
   // ── GET /api/tickets (protegido — painel interno) ───────────────────────
-  router.get("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
+  router.get("/", isLoggedIn, checkPermission("tickets.view"), async (req, res) => {
     const { tenant_id, status, type } = req.query;
 
     try {
@@ -730,7 +730,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
   router.patch(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("tickets.manage"),
     async (req, res) => {
       const { id } = req.params;
       const { status, observation, resolution_notes } = req.body;
@@ -815,7 +815,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
   router.patch(
     "/:id/attend",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("tickets.manage"),
     async (req, res) => {
       const { id } = req.params;
 
@@ -880,7 +880,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
   router.patch(
     "/:id/close",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("tickets.manage"),
     async (req, res) => {
       const { id } = req.params;
       const { resolution_notes } = req.body;
@@ -990,7 +990,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("tickets.manage"),
     async (req, res) => {
       const { id } = req.params;
 

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload, resend, logActivity) {
   // ── Helper: template de e-mail para atas de reunião ──────────────────────
@@ -65,7 +65,7 @@ module.exports = function (pool, cloudinary, upload, resend, logActivity) {
     </html>`;
   };
   // ── GET /api/meeting-records ─────────────────────────────────────────────
-  router.get("/", isLoggedIn, async (req, res) => {
+  router.get("/", isLoggedIn, checkPermission("meeting_records.view"), async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
@@ -123,7 +123,7 @@ module.exports = function (pool, cloudinary, upload, resend, logActivity) {
   router.get(
     "/internal-users",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("meeting_records.view"),
     async (req, res) => {
       try {
         const result = await pool.query(
@@ -144,7 +144,7 @@ module.exports = function (pool, cloudinary, upload, resend, logActivity) {
   router.post(
     "/",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("meeting_records.manage"),
     upload.array("attachments", 20),
     async (req, res) => {
       const { title, description, participantIds, sendEmail } = req.body;
@@ -305,7 +305,7 @@ module.exports = function (pool, cloudinary, upload, resend, logActivity) {
   router.put(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("meeting_records.manage"),
     upload.array("attachments", 20),
     async (req, res) => {
       const { id } = req.params;
@@ -394,7 +394,7 @@ module.exports = function (pool, cloudinary, upload, resend, logActivity) {
   router.delete(
     "/:id/attachments/:attachmentId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("meeting_records.manage"),
     async (req, res) => {
       const { attachmentId } = req.params;
       try {
@@ -417,7 +417,7 @@ module.exports = function (pool, cloudinary, upload, resend, logActivity) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("meeting_records.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {

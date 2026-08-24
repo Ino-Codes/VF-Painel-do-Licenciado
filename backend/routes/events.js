@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, isAdmin, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
 module.exports = function (pool, cloudinary, upload) {
   // ROTA PÚBLICA PARA O DASHBOARD
-  router.get("/current-month", isLoggedIn, async (req, res) => {
+  router.get("/current-month", isLoggedIn, checkPermission("events.view"), async (req, res) => {
     try {
       const now = new Date();
       const year = now.getFullYear();
@@ -32,7 +32,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.get(
     "/users-for-notification",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("events.view"),
     async (req, res) => {
       try {
         const result = await pool.query(
@@ -49,7 +49,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.get(
     "/:id/notified-users",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("events.view"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -65,9 +65,7 @@ module.exports = function (pool, cloudinary, upload) {
   );
 
   // Rota para BUSCAR todos os eventos
-  router.get("/", isLoggedIn, async (req, res) => {
-    const userId = req.user.id; // Obtém o ID do utilizador logado
-
+  router.get("/", isLoggedIn, checkPermission("events.view"), async (req, res) => {
     try {
       // Busca os eventos comuns da tabela 'events'
       const eventsResult = await pool.query(
@@ -87,45 +85,10 @@ module.exports = function (pool, cloudinary, upload) {
         },
       }));
 
-      // Busca os pedidos de férias DO UTILIZADOR LOGADO
-      const vacationResult = await pool.query(
-        `SELECT * FROM vacation_requests WHERE user_id = $1 ORDER BY start_date ASC`,
-        [userId],
-      );
-
-      const statusColors = {
-        Pendente: "#daa520", // Dourado
-        Aprovado: "#28a745", // Verde
-        Recusado: "#dc3545", // Vermelho
-      };
-
-      const vacationEvents = vacationResult.rows.map((req) => ({
-        id: `vacation-${req.id}`, // Prefixo para evitar conflito de ID
-        title: `Férias ${req.status}`, // Título indica o status
-        start: req.start_date,
-        // Adiciona 1 dia ao end_date para exibição correta no FullCalendar (dia inteiro)
-        end: new Date(
-          new Date(req.end_date).setDate(new Date(req.end_date).getDate() + 1),
-        )
-          .toISOString()
-          .split("T")[0],
-        allDay: true, // Férias são eventos de dia inteiro
-        backgroundColor: statusColors[req.status] || "#6c757d",
-        borderColor: statusColors[req.status] || "#6c757d",
-        extendedProps: {
-          type: "vacation", // Identificador do tipo
-          dias_solicitados: req.dias_solicitados,
-          observacao: req.observacao,
-          status: req.status,
-        },
-      }));
-
-      const allEvents = [...regularEvents, ...vacationEvents];
-
-      res.json(allEvents);
+      res.json(regularEvents);
     } catch (err) {
-      console.error("Erro ao buscar eventos e férias:", err);
-      res.status(500).json({ error: "Erro ao buscar eventos e férias." });
+      console.error("Erro ao buscar eventos:", err);
+      res.status(500).json({ error: "Erro ao buscar eventos." });
     }
   });
 
@@ -133,7 +96,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.get(
     "/categories",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("events.view"),
     async (req, res) => {
       try {
         const result = await pool.query(
@@ -149,7 +112,7 @@ module.exports = function (pool, cloudinary, upload) {
   );
 
   // Rota para CRIAR um novo evento
-  router.post("/", isLoggedIn, checkRole(["admin", "rh"]), async (req, res) => {
+  router.post("/", isLoggedIn, checkPermission("events.manage"), async (req, res) => {
     const {
       title,
       description,
@@ -190,7 +153,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.put(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("events.manage"),
     async (req, res) => {
       const { id } = req.params;
       const {
@@ -238,7 +201,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("events.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {

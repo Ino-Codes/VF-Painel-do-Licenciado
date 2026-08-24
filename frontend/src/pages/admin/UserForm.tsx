@@ -10,7 +10,8 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  role: "admin" | "licenciado" | "comercial" | "rh" | "operacional";
+  role?: string;
+  group_id?: number | null;
   birth_date?: string | null;
   cargo?: string;
   setor?: string;
@@ -20,6 +21,13 @@ interface User {
   data_admissao?: string | null;
 }
 
+interface AssignableGroup {
+  id: number;
+  name: string;
+  slug: string;
+  is_system: boolean;
+}
+
 const UserForm: React.FC<{
   userToEdit: User | null;
   formType: "licenciado" | "interno";
@@ -27,7 +35,17 @@ const UserForm: React.FC<{
   onCancel: () => void;
 }> = ({ userToEdit, formType, onSuccess, onCancel }) => {
   const [formData, setFormData] = useState<Partial<User>>({});
+  const [groups, setGroups] = useState<AssignableGroup[]>([]);
   const { units, loading } = useUnits();
+
+  // Carrega os grupos atribuíveis (para o formulário de colaborador interno).
+  useEffect(() => {
+    if (formType !== "interno") return;
+    api
+      .get("/api/groups/assignable")
+      .then((res) => setGroups(res.data))
+      .catch(() => setGroups([]));
+  }, [formType]);
 
   useEffect(() => {
     if (userToEdit) {
@@ -42,8 +60,7 @@ const UserForm: React.FC<{
         setor: "",
         birth_date: "",
         data_admissao: "",
-        role:
-          formType === "licenciado" ? "licenciado" : "Selecione a Permissão",
+        group_id: null,
       });
     }
   }, [userToEdit, formType]);
@@ -213,26 +230,31 @@ const UserForm: React.FC<{
                     ))}
                 </select>
               </div>
-              {userToEdit?.role !== "licenciado" && (
-                <div className="form-field">
-                  <label htmlFor="uf-role">Permissão</label>
-                  <select
-                    id="uf-role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    className="form-select"
-                  >
-                    <option value="">
-                      {loading ? "Carregando..." : "Selecione a Permissão"}
-                    </option>
-                    <option value="comercial">Comercial</option>
-                    <option value="rh">RH</option>
-                    <option value="operacional">Operacional</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-              )}
+              <div className="form-field">
+                <label htmlFor="uf-group">Grupo de permissões</label>
+                <select
+                  id="uf-group"
+                  name="group_id"
+                  value={formData.group_id ?? ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      group_id: e.target.value ? Number(e.target.value) : null,
+                    }))
+                  }
+                  required
+                  className="form-select"
+                >
+                  <option value="">Selecione o Grupo</option>
+                  {groups
+                    .filter((g) => g.slug !== "licenciado")
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -273,14 +295,14 @@ const UserForm: React.FC<{
         </div>
       )}
 
-      {/* --- FORMULÁRIO PARA LICENCIADOS --- */}
+      {/* --- FORMULÁRIO PARA V-PARTNERS --- */}
       {formType !== "interno" && (
         <div>
-          <h3>{userToEdit ? "Editar Licenciado" : "Cadastrar Novo Licenciado"}</h3>
+          <h3>{userToEdit ? "Editar V-Partner" : "Cadastrar Novo V-Partner"}</h3>
           <p className="userform-sub">
             {userToEdit
               ? `Atualize os dados de ${userToEdit.nome}.`
-              : "Preencha os dados do novo licenciado."}
+              : "Preencha os dados do novo V-Partner."}
           </p>
 
           <div className="userform-section">

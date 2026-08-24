@@ -34,13 +34,13 @@ const setWidgetVisible = (visible: boolean) => {
 // "licenciado" e fora das rotas públicas. O widget.js cria o botão, o overlay
 // e o iframe do formulário por conta própria.
 const SupportWidget: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { pathname } = useLocation();
 
   useEffect(() => {
     const shouldShow =
       !!user &&
-      user.role !== "licenciado" &&
+      hasPermission("internal_access") &&
       !PUBLIC_PATHS.includes(pathname);
 
     if (!shouldShow) {

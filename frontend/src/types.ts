@@ -3,7 +3,8 @@ export type CompanySlug =
   | "v-banking"
   | "v-business"
   | "v-corp"
-  | "v-tech";
+  | "v-tech"
+  | "v-partner";
 
 export interface Lesson {
   id: number;

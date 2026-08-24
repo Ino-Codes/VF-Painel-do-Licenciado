@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
+const { resolveVpartnerId, isLicenciado } = require("../companyAccess.js");
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
   // --- HELPER: Busca ID da empresa pelo Slug ---
@@ -23,13 +24,13 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   };
 
   // --- LISTAR ARQUIVOS ---
-  router.get("/", isLoggedIn, async (req, res) => {
+  router.get("/", isLoggedIn, checkPermission("files.view"), async (req, res) => {
     const { category, search, company } = req.query; // Recebe 'company'
-    const { role } = req.user;
 
     try {
-      // 1. Resolve o ID da empresa (null = todas)
-      const companyId = await getCompanyId(company);
+      // 1. Resolve o ID da empresa (null = todas). Licenciado é forçado à V-PARTNER.
+      let companyId = await getCompanyId(company);
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
 
       // 2. Inicia os arrays de parâmetros e cláusulas
       const params = [];
@@ -37,17 +38,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       if (companyId !== null) {
         params.push(companyId);
         whereClauses.push(`company_id = $${params.length}`);
-      }
-
-      // Filtros de Role (Visibilidade)
-      if (role === "licenciado") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')",
-        );
-      } else if (role !== "admin") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'colaboradores')",
-        );
       }
 
       // Filtro de Categoria
@@ -89,29 +79,19 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   });
 
   // --- LISTAR CATEGORIAS ---
-  router.get("/categories", isLoggedIn, async (req, res) => {
-    const { role } = req.user;
+  router.get("/categories", isLoggedIn, checkPermission("files.view"), async (req, res) => {
     const { company } = req.query; // Recebe company
 
     try {
-      const companyId = await getCompanyId(company);
+      let companyId = await getCompanyId(company);
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
 
-      // Inicia com filtro de empresa (null = todas) e visibilidade
+      // Inicia com filtro de empresa (null = todas)
       const params = [];
       const whereClauses = [];
       if (companyId !== null) {
         params.push(companyId);
         whereClauses.push(`company_id = $${params.length}`);
-      }
-
-      if (role === "licenciado") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')",
-        );
-      } else if (role !== "admin") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'colaboradores')",
-        );
       }
 
       const whereString = whereClauses.length
@@ -131,10 +111,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.post(
     "/",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("files.manage"),
     upload.single("file"),
     async (req, res) => {
-      const { originalname, category, folder, visibility, company } = req.body;
+      const { originalname, category, folder, company } = req.body;
 
       if (!req.file)
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
@@ -177,19 +157,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         // INSERÇÃO NO BANCO
         const result = await pool.query(
-          `INSERT INTO files 
-           (filename, originalname, category, folder, visibility, public_id, company_id) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7) 
+          `INSERT INTO files
+           (filename, originalname, category, folder, public_id, company_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING *`,
-          [
-            fileUrl,
-            originalname,
-            category,
-            folder,
-            visibility,
-            publicId,
-            companyId,
-          ],
+          [fileUrl, originalname, category, folder, publicId, companyId],
         );
 
         try {
@@ -216,17 +188,15 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.put(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("files.manage"),
     async (req, res) => {
       const { id } = req.params;
-      const { originalname, category, folder, visibility } = req.body;
+      const { originalname, category, folder } = req.body;
 
-      // Nota: Não estamos permitindo mudar a empresa na edição por enquanto para simplificar,
-      // mas mantemos os outros campos.
       try {
         const result = await pool.query(
-          "UPDATE files SET originalname = $1, category = $2, folder = $3, visibility = $4 WHERE id = $5 RETURNING *",
-          [originalname, category, folder, visibility, id],
+          "UPDATE files SET originalname = $1, category = $2, folder = $3 WHERE id = $4 RETURNING *",
+          [originalname, category, folder, id],
         );
         if (result.rowCount === 0)
           return res.status(404).json({ error: "Arquivo não encontrado." });
@@ -255,7 +225,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("files.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {
@@ -304,10 +274,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   );
 
   // --- DOWNLOAD ---
-  router.get("/download/:id", isLoggedIn, async (req, res) => {
+  router.get("/download/:id", isLoggedIn, checkPermission("files.view"), async (req, res) => {
     try {
       const fileResult = await pool.query(
-        "SELECT public_id, originalname, filename, visibility FROM files WHERE id = $1",
+        "SELECT public_id, originalname, filename, company_id FROM files WHERE id = $1",
         [req.params.id],
       );
 
@@ -316,13 +286,9 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       }
 
       const file = fileResult.rows[0];
-      const { role } = req.user;
-
+      // Licenciado só baixa conteúdo da V-PARTNER; interno baixa qualquer um.
       const isAllowed =
-        role === "admin" ||
-        file.visibility === "todos" ||
-        (role === "licenciado" && file.visibility === "licenciados") ||
-        (role !== "licenciado" && file.visibility === "colaboradores");
+        !isLicenciado(req) || file.company_id === (await resolveVpartnerId(pool));
 
       if (!isAllowed) {
         return res

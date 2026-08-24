@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { isAdmin, isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -117,7 +117,7 @@ module.exports = function (pool) {
   router.post(
     "/:quizId/questions",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { quizId } = req.params;
       const { question_text } = req.body;
@@ -136,7 +136,7 @@ module.exports = function (pool) {
   router.delete(
     "/questions/:questionId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { questionId } = req.params;
       try {
@@ -152,7 +152,7 @@ module.exports = function (pool) {
   router.post(
     "/questions/:questionId/options",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { questionId } = req.params;
       const { option_text } = req.body;
@@ -171,7 +171,7 @@ module.exports = function (pool) {
   router.put(
     "/options/:optionId/correct",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { optionId } = req.params;
       const client = await pool.connect();
@@ -204,7 +204,7 @@ module.exports = function (pool) {
   router.delete(
     "/options/:optionId",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("courses.manage"),
     async (req, res) => {
       const { optionId } = req.params;
       try {

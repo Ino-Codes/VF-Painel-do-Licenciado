@@ -19,13 +19,6 @@ const InterviewsCalendar: React.FC = () => {
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
-      toast.error("Acesso restrito aos administradores.");
-      navigate("/admin/dashboards");
-    }
-  }, [user, loading, navigate]);
-
   const fetchInterviews = useCallback(async () => {
     try {
       const res = await api.get("/api/recruitment/interviews");
@@ -46,7 +39,7 @@ const InterviewsCalendar: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (user && (user.role === "admin" || user.role === "rh")) {
+    if (user) {
       fetchInterviews();
     }
   }, [user, fetchInterviews]);
@@ -93,7 +86,7 @@ const InterviewsCalendar: React.FC = () => {
     fetchInterviews();
   };
 
-  if (loading || !user || (user.role !== "admin" && user.role !== "rh")) {
+  if (loading || !user) {
     return <div className="tela-loading">Carregando...</div>;
   }
 

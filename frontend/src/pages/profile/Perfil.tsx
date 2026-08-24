@@ -50,6 +50,7 @@ const COMPANY_NAMES: Record<string, string> = {
   "v-business": "V-BUSINESS",
   "v-corp": "V-CORP",
   "v-tech": "V-TECH",
+  "v-partner": "V-PARTNER",
 };
 
 // ─── Helper de formatação de telefone ────────────────────────────────────────
@@ -64,11 +65,12 @@ const formatarTelefone = (telefone?: string | null): string => {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 const Perfil: React.FC = () => {
-  const { user, login, logout, loading } = useAuth() as {
+  const { user, login, logout, loading, hasPermission } = useAuth() as {
     user: User | null;
     login: (u: any, t?: string) => void;
     logout: () => void;
     loading: boolean;
+    hasPermission: (key: string) => boolean;
   };
   const { getUnitNameById, getUnitIdByName } = useUnits();
   const navigate = useNavigate();
@@ -141,7 +143,9 @@ const Perfil: React.FC = () => {
   const handleSaveChanges = async () => {
     if (!user) return;
 
-    const nomeAtualizado = user.role === "licenciado" ? nome : editForm.nome;
+    const nomeAtualizado = !hasPermission("internal_access")
+      ? nome
+      : editForm.nome;
 
     if (!nomeAtualizado.trim()) {
       toast.error("O nome não pode estar vazio.");
@@ -155,7 +159,7 @@ const Perfil: React.FC = () => {
       nickname: editForm.nickname.trim() || null, // ADICIONADO
     };
 
-    if (user.role !== "licenciado") {
+    if (hasPermission("internal_access")) {
       const unitId = getUnitIdByName(editForm.unidade);
       payload.cargo = editForm.cargo;
       payload.setor = editForm.setor;
@@ -338,19 +342,19 @@ const Perfil: React.FC = () => {
                     <span>Email</span>
                     <p>{user.email}</p>
                   </div>
-                  {user.role !== "licenciado" && (
+                  {hasPermission("internal_access") && (
                     <div className="info-item">
                       <span>Cargo</span>
                       <p>{user.cargo || "Não informado"}</p>
                     </div>
                   )}
-                  {user.role !== "licenciado" && (
+                  {hasPermission("internal_access") && (
                     <div className="info-item">
                       <span>Setor</span>
                       <p>{user.setor || "Não informado"}</p>
                     </div>
                   )}
-                  {user.role !== "licenciado" && (
+                  {hasPermission("internal_access") && (
                     <div className="info-item">
                       <span>Unidade</span>
                       <p>
@@ -360,7 +364,7 @@ const Perfil: React.FC = () => {
                       </p>
                     </div>
                   )}
-                  {user.role !== "licenciado" && (
+                  {hasPermission("internal_access") && (
                     <div className="info-item">
                       <span>Telefone</span>
                       <p>{formatarTelefone(user.telefone)}</p>
@@ -383,7 +387,7 @@ const Perfil: React.FC = () => {
                     />
                   </div>
 
-                  {user.role !== "licenciado" && (
+                  {hasPermission("internal_access") && (
                     <div className="form-row">
                       <label>Telefone:</label>
                       <IMaskInput
@@ -415,7 +419,7 @@ const Perfil: React.FC = () => {
             </div>
 
             {/* ── Perfil Comportamental ── */}
-            {user.role !== "licenciado" && (
+            {hasPermission("internal_access") && (
               <div className="profile-section">
                 <h3>Perfil Comportamental</h3>
                 <p>

@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
-const { isLoggedIn, checkRole } = require("../middleware/auth.js");
+const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
+const { resolveVpartnerId, isLicenciado } = require("../companyAccess.js");
 
 module.exports = function (pool, cloudinary, upload) {
   const getCompanyId = async (slug) => {
@@ -20,16 +21,17 @@ module.exports = function (pool, cloudinary, upload) {
     }
   };
 
-  router.get("/", isLoggedIn, async (req, res) => {
+  router.get("/", isLoggedIn, checkPermission("faq.view"), async (req, res) => {
     const { category, search, page = 1, limit = 15, company } = req.query;
-    const userRole = req.user ? req.user.role : null;
 
     try {
       const offset = (page - 1) * limit;
       const isAll = company === "all";
-      const companyId = isAll ? null : await getCompanyId(company);
+      let companyId = isAll ? null : await getCompanyId(company);
+      // Licenciado é forçado à V-PARTNER (ignora o param/all).
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
 
-      if (!isAll && companyId === null) {
+      if (!isAll && companyId === null && !isLicenciado(req)) {
         return res.status(404).json({ error: "Empresa não encontrada.", faqs: [], totalCount: 0, totalPages: 0 });
       }
 
@@ -38,15 +40,6 @@ module.exports = function (pool, cloudinary, upload) {
       if (companyId !== null) {
         params.push(companyId);
         whereClauses.push(`company_id = $${params.length}`);
-      }
-
-      if (userRole === "licenciado") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')"
-        );
-      } else if (userRole === "admin") {
-      } else {
-        whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
       }
 
       if (category) {
@@ -84,15 +77,15 @@ module.exports = function (pool, cloudinary, upload) {
     }
   });
 
-  router.get("/categories", isLoggedIn, async (req, res) => {
+  router.get("/categories", isLoggedIn, checkPermission("faq.view"), async (req, res) => {
     const { company } = req.query;
-    const userRole = req.user ? req.user.role : null;
 
     try {
       const isAll = company === "all";
-      const companyId = isAll ? null : await getCompanyId(company);
+      let companyId = isAll ? null : await getCompanyId(company);
+      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
 
-      if (!isAll && companyId === null) {
+      if (!isAll && companyId === null && !isLicenciado(req)) {
         return res.json([]);
       }
 
@@ -101,14 +94,6 @@ module.exports = function (pool, cloudinary, upload) {
       if (companyId !== null) {
         params.push(companyId);
         whereClauses.push(`company_id = $${params.length}`);
-      }
-
-      if (userRole === "licenciado") {
-        whereClauses.push(
-          "(visibility = 'todos' OR visibility = 'licenciados')"
-        );
-      } else if (userRole !== "admin") {
-        whereClauses.push("(visibility = 'todos' OR visibility = 'internos')");
       }
 
       const whereString = whereClauses.length
@@ -177,16 +162,10 @@ module.exports = function (pool, cloudinary, upload) {
   router.post(
     "/admin",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("faq.manage"),
     upload.single("document"),
     async (req, res) => {
-      const {
-        category,
-        question,
-        answer,
-        visibility = "todos",
-        company,
-      } = req.body;
+      const { category, question, answer, company } = req.body;
 
       try {
         const companyId = await getCompanyId(company);
@@ -213,14 +192,13 @@ module.exports = function (pool, cloudinary, upload) {
         }
 
         const result = await pool.query(
-          "INSERT INTO faq (category, question, answer, document_url, document_originalname, visibility, company_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+          "INSERT INTO faq (category, question, answer, document_url, document_originalname, company_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
           [
             category,
             question,
             answer,
             document_url,
             document_originalname,
-            visibility,
             companyId,
           ]
         );
@@ -235,7 +213,7 @@ module.exports = function (pool, cloudinary, upload) {
   router.delete(
     "/admin/:id",
     isLoggedIn,
-    checkRole(["admin", "rh"]),
+    checkPermission("faq.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {

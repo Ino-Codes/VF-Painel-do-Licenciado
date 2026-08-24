@@ -12,7 +12,7 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
 
 const AdminCalendar: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,15 +20,8 @@ const AdminCalendar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (!loading && (!user || (user.role !== "admin" && user.role !== "rh"))) {
-      toast.error("Acesso restrito aos administradores.");
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
-
   const fetchCategories = useCallback(async () => {
-    if (!user || (user.role !== "admin" && user.role !== "rh")) return;
+    if (!user || !hasPermission("events.manage")) return;
     try {
       const res = await api.get("/api/admin/events/categories");
       setCategories(res.data);
@@ -60,7 +53,7 @@ const AdminCalendar: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (user && user.role === "admin") {
+    if (user && hasPermission("events.manage")) {
       fetchEvents();
       fetchCategories();
     }
@@ -118,7 +111,7 @@ const AdminCalendar: React.FC = () => {
     fetchCategories();
   };
 
-  if (loading || !user || (user.role !== "admin" && user.role !== "rh")) {
+  if (loading || !user) {
     return <div className="tela-loading">Carregando...</div>;
   }
 

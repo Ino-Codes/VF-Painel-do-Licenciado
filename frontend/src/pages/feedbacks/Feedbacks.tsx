@@ -11,7 +11,7 @@ import FeedbackFillModal from "../../components/forms/FeedbackFillModal.tsx";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 
 const Feedbacks: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [activeTab, setActiveTab] = useState<"pendentes" | "historico">(
     "pendentes",
@@ -93,7 +93,7 @@ const Feedbacks: React.FC = () => {
         <div className="page-header">
           <h2>Gestão de Feedbacks</h2>
 
-          {(user.role === "admin" || user.role === "rh") && (
+          {hasPermission("feedbacks.manage") && (
             <button
               className="form-button form-button--add"
               onClick={() => setIsInitiateModalOpen(true)}
@@ -168,7 +168,7 @@ const Feedbacks: React.FC = () => {
                       <FiEye />
                     </button>
                   )}
-                  {(user.role === "admin" || user.role === "rh") &&
+                  {hasPermission("feedbacks.manage") &&
                     fb.status !== "Concluído" && (
                       <button
                         className="form-icon-delete"
