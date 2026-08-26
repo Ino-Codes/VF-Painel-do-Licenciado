@@ -20,30 +20,34 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     }
   };
 
-  // ─── Helper: busca usuários alvo para notificação/email ───────────────────
-  // Audiência derivada da EMPRESA do aviso: V-PARTNER → licenciados;
-  // empresa interna → internos; global (NULL) → todos.
-  const getTargetUsers = async (companyId, creatorId) => {
-    const vpartnerId = await resolveVpartnerId(pool);
-    if (companyId === null) {
-      const r = await pool.query(
-        "SELECT id, nome, email FROM users WHERE id != $1",
-        [creatorId],
-      );
-      return r.rows;
-    }
-    if (companyId === vpartnerId) {
-      const r = await pool.query(
-        "SELECT id, nome, email FROM users WHERE role = 'licenciado' AND id != $1",
-        [creatorId],
-      );
-      return r.rows;
-    }
+  // ─── Helper: usuários por acesso interno (RBAC) ───────────────────────────
+  // "Interno × licenciado" é derivado da permissão `internal_access` concedida
+  // pelo grupo do usuário — mesma fonte usada por isLicenciado (visualização),
+  // e não pelo `role` legado. wantInternal=true → colaboradores internos;
+  // false → externos (sem internal_access, ou seja, licenciados/órfãos).
+  const getUsersByAccess = async (wantInternal, excludeId) => {
+    const op = wantInternal ? "EXISTS" : "NOT EXISTS";
     const r = await pool.query(
-      "SELECT id, nome, email FROM users WHERE role != 'licenciado' AND id != $1",
-      [creatorId],
+      `SELECT u.id, u.nome, u.email
+         FROM users u
+        WHERE u.id != $1
+          AND ${op} (
+            SELECT 1 FROM group_permissions gp
+             WHERE gp.group_id = u.group_id
+               AND gp.permission_key = 'internal_access'
+          )`,
+      [excludeId],
     );
     return r.rows;
+  };
+
+  // ─── Helper: busca usuários alvo para notificação/email ───────────────────
+  // Audiência derivada da EMPRESA do aviso:
+  //   - V-PARTNER  → licenciados (único caso que comunica externos);
+  //   - global (NULL) ou empresa interna → SOMENTE colaboradores internos.
+  const getTargetUsers = async (companyId, creatorId) => {
+    const vpartnerId = await resolveVpartnerId(pool);
+    return getUsersByAccess(companyId !== vpartnerId, creatorId);
   };
 
   // ─── Helper: template de e-mail ───────────────────────────────────────────
@@ -152,10 +156,14 @@ module.exports = function (pool, createNotification, logActivity, resend) {
     async (req, res) => {
       try {
         const result = await pool.query(
-          `SELECT id, nome, cargo, setor
-           FROM users
-           WHERE role != 'licenciado'
-           ORDER BY nome ASC`,
+          `SELECT u.id, u.nome, u.cargo, u.setor
+             FROM users u
+            WHERE EXISTS (
+              SELECT 1 FROM group_permissions gp
+               WHERE gp.group_id = u.group_id
+                 AND gp.permission_key = 'internal_access'
+            )
+            ORDER BY u.nome ASC`,
         );
         res.json(result.rows);
       } catch (err) {
@@ -171,20 +179,27 @@ module.exports = function (pool, createNotification, logActivity, resend) {
 
     try {
       // Licenciado é forçado à V-PARTNER; interno honra o param (all = todas).
+      const licenciado = isLicenciado(req);
       let companyId = await getCompanyId(company);
-      if (isLicenciado(req)) companyId = await resolveVpartnerId(pool);
+      if (licenciado) companyId = await resolveVpartnerId(pool);
       const pageNum = parseInt(page, 10) || 1;
       const limitNum = parseInt(limit, 10) || 10;
       const offset = (pageNum - 1) * limitNum;
 
       const params = [];
       const whereClauses = [];
-      if (companyId !== null) {
+      if (licenciado) {
+        // Licenciado vê SOMENTE avisos da V-PARTNER (sem os globais).
+        params.push(companyId);
+        whereClauses.push(`n.company_id = $${params.length}`);
+      } else if (companyId !== null) {
+        // Interno: empresa selecionada + avisos globais.
         params.push(companyId);
         whereClauses.push(
           `(n.company_id = $${params.length} OR n.company_id IS NULL)`,
         );
       }
+      // Interno com "all" → sem filtro (vê todos).
 
       const whereString = whereClauses.length
         ? `WHERE ${whereClauses.join(" AND ")}`

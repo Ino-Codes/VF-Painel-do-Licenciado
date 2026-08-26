@@ -344,6 +344,12 @@ const Perfil: React.FC = () => {
                   </div>
                   {hasPermission("internal_access") && (
                     <div className="info-item">
+                      <span>Telefone</span>
+                      <p>{formatarTelefone(user.telefone)}</p>
+                    </div>
+                  )}
+                  {hasPermission("internal_access") && (
+                    <div className="info-item">
                       <span>Cargo</span>
                       <p>{user.cargo || "Não informado"}</p>
                     </div>
@@ -354,22 +360,7 @@ const Perfil: React.FC = () => {
                       <p>{user.setor || "Não informado"}</p>
                     </div>
                   )}
-                  {hasPermission("internal_access") && (
-                    <div className="info-item">
-                      <span>Unidade</span>
-                      <p>
-                        {getUnitNameById(user.unit_id) ||
-                          user.unidade ||
-                          "Não informado"}
-                      </p>
-                    </div>
-                  )}
-                  {hasPermission("internal_access") && (
-                    <div className="info-item">
-                      <span>Telefone</span>
-                      <p>{formatarTelefone(user.telefone)}</p>
-                    </div>
-                  )}
+                  
                 </div>
               )}
 
