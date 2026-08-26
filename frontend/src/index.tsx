@@ -1,6 +1,11 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import { ThemeProvider } from "./context/ThemeContext.tsx";
@@ -29,7 +34,6 @@ import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
 import Empresa from "./pages/company/Empresa.tsx";
 import Recruitment from "./pages/admin/Recruitment.tsx";
 import ChecklistTemplatesAdmin from "./pages/admin/ChecklistTemplatesAdmin.tsx";
-import RhGestao from "./pages/admin/RhGestao.tsx";
 import Feedbacks from "./pages/feedbacks/Feedbacks.tsx";
 import AdminGestao from "./pages/admin/AdminGestao.tsx";
 import AdminStatistics from "./pages/admin/AdminStatistics.tsx";
@@ -328,23 +332,10 @@ const AppRouter: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          {/* RH consolidado no Admin — mantém links/bookmarks antigos válidos. */}
           <Route
             path="/admin/rh-gestao"
-            element={
-              <ProtectedRoute
-                anyOf={[
-                  "users.view",
-                  "recruitment.view",
-                  "feedbacks.view",
-                  "analytics.view",
-                  "meeting_records.view",
-                  "courses.manage",
-                  "events.manage",
-                ]}
-              >
-                <RhGestao />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/admin/admin-gestao" replace />}
           />
           <Route
             path="/admin/feedbacks"
@@ -359,10 +350,17 @@ const AppRouter: React.FC = () => {
             element={
               <ProtectedRoute
                 anyOf={[
+                  "users.view",
                   "groups.view",
-                  "logs.view",
-                  "widget_tenants.view",
+                  "recruitment.view",
+                  "feedbacks.view",
+                  "tickets.view",
+                  "courses.manage",
+                  "events.manage",
                   "analytics.view",
+                  "logs.view",
+                  "meeting_records.view",
+                  "widget_tenants.view",
                   "projects.view",
                   "units.view",
                 ]}

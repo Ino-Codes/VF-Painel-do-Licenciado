@@ -11,7 +11,7 @@ import LogoVCorpEscura from "../../img/textopreto.png";
 import NotificationModal from "../ui/NotificationModal.tsx";
 
 import { HiOutlineUserCircle, HiOutlineBell } from "react-icons/hi";
-import { FaPeopleGroup, FaLock } from "react-icons/fa6";
+import { FaLock } from "react-icons/fa6";
 import { FaUsers, FaFolderOpen } from "react-icons/fa";
 
 interface Notification {
@@ -22,20 +22,20 @@ interface Notification {
   created_at: string;
 }
 
-const RH_SCREENS = [
+// Telas do hub Admin (RH foi consolidado aqui). O item de menu aparece para
+// quem tem o `.view`/`.manage` de qualquer card exibido em AdminGestao.
+const ADMIN_SCREENS = [
   "users.view",
+  "groups.view",
   "recruitment.view",
   "feedbacks.view",
-  "analytics.view",
-  "meeting_records.view",
+  "tickets.view",
   "courses.manage",
   "events.manage",
-];
-const ADMIN_SCREENS = [
-  "groups.view",
-  "logs.view",
-  "widget_tenants.view",
   "analytics.view",
+  "logs.view",
+  "meeting_records.view",
+  "widget_tenants.view",
   "projects.view",
   "units.view",
 ];
@@ -132,18 +132,7 @@ const Menu: React.FC = () => {
           </NavLink>
         )}
 
-        {/* SEÇÃO ADMINISTRATIVA (RH e Admin Global) */}
-        {hasAnyPermission(RH_SCREENS) && (
-          <NavLink
-            to="/admin/rh-gestao"
-            className="menu-item dropdown-trigger"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <FaPeopleGroup />
-            RH
-          </NavLink>
-        )}
-
+        {/* SEÇÃO ADMINISTRATIVA (RH consolidado no Admin) */}
         {hasAnyPermission(ADMIN_SCREENS) && (
           <NavLink
             to="/admin/admin-gestao"
