@@ -153,7 +153,6 @@ const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(
 );
 const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
 const notificationRoutes = require("./routes/notifications.js")(pool);
-const recruitmentRoutes = require("./routes/recruitment.js")(pool, logActivity);
 const unitsRoutes = require("./routes/units.js")(pool);
 const socialRoutes = require("./routes/social.js")(pool, cloudinary, upload);
 const projectRoutes = require("./routes/projects.js")(pool, logActivity);
@@ -180,6 +179,8 @@ const archivesRoutes = require("./routes/archives.js")(
   upload,
   logActivity,
 );
+const praisesRoutes = require("./routes/praises.js")(pool, logActivity);
+const setoresRoutes = require("./routes/setores.js")(pool);
 
 cronFunctions.initializeCron(pool, resend);
 
@@ -205,13 +206,14 @@ app.use("/api/enneagram", corsRestrito, enneagramRoutes);
 app.use("/api/admin/analytics", corsRestrito, adminAnalyticsRoutes);
 app.use("/api/cron", corsRestrito, cronTriggerRoutes);
 app.use("/api/notifications", corsRestrito, notificationRoutes);
-app.use("/api/recruitment", corsRestrito, recruitmentRoutes);
 app.use("/api/units", corsRestrito, unitsRoutes);
 app.use("/api/projects", corsRestrito, projectRoutes);
 app.use("/api/widget-tenants", corsRestrito, widgetTenantsRoutes);
 app.use("/api/tickets", corsRestrito, ticketsRoutes);
 app.use("/api/meeting-records", corsRestrito, meetingRecordsRoutes);
 app.use("/api/archives", corsRestrito, archivesRoutes);
+app.use("/api/praises", corsRestrito, praisesRoutes);
+app.use("/api/setores", corsRestrito, setoresRoutes);
 
 // ── Rota pública do widget — CORS aberto, sem autenticação ────────────────────
 app.use("/api/ticket", corsAberto, ticketsRoutes);

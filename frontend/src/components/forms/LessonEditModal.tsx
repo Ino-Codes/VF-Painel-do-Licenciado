@@ -2,6 +2,7 @@ import React from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import toast from "react-hot-toast";
+import Modal from "../ui/Modal.tsx";
 import { Lesson } from "../../types.ts";
 
 const MenuBar = ({ editor }) => {
@@ -92,12 +93,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>{lesson.id ? "Editar Aula" : "Adicionar Nova Aula"}</h2>
+    <Modal onClose={onClose} title={lesson.id ? "Editar Aula" : "Adicionar Nova Aula"}>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <input
@@ -146,8 +142,7 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -207,20 +207,108 @@ input[type="checkbox"]:checked {
   border-color: var(--action-secondary);
 }
 
-.botao-logout {
-  width: 140px;
-  height: 30px;
-  border-radius: 100px;
-  border: none;
-  background-color: var(--action-danger);
-  color: var(--text-white);
-  font-weight: bold;
-  transition: opacity 0.2s;
-  cursor: pointer;
+/* Subtítulo abaixo do título de uma tela (ex.: cabeçalhos de Admin/telas
+   internas). Fica como bloco muted logo abaixo do .content-title. */
+.content-subtitle {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
-.botao-logout:hover {
-  opacity: 0.85;
+/* ── Skeletons de carregamento ─────────────────────────────────────────────
+   Placeholders com formato do conteúdo real, no lugar de um card vazio com
+   "Carregando...". Dimensões dinâmicas via --sk-w / --sk-h. */
+.skeleton {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  width: var(--sk-w, 100%);
+  height: var(--sk-h, 1rem);
+  background-color: var(--bg-secondary);
+  border-radius: 6px;
+  vertical-align: middle;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.28),
+    transparent
+  );
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+.skeleton--circle {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Card de curso (thumbnail + textos) */
+.course-card-skeleton {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+}
+.skeleton--thumb {
+  display: block;
+  width: 100%;
+  height: 160px;
+  border-radius: 0;
+}
+.course-card-skeleton-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Gráfico + lista lateral (Dashboard do Eneagrama) */
+.stats-container .skeleton {
+  display: block;
+}
+.stats-main-column .skeleton + .skeleton {
+  margin-top: 12px;
+}
+.stats-side-column .skeleton + .skeleton {
+  margin-top: 10px;
+}
+.skeleton--chart {
+  height: 300px;
+}
+.skeleton--stat-card {
+  height: 90px;
+}
+
+/* Ranking (Top de engajamento em cursos) */
+.skeleton-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.skeleton-ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.skeleton-ranking-score {
+  margin-left: auto;
 }
 
 .btn-back-subtle {

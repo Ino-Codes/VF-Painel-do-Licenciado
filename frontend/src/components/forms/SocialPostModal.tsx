@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { FiX, FiPlus } from "react-icons/fi";
 import { useSearchParams } from "react-router-dom";
+import Modal from "../ui/Modal.tsx";
 
 interface SocialPostModalProps {
   postToEdit?: any;
@@ -35,9 +36,20 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
 
+  // Mantém os previews atuais acessíveis na limpeza de unmount.
+  const previewsRef = useRef<string[]>([]);
+  previewsRef.current = previews;
+
   useEffect(() => {
     setCompany(currentCompanySlug);
   }, [currentCompanySlug]);
+
+  // Libera os object URLs restantes ao desmontar (evita vazamento de memória).
+  useEffect(() => {
+    return () => {
+      previewsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -55,7 +67,11 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
 
   const removeImage = (index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviews((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => {
+      const url = prev[index];
+      if (url) URL.revokeObjectURL(url); // libera o preview removido
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,12 +110,7 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content social-post-modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>Adicionar Conteúdo Social</h2>
+    <Modal onClose={onClose} title="Adicionar Conteúdo Social" className="social-post-modal-content">
         <form onSubmit={handleSubmit}>
           {/* Empresa */}
           <div className="form-row">
@@ -206,8 +217,7 @@ const SocialPostModal: React.FC<SocialPostModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

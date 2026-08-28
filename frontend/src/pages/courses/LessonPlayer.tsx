@@ -11,6 +11,7 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import { Module, Lesson } from "../../types.ts";
+import { sanitizeHtml } from "../../utils/sanitize.ts";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import { FaArrowLeftLong } from "react-icons/fa6";
 
@@ -60,18 +61,10 @@ const LessonPlayer: React.FC = () => {
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const getAuthHeaders = useCallback(() => {
-    if (!user) return {};
-    return { headers: { "x-user-id": user.id } };
-  }, [user]);
-
   const fetchCourse = useCallback(async () => {
     if (!user || !courseId) return;
     try {
-      const res = await api.get(
-        `/api/admin/courses/public/${courseId}`,
-        getAuthHeaders(),
-      );
+      const res = await api.get(`/api/admin/courses/public/${courseId}`);
       setCourse(res.data);
       if (res.data.modules?.[0]?.lessons?.[0]) {
         setActiveLesson(res.data.modules[0].lessons[0]);
@@ -83,7 +76,7 @@ const LessonPlayer: React.FC = () => {
       // Redireciona mantendo o contexto da empresa em caso de erro
       navigate(`/content/courses?company=${companySlug}`);
     }
-  }, [courseId, user, getAuthHeaders, navigate, companySlug]);
+  }, [courseId, user, navigate, companySlug]);
 
   useEffect(() => {
     if (user) fetchCourse();
@@ -100,7 +93,6 @@ const LessonPlayer: React.FC = () => {
       await api.post(
         `/api/admin/courses/lessons/${activeLesson.id}/complete`,
         {},
-        getAuthHeaders(),
       );
       toast.success("Aula concluída!");
       setCourse((prev) =>
@@ -121,7 +113,6 @@ const LessonPlayer: React.FC = () => {
     try {
       await api.delete(
         `/api/admin/courses/lessons/${activeLesson.id}/progress`,
-        getAuthHeaders(),
       );
       toast.success("Progresso removido!");
       setCourse((prev) =>
@@ -148,7 +139,6 @@ const LessonPlayer: React.FC = () => {
       const response = await api.get(
         `/api/admin/courses/${course.id}/certificate`,
         {
-          ...getAuthHeaders(),
           responseType: "blob",
         },
       );
@@ -259,7 +249,7 @@ const LessonPlayer: React.FC = () => {
                       } as React.CSSProperties
                     }
                     dangerouslySetInnerHTML={{
-                      __html: activeLesson.text_content,
+                      __html: sanitizeHtml(activeLesson.text_content),
                     }}
                   />
                 )}
@@ -301,11 +291,10 @@ const LessonPlayer: React.FC = () => {
                   );
                   const isActive = activeLesson?.id === lesson.id;
                   return (
-                    <a
+                    <button
+                      type="button"
                       key={lesson.id}
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
+                      onClick={() => {
                         setActiveLesson(lesson);
                         setIsSidebarOpen(false);
                       }}
@@ -315,7 +304,7 @@ const LessonPlayer: React.FC = () => {
                     >
                       {isCompleted ? "✓ " : "○ "}
                       {lesson.title}
-                    </a>
+                    </button>
                   );
                 })}
               </div>

@@ -13,15 +13,18 @@
   display: flex;
   gap: 16px;
   align-items: flex-start;
-  min-width: max-content;
+  width: 100%;
   padding: 4px 2px 16px;
 }
 
 /* ── Coluna ───────────────────────────────────────────────────── */
 
 .hd-kanban-column {
-  width: 300px;
-  min-width: 300px;
+  /* Colunas dividem a largura disponível (sem scroll horizontal no desktop);
+     abaixo de ~240px por coluna o container passa a rolar lateralmente. */
+  flex: 1 1 0;
+  min-width: 240px;
+  max-width: 420px;
   background: var(--bg-primary);
   border-radius: 14px;
   display: flex;
@@ -660,7 +663,9 @@
   }
 
   .hd-kanban-column {
+    flex: 0 0 auto;
     width: 100%;
     min-width: unset;
+    max-width: unset;
   }
 }

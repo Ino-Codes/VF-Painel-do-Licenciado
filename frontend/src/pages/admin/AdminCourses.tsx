@@ -8,6 +8,7 @@ import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import CourseModal from "../../components/forms/CourseModal.tsx";
+import EmptyState from "../../components/ui/EmptyState.tsx";
 import { FiTrash2, FiEdit } from "react-icons/fi";
 import { FaChalkboardTeacher } from "react-icons/fa";
 // Removemos import de CompanySlug pois não filtraremos mais aqui
@@ -33,11 +34,7 @@ const AdminCourses: React.FC = () => {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
-
-  const getAuthHeaders = useCallback(() => {
-    if (!user) return {};
-    return { headers: { "x-user-id": user.id } };
-  }, [user]);
+  const [loadError, setLoadError] = useState(false);
 
   const fetchCourses = useCallback(async () => {
     if (!user) return;
@@ -47,13 +44,14 @@ const AdminCourses: React.FC = () => {
         params: {
           _t: new Date().getTime(), // Evita cache
         },
-        ...getAuthHeaders(),
       });
       setCourses(res.data);
+      setLoadError(false);
     } catch (err) {
+      setLoadError(true);
       toast.error("Não foi possível carregar os cursos.");
     }
-  }, [user, getAuthHeaders]);
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -87,10 +85,7 @@ const AdminCourses: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (courseToDelete === null) return;
     try {
-      await api.delete(
-        `/api/admin/courses/${courseToDelete}`,
-        getAuthHeaders(),
-      );
+      await api.delete(`/api/admin/courses/${courseToDelete}`);
       toast.success("Curso excluído com sucesso!");
       fetchCourses();
     } catch (err) {
@@ -141,8 +136,16 @@ const AdminCourses: React.FC = () => {
           </button>
         </div>
 
-        {courses.length === 0 ? (
-          <p className="admin-courses-empty">Nenhum curso encontrado.</p>
+        {loadError ? (
+          <p className="admin-courses-empty">
+            Não foi possível carregar os dados. Tente novamente mais tarde.
+          </p>
+        ) : courses.length === 0 ? (
+          <EmptyState
+            imageKey="cursos"
+            title="Nenhum curso encontrado"
+            message="Crie o primeiro curso no botão “Adicionar Curso” acima."
+          />
         ) : (
           <ul className="user-list">
             {courses.map((course) => (

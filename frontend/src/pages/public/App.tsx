@@ -138,13 +138,11 @@ const App: React.FC = () => {
     }
   };
 
-  const toggleRecuperacao = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
+  const toggleRecuperacao = () => {
     setMostrarRecuperacao(true);
   };
 
-  const toggleLogin = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
+  const toggleLogin = () => {
     setMostrarRecuperacao(false);
     setRecoveryMessage("");
   };
@@ -208,9 +206,13 @@ const App: React.FC = () => {
                 <p className="feedback-message">{recoveryMessage}</p>
               )}
               <p className="auth-back-link">
-                <a href="#" onClick={toggleLogin}>
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={toggleLogin}
+                >
                   Voltar para o Login
-                </a>
+                </button>
               </p>
             </>
           ) : step === "2fa" ? (
@@ -252,26 +254,22 @@ const App: React.FC = () => {
               </button>
 
               <p className="esqueceu-senha">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleResend();
-                  }}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={handleResend}
                 >
                   Reenviar código
-                </a>
+                </button>
               </p>
               <p className="auth-back-link">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    voltarParaLogin();
-                  }}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={voltarParaLogin}
                 >
                   Voltar para o Login
-                </a>
+                </button>
               </p>
             </form>
           ) : (
@@ -304,9 +302,13 @@ const App: React.FC = () => {
                 {isLoading ? "Logando..." : "Login"}
               </button>
               <p className="esqueceu-senha">
-                <a href="#" onClick={toggleRecuperacao}>
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={toggleRecuperacao}
+                >
                   Esqueceu a senha?
-                </a>
+                </button>
               </p>
             </form>
           )}

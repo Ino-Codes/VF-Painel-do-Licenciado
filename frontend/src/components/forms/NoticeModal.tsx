@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { TiptapMenuBar } from "../editor/TiptapEditor.tsx";
+import Modal from "../ui/Modal.tsx";
 import { COMPANY_OPTIONS } from "../ui/CompanyFilter.tsx";
 import { FiSearch, FiX } from "react-icons/fi";
 
@@ -182,13 +183,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
   ];
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>{noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}</h2>
-
+    <Modal onClose={onClose} title={noticeToEdit ? "Editar Aviso" : "Adicionar Novo Aviso"}>
         {/* Editor */}
         <div className="form-row">
           <div className="tiptap-container">
@@ -245,7 +240,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
                 Destinatários para e-mail:
                 <span className="text-span">
                   {selectedUserIds.length === 0
-                    ? "Todos dentro da visibilidade selecionada"
+                    ? "Todos os destinatários da empresa selecionada"
                     : `${selectedUserIds.length} usuário(s) selecionado(s)`}
                 </span>
               </label>
@@ -340,8 +335,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
             Salvar
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

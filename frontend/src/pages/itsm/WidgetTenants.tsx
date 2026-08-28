@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
+import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import {
-  FiPlus,
   FiCopy,
   FiEdit2,
   FiTrash2,
   FiRefreshCw,
-  FiCheck,
   FiToggleLeft,
   FiToggleRight,
 } from "react-icons/fi";
@@ -43,8 +42,12 @@ const WidgetTenantsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editTenant, setEditTenant] = useState<Tenant | null>(null);
   const [formName, setFormName] = useState("");
-  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  // Ação destrutiva aguardando confirmação (substitui window.confirm).
+  const [confirmState, setConfirmState] = useState<{
+    action: "delete" | "regenerate";
+    tenant: Tenant;
+  } | null>(null);
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchTenants = async () => {
@@ -121,14 +124,7 @@ const WidgetTenantsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (t: Tenant) => {
-    if (
-      !window.confirm(
-        `Excluir "${t.name}"?\n\nTodos os tickets recebidos por este sistema também serão excluídos.`,
-      )
-    )
-      return;
-
+  const performDelete = async (t: Tenant) => {
     try {
       await api.delete(`/api/widget-tenants/${t.id}`);
       toast.success("Token excluído.");
@@ -138,14 +134,7 @@ const WidgetTenantsPage: React.FC = () => {
     }
   };
 
-  const handleRegenerateToken = async (t: Tenant) => {
-    if (
-      !window.confirm(
-        `Regenerar o token de "${t.name}"?\n\nO token atual deixará de funcionar imediatamente e o widget instalado precisará ser atualizado.`,
-      )
-    )
-      return;
-
+  const performRegenerateToken = async (t: Tenant) => {
     try {
       await api.post(`/api/widget-tenants/${t.id}/regenerate-token`);
       toast.success("Token regenerado com sucesso!");
@@ -155,11 +144,15 @@ const WidgetTenantsPage: React.FC = () => {
     }
   };
 
+  // Abrem o modal de confirmação (a ação só ocorre no onConfirm).
+  const handleDelete = (t: Tenant) =>
+    setConfirmState({ action: "delete", tenant: t });
+  const handleRegenerateToken = (t: Tenant) =>
+    setConfirmState({ action: "regenerate", tenant: t });
+
   const copyToken = (t: Tenant) => {
     navigator.clipboard.writeText(t.token);
-    setCopiedId(t.id);
     toast.success("Token copiado!");
-    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const copySnippet = (t: Tenant) => {
@@ -443,6 +436,30 @@ const WidgetTenantsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmState !== null}
+        onClose={() => setConfirmState(null)}
+        onConfirm={() => {
+          if (!confirmState) return;
+          const { action, tenant } = confirmState;
+          setConfirmState(null);
+          if (action === "delete") performDelete(tenant);
+          else performRegenerateToken(tenant);
+        }}
+        title={
+          confirmState?.action === "delete"
+            ? "Excluir Sistema"
+            : "Regenerar Token"
+        }
+        message={
+          confirmState
+            ? confirmState.action === "delete"
+              ? `Excluir "${confirmState.tenant.name}"? Todos os tickets recebidos por este sistema também serão excluídos.`
+              : `Regenerar o token de "${confirmState.tenant.name}"? O token atual deixará de funcionar imediatamente e o widget instalado precisará ser atualizado.`
+            : ""
+        }
+      />
       <Footer />
     </div>
   );

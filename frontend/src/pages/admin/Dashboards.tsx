@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
@@ -10,7 +9,6 @@ import CourseEngagementDash from "./CourseEngagementDash.tsx";
 
 const Dashboard: React.FC = () => {
   const { user, loading, hasPermission } = useAuth();
-  const navigate = useNavigate();
 
   const [activeReportTab, setActiveReportTab] = useState(
     hasPermission("analytics.view") ? "eneagrama" : "cursos"

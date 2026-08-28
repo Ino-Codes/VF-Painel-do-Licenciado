@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
+import Modal from "../ui/Modal.tsx";
 
 interface Course {
   id: number;
@@ -40,8 +41,6 @@ const CourseModal: React.FC<CourseModalProps> = ({
   const [description, setDescription] = useState("");
   const [company, setCompany] = useState(currentCompanySlug);
 
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-
   useEffect(() => {
     if (courseToEdit) {
       setTitle(courseToEdit.title);
@@ -50,7 +49,6 @@ const CourseModal: React.FC<CourseModalProps> = ({
       setTitle("");
       setDescription("");
       setCompany(currentCompanySlug);
-      setThumbnailFile(null);
     }
   }, [courseToEdit, currentCompanySlug]);
 
@@ -64,15 +62,6 @@ const CourseModal: React.FC<CourseModalProps> = ({
           description,
           is_active: courseToEdit.is_active,
         });
-
-        if (thumbnailFile) {
-          const formData = new FormData();
-          formData.append("thumbnail", thumbnailFile);
-          await api.post(
-            `/api/admin/courses/${courseToEdit.id}/thumbnail`,
-            formData,
-          );
-        }
 
         toast.success("Curso atualizado com sucesso!");
       } else {
@@ -95,20 +84,16 @@ const CourseModal: React.FC<CourseModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>{courseToEdit ? "Editar Curso" : "Novo Curso"}</h2>
+    <Modal onClose={onClose} title={courseToEdit ? "Editar Curso" : "Novo Curso"}>
         <form onSubmit={handleSubmit}>
           {!courseToEdit && (
             <>
               <div className="form-row">
-                <label>Empresa:</label>
+                <label htmlFor="course-company">Empresa:</label>
               </div>
               <div className="form-row">
                 <select
+                  id="course-company"
                   className="form-select"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
@@ -124,10 +109,11 @@ const CourseModal: React.FC<CourseModalProps> = ({
           )}
 
           <div className="form-row">
-            <label>Dados do curso:</label>
+            <label htmlFor="course-title">Dados do curso:</label>
           </div>
           <div className="form-row">
             <input
+              id="course-title"
               className="form-input"
               placeholder="Título do Curso"
               value={title}
@@ -140,41 +126,12 @@ const CourseModal: React.FC<CourseModalProps> = ({
             <textarea
               className="form-input"
               placeholder="Descrição..."
+              aria-label="Descrição do curso"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-
-          {/* --- Upload de Thumbnail (Apenas na Edição) ---
-          {courseToEdit && (
-            <>
-              <div className="form-row">
-                <label>Alterar thumbnail:</label>
-              </div>
-              <div className="form-row">
-                <div className="file-upload-wrapper">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      e.target.files && setThumbnailFile(e.target.files[0])
-                    }
-                    className="file-upload-input"
-                  />
-                  <label htmlFor="file-upload" className="file-upload-label">
-                    Escolher Arquivo
-                  </label>
-                  <span className="file-upload-filename">
-                    {thumbnailFile
-                      ? thumbnailFile.name
-                      : "Nenhum arquivo escolhido"}
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
-          */}
 
           <div className="modal-actions">
             <button
@@ -189,8 +146,7 @@ const CourseModal: React.FC<CourseModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

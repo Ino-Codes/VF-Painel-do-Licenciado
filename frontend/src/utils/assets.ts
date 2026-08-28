@@ -13,11 +13,27 @@ import {
   PiVideo,
   PiQuestion,
   PiChartPieSliceFill,
+  PiHandHeart,
 } from "react-icons/pi";
 import { TbError404 } from "react-icons/tb";
 
+// Chaves válidas de ícone (fonte única para os consumidores, ex.: EmptyState).
+export type IconKey =
+  | "404"
+  | "arquivos"
+  | "avisos"
+  | "certificado"
+  | "cursos"
+  | "dashs"
+  | "documentos"
+  | "elogios"
+  | "eventos"
+  | "faq"
+  | "video"
+  | "projetos";
+
 // Mapeamento de chaves para Componentes de Ícone
-export const iconMap: Record<string, IconType> = {
+export const iconMap: Record<IconKey, IconType> = {
   "404": TbError404,
   arquivos: PiArchive,
   avisos: PiInfo,
@@ -25,6 +41,7 @@ export const iconMap: Record<string, IconType> = {
   cursos: PiGraduationCap,
   dashs: PiChartDonut,
   documentos: PiFolderOpen,
+  elogios: PiHandHeart,
   eventos: PiCalendarSlash,
   faq: PiQuestion,
   video: PiVideo,
@@ -33,5 +50,5 @@ export const iconMap: Record<string, IconType> = {
 
 // Função simples para obter o componente
 export const getIconByKey = (key: string): IconType | null => {
-  return iconMap[key] || null;
+  return iconMap[key as IconKey] || null;
 };

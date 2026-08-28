@@ -257,6 +257,23 @@
   display: block;
 }
 
+/* Avatar de fallback (iniciais) quando não há foto ou ela está quebrada.
+   Largura fixa em proporção de retrato (3:4) para casar com as fotos reais,
+   que usam height:300px / width:auto. */
+.corp-user-card-photo-fallback {
+  width: 225px;
+  max-width: 100%;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text-white);
+  background: linear-gradient(135deg, var(--accent-color), #6d5528);
+}
+
 .corp-user-card-info {
   padding: 10px;
   background: var(--glass-surface);

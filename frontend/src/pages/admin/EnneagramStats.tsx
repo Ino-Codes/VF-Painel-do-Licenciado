@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import { Bar } from "react-chartjs-2";
-import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { ChartSkeleton } from "../../components/ui/Skeleton.tsx";
 import { useTheme } from "../../context/ThemeContext.tsx";
 
 import {
@@ -44,6 +44,7 @@ const EnneagramStats: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [typesInfo, setTypesInfo] = useState<EnneagramType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const [chartOptions, setChartOptions] = useState<ChartOptions<"bar">>({});
   const [chartData, setChartData] = useState<ChartData<"bar">>({
@@ -105,8 +106,10 @@ const EnneagramStats: React.FC = () => {
       .then(([statsRes, typesRes]) => {
         setStats(statsRes.data);
         setTypesInfo(typesRes.data);
+        setLoadError(false);
       })
       .catch((err) => {
+        setLoadError(true);
         console.error("Erro ao carregar dados do Eneagrama", err);
       })
       .finally(() => {
@@ -115,7 +118,15 @@ const EnneagramStats: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <ChartSkeleton />;
+  }
+
+  if (loadError) {
+    return (
+      <p className="tela-loading">
+        Não foi possível carregar os dados. Tente novamente mais tarde.
+      </p>
+    );
   }
 
   if (!stats || typesInfo.length === 0) {

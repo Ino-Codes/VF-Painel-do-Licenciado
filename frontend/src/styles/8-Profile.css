@@ -315,9 +315,4 @@
     justify-content: center;
     gap: 15px;
   }
-
-  .profile-header .botao-logout {
-    margin-left: 0;
-    margin-top: 0;
-  }
 }

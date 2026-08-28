@@ -6,12 +6,13 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import EmptyState from "../../components/ui/EmptyState.tsx";
+import { sanitizeHtml } from "../../utils/sanitize.ts";
 import EventCard from "./EventCard.tsx";
 import NoticeModal from "../../components/forms/NoticeModal.tsx";
 import { IoMdDocument } from "react-icons/io";
 import { MdPlayLesson, MdPlayCircle } from "react-icons/md";
 import { RiQuestionnaireFill } from "react-icons/ri";
-import { FaHeadset, FaArrowRight } from "react-icons/fa";
+import { FaHeadset, FaArrowRight, FaHandHoldingHeart } from "react-icons/fa";
 
 interface Notice {
   id: number;
@@ -70,7 +71,7 @@ const Home: React.FC = () => {
       console.error("Erro ao buscar eventos do mês:", err);
       toast.error("Não foi possível carregar os eventos do mês.");
     }
-  }, [user]);
+  }, [user, hasPermission]);
 
   useEffect(() => {
     if (user) {
@@ -93,13 +94,18 @@ const Home: React.FC = () => {
     { label: "Documentos", icon: <IoMdDocument />, path: "/content/documentos" },
     { label: "Cursos", icon: <MdPlayLesson />, path: "/content/courses" },
     { label: "Vídeos", icon: <MdPlayCircle />, path: "/content/videos" },
-    { label: "FAQ", icon: <RiQuestionnaireFill />, path: "/faq" },
+    { label: "FAQ", icon: <RiQuestionnaireFill />, path: "/content/faq" },
   ];
   if (!isLicenciado) {
     quickLinks.push({
       label: "Meus Chamados",
       icon: <FaHeadset />,
       path: "/internal/meus-chamados",
+    });
+    quickLinks.push({
+      label: "Elogios",
+      icon: <FaHandHoldingHeart />,
+      path: "/internal/elogios",
     });
   }
 
@@ -172,7 +178,9 @@ const Home: React.FC = () => {
                 <article className="home-notice-highlight">
                   <div
                     className="home-notice-preview"
-                    dangerouslySetInnerHTML={{ __html: latestNotice.message }}
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(latestNotice.message),
+                    }}
                   />
                   <div className="home-notice-meta">
                     {latestNotice.creator_name && (

@@ -5,6 +5,9 @@ import Select, { StylesConfig } from "react-select";
 import DatePicker from "./DatePicker.tsx";
 import { TimePicker } from "./TimePicker.tsx";
 import { useTheme } from "../../context/ThemeContext.tsx";
+import Modal from "../ui/Modal.tsx";
+import ConfirmationModal from "../ui/ConfirmationModal.tsx";
+import { onKeyActivate } from "../../utils/a11y.ts";
 
 type UserOption = {
   value: number;
@@ -36,6 +39,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const [category, setCategory] = useState("");
   const [color, setColor] = useState(colorPalette[0]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [allUsers, setAllUsers] = useState<UserOption[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
 
@@ -117,6 +121,15 @@ const EventModal: React.FC<EventModalProps> = ({
       ":" +
       String(date.getMinutes()).padStart(2, "0");
 
+    // Data no fuso LOCAL — evita o deslocamento de dia que ocorre ao usar
+    // toISOString() (que converte para UTC antes de fatiar a data).
+    const getFormattedDate = (date: Date) =>
+      String(date.getFullYear()) +
+      "-" +
+      String(date.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(date.getDate()).padStart(2, "0");
+
     if (eventToEdit) {
       setTitle(eventToEdit.title || "");
       setDescription(eventToEdit.description || "");
@@ -126,7 +139,7 @@ const EventModal: React.FC<EventModalProps> = ({
       const start = new Date(eventToEdit.start_date);
       const end = new Date(eventToEdit.end_date);
 
-      setEventDate(start.toISOString().split("T")[0]);
+      setEventDate(getFormattedDate(start));
       setStartTime(getFormattedTime(start));
       setEndTime(getFormattedTime(end));
 
@@ -151,7 +164,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
       setTitle("");
       setDescription("");
-      setEventDate(startDateObj.toISOString().split("T")[0]);
+      setEventDate(getFormattedDate(startDateObj));
       setStartTime(getFormattedTime(startDateObj));
       setEndTime(getFormattedTime(endDateObj));
       setCategory("");
@@ -212,12 +225,8 @@ const EventModal: React.FC<EventModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>{eventToEdit ? "Editar Evento" : "Criar Novo Evento"}</h2>
+    <>
+    <Modal onClose={onClose} title={eventToEdit ? "Editar Evento" : "Criar Novo Evento"}>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <input
@@ -279,7 +288,7 @@ const EventModal: React.FC<EventModalProps> = ({
             <label>Cor do Evento</label>
           </div>
           <div className="form-row">
-            <div className="color-palette">
+            <div className="color-palette" role="radiogroup" aria-label="Cor do evento">
               {colorPalette.map((c) => (
                 <div
                   key={c}
@@ -287,7 +296,12 @@ const EventModal: React.FC<EventModalProps> = ({
                     color === c ? "selected" : ""
                   }`}
                   style={{ "--event-swatch-color": c } as React.CSSProperties}
+                  role="radio"
+                  aria-checked={color === c}
+                  aria-label={`Cor ${c}`}
+                  tabIndex={0}
                   onClick={() => setColor(c)}
+                  onKeyDown={onKeyActivate(() => setColor(c))}
                 />
               ))}
             </div>
@@ -316,7 +330,7 @@ const EventModal: React.FC<EventModalProps> = ({
               {eventToEdit && (
                 <button
                   type="button"
-                  onClick={handleDelete}
+                  onClick={() => setIsDeleteConfirmOpen(true)}
                   className="form-button delete"
                   disabled={isDeleting}
                 >
@@ -337,8 +351,18 @@ const EventModal: React.FC<EventModalProps> = ({
             </div>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
+    <ConfirmationModal
+      isOpen={isDeleteConfirmOpen}
+      onClose={() => setIsDeleteConfirmOpen(false)}
+      onConfirm={() => {
+        setIsDeleteConfirmOpen(false);
+        handleDelete();
+      }}
+      title="Excluir Evento"
+      message="Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita."
+    />
+    </>
   );
 };
 

@@ -1,8 +1,17 @@
 /* --- Grade de Módulos--- */
+/* Flex com wrap + centralização: linhas cheias preenchem a largura e uma
+   última linha incompleta fica centralizada (sem card solitário à esquerda).
+   O max-width evita que os cards da última linha estiquem demais. */
 .gestao-modules-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 2rem;
+}
+
+.gestao-module-card {
+  flex: 1 1 320px;
+  max-width: 380px;
 }
 
 .gestao-module-card {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
-import { IoCloseSharp } from "react-icons/io5";
+import Modal from "../ui/Modal.tsx";
 
 interface Project {
   id: number;
@@ -67,20 +67,18 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-button" onClick={onClose}>
-          <IoCloseSharp />
-        </button>
-
-        <h2>{projectToEdit ? "Editar Projeto" : "Novo Projeto"}</h2>
-
+    <Modal
+      onClose={onClose}
+      title={projectToEdit ? "Editar Projeto" : "Novo Projeto"}
+      closeOnOverlayClick
+    >
         <form onSubmit={handleSubmit} className="modal-body">
           <div className="form-row">
-            <label>Nome do Projeto:</label>
+            <label htmlFor="project-name">Nome do Projeto:</label>
           </div>
           <div className="form-row">
             <input
+              id="project-name"
               className="form-input"
               type="text"
               value={name}
@@ -91,10 +89,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label>Time Responsável:</label>
+            <label htmlFor="project-team">Time Responsável:</label>
           </div>
           <div className="form-row">
             <input
+              id="project-team"
               className="form-input"
               type="text"
               value={team}
@@ -104,10 +103,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label>Descrição:</label>
+            <label htmlFor="project-description">Descrição:</label>
           </div>
           <div className="form-row">
             <textarea
+              id="project-description"
               className="form-input form-textarea"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -133,8 +133,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

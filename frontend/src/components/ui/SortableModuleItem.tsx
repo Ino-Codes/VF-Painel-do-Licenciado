@@ -10,6 +10,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -52,25 +53,29 @@ export const SortableModuleItem: React.FC<SortableModuleItemProps> = ({
     })
   );
 
-  const handleLessonDragEnd = (event) => {
+  const handleLessonDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    // `over` é null quando o item é solto fora de um alvo válido.
+    if (!over || active.id === over.id) return;
 
-    if (active.id !== over.id) {
-      setModules((prevModules) => {
-        const newModules = [...prevModules];
-        const moduleIndex = newModules.findIndex((m) => m.id === module.id);
-        const lessons = newModules[moduleIndex].lessons;
-        const oldIndex = lessons.findIndex((l) => l.id === active.id);
-        const newIndex = lessons.findIndex((l) => l.id === over.id);
-        const reorderedLessons = arrayMove(lessons, oldIndex, newIndex);
-        newModules[moduleIndex].lessons = reorderedLessons;
+    const lessons = module.lessons;
+    const oldIndex = lessons.findIndex((l) => l.id === active.id);
+    const newIndex = lessons.findIndex((l) => l.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
 
-        const orderedLessonIds = reorderedLessons.map((l) => l.id);
-        onLessonOrderChange(module.id, orderedLessonIds);
+    const reorderedLessons = arrayMove(lessons, oldIndex, newIndex);
 
-        return newModules;
-      });
-    }
+    // Atualização imutável: novo array + novo objeto de módulo (sem mutar o estado anterior).
+    setModules((prevModules) =>
+      prevModules.map((m) =>
+        m.id === module.id ? { ...m, lessons: reorderedLessons } : m,
+      ),
+    );
+
+    onLessonOrderChange(
+      module.id,
+      reorderedLessons.map((l) => l.id),
+    );
   };
 
   return (

@@ -9,11 +9,9 @@ import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
 import EventModal from "../../components/forms/EventModal.tsx";
 import { useAuth } from "../../context/AuthContext.tsx";
-import { useNavigate } from "react-router-dom";
 
 const AdminCalendar: React.FC = () => {
   const { user, loading, hasPermission } = useAuth();
-  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -28,7 +26,7 @@ const AdminCalendar: React.FC = () => {
     } catch (err) {
       toast.error("Não foi possível carregar as categorias de eventos.");
     }
-  }, [user]);
+  }, [user, hasPermission]);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -57,7 +55,7 @@ const AdminCalendar: React.FC = () => {
       fetchEvents();
       fetchCategories();
     }
-  }, [user, fetchEvents]);
+  }, [user, hasPermission, fetchEvents, fetchCategories]);
 
   const handleDateClick = (arg: any) => {
     setSelectedDate(arg.dateStr);

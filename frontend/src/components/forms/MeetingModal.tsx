@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { FiX, FiSearch, FiPaperclip, FiTrash2 } from "react-icons/fi";
+import Modal from "../ui/Modal.tsx";
 import { MeetingRecord } from "../../pages/meetings/MeetingRecords.tsx";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -112,22 +113,13 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
     setNewFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const removeExistingAttachment = async (
-    attachmentId: number,
-    meetingId: number,
-  ) => {
-    try {
-      await api.delete(
-        `/api/meeting-records/${meetingId}/attachments/${attachmentId}`,
-      );
-      setExistingAttachments((prev) =>
-        prev.filter((a) => a.id !== attachmentId),
-      );
-      setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
-      toast.success("Anexo removido.");
-    } catch {
-      toast.error("Erro ao remover anexo.");
-    }
+  // Marca o anexo para remoção apenas localmente; a exclusão só é efetivada ao
+  // salvar (handleSubmit). Assim, cancelar o modal não apaga nada.
+  const removeExistingAttachment = (attachmentId: number) => {
+    setExistingAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+    setRemovedAttachmentIds((prev) =>
+      prev.includes(attachmentId) ? prev : [...prev, attachmentId],
+    );
   };
 
   // ── Submit ──────────────────────────────────────────────────────────────────
@@ -156,6 +148,14 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
       });
 
       if (meetingToEdit) {
+        // Efetiva a remoção dos anexos marcados (só agora, ao salvar).
+        await Promise.all(
+          removedAttachmentIds.map((attId) =>
+            api.delete(
+              `/api/meeting-records/${meetingToEdit.id}/attachments/${attId}`,
+            ),
+          ),
+        );
         await api.put(`/api/meeting-records/${meetingToEdit.id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
@@ -183,15 +183,10 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>
-          {meetingToEdit ? "Editar Ata de Reunião" : "Nova Ata de Reunião"}
-        </h2>
-
+    <Modal
+      onClose={onClose}
+      title={meetingToEdit ? "Editar Ata de Reunião" : "Nova Ata de Reunião"}
+    >
         {/* ── Campo A: Título ── */}
         <div className="form-row">
           <label htmlFor="meeting-title">Título da Reunião</label>
@@ -315,9 +310,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
                   <button
                     type="button"
                     className="meeting-modal-attachment-remove"
-                    onClick={() =>
-                      removeExistingAttachment(a.id, meetingToEdit.id)
-                    }
+                    onClick={() => removeExistingAttachment(a.id)}
                   >
                     <FiTrash2 size={13} />
                   </button>
@@ -400,8 +393,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
             {isSubmitting ? "Salvando..." : "Salvar"}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

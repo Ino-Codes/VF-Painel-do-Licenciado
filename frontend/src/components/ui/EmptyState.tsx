@@ -1,8 +1,8 @@
 import React from "react";
-import { getIconByKey } from "../../utils/assets.ts";
+import { getIconByKey, IconKey } from "../../utils/assets.ts";
 
 interface EmptyStateProps {
-  imageKey: "faq" | "logo";
+  imageKey: IconKey;
   title: string;
   message: string;
 }

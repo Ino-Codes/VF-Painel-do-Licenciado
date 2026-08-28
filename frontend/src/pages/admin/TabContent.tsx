@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useUnits } from "../../hooks/useUnits.ts";
 import { FiTrash2, FiEdit } from "react-icons/fi";
 
 interface User {
@@ -10,6 +9,15 @@ interface User {
   unit_id?: number;
   unidade?: string; // legacy support
 }
+
+// Rótulo visível do tipo de usuário. O `role` é legado e no banco o valor
+// segue "licenciado"; na interface ele foi renomeado para "V-Partner".
+// (A célula usa text-transform: capitalize para os demais tipos.)
+const ROLE_LABELS: Record<string, string> = {
+  licenciado: "V-Partner",
+};
+const formatRole = (role: string) =>
+  ROLE_LABELS[(role || "").toLowerCase()] || role;
 
 interface TabContentProps {
   tab: "licenciados" | "colaboradores";
@@ -37,9 +45,7 @@ const TabContent: React.FC<TabContentProps> = ({
   handlePageChange,
   handleSort,
 }) => {
-  const { getUnitNameById } = useUnits();
   const [searchTerm, setSearchTerm] = useState("");
-  const isLicenciadoTab = tab === "licenciados";
 
   const getSortIcon = (key: string) => {
     if (state.sortConfig.key !== key) return null;
@@ -89,14 +95,6 @@ const TabContent: React.FC<TabContentProps> = ({
               >
                 Tipo {getSortIcon("role")}
               </th>
-              {!isLicenciadoTab && (
-                <th
-                  onClick={() => handleSort(tab, "unidade")}
-                  className="sortable-header"
-                >
-                  Unidade {getSortIcon("unidade")}
-                </th>
-              )}
               <th className="tab-users-actions-col">Ações</th>
             </tr>
           </thead>
@@ -106,13 +104,8 @@ const TabContent: React.FC<TabContentProps> = ({
                 <td data-label="Nome">{u.nome}</td>
                 <td data-label="Email">{u.email}</td>
                 <td data-label="Tipo" className="tab-users-role-cell">
-                  {u.role}
+                  {formatRole(u.role)}
                 </td>
-                {!isLicenciadoTab && (
-                  <td data-label="Unidade">
-                    {getUnitNameById(u.unit_id) || u.unidade}
-                  </td>
-                )}
                 <td data-label="Ações">
                   <div className="user-actions">
                     <button

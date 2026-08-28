@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { FaUserTie } from "react-icons/fa";
+import { RankingSkeleton } from "../../components/ui/Skeleton.tsx";
 
 interface EngagementData {
   nome: string;
@@ -12,13 +13,16 @@ interface EngagementData {
 const CourseEngagementDash: React.FC = () => {
   const [engagementData, setEngagementData] = useState<EngagementData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     const fetchEngagement = async () => {
       try {
         const res = await api.get("/api/admin/analytics/course-engagement");
         setEngagementData(res.data);
+        setLoadError(false);
       } catch (err) {
+        setLoadError(true);
         toast.error("Não foi possível carregar o ranking de engajamento.");
       } finally {
         setIsLoading(false);
@@ -28,7 +32,15 @@ const CourseEngagementDash: React.FC = () => {
   }, []);
 
   if (isLoading) {
-    return <p>Carregando ranking...</p>;
+    return <RankingSkeleton />;
+  }
+
+  if (loadError) {
+    return (
+      <p className="tela-loading">
+        Não foi possível carregar os dados. Tente novamente mais tarde.
+      </p>
+    );
   }
 
   if (engagementData.length === 0) {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { IMaskInput } from "react-imask";
 import { useAuth } from "../../context/AuthContext.tsx";
-import { useUnits } from "../../hooks/useUnits.ts";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
@@ -12,7 +11,7 @@ import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import AvatarModal from "../../components/forms/AvatarModal.tsx";
 import { HiOutlineUserCircle } from "react-icons/hi";
-import { FiEdit, FiEye, FiCamera } from "react-icons/fi";
+import { FiEdit, FiEye, FiCamera, FiLogOut } from "react-icons/fi";
 import { PiPencilSimpleLineBold } from "react-icons/pi";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -72,12 +71,10 @@ const Perfil: React.FC = () => {
     loading: boolean;
     hasPermission: (key: string) => boolean;
   };
-  const { getUnitNameById, getUnitIdByName } = useUnits();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"info" | "certificates">("info");
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-  const [nome, setNome] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -89,7 +86,6 @@ const Perfil: React.FC = () => {
     nome: "",
     cargo: "",
     setor: "",
-    unidade: "",
     telefone: "",
     nickname: "",
   });
@@ -102,7 +98,6 @@ const Perfil: React.FC = () => {
         nome: user.nome || "",
         cargo: user.cargo || "",
         setor: user.setor || "",
-        unidade: user.unidade || "",
         telefone: user.telefone || "",
         nickname: user.nickname || "",
       });
@@ -110,12 +105,8 @@ const Perfil: React.FC = () => {
   }, [user, loading]);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        navigate("/");
-      } else {
-        setNome(user.nome);
-      }
+    if (!loading && !user) {
+      navigate("/");
     }
   }, [user, loading, navigate]);
 
@@ -143,9 +134,10 @@ const Perfil: React.FC = () => {
   const handleSaveChanges = async () => {
     if (!user) return;
 
-    const nomeAtualizado = !hasPermission("internal_access")
-      ? nome
-      : editForm.nome;
+    // Não-internos não editam o nome (não há campo na UI) → mantém o atual.
+    const nomeAtualizado = hasPermission("internal_access")
+      ? editForm.nome
+      : user.nome || "";
 
     if (!nomeAtualizado.trim()) {
       toast.error("O nome não pode estar vazio.");
@@ -160,11 +152,8 @@ const Perfil: React.FC = () => {
     };
 
     if (hasPermission("internal_access")) {
-      const unitId = getUnitIdByName(editForm.unidade);
       payload.cargo = editForm.cargo;
       payload.setor = editForm.setor;
-      payload.unidade = editForm.unidade;
-      payload.unidade_id = unitId;
       payload.telefone = editForm.telefone.replace(/\D/g, "");
     }
 
@@ -286,13 +275,15 @@ const Perfil: React.FC = () => {
               <p>{user.email}</p>
             </div>
             <button
-              className="botao-logout"
+              className="form-icon-delete"
+              title="Desconectar"
+              aria-label="Desconectar"
               onClick={() => {
                 logout();
                 navigate("/");
               }}
             >
-              Desconectar
+              <FiLogOut /> Desconectar
             </button>
           </div>
         </div>

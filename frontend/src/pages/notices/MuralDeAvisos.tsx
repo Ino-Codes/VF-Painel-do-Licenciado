@@ -1,6 +1,6 @@
 // frontend/src/pages/content/MuralDeAvisos.tsx
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
@@ -10,6 +10,7 @@ import NoticeModal from "../../components/forms/NoticeModal.tsx";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
+import { sanitizeHtml } from "../../utils/sanitize.ts";
 import toast from "react-hot-toast";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 
@@ -22,6 +23,43 @@ interface Notice {
   company_id: number | null;
   creator_name?: string;
 }
+
+// Altura máxima (px) de um aviso colapsado antes de exibir o "Ler mais".
+const COLLAPSE_MAX_HEIGHT = 260;
+
+// Mensagem de aviso com colapso: avisos longos são cortados com um fade e um
+// botão "Ler mais"/"Ler menos". O botão só aparece quando há conteúdo cortado.
+const NoticeMessage: React.FC<{ html: string }> = ({ html }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el) setOverflowing(el.scrollHeight > COLLAPSE_MAX_HEIGHT + 8);
+  }, [html]);
+
+  return (
+    <>
+      <div
+        ref={ref}
+        className={`notice-message ${
+          overflowing && !expanded ? "notice-message--collapsed" : ""
+        }`}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
+      />
+      {overflowing && (
+        <button
+          type="button"
+          className="link-button notice-readmore"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Ler menos" : "Ler mais"}
+        </button>
+      )}
+    </>
+  );
+};
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
@@ -184,11 +222,8 @@ const MuralDeAvisos: React.FC = () => {
           <div className="notice-list">
             {notices.map((notice) => (
               <div key={notice.id} className="notice-card">
-                {/* Conteúdo HTML do aviso (Tiptap) */}
-                <div
-                  className="notice-message"
-                  dangerouslySetInnerHTML={{ __html: notice.message }}
-                />
+                {/* Conteúdo HTML do aviso (Tiptap), com colapso "Ler mais" */}
+                <NoticeMessage html={notice.message} />
 
                 {/* Rodapé: data + ações */}
                 <div className="notice-footer">

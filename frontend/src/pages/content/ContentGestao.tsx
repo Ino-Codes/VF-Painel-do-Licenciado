@@ -52,7 +52,7 @@ const ContentGestao: React.FC = () => {
       title: "FAQ",
       description: "Perguntas frequentes e respostas",
       icon: <RiQuestionnaireFill />,
-      path: "/faq",
+      path: "/content/faq",
     },
     {
       title: "Vídeos",

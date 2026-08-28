@@ -28,12 +28,9 @@ import LessonPlayer from "./pages/courses/LessonPlayer.tsx";
 import QuizPlayer from "./pages/courses/QuizPlayer.tsx";
 import NotFoundPage from "./pages/public/NotFoundPage.tsx";
 import AdminCalendar from "./pages/admin/AdminCalendar.tsx";
-import InterviewsCalendar from "./pages/admin/InterviewsCalendar.tsx";
 import EnneagramPage from "./pages/profile/EnneagramPage.tsx";
 import EnneagramResultsPage from "./pages/profile/EnneagramResultsPage.tsx";
 import Empresa from "./pages/company/Empresa.tsx";
-import Recruitment from "./pages/admin/Recruitment.tsx";
-import ChecklistTemplatesAdmin from "./pages/admin/ChecklistTemplatesAdmin.tsx";
 import Feedbacks from "./pages/feedbacks/Feedbacks.tsx";
 import AdminGestao from "./pages/admin/AdminGestao.tsx";
 import AdminStatistics from "./pages/admin/AdminStatistics.tsx";
@@ -47,6 +44,7 @@ import Arquivos from "./pages/archives/Arquivos.tsx";
 import SupportWidget from "./components/layout/SupportWidget.tsx";
 import Acompanhar from "./pages/public/Acompanhar.tsx";
 import MeusChamados from "./pages/internal/MeusChamados.tsx";
+import PraiseWall from "./pages/internal/PraiseWall.tsx";
 import GroupsManagement from "./pages/admin/GroupsManagement.tsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 
@@ -71,8 +69,7 @@ import "./styles/17-Kanban.css";
 import "./styles/18-MeetingRecords.css";
 import "./styles/19-Tracking.css";
 import "./styles/20-Brand.css";
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />;
+import "./styles/21-Praises.css";
 
 const AppRouter: React.FC = () => {
   return (
@@ -153,13 +150,15 @@ const AppRouter: React.FC = () => {
             }
           />
           <Route
-            path="/faq"
+            path="/content/faq"
             element={
               <ProtectedRoute permission="faq.view">
                 <Faq />
               </ProtectedRoute>
             }
           />
+          {/* Redirect da rota antiga para o padrão /content/* */}
+          <Route path="/faq" element={<Navigate to="/content/faq" replace />} />
           <Route
             path="/content/courses"
             element={
@@ -231,6 +230,14 @@ const AppRouter: React.FC = () => {
             element={
               <ProtectedRoute permission="internal_access">
                 <MeusChamados />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/internal/elogios"
+            element={
+              <ProtectedRoute permission="internal_access">
+                <PraiseWall />
               </ProtectedRoute>
             }
           />
@@ -308,30 +315,6 @@ const AppRouter: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/recrutamento/entrevistas"
-            element={
-              <ProtectedRoute permission="recruitment.view">
-                <InterviewsCalendar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/recrutamento"
-            element={
-              <ProtectedRoute permission="recruitment.view">
-                <Recruitment />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/checklist-templates"
-            element={
-              <ProtectedRoute permission="recruitment.view">
-                <ChecklistTemplatesAdmin />
-              </ProtectedRoute>
-            }
-          />
           {/* RH consolidado no Admin — mantém links/bookmarks antigos válidos. */}
           <Route
             path="/admin/rh-gestao"
@@ -352,7 +335,6 @@ const AppRouter: React.FC = () => {
                 anyOf={[
                   "users.view",
                   "groups.view",
-                  "recruitment.view",
                   "feedbacks.view",
                   "tickets.view",
                   "courses.manage",

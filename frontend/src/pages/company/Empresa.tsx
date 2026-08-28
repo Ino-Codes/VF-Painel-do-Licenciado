@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
-import { useUnits } from "../../hooks/useUnits.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import UserCard from "./UserCard.tsx";
 import { useNavigate } from "react-router-dom";
-import MapaEscritorios from "./MapaEscritorios.tsx";
 import UserDetailModal from "./UserDetailModal.tsx";
 
 import { FiTarget, FiEye } from "react-icons/fi";
@@ -14,12 +12,8 @@ import { RiVipDiamondLine } from "react-icons/ri";
 
 const Empresa: React.FC = () => {
   const { user, loading } = useAuth();
-  const { units, getUnitIdByName, getUnitNameById } = useUnits();
   const navigate = useNavigate();
   const [internalUsers, setInternalUsers] = useState<any[]>([]);
-  const [selectedState, setSelectedState] = useState<
-    "rs" | "sc" | "sp" | "todos"
-  >("todos");
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
   useEffect(() => {
@@ -32,25 +26,6 @@ const Empresa: React.FC = () => {
         .catch((err) => console.error("Erro ao buscar equipe", err));
     }
   }, [user, loading, navigate]);
-
-  // 3. Lógica para filtrar os utilizadores
-  const unitMap = {
-    rs: "Matriz",
-    sc: "Filial SC",
-    sp: "Filial SP",
-  };
-
-  const filteredUsers = internalUsers.filter((user) => {
-    if (selectedState === "todos") return true;
-    const unitName = getUnitNameById(user.unit_id) || user.unidade;
-    return unitName === unitMap[selectedState];
-  });
-
-  const stateNames = {
-    rs: "Matriz em RS",
-    sc: "Filial em SC",
-    sp: "Filial em SP",
-  };
 
   const handleOpenModal = (userToShow: any) => {
     setSelectedUser(userToShow);
@@ -109,104 +84,15 @@ const Empresa: React.FC = () => {
           </div>
         </section>
 
-        {/* <section className="info-section">
-          <div className="page-header">
-            <h2>Nossa História</h2>
-          </div>
-
-          <div className="timeline-container">
-            <div className="timeline-item">
-              <div className="timeline-image-placeholder">
-                <img
-                  src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759930448/default-01_br7je3.png"
-                  alt="Fundação da V-CORP"
-                />
-              </div>
-              <div className="timeline-dot"></div>
-              <div className="timeline-content">
-                <h4>2014</h4>
-                <p>Descrição de outro momento.</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-image-placeholder">
-                <img
-                  src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759930448/default-01_br7je3.png"
-                  alt="Outr marco importante"
-                />
-              </div>
-              <div className="timeline-dot"></div>
-              <div className="timeline-content">
-                <h4>2021</h4>
-                <p>Descrição de outro momento.</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-image-placeholder">
-                <img
-                  src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759930448/default-01_br7je3.png"
-                  alt="Outro marco importante"
-                />
-              </div>
-              <div className="timeline-dot"></div>
-              <div className="timeline-content">
-                <h4>2022</h4>
-                <p>Descrição de outro momento.</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-image-placeholder">
-                <img
-                  src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1759930448/default-01_br7je3.png"
-                  alt="Estado atual da empresa"
-                />
-              </div>
-              <div className="timeline-dot"></div>
-              <div className="timeline-content">
-                <h4>2025</h4>
-                <p>Descrição de outro momento.</p>
-              </div>
-            </div>
-          </div>
-        </section> */}
-
         <section className="info-section">
           <div className="page-header">
             <h2>Nossa Equipe</h2>
-            {/* <p>
-              Selecione um estado no mapa para ver a equipe local ou veja todos
-              os colaboradores.
-            </p> */}
           </div>
 
-          
-
           <div className="equipe-layout">
-            {/* <div className="equipe-sidebar">
-              <MapaEscritorios
-                activeState={selectedState}
-                onStateClick={setSelectedState}
-              />
-              <div className="map-controls">
-                <button
-                  className={`map-button ${
-                    selectedState === "todos" ? "active" : ""
-                  }`}
-                  onClick={() => setSelectedState("todos")}
-                >
-                  Ver Todos
-                </button>
-              </div>
-            </div> */}
-
             <div className="equipe-main-content">
-              
-
               <div className="user-grid">
-                {filteredUsers.map((internalUser) => (
+                {internalUsers.map((internalUser) => (
                   <UserCard
                     key={internalUser.id}
                     user={internalUser}

@@ -173,6 +173,7 @@ const TicketKanbanPage: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [detailTicket, setDetailTicket] = useState<Ticket | null>(null);
   const [attending, setAttending] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -188,7 +189,9 @@ const TicketKanbanPage: React.FC = () => {
 
       const res = await api.get("/api/tickets", { params });
       setTickets(res.data);
+      setLoadError(false);
     } catch {
+      setLoadError(true);
       toast.error("Erro ao carregar tickets.");
     } finally {
       setLoading(false);
@@ -362,6 +365,12 @@ const TicketKanbanPage: React.FC = () => {
             {loading ? (
               <div className="loading-state">Carregando...</div>
             ) : (
+              <>
+              {loadError && (
+                <div className="tela-loading">
+                  Não foi possível carregar os dados. Tente novamente mais tarde.
+                </div>
+              )}
               <div className="hd-kanban-board">
                 {COLUMNS.map((col) => (
                   <KanbanColumn
@@ -372,6 +381,7 @@ const TicketKanbanPage: React.FC = () => {
                   />
                 ))}
               </div>
+              </>
             )}
           </div>
         </div>

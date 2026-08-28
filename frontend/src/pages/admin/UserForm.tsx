@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import CorporatePhotoUploader from "./CorporatePhotoUploader.tsx";
-import { useUnits } from "../../hooks/useUnits.ts";
-import { Unit } from "../../types/recruitment.ts";
 import DatePicker from "../../components/forms/DatePicker.tsx";
 
 interface User {
@@ -15,8 +13,7 @@ interface User {
   birth_date?: string | null;
   cargo?: string;
   setor?: string;
-  unidade?: string;
-  unidade_id?: number | null;
+  setor_id?: number | null;
   corporate_photo_url?: string;
   data_admissao?: string | null;
 }
@@ -28,6 +25,11 @@ interface AssignableGroup {
   is_system: boolean;
 }
 
+interface Setor {
+  id: number;
+  nome: string;
+}
+
 const UserForm: React.FC<{
   userToEdit: User | null;
   formType: "licenciado" | "interno";
@@ -36,7 +38,7 @@ const UserForm: React.FC<{
 }> = ({ userToEdit, formType, onSuccess, onCancel }) => {
   const [formData, setFormData] = useState<Partial<User>>({});
   const [groups, setGroups] = useState<AssignableGroup[]>([]);
-  const { units, loading } = useUnits();
+  const [setores, setSetores] = useState<Setor[]>([]);
 
   // Carrega os grupos atribuíveis (para o formulário de colaborador interno).
   useEffect(() => {
@@ -47,6 +49,15 @@ const UserForm: React.FC<{
       .catch(() => setGroups([]));
   }, [formType]);
 
+  // Carrega os setores (tabela normalizada) para o seletor.
+  useEffect(() => {
+    if (formType !== "interno") return;
+    api
+      .get("/api/setores")
+      .then((res) => setSetores(res.data))
+      .catch(() => setSetores([]));
+  }, [formType]);
+
   useEffect(() => {
     if (userToEdit) {
       setFormData(userToEdit);
@@ -54,10 +65,9 @@ const UserForm: React.FC<{
       setFormData({
         nome: "",
         email: "",
-        unidade: "",
-        unidade_id: null,
         cargo: "",
         setor: "",
+        setor_id: null,
         birth_date: "",
         data_admissao: "",
         group_id: null,
@@ -65,17 +75,18 @@ const UserForm: React.FC<{
     }
   }, [userToEdit, formType]);
 
-  // If the form has unidade (text) but not unidade_id, try to map it after units load
+  // Se o usuário tem setor (texto legado) mas não setor_id, tenta casar pelo
+  // nome quando os setores carregarem.
   useEffect(() => {
-    if (units.length === 0) return;
-    if (formData.unidade_id) return;
-    if (!formData.unidade) return;
+    if (setores.length === 0) return;
+    if (formData.setor_id) return;
+    if (!formData.setor) return;
 
-    const match = units.find((u) => u.name === formData.unidade);
+    const match = setores.find((s) => s.nome === formData.setor);
     if (match) {
-      setFormData((prev) => ({ ...prev, unidade_id: match.id }));
+      setFormData((prev) => ({ ...prev, setor_id: match.id }));
     }
-  }, [units]);
+  }, [setores]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -83,14 +94,14 @@ const UserForm: React.FC<{
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSetorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     const id = val ? Number(val) : null;
-    const selected = units.find((u) => u.id === id);
+    const selected = setores.find((s) => s.id === id);
     setFormData((prev) => ({
       ...prev,
-      unidade_id: id,
-      unidade: selected ? selected.name : "",
+      setor_id: id,
+      setor: selected ? selected.nome : "",
     }));
   };
 
@@ -198,36 +209,20 @@ const UserForm: React.FC<{
               </div>
               <div className="form-field">
                 <label htmlFor="uf-setor">Setor</label>
-                <input
-                  id="uf-setor"
-                  name="setor"
-                  value={formData.setor || ""}
-                  onChange={handleChange}
-                  placeholder="Setor"
-                  required
-                  className="form-input"
-                />
-              </div>
-              <div className="form-field">
-                <label htmlFor="uf-unidade">Unidade</label>
                 <select
-                  id="uf-unidade"
-                  name="unidade_id"
-                  value={formData.unidade_id ?? ""}
-                  onChange={handleUnitChange}
+                  id="uf-setor"
+                  name="setor_id"
+                  value={formData.setor_id ?? ""}
+                  onChange={handleSetorChange}
                   required
                   className="form-select"
-                  disabled={loading}
                 >
-                  <option value="">
-                    {loading ? "Carregando..." : "Selecione a Unidade"}
-                  </option>
-                  {!loading &&
-                    units.map((unit) => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.name}
-                      </option>
-                    ))}
+                  <option value="">Selecione o Setor</option>
+                  {setores.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nome}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="form-field">

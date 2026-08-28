@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext.tsx";
-import { useNavigate } from "react-router-dom";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
@@ -106,7 +105,6 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const AdminStatistics: React.FC = () => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<
     "sistema" | "chamados" | "jira"

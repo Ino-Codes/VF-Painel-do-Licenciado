@@ -1,5 +1,6 @@
 import React from "react";
 import UserForm from "../../pages/admin/UserForm.tsx"; // Importa o formulário que acabámos de criar
+import Modal from "../ui/Modal.tsx";
 
 const UserFormModal: React.FC<{
   isOpen: boolean;
@@ -11,19 +12,14 @@ const UserFormModal: React.FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
+    <Modal onClose={onClose}>
         <UserForm
           userToEdit={userToEdit}
           formType={formType}
           onSuccess={onSuccess}
           onCancel={onClose}
         />
-      </div>
-    </div>
+    </Modal>
   );
 };
 

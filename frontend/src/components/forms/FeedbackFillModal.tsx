@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
-import { IoCloseSharp } from "react-icons/io5";
+import Modal from "../ui/Modal.tsx";
 import {
   Feedback,
   FeedbackTheme,
@@ -139,19 +139,12 @@ const FeedbackFillModal: React.FC<Props> = ({
   if (!isOpen || !feedback) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-content feedback-fill-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="modal-close-button" onClick={onClose}>
-          <IoCloseSharp />
-        </button>
-
-        <h2>
-          {readOnly ? "Visualizar Feedback" : "Realizar Coleta de Feedback"}
-        </h2>
-
+    <Modal
+      onClose={onClose}
+      title={readOnly ? "Visualizar Feedback" : "Realizar Coleta de Feedback"}
+      className="feedback-fill-modal"
+      closeOnOverlayClick
+    >
         {/* Cabeçalho de Informações Fixas */}
         <div className="feedback-header-info">
           <p>
@@ -319,8 +312,7 @@ const FeedbackFillModal: React.FC<Props> = ({
             </div>
           )}
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -48,7 +48,10 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
           e.target.value = "";
         } else {
           setSelectedFile(file);
-          setPreviewUrl(URL.createObjectURL(file));
+          setPreviewUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev); // libera o preview anterior
+            return URL.createObjectURL(file);
+          });
           toast.success("Imagem selecionada com sucesso!");
         }
       };
@@ -63,7 +66,10 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
 
   const closeAndReset = () => {
     setSelectedFile(null);
-    setPreviewUrl(null);
+    setPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
     onClose();
   };
 

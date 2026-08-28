@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom"; // Importado
+import Modal from "../ui/Modal.tsx";
 
 interface VideoData {
   id: number;
@@ -99,13 +100,11 @@ const VideoModal: React.FC<VideoModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>{videoToEdit ? "Editar Vídeo" : "Adicionar Novo Vídeo"}</h2>
-        <form onSubmit={handleSubmit}>
+    <Modal
+      onClose={onClose}
+      title={videoToEdit ? "Editar Vídeo" : "Adicionar Novo Vídeo"}
+    >
+      <form onSubmit={handleSubmit}>
           {/* 4. Campo de Seleção de Empresa */}
 
           <div className="form-row">
@@ -129,7 +128,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
           </div>
 
           <div className="form-row">
-            <label htmlFor="visibility" className="content-modal-label">
+            <label className="content-modal-label">
               Dados do vídeo:
             </label>
           </div>
@@ -194,8 +193,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

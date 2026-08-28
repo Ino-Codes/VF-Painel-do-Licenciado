@@ -156,6 +156,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         onFocus={() => setIsOpen(true)}
         className="form-input"
         placeholder="dd/mm/aaaa"
+        aria-label="Data (dd/mm/aaaa)"
         maxLength={10}
         // readOnly removido
       />

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
-import { useNavigate } from "react-router-dom";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
@@ -30,7 +29,6 @@ type SortConfig = {
 
 const AdminUsers: React.FC = () => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"licenciados" | "interno">(
     "licenciados"
@@ -55,6 +53,7 @@ const AdminUsers: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -84,8 +83,10 @@ const AdminUsers: React.FC = () => {
           users: res.data.users,
           totalPages: res.data.totalPages,
         }));
+        setLoadError(false);
       })
       .catch((err) => {
+        setLoadError(true);
         toast.error(`Não foi possível carregar os ${activeTab}.`);
       });
   }, [
@@ -231,6 +232,12 @@ const AdminUsers: React.FC = () => {
           </button>
         </div>
 
+        {loadError ? (
+          <div className="tela-loading">
+            Não foi possível carregar os dados. Tente novamente mais tarde.
+          </div>
+        ) : (
+          <>
         {activeTab === "licenciados" && (
           <TabContent
             key="licenciados"
@@ -258,6 +265,8 @@ const AdminUsers: React.FC = () => {
             handleDeleteClick={handleDeleteClick}
             handleSort={handleSort}
           />
+        )}
+          </>
         )}
       </div>
       <Footer />

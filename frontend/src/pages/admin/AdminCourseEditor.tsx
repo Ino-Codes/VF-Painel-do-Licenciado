@@ -16,6 +16,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -48,27 +49,25 @@ const AdminCourseEditor: React.FC = () => {
     })
   );
 
-  const handleModuleDragEnd = (event) => {
+  const handleModuleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
-      let reorderedModules;
-      setModules((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        reorderedModules = arrayMove(items, oldIndex, newIndex);
-        return reorderedModules;
-      });
+    // `over` é null quando o módulo é solto fora de um alvo válido.
+    if (!over || active.id === over.id) return;
 
-      if (reorderedModules) {
-        const orderedModuleIds = reorderedModules.map((m) => m.id);
-        api
-          .put(`/api/admin/courses/${courseId}/modules/order`, {
-            orderedModuleIds,
-          })
-          .then(() => toast.success("Ordem dos módulos salva!"))
-          .catch(() => toast.error("Erro ao salvar a ordem dos módulos."));
-      }
-    }
+    const oldIndex = modules.findIndex((item) => item.id === active.id);
+    const newIndex = modules.findIndex((item) => item.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedModules = arrayMove(modules, oldIndex, newIndex);
+    setModules(reorderedModules);
+
+    const orderedModuleIds = reorderedModules.map((m) => m.id);
+    api
+      .put(`/api/admin/courses/${courseId}/modules/order`, {
+        orderedModuleIds,
+      })
+      .then(() => toast.success("Ordem dos módulos salva!"))
+      .catch(() => toast.error("Erro ao salvar a ordem dos módulos."));
   };
 
   const handleLessonOrderChange = async (
@@ -200,14 +199,14 @@ const AdminCourseEditor: React.FC = () => {
       title: `Teste Final - ${course?.title}`,
       passing_score: 70,
     };
+    const toastId = toast.loading("Criando o quiz...");
     try {
-      toast.loading("Criando o quiz...");
       await api.post(`/api/admin/courses/${courseId}/quiz`, quizData);
-      toast.dismiss();
+      toast.dismiss(toastId);
       toast.success("Quiz criado com sucesso! Agora adicione as perguntas.");
       fetchCourseDetails();
     } catch (err) {
-      toast.dismiss();
+      toast.dismiss(toastId);
       toast.error("Não foi possível criar o quiz.");
       console.error("Erro ao criar quiz:", err);
     }

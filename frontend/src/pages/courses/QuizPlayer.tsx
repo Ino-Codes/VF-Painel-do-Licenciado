@@ -42,11 +42,6 @@ const QuizPlayer: React.FC = () => {
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const getAuthHeaders = useCallback(() => {
-    if (!user) return {};
-    return { headers: { "x-user-id": user.id } };
-  }, [user]);
-
   const fetchQuiz = useCallback(async () => {
     if (!user) return;
     try {
@@ -79,14 +74,9 @@ const QuizPlayer: React.FC = () => {
       return;
     }
     try {
-      const res = await api.post(
-        `/api/quizzes/${quiz.id}/submit`,
-        {
-          userId: user?.id,
-          answers: selectedAnswers,
-        },
-        getAuthHeaders(),
-      );
+      const res = await api.post(`/api/quizzes/${quiz.id}/submit`, {
+        answers: selectedAnswers,
+      });
       setQuizResult(res.data);
     } catch (error) {
       toast.error("Erro ao submeter o quiz.");

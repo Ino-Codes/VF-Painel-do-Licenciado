@@ -3,7 +3,6 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
-import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 interface Log {
@@ -15,9 +14,29 @@ interface Log {
   created_at: string;
 }
 
+// Humaniza as ações em estilo ENUM (UPPER_SNAKE_CASE) para pt-BR. Ações que já
+// vêm legíveis (ex.: "Login Bem-Sucedido") passam intactas.
+// FILE = Documentos, ARCHIVE = Arquivos (nomenclatura das telas de conteúdo).
+const ACTION_LABELS: Record<string, string> = {
+  CREATE_FILE: "Documento Criado",
+  UPDATE_FILE: "Documento Editado",
+  DELETE_FILE: "Documento Excluído",
+  DOWNLOAD_FILE: "Documento Baixado",
+  CREATE_ARCHIVE: "Arquivo Criado",
+  UPDATE_ARCHIVE: "Arquivo Editado",
+  DELETE_ARCHIVE: "Arquivo Excluído",
+  DOWNLOAD_ARCHIVE: "Arquivo Baixado",
+  UPDATE_SOCIAL_POST: "Conteúdo Social Editado",
+  DELETE_SOCIAL_POST: "Conteúdo Social Excluído",
+  WIDGET_TENANT_CRIADO: "Widget: Cliente Criado",
+  WIDGET_TENANT_EDITADO: "Widget: Cliente Editado",
+  WIDGET_TENANT_EXCLUIDO: "Widget: Cliente Excluído",
+  WIDGET_TOKEN_REGENERADO: "Widget: Token Regenerado",
+};
+const formatAction = (action: string) => ACTION_LABELS[action] || action;
+
 const ActivityLogs: React.FC = () => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
 
   const [logs, setLogs] = useState<Log[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,6 +44,7 @@ const ActivityLogs: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loadError, setLoadError] = useState(false);
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -38,7 +58,9 @@ const ActivityLogs: React.FC = () => {
       const res = await api.get("/api/admin/logs", { params });
       setLogs(res.data.logs);
       setTotalPages(res.data.totalPages);
+      setLoadError(false);
     } catch (err) {
+      setLoadError(true);
       toast.error("Erro ao carregar os logs.");
     }
   }, [user, currentPage, searchQuery]);
@@ -81,6 +103,11 @@ const ActivityLogs: React.FC = () => {
           </button>
         </div>
 
+        {loadError ? (
+          <div className="tela-loading">
+            Não foi possível carregar os dados. Tente novamente mais tarde.
+          </div>
+        ) : (
         <div className="logs-table-container">
           <table className="logs-table">
             <thead>
@@ -97,7 +124,7 @@ const ActivityLogs: React.FC = () => {
                 <tr key={log.id}>
                   <td>{new Date(log.created_at).toLocaleString("pt-BR")}</td>
                   <td>{log.user_email || "N/A"}</td>
-                  <td>{log.action}</td>
+                  <td>{formatAction(log.action)}</td>
                   <td>{log.details}</td>
                   <td>{log.ip_address}</td>
                 </tr>
@@ -105,6 +132,7 @@ const ActivityLogs: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
 
         {totalPages > 0 && (
           <div className="pagination-controls">

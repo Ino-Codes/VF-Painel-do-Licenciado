@@ -1,6 +1,4 @@
 import React from "react";
-import { useUnits } from "../../hooks/useUnits.ts";
-import { Unit } from "../../types.ts";
 
 interface User {
   nome: string;
@@ -37,8 +35,6 @@ const formatarAniversario = (data?: string): string => {
 };
 
 const UserDetailModal: React.FC<ModalProps> = ({ isOpen, onClose, user }) => {
-  const { getUnitNameById } = useUnits();
-
   if (!isOpen || !user) {
     return null;
   }

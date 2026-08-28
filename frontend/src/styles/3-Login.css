@@ -278,11 +278,13 @@
   margin: 0 0 26px;
 }
 
-.login-panel-inner a {
+.login-panel-inner a,
+.login-panel-inner .link-button {
   color: #8a6c35;
   text-decoration: none;
 }
-.login-panel-inner a:hover {
+.login-panel-inner a:hover,
+.login-panel-inner .link-button:hover {
   text-decoration: underline;
 }
 

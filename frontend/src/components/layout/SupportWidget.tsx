@@ -62,7 +62,7 @@ const SupportWidget: React.FC = () => {
     script.setAttribute("data-token", WIDGET_TOKEN);
     script.setAttribute("data-api", API_BASE);
     document.body.appendChild(script);
-  }, [user, pathname]);
+  }, [user, pathname, hasPermission]);
 
   return null;
 };

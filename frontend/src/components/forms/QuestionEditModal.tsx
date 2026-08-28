@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import Modal from "../ui/Modal.tsx";
 import { Question } from "../../types.ts";
 
 interface QuestionEditModalProps {
@@ -16,9 +17,8 @@ const QuestionEditModal: React.FC<QuestionEditModalProps> = ({
   const [questionText, setQuestionText] = useState("");
 
   useEffect(() => {
-    if (question && question.question_text) {
-      setQuestionText(question.question_text);
-    }
+    // Sempre sincroniza (inclusive resetando para "" ao abrir para uma nova pergunta).
+    setQuestionText(question?.question_text || "");
   }, [question]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,12 +31,7 @@ const QuestionEditModal: React.FC<QuestionEditModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>{question.id ? "Editar Pergunta" : "Adicionar Nova Pergunta"}</h2>
+    <Modal onClose={onClose} title={question.id ? "Editar Pergunta" : "Adicionar Nova Pergunta"}>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <textarea
@@ -61,8 +56,7 @@ const QuestionEditModal: React.FC<QuestionEditModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

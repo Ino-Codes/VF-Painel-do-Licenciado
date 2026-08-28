@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
-import { IoCloseSharp } from "react-icons/io5";
+import Modal from "../ui/Modal.tsx";
+import { onKeyActivate } from "../../utils/a11y.ts";
 
 interface ProjectTask {
   id: number;
@@ -136,18 +137,11 @@ const TaskModal: React.FC<TaskModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-button" onClick={onClose}>
-          <IoCloseSharp />
-        </button>
-
-        <h2>{taskToEdit ? "Editar Tarefa" : "Nova Tarefa"}</h2>
-
+    <Modal onClose={onClose} title={taskToEdit ? "Editar Tarefa" : "Nova Tarefa"} closeOnOverlayClick>
         <form onSubmit={handleSubmit} className="modal-body">
           {/* Nome */}
           <div className="form-row">
-            <label htmlFor="visibility" className="task-name-label">
+            <label className="task-name-label">
               Nome da Tarefa:
             </label>
           </div>
@@ -225,13 +219,22 @@ const TaskModal: React.FC<TaskModalProps> = ({
             <label>Cor da Tarefa</label>
           </div>
           <div className="form-row">
-            <div className="task-color-palette">
+            <div
+              className="task-color-palette"
+              role="radiogroup"
+              aria-label="Cor da tarefa"
+            >
               {COLOR_PALETTE.map((c) => (
                 <div
                   key={c.value}
                   className={`color-swatch ${color === c.value ? "selected" : ""}`}
                   style={{ "--swatch-color": c.value } as React.CSSProperties}
+                  role="radio"
+                  aria-checked={color === c.value}
+                  aria-label={`Cor ${c.label}`}
+                  tabIndex={0}
                   onClick={() => setColor(c.value)}
+                  onKeyDown={onKeyActivate(() => setColor(c.value))}
                 />
               ))}
             </div>
@@ -268,8 +271,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

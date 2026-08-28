@@ -50,7 +50,9 @@ module.exports = function (pool) {
   // Rota para submeter as respostas do quiz
   router.post("/:quizId/submit", isLoggedIn, async (req, res) => {
     const { quizId } = req.params;
-    const { userId, answers } = req.body;
+    const { answers } = req.body;
+    // Identidade vem do JWT (não do body) — evita registrar tentativa como outro usuário.
+    const userId = req.user.id;
 
     try {
       const quizInfo = await pool.query(

@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { onKeyActivate } from "../../utils/a11y.ts";
 
 interface CourseData {
   id: number;
@@ -30,7 +31,13 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, companySlug }) => {
   };
 
   return (
-    <div onClick={handleClick} className="course-card-link">
+    <div
+      onClick={handleClick}
+      onKeyDown={onKeyActivate(handleClick)}
+      role="button"
+      tabIndex={0}
+      className="course-card-link"
+    >
       <div className="course-card">
         <div className="course-card-thumbnail">
           <img

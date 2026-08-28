@@ -1,6 +1,13 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
 import api from "../api.ts";
 import { CompanySlug } from "../types.ts";
+import { safeStorage } from "../utils/safeStorage.ts";
 
 export interface User {
   id: number;
@@ -60,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const res = await api.get("/api/auth/me");
       if (res.data?.user) {
         setUser(res.data.user);
-        localStorage.setItem("userData", JSON.stringify(res.data.user));
+        safeStorage.set("userData", JSON.stringify(res.data.user));
       }
     } catch {
       // silencioso: se falhar (ex.: token expirado), o fluxo normal trata
@@ -68,12 +75,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("userData");
-    const savedCompany = localStorage.getItem("currentCompany") as CompanySlug;
+    const token = safeStorage.get("token");
+    const userData = safeStorage.get("userData");
+    const savedCompany = safeStorage.get("currentCompany") as CompanySlug | null;
 
-    if (token && userData && !isTokenExpired(token)) {
-      const parsedUser = JSON.parse(userData);
+    let parsedUser: User | null = null;
+    if (userData) {
+      try {
+        parsedUser = JSON.parse(userData);
+      } catch {
+        parsedUser = null; // dado corrompido → trata como sem sessão
+      }
+    }
+
+    if (token && parsedUser && !isTokenExpired(token)) {
       setUser(parsedUser);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
@@ -85,10 +100,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Atualiza permissões em segundo plano.
       refreshUser();
     } else if (token || userData) {
-      // Sessão ausente/expirada → limpa restos para cair no login limpo.
-      localStorage.removeItem("token");
-      localStorage.removeItem("userData");
-      localStorage.removeItem("currentCompany");
+      // Sessão ausente/expirada/corrompida → limpa restos para login limpo.
+      safeStorage.remove("token");
+      safeStorage.remove("userData");
+      safeStorage.remove("currentCompany");
     }
     setLoading(false);
   }, []);
@@ -96,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Ressincroniza as permissões quando a aba volta ao foco.
   useEffect(() => {
     const onFocus = () => {
-      const token = localStorage.getItem("token");
+      const token = safeStorage.get("token");
       if (token && !isTokenExpired(token)) refreshUser();
     };
     window.addEventListener("focus", onFocus);
@@ -107,21 +122,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Preserva o token atual quando a chamada não envia um novo (ex.: apenas
     // atualização de dados do usuário). Evita gravar "undefined" como token e
     // corromper o cabeçalho Authorization.
-    const finalToken = token || localStorage.getItem("token") || "";
+    const finalToken = token || safeStorage.get("token") || "";
     if (finalToken) {
-      localStorage.setItem("token", finalToken);
+      safeStorage.set("token", finalToken);
       api.defaults.headers.common["Authorization"] = `Bearer ${finalToken}`;
     }
-    localStorage.setItem("userData", JSON.stringify(userData));
+    safeStorage.set("userData", JSON.stringify(userData));
     setUser(userData);
 
     setCurrentCompany(userData.company_slug || "v-tax");
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userData");
-    localStorage.removeItem("currentCompany");
+    safeStorage.remove("token");
+    safeStorage.remove("userData");
+    safeStorage.remove("currentCompany");
     setUser(null);
     delete api.defaults.headers.common["Authorization"];
     window.location.href = "/";
@@ -129,15 +144,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const switchCompany = (slug: CompanySlug) => {
     setCurrentCompany(slug);
-    localStorage.setItem("currentCompany", slug);
+    safeStorage.set("currentCompany", slug);
   };
 
-  const hasPermission = (key: string): boolean =>
-    Array.isArray(user?.permissions) && user!.permissions.includes(key);
+  // Memoizados por `user`: identidade estável entre renders (sem trocar de
+  // usuário), permitindo que consumidores os incluam nas deps de efeitos sem
+  // stale-closure nem loops.
+  const hasPermission = useCallback(
+    (key: string): boolean =>
+      Array.isArray(user?.permissions) && user!.permissions.includes(key),
+    [user],
+  );
 
-  const hasAnyPermission = (keys: string[]): boolean =>
-    Array.isArray(user?.permissions) &&
-    keys.some((k) => user!.permissions!.includes(k));
+  const hasAnyPermission = useCallback(
+    (keys: string[]): boolean =>
+      Array.isArray(user?.permissions) &&
+      keys.some((k) => user!.permissions!.includes(k)),
+    [user],
+  );
 
   return (
     <AuthContext.Provider

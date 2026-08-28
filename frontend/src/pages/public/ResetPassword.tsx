@@ -9,8 +9,8 @@ const logo =
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -19,7 +19,6 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setMessage("");
 
     if (!token) {
       setError(
@@ -36,6 +35,7 @@ const ResetPassword = () => {
       return;
     }
 
+    setSubmitting(true);
     try {
       const res = await api.post("/api/auth/redefinir-senha", {
         token,
@@ -48,6 +48,8 @@ const ResetPassword = () => {
         err.response?.data?.error || "Erro ao redefinir a senha.";
       setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -78,8 +80,8 @@ const ResetPassword = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
-          <button className="botao-login" type="submit">
-            Redefinir Senha
+          <button className="botao-login" type="submit" disabled={submitting}>
+            {submitting ? "Redefinindo..." : "Redefinir Senha"}
           </button>
         </form>
 

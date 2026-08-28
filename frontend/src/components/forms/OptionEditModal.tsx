@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import Modal from "../ui/Modal.tsx";
 import { Option } from "../../types.ts";
 
 interface OptionEditModalProps {
@@ -16,9 +17,8 @@ const OptionEditModal: React.FC<OptionEditModalProps> = ({
   const [optionText, setOptionText] = useState("");
 
   useEffect(() => {
-    if (option && option.option_text) {
-      setOptionText(option.option_text);
-    }
+    // Sempre sincroniza (inclusive resetando para "" ao abrir para uma nova opção).
+    setOptionText(option?.option_text || "");
   }, [option]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,12 +31,7 @@ const OptionEditModal: React.FC<OptionEditModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>{option.id ? "Editar Opção" : "Adicionar Nova Opção"}</h2>
+    <Modal onClose={onClose} title={option.id ? "Editar Opção" : "Adicionar Nova Opção"}>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <input
@@ -61,8 +56,7 @@ const OptionEditModal: React.FC<OptionEditModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

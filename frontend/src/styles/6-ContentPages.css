@@ -1,5 +1,23 @@
 /* --- DOCUMENTOS --- */
 
+/* Telas de conteúdo/lista: limita a largura e centraliza, para o conteúdo não
+   esticar de ponta a ponta em monitores largos (fica mais contido/equilibrado). */
+.document-center {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+/* Compacta a zona de filtros (empresa + abas + busca) só nas telas de
+   conteúdo, aproximando os controles para o conteúdo "subir". */
+.document-center .company-filter {
+  margin-bottom: 12px;
+}
+.document-center .tabs,
+.document-center .search-bar {
+  margin-bottom: 14px;
+}
 
 .document-center .document-header {
   display: flex;
@@ -268,12 +286,18 @@
 
 .sidebar-lesson-item {
   display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
   padding: 12px;
   color: var(--text-secondary);
   border: 1px solid transparent;
   border-radius: 5px;
   margin-bottom: 5px;
+  font-family: inherit;
+  font-size: inherit;
   font-weight: 500;
+  cursor: pointer;
 }
 
 .sidebar-lesson-item.active {

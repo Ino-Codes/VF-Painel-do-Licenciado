@@ -29,6 +29,7 @@ const ForcePasswordResetModal: React.FC<Props> = ({ onSuccess }) => {
       );
       onSuccess();
     } catch (err) {
+      console.error("Erro ao forçar troca de senha:", err);
       toast.error("Não foi possível atualizar a senha.");
     }
   };

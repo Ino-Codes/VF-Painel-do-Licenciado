@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
+import Modal from "../ui/Modal.tsx";
 
 interface FaqModalProps {
   onClose: () => void;
@@ -11,7 +12,6 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
   const [category, setCategory] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,9 +24,6 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
     formData.append("category", category);
     formData.append("question", question);
     formData.append("answer", answer);
-    if (documentFile) {
-      formData.append("document", documentFile);
-    }
 
     try {
       await api.post("/api/faq/admin", formData, {
@@ -41,12 +38,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
-          &times;
-        </button>
-        <h2>Adicionar Novo FAQ</h2>
+    <Modal onClose={onClose} title="Adicionar Novo FAQ">
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <input
@@ -92,8 +84,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ onClose, onSuccess }) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

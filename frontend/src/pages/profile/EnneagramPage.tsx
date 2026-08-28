@@ -17,10 +17,16 @@ const EnneagramPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    api.get("/api/enneagram/questions").then((res) => {
-      setQuestions(res.data);
-      setLoading(false);
-    });
+    api
+      .get("/api/enneagram/questions")
+      .then((res) => {
+        setQuestions(res.data);
+      })
+      .catch((err) => {
+        console.error("Erro ao carregar perguntas do eneagrama:", err);
+        toast.error("Não foi possível carregar o teste. Tente novamente.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSelect = (questionId, chosenType) => {

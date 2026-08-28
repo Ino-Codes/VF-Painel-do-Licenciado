@@ -4,9 +4,9 @@ import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import { useNavigate } from "react-router-dom";
-import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import CourseCard from "../../components/ui/CourseCard.tsx";
+import { CoursesGridSkeleton } from "../../components/ui/Skeleton.tsx";
 import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 
 interface CourseData {
@@ -114,7 +114,7 @@ const CoursesPage: React.FC = () => {
         </div>
 
         {isLoadingContent ? (
-          <LoadingSpinner />
+          <CoursesGridSkeleton />
         ) : (
           <div>
             {coursesToDisplay.length > 0 ? (

@@ -95,23 +95,24 @@ const SocialMedia: React.FC = () => {
       const uniqueCategories = Object.keys(res.data);
       setCategories(uniqueCategories);
 
-      // Controle inteligente da aba ativa ao trocar de empresa
-      if (uniqueCategories.length > 0) {
-        if (!activeCategory || !uniqueCategories.includes(activeCategory)) {
-          setActiveCategory(uniqueCategories[0]);
-        }
-      } else {
-        setActiveCategory("");
-      }
+      // Controle inteligente da aba ativa ao trocar de empresa. Usa update
+      // funcional para não depender de `activeCategory` (evita que a busca seja
+      // refeita no servidor só por trocar de aba).
+      setActiveCategory((prev) => {
+        if (uniqueCategories.length === 0) return "";
+        return prev && uniqueCategories.includes(prev)
+          ? prev
+          : uniqueCategories[0];
+      });
     } catch (err) {
       toast.error("Erro ao carregar conteúdos das redes sociais.");
     }
-  }, [user, activeCategory, company]);
+  }, [user, company]);
 
   // Refaz a busca sempre que a empresa mudar
   useEffect(() => {
     if (user) fetchSocialContent();
-  }, [user, fetchSocialContent, company]);
+  }, [user, fetchSocialContent]);
 
   const handleSuccess = () => {
     setIsModalOpen(false);
@@ -163,15 +164,19 @@ const SocialMedia: React.FC = () => {
             groupedPosts[activeCategory].map((post: any) => (
               <div key={post.id} className="social-post-card">
                 <div className="social-post-image-container">
-                  <img
-                    src={post.images[0]}
-                    alt={post.title}
-                    className="social-post-main-image"
-                  />
-                  {post.images.length > 1 && (
-                    <div className="social-post-badge">
-                      <FiImage /> <span>+{post.images.length - 1}</span>
-                    </div>
+                  {post.images?.length > 0 && (
+                    <>
+                      <img
+                        src={post.images[0]}
+                        alt={post.title}
+                        className="social-post-main-image"
+                      />
+                      {post.images.length > 1 && (
+                        <div className="social-post-badge">
+                          <FiImage /> <span>+{post.images.length - 1}</span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 

@@ -99,13 +99,14 @@ const MeusChamados: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <div className="page-header">
-          <h2>Meus Chamados</h2>
-        
-          <p>
-            Informe o número do protocolo e o e-mail usado na abertura para
-            consultar o andamento.
-          </p>
+        <div className="document-header">
+          <div>
+            <h2 className="content-title">Meus Chamados</h2>
+            <span className="content-subtitle">
+              Informe o número do protocolo e o e-mail usado na abertura para
+              consultar o andamento.
+            </span>
+          </div>
         </div>
 
         <div className="meus-chamados-wrap">

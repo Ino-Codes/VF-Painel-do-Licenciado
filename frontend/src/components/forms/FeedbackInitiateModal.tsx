@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
-import { IoCloseSharp } from "react-icons/io5";
 import DatePicker from "./DatePicker.tsx";
 import { TimePicker } from "./TimePicker.tsx";
+import Modal from "../ui/Modal.tsx";
 
 interface Props {
   isOpen: boolean;
@@ -118,14 +118,7 @@ const FeedbackInitiateModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-button" onClick={handleClose}>
-          <IoCloseSharp />
-        </button>
-
-        <h2>Novo Feedback</h2>
-
+    <Modal onClose={handleClose} title="Novo Feedback" closeOnOverlayClick>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
@@ -189,8 +182,7 @@ const FeedbackInitiateModal: React.FC<Props> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

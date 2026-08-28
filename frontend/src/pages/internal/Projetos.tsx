@@ -1,5 +1,5 @@
 // src/pages/AreaInterna/Projetos.tsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
 import api from "../../api.ts";
@@ -232,8 +232,8 @@ const Projetos: React.FC = () => {
 
   // ─── Cronograma: cálculo das colunas ────────────────────────────────────
 
-  const columns = buildTimelineColumns(tasks);
-  const yearGroups = groupByYear(columns);
+  const columns = useMemo(() => buildTimelineColumns(tasks), [tasks]);
+  const yearGroups = useMemo(() => groupByYear(columns), [columns]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 

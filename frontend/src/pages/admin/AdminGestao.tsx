@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
+import { onKeyActivate } from "../../utils/a11y.ts";
 
 import {
   FaUserCog,
@@ -12,7 +13,6 @@ import {
   FaGraduationCap,
   FaChartLine,
   FaCalendarDay,
-  FaUserPlus,
 } from "react-icons/fa";
 import { FaMagnifyingGlassChart } from "react-icons/fa6";
 import { MdFeedback } from "react-icons/md";
@@ -39,14 +39,6 @@ const AdminGestao: React.FC = () => {
       icon: <FaUsers />,
       path: "/admin/groups",
       permission: "groups.view",
-    },
-    {
-      title: "Recrutamento",
-      description:
-        "Gerencie processos seletivos e candidatos para vagas abertas",
-      icon: <FaUserPlus />,
-      path: "/admin/recrutamento",
-      permission: "recruitment.view",
     },
     // {
     //   title: "Feedbacks",
@@ -117,6 +109,9 @@ const AdminGestao: React.FC = () => {
               key={index}
               className="gestao-module-card"
               onClick={() => navigate(module.path)}
+              onKeyDown={onKeyActivate(() => navigate(module.path))}
+              role="button"
+              tabIndex={0}
             >
               <div className="gestao-module-icon">{module.icon}</div>
               <h3>{module.title}</h3>

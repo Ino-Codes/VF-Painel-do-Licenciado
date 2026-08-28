@@ -32,6 +32,25 @@ async function resolveGroupAndRole(pool, body) {
   return { effectiveRole, effectiveGroupId };
 }
 
+// Resolve o setor a partir do id (tabela setores) e devolve id + nome. Espelha
+// o nome em users.setor (texto) para manter compatibilidade com as telas que
+// ainda leem esse campo. Aceita texto legado quando não houver id.
+async function resolveSetor(pool, body) {
+  const rawId = body.setor_id;
+  const setorId = rawId ? Number(rawId) : null;
+  if (setorId) {
+    const r = await pool.query("SELECT nome FROM setores WHERE id = $1", [
+      setorId,
+    ]);
+    if (r.rows.length === 0) {
+      return { setorId: null, setorNome: null, error: "Setor inválido." };
+    }
+    return { setorId, setorNome: r.rows[0].nome };
+  }
+  const texto = (body.setor || "").trim();
+  return { setorId: null, setorNome: texto || null };
+}
+
 // Função para capitalizar nomes
 const capitalizeNameWithPrepositions = (name) => {
   if (!name || typeof name !== "string") return name;
@@ -120,7 +139,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           orderByClause = `ORDER BY "${sortBy}" ${sortOrder.toUpperCase()}`;
         }
 
-        const usersSql = `SELECT id, nome, nickname, email, role, group_id, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
+        const usersSql = `SELECT id, nome, nickname, email, role, group_id, avatar_url, corporate_photo_url, birth_date, cargo, setor, setor_id, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 
@@ -155,8 +174,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         birth_date,
         cargo,
         setor,
-        unidade,
-        unidade_id,
+        setor_id,
         telefone,
         data_admissao,
         nickname, // Opcional na criação
@@ -176,15 +194,16 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const client = await pool.connect();
 
       try {
-        if (
-          role !== "licenciado" &&
-          !unidade_id &&
-          (!unidade || !unidade.trim())
-        ) {
-          return res.status(400).json({
-            error:
-              "O campo Unidade (ou unidade_id) é obrigatório para Colaboradores.",
-          });
+        // Setor normalizado: resolve pelo id (tabela setores) e espelha o nome
+        // no campo texto users.setor (mantido por compatibilidade com telas que
+        // ainda leem o texto). Aceita texto legado se vier sem id.
+        const {
+          setorId,
+          setorNome,
+          error: setorError,
+        } = await resolveSetor(pool, { setor_id, setor });
+        if (setorError) {
+          return res.status(400).json({ error: setorError });
         }
 
         if (role !== "licenciado" && !data_admissao) {
@@ -198,7 +217,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         const hash = await bcrypt.hash(password, 10);
 
         const userResult = await client.query(
-          "INSERT INTO users (nome, email, password, role, group_id, birth_date, cargo, setor, unidade, unidade_id, telefone, data_admissao, nickname) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id",
+          "INSERT INTO users (nome, email, password, role, group_id, birth_date, cargo, setor, setor_id, telefone, data_admissao, nickname) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
           [
             nome,
             email,
@@ -207,9 +226,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             groupId,
             birth_date || null,
             cargo || null,
-            setor || null,
-            unidade || null,
-            unidade_id || null,
+            setorNome,
+            setorId,
             telefone || null,
             role === "licenciado" ? null : data_admissao,
             nickname || null,
@@ -285,8 +303,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       birth_date,
       cargo,
       setor,
-      unidade,
-      unidade_id,
+      setor_id,
       telefone,
       data_admissao,
       nickname,
@@ -311,8 +328,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       let finalEmail = currentUser.email;
       let finalCargo = currentUser.cargo;
       let finalSetor = currentUser.setor;
-      let finalUnidade = currentUser.unidade;
-      let finalUnidadeId = currentUser.unidade_id;
+      let finalSetorId = currentUser.setor_id;
+      // Unidade descontinuada: preserva o que já existe no banco, sem editar.
+      const finalUnidade = currentUser.unidade;
+      const finalUnidadeId = currentUser.unidade_id;
       let finalDataAdmissao = currentUser.data_admissao;
       let finalBirthDate = currentUser.birth_date;
 
@@ -324,10 +343,18 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           ? emailOriginal.toLowerCase().trim()
           : currentUser.email;
         finalCargo = cargo;
-        finalSetor = setor;
-        finalUnidade = unidade;
-        finalUnidadeId =
-          unidade_id !== undefined ? unidade_id : currentUser.unidade_id;
+        // Setor normalizado (id + espelho de texto).
+        const {
+          setorId,
+          setorNome,
+          error: setorError,
+        } = await resolveSetor(pool, { setor_id, setor });
+        if (setorError) {
+          client.release();
+          return res.status(400).json({ error: setorError });
+        }
+        finalSetor = setorNome;
+        finalSetorId = setorId;
         finalDataAdmissao = data_admissao;
         finalBirthDate = birth_date;
 
@@ -346,17 +373,6 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const finalNickname = nickname ? nickname.trim() : null;
       const finalTelefone = telefone;
 
-      if (
-        hasPrivilegedRole &&
-        finalRole !== "licenciado" &&
-        (!finalUnidade || !finalUnidade.trim())
-      ) {
-        client.release();
-        return res.status(400).json({
-          error: "O campo Unidade é obrigatório para Colaboradores.",
-        });
-      }
-
       await client.query("BEGIN");
 
       await client.query(
@@ -367,13 +383,14 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           birth_date = $4,
           cargo = $5,
           setor = $6,
-          unidade = $7,
-          unidade_id = $8,
-          telefone = $9,
-          data_admissao = $10,
-          nickname = $11,
-          group_id = $12
-        WHERE id = $13`,
+          setor_id = $7,
+          unidade = $8,
+          unidade_id = $9,
+          telefone = $10,
+          data_admissao = $11,
+          nickname = $12,
+          group_id = $13
+        WHERE id = $14`,
         [
           finalNome,
           finalEmail,
@@ -381,6 +398,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           finalBirthDate,
           finalCargo,
           finalSetor,
+          finalSetorId || null,
           finalUnidade,
           finalUnidadeId || null,
           finalTelefone,
@@ -392,7 +410,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       );
 
       const updatedUserResult = await client.query(
-        "SELECT id, nome, nickname, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, unidade, unidade_id AS unit_id, telefone, data_admissao FROM users WHERE id = $1",
+        "SELECT id, nome, nickname, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, setor_id, unidade, unidade_id AS unit_id, telefone, data_admissao FROM users WHERE id = $1",
         [id],
       );
 

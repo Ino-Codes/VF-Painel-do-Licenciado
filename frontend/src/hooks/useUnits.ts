@@ -14,6 +14,7 @@ export const useUnits = () => {
         setUnits(response.data);
         setLoading(false);
       } catch (err) {
+        console.error("Erro ao carregar unidades:", err);
         setError("Erro ao carregar unidades");
         setLoading(false);
       }

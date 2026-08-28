@@ -5,6 +5,7 @@ import React, {
   useContext,
   useMemo,
 } from "react";
+import { safeStorage } from "../utils/safeStorage.ts";
 
 type Theme = "light" | "dark";
 
@@ -20,7 +21,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     // Lê o tema do localStorage ou define 'light' como padrão
-    return (localStorage.getItem("theme") as Theme) || "light";
+    return (safeStorage.get("theme") as Theme) || "light";
   });
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     const body = window.document.body;
     body.classList.remove("light-theme", "dark-theme");
     body.classList.add(`${theme}-theme`);
-    localStorage.setItem("theme", theme);
+    safeStorage.set("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {

@@ -27,7 +27,6 @@ interface Notification {
 const ADMIN_SCREENS = [
   "users.view",
   "groups.view",
-  "recruitment.view",
   "feedbacks.view",
   "tickets.view",
   "courses.manage",
@@ -104,14 +103,14 @@ const Menu: React.FC = () => {
       <button
         className="hamburger-menu"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
+        aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+        aria-expanded={isMenuOpen}
       >
         &#9776;
       </button>
 
       <div className={`menu-left ${isMenuOpen ? "open" : ""}`}>
         <img src={currentLogoVCorp} alt="V-CORP Logo" className="menu-logo" />
-
-        {/* <h2 className="menu-v-corp">V-CORP</h2> */}
 
         <NavLink
           to="/home"
@@ -155,13 +154,6 @@ const Menu: React.FC = () => {
           </NavLink>
         )}
 
-        {/* <NavLink
-          to="/faq"
-          className="menu-item"
-          onClick={() => setIsMenuOpen(false)}
-        >
-          FAQ
-        </NavLink> */}
       </div>
 
       <div className="menu-right">

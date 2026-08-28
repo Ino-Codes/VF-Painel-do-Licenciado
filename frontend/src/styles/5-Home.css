@@ -144,6 +144,29 @@
   color: var(--text-secondary);
 }
 
+/* Aviso colapsado: limita a altura e aplica um fade no fim do texto. */
+.notice-message--collapsed {
+  max-height: 260px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 65%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, #000 65%, transparent 100%);
+}
+
+.notice-readmore {
+  margin-top: 8px;
+  color: var(--accent-color);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.notice-readmore:hover {
+  text-decoration: underline;
+}
+
 .placeholder-column {
   border-radius: 8px;
   background-color: var(--bg-secondary);

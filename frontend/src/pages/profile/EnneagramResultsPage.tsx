@@ -40,6 +40,7 @@ const EnneagramResultsPage: React.FC = () => {
   const [results, setResults] = useState(null);
   const [typesInfo, setTypesInfo] = useState([]);
   const [activeTab, setActiveTab] = useState("percentual");
+  const [loadError, setLoadError] = useState(false);
 
   const [percentageChartData, setPercentageChartData] = useState<
     ChartData<"bar">
@@ -57,10 +58,15 @@ const EnneagramResultsPage: React.FC = () => {
     Promise.all([
       api.get("/api/enneagram/results"),
       api.get("/api/enneagram/types"),
-    ]).then(([resultsRes, typesRes]) => {
-      setResults(resultsRes.data);
-      setTypesInfo(typesRes.data);
-    });
+    ])
+      .then(([resultsRes, typesRes]) => {
+        setResults(resultsRes.data);
+        setTypesInfo(typesRes.data);
+      })
+      .catch((err) => {
+        console.error("Erro ao carregar resultado do eneagrama:", err);
+        setLoadError(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -156,11 +162,31 @@ const EnneagramResultsPage: React.FC = () => {
     });
   }, [theme, results, typesInfo]);
 
-  if (!results || typesInfo.length === 0) return <LoadingSpinner />;
+  const dominantTypeInfo =
+    results && typesInfo.length > 0
+      ? typesInfo.find((t) => t.id === results.dominant_type)
+      : undefined;
 
-  const dominantTypeInfo = typesInfo.find(
-    (t) => t.id === results.dominant_type,
-  );
+  // Estado de erro / dado inconsistente: evita spinner eterno e crash por
+  // desreferenciar um tipo dominante inexistente.
+  if (loadError || ((results || typesInfo.length > 0) && !dominantTypeInfo)) {
+    return (
+      <div className="p-2">
+        <Menu />
+        <div className="content-area">
+          <h2>Seu Resultado do Eneagrama</h2>
+          <p>
+            Não foi possível carregar seu resultado. Refaça o teste ou tente
+            novamente mais tarde.
+          </p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!results || typesInfo.length === 0 || !dominantTypeInfo)
+    return <LoadingSpinner />;
 
   return (
     <div className="p-2">
