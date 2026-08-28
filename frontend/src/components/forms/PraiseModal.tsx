@@ -142,8 +142,8 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
     <Modal onClose={onClose} title="Publicar um elogio">
       <form onSubmit={handleSubmit} className="modal-body">
         <p className="praise-anon-note">
-          🔒 O elogio é <strong>anônimo</strong>: seu nome não aparece para
-          ninguém. Apenas o destinatário (pessoa ou setor) será exibido.
+          🔒 O mural <strong>não exibe quem publicou</strong> — apenas o
+          destinatário (pessoa ou setor) do elogio.
         </p>
 
         {/* Alvo do elogio: pessoa ou setor */}

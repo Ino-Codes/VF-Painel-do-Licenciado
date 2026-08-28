@@ -79,7 +79,7 @@ const PraiseWall: React.FC = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [praiseToDelete, setPraiseToDelete] = useState<number | null>(null);
 
-  const canManage = hasPermission("users.manage");
+  const canManage = hasPermission("praises.manage");
 
   useEffect(() => {
     if (!loading && !user) navigate("/");
@@ -145,17 +145,19 @@ const PraiseWall: React.FC = () => {
           <div>
             <h2 className="content-title">Mural de Elogios</h2>
             <span className="content-subtitle">
-              Reconheça publicamente um colega ou um setor. A publicação é
-              anônima — só o destinatário do elogio aparece.
+              Apuração dos elogios da urna. Registre aqui os elogios recebidos —
+              o autor nunca é exibido, apenas o destinatário (pessoa ou setor).
             </span>
           </div>
 
-          <button
-            className="form-button form-button--add"
-            onClick={() => setIsModalOpen(true)}
-          >
-            + Publicar Elogio
-          </button>
+          {canManage && (
+            <button
+              className="form-button form-button--add"
+              onClick={() => setIsModalOpen(true)}
+            >
+              + Publicar Elogio
+            </button>
+          )}
         </div>
 
         {loadError ? (
@@ -166,7 +168,7 @@ const PraiseWall: React.FC = () => {
           <EmptyState
             imageKey="elogios"
             title="Nenhum elogio ainda"
-            message="Seja o primeiro a reconhecer um colega ou setor! Clique em “Publicar Elogio”."
+            message="Os elogios apurados da urna aparecerão aqui conforme forem registrados."
           />
         ) : (
           <>

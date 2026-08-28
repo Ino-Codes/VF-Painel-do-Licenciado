@@ -5,12 +5,7 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import { onKeyActivate } from "../../utils/a11y.ts";
 
-import {
-  FaBuilding,
-  FaFileAlt,
-  FaHeadset,
-  FaHandHoldingHeart,
-} from "react-icons/fa";
+import { FaBuilding, FaFileAlt, FaHeadset } from "react-icons/fa";
 
 const InternalGestao: React.FC = () => {
   const { user, loading } = useAuth();
@@ -30,12 +25,6 @@ const InternalGestao: React.FC = () => {
       description: "Acompanhe o andamento dos chamados que você abriu",
       icon: <FaHeadset />,
       path: "/internal/meus-chamados",
-    },
-    {
-      title: "Mural de Elogios",
-      description: "Reconheça um colega — publicação anônima, destaque público",
-      icon: <FaHandHoldingHeart />,
-      path: "/internal/elogios",
     },
     {
       title: "Quem Somos",

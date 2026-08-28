@@ -13,6 +13,7 @@ import {
   FaGraduationCap,
   FaChartLine,
   FaCalendarDay,
+  FaHandHoldingHeart,
 } from "react-icons/fa";
 import { FaMagnifyingGlassChart } from "react-icons/fa6";
 import { MdFeedback } from "react-icons/md";
@@ -90,6 +91,13 @@ const AdminGestao: React.FC = () => {
       icon: <FaUserSecret />,
       path: "/admin/logs",
       permission: "logs.view",
+    },
+    {
+      title: "Mural de Elogios",
+      description: "Apure e publique os elogios recebidos na urna",
+      icon: <FaHandHoldingHeart />,
+      path: "/admin/elogios",
+      permission: "praises.view",
     },
   ]
     .filter((m) => hasPermission(m.permission))

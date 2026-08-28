@@ -24,6 +24,7 @@ const SCREENS = [
   // RH / Operacional
   { key: "meeting_records", label: "Atas de Reunião", manage: true, category: "RH & Operacional" },
   { key: "tickets", label: "Central de Chamados", manage: true, category: "RH & Operacional" },
+  { key: "praises", label: "Mural de Elogios", manage: true, category: "RH & Operacional" },
 
   // Conteúdo
   { key: "courses", label: "Cursos", manage: true, category: "Conteúdo" },

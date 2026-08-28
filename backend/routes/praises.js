@@ -2,11 +2,11 @@
 // Mural de Elogios — reconhecimentos entre colaboradores internos.
 //
 // Regras:
-//   - Acesso (ver + publicar): usuários com internal_access (todos menos V-Partner).
-//   - Publicação é ANÔNIMA: o autor é gravado (author_id) apenas para integridade
-//     e moderação; a API pública NUNCA retorna o autor.
-//   - O destinatário é público.
-//   - Moderação (excluir): quem tem users.manage (admin/RH).
+//   - Ver o mural: quem tem a permissão praises.view (o curador da apuração).
+//   - Publicar/excluir: quem tem praises.manage.
+//   - Os elogios são apurados de uma urna física (papel) e transcritos pelo
+//     curador; a API NUNCA retorna o autor (author_id serve só de integridade).
+//   - O destinatário (pessoa ou setor) é exibido.
 const express = require("express");
 const router = express.Router();
 const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
@@ -20,7 +20,7 @@ module.exports = function (pool, logActivity) {
   router.get(
     "/",
     isLoggedIn,
-    checkPermission("internal_access"),
+    checkPermission("praises.view"),
     async (req, res) => {
       const page = Math.max(1, parseInt(req.query.page, 10) || 1);
       const limit = Math.min(60, Math.max(1, parseInt(req.query.limit, 10) || 24));
@@ -67,7 +67,7 @@ module.exports = function (pool, logActivity) {
   router.post(
     "/",
     isLoggedIn,
-    checkPermission("internal_access"),
+    checkPermission("praises.manage"),
     async (req, res) => {
       const authorId = req.user.id;
       const recipientId = req.body.recipientId
@@ -158,11 +158,11 @@ module.exports = function (pool, logActivity) {
   );
 
   // ─── DELETE /api/praises/:id ──────────────────────────────────────────────
-  // Moderação: remove um elogio inadequado. Restrito a users.manage (admin/RH).
+  // Remove um elogio. Restrito a quem faz a apuração (praises.manage).
   router.delete(
     "/:id",
     isLoggedIn,
-    checkPermission("users.manage"),
+    checkPermission("praises.manage"),
     async (req, res) => {
       const { id } = req.params;
       try {

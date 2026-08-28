@@ -234,9 +234,9 @@ const AppRouter: React.FC = () => {
             }
           />
           <Route
-            path="/internal/elogios"
+            path="/admin/elogios"
             element={
-              <ProtectedRoute permission="internal_access">
+              <ProtectedRoute permission="praises.view">
                 <PraiseWall />
               </ProtectedRoute>
             }

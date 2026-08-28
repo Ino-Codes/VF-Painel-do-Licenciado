@@ -12,7 +12,7 @@ import NoticeModal from "../../components/forms/NoticeModal.tsx";
 import { IoMdDocument } from "react-icons/io";
 import { MdPlayLesson, MdPlayCircle } from "react-icons/md";
 import { RiQuestionnaireFill } from "react-icons/ri";
-import { FaHeadset, FaArrowRight, FaHandHoldingHeart } from "react-icons/fa";
+import { FaHeadset, FaArrowRight } from "react-icons/fa";
 
 interface Notice {
   id: number;
@@ -101,11 +101,6 @@ const Home: React.FC = () => {
       label: "Meus Chamados",
       icon: <FaHeadset />,
       path: "/internal/meus-chamados",
-    });
-    quickLinks.push({
-      label: "Elogios",
-      icon: <FaHandHoldingHeart />,
-      path: "/internal/elogios",
     });
   }
 
