@@ -126,7 +126,7 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
           ? { recipientId: Number(selectedPerson!.value), message: message.trim() }
           : { recipientSetor: String(selectedSetor!.value), message: message.trim() };
       const res = await api.post("/api/praises", payload);
-      toast.success("Elogio publicado! 🎉");
+      toast.success("Elogio registrado como rascunho.");
       onSuccess(res.data);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Erro ao publicar o elogio.");
@@ -139,7 +139,7 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
     typeof document !== "undefined" ? document.body : undefined;
 
   return (
-    <Modal onClose={onClose} title="Publicar um elogio">
+    <Modal onClose={onClose} title="Registrar um elogio">
       <form onSubmit={handleSubmit} className="modal-body">
         <p className="praise-anon-note">
           🔒 O mural <strong>não exibe quem publicou</strong> — apenas o
@@ -246,7 +246,7 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
             Cancelar
           </button>
           <button type="submit" className="form-button" disabled={isSubmitting}>
-            {isSubmitting ? "Publicando..." : "Publicar elogio"}
+            {isSubmitting ? "Salvando..." : "Salvar rascunho"}
           </button>
         </div>
       </form>

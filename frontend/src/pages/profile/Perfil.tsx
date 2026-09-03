@@ -10,6 +10,7 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import AvatarModal from "../../components/forms/AvatarModal.tsx";
+import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { FiEdit, FiEye, FiCamera, FiLogOut } from "react-icons/fi";
 import { PiPencilSimpleLineBold } from "react-icons/pi";
@@ -81,6 +82,7 @@ const Perfil: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [certificates, setCertificates] = useState<CertificateData[]>([]);
   const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
+  const [myPraises, setMyPraises] = useState<Praise[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     nome: "",
@@ -109,6 +111,15 @@ const Perfil: React.FC = () => {
       navigate("/");
     }
   }, [user, loading, navigate]);
+
+  // Elogios recebidos (pessoa ou setor) — somente colaboradores internos.
+  useEffect(() => {
+    if (!user || !hasPermission("internal_access")) return;
+    api
+      .get("/api/praises/mine")
+      .then((res) => setMyPraises(res.data as Praise[]))
+      .catch(() => setMyPraises([]));
+  }, [user, hasPermission]);
 
   const fetchCertificates = useCallback(async () => {
     if (!user) return;
@@ -399,6 +410,27 @@ const Perfil: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* ── Seus Elogios ── */}
+            {hasPermission("internal_access") && myPraises.length > 0 && (
+              <div className="profile-section">
+                <h3>Seus Elogios</h3>
+                <p>
+                  Reconhecimentos recebidos por você ou pelo seu setor. Quem
+                  escreveu permanece anônimo. 💛
+                </p>
+                <div className="praise-grid praise-grid--testimonial">
+                  {myPraises.map((p) => (
+                    <PraiseCard
+                      key={p.id}
+                      praise={p}
+                      showRecipient={false}
+                      variant="testimonial"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ── Perfil Comportamental ── */}
             {hasPermission("internal_access") && (

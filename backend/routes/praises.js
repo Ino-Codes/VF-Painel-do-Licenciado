@@ -37,6 +37,7 @@ module.exports = function (pool, logActivity) {
             p.id,
             p.message,
             p.created_at,
+            p.published_at,
             p.recipient_id,
             u.nome  AS recipient_name,
             u.cargo AS recipient_cargo,
@@ -58,6 +59,95 @@ module.exports = function (pool, logActivity) {
       } catch (err) {
         console.error("Erro ao listar elogios:", err);
         res.status(500).json({ error: "Erro ao listar elogios." });
+      }
+    },
+  );
+
+  // ─── GET /api/praises/for-user/:id ────────────────────────────────────────
+  // Elogios PUBLICADOS de uma pessoa (usado no modal de Quem Somos).
+  // Qualquer colaborador interno pode ver; o autor nunca é retornado.
+  router.get(
+    "/for-user/:id",
+    isLoggedIn,
+    checkPermission("internal_access"),
+    async (req, res) => {
+      const recipientId = parseInt(req.params.id, 10);
+      if (!recipientId) {
+        return res.status(400).json({ error: "Destinatário inválido." });
+      }
+      try {
+        const result = await pool.query(
+          `
+          SELECT id, message, created_at
+          FROM praises
+          WHERE recipient_id = $1 AND published_at IS NOT NULL
+          ORDER BY created_at DESC
+          `,
+          [recipientId],
+        );
+        res.json(result.rows);
+      } catch (err) {
+        console.error("Erro ao buscar elogios da pessoa:", err);
+        res.status(500).json({ error: "Erro ao buscar elogios." });
+      }
+    },
+  );
+
+  // ─── GET /api/praises/setores ─────────────────────────────────────────────
+  // Elogios PUBLICADOS direcionados a setores (seção "Elogios aos Setores").
+  router.get(
+    "/setores",
+    isLoggedIn,
+    checkPermission("internal_access"),
+    async (req, res) => {
+      try {
+        const result = await pool.query(
+          `
+          SELECT id, message, created_at, recipient_setor
+          FROM praises
+          WHERE recipient_setor IS NOT NULL AND published_at IS NOT NULL
+          ORDER BY recipient_setor ASC, created_at DESC
+          `,
+        );
+        res.json(result.rows);
+      } catch (err) {
+        console.error("Erro ao buscar elogios de setores:", err);
+        res.status(500).json({ error: "Erro ao buscar elogios." });
+      }
+    },
+  );
+
+  // ─── GET /api/praises/mine ────────────────────────────────────────────────
+  // Elogios PUBLICADOS direcionados ao usuário logado ou ao seu setor.
+  router.get(
+    "/mine",
+    isLoggedIn,
+    checkPermission("internal_access"),
+    async (req, res) => {
+      try {
+        const meRes = await pool.query(
+          "SELECT setor FROM users WHERE id = $1",
+          [req.user.id],
+        );
+        const mySetor = meRes.rows[0]?.setor || null;
+
+        const result = await pool.query(
+          `
+          SELECT id, message, created_at, recipient_id, recipient_setor
+          FROM praises
+          WHERE published_at IS NOT NULL
+            AND (
+              recipient_id = $1
+              OR ($2::text IS NOT NULL AND recipient_setor = $2)
+            )
+          ORDER BY created_at DESC
+          `,
+          [req.user.id, mySetor],
+        );
+        res.json(result.rows);
+      } catch (err) {
+        console.error("Erro ao buscar seus elogios:", err);
+        res.status(500).json({ error: "Erro ao buscar seus elogios." });
       }
     },
   );
@@ -138,6 +228,7 @@ module.exports = function (pool, logActivity) {
             p.id,
             p.message,
             p.created_at,
+            p.published_at,
             p.recipient_id,
             u.nome  AS recipient_name,
             u.cargo AS recipient_cargo,
@@ -153,6 +244,40 @@ module.exports = function (pool, logActivity) {
       } catch (err) {
         console.error("Erro ao publicar elogio:", err);
         res.status(500).json({ error: "Erro ao publicar o elogio." });
+      }
+    },
+  );
+
+  // ─── POST /api/praises/publish ────────────────────────────────────────────
+  // Publica em lote todos os rascunhos (published_at NULL → NOW()).
+  // Usado ao final da apuração da urna, para revelar os elogios de uma vez.
+  router.post(
+    "/publish",
+    isLoggedIn,
+    checkPermission("praises.manage"),
+    async (req, res) => {
+      try {
+        const upd = await pool.query(
+          "UPDATE praises SET published_at = NOW() WHERE published_at IS NULL RETURNING id",
+        );
+        const count = upd.rowCount;
+
+        try {
+          await logActivity(
+            req.user.id,
+            req.user.email,
+            "Elogios Publicados",
+            `${count} elogio(s) publicado(s) em lote.`,
+            req.ipAddress,
+          );
+        } catch (e) {
+          console.warn("[praises] Falha ao registrar log:", e);
+        }
+
+        res.json({ success: true, published: count });
+      } catch (err) {
+        console.error("Erro ao publicar elogios:", err);
+        res.status(500).json({ error: "Erro ao publicar os elogios." });
       }
     },
   );

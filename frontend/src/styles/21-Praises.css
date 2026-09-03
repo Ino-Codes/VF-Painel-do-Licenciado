@@ -134,3 +134,152 @@
   color: var(--text-secondary);
   margin-top: 4px;
 }
+
+/* ── Ações do cabeçalho (curador) ── */
+.praise-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.praise-card-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Selo de status Rascunho/Publicado ── */
+.praise-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.praise-status--draft {
+  background: var(--bg-accent-color-light);
+  color: var(--text-secondary);
+}
+
+.praise-status--published {
+  background: rgba(46, 160, 87, 0.15);
+  color: #2ea057;
+}
+
+/* ── Selo de contagem de elogios no card da equipe ── */
+.corp-user-card {
+  position: relative;
+}
+
+.corp-user-praise-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-white);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.corp-user-praise-badge svg {
+  color: #ff6b81;
+}
+
+/* ── Cartão em estilo depoimento (visões dos destinatários) ── */
+.praise-grid--testimonial {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.praise-card--testimonial {
+  position: relative;
+  border-left: none;
+  border-radius: 14px;
+  padding: 26px 20px 16px 20px;
+  gap: 10px;
+  background: var(--glass-surface);
+}
+
+.praise-quote-mark {
+  color: var(--accent-color);
+  opacity: 0.45;
+  font-size: 1.1rem;
+}
+
+.praise-card--testimonial .praise-card-message {
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.praise-card--testimonial .praise-card-foot {
+  border-top: 1px solid var(--glass-border);
+  padding-top: 10px;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.praise-foot-heart {
+  color: #ff6b81;
+  font-size: 0.8rem;
+}
+
+/* ── Elogios recebidos no modal de Quem Somos ── */
+.user-detail-praises {
+  padding: 4px 24px 24px 24px;
+}
+
+.user-detail-praises-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px 0;
+  padding-top: 18px;
+}
+
+.user-detail-praises-icon {
+  color: #ff6b81;
+  font-size: 1.05rem;
+}
+
+.user-detail-praises-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.user-detail-praises-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent-color);
+  color: var(--text-white);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* ── Seção "Elogios aos Setores" (Quem Somos) ── */
+.setor-praise-group {
+  margin-bottom: 24px;
+}
+
+.setor-praise-group-title {
+  margin: 0 0 12px 0;
+  color: var(--accent-color);
+  font-size: 1.1rem;
+}

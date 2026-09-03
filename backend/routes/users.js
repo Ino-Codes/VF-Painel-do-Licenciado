@@ -735,7 +735,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     try {
       // "Internos" = usuários cujo grupo tem a permissão internal_access.
       const internalUsersSql = `
-      SELECT u.id, u.nome, u.nickname, u.email, u.role, u.group_id, u.avatar_url, u.corporate_photo_url, u.cargo, u.setor, u.unidade, u.unidade_id, u.telefone, u.birth_date, u.data_admissao
+      SELECT u.id, u.nome, u.nickname, u.email, u.role, u.group_id, u.avatar_url, u.corporate_photo_url, u.cargo, u.setor, u.unidade, u.unidade_id, u.telefone, u.birth_date, u.data_admissao,
+        (SELECT COUNT(*)::int FROM praises p WHERE p.recipient_id = u.id AND p.published_at IS NOT NULL) AS praise_count
       FROM users u
       WHERE EXISTS (
         SELECT 1 FROM group_permissions gp

@@ -275,6 +275,23 @@
   margin-bottom: 20px;
 }
 
+/* Cabeçalho com descrição: empilha título + texto em coluna, à esquerda.
+   O :has garante que os cabeçalhos com título + botão (sem descrição)
+   continuem em linha, como antes. */
+.page-header:has(.page-description) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.page-description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
 .filter-group {
   max-width: 280px;
 }

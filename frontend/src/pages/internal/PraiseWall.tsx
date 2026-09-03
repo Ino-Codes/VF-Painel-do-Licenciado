@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
@@ -7,63 +7,8 @@ import Footer from "../../components/layout/Footer.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import PraiseModal from "../../components/forms/PraiseModal.tsx";
+import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
 import toast from "react-hot-toast";
-import { FiTrash2 } from "react-icons/fi";
-
-interface Praise {
-  id: number;
-  message: string;
-  created_at: string;
-  recipient_id: number | null;
-  recipient_name: string | null;
-  recipient_cargo?: string | null;
-  recipient_setor?: string | null;
-}
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-
-// Altura máxima (px) da mensagem antes de colapsar com "Ver mais".
-const CLAMP_MAX_HEIGHT = 160;
-
-// Mensagem do elogio com colapso: textos longos são cortados (com fade) e um
-// botão "Ver mais"/"Ver menos" só aparece quando há conteúdo além do limite.
-const PraiseMessage: React.FC<{ text: string }> = ({ text }) => {
-  const ref = useRef<HTMLParagraphElement>(null);
-  const [expanded, setExpanded] = useState(false);
-  const [overflowing, setOverflowing] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (el) setOverflowing(el.scrollHeight > CLAMP_MAX_HEIGHT + 8);
-  }, [text]);
-
-  return (
-    <>
-      <p
-        ref={ref}
-        className={`praise-card-message ${
-          overflowing && !expanded ? "praise-card-message--clamped" : ""
-        }`}
-      >
-        {text}
-      </p>
-      {overflowing && (
-        <button
-          type="button"
-          className="link-button praise-readmore"
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {expanded ? "Ver menos" : "Ver mais"}
-        </button>
-      )}
-    </>
-  );
-};
 
 const PraiseWall: React.FC = () => {
   const { user, loading, hasPermission } = useAuth();
@@ -78,8 +23,10 @@ const PraiseWall: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [praiseToDelete, setPraiseToDelete] = useState<number | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const canManage = hasPermission("praises.manage");
+  const pendingCount = praises.filter((p) => !p.published_at).length;
 
   useEffect(() => {
     if (!loading && !user) navigate("/");
@@ -133,6 +80,26 @@ const PraiseWall: React.FC = () => {
     }
   };
 
+  const handlePublishAll = async () => {
+    if (pendingCount === 0 || isPublishing) return;
+    setIsPublishing(true);
+    try {
+      const res = await api.post("/api/praises/publish");
+      const count = res.data?.published ?? 0;
+      toast.success(
+        count > 0
+          ? `${count} elogio(s) publicado(s)! 🎉`
+          : "Nenhum rascunho para publicar.",
+      );
+      // Recarrega para refletir o novo status (published_at).
+      fetchPraises(1);
+    } catch (err) {
+      toast.error("Erro ao publicar os elogios.");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   if (loading || !user) {
     return <div className="tela-loading">Carregando...</div>;
   }
@@ -145,18 +112,32 @@ const PraiseWall: React.FC = () => {
           <div>
             <h2 className="content-title">Mural de Elogios</h2>
             <span className="content-subtitle">
-              Apuração dos elogios da urna. Registre aqui os elogios recebidos —
-              o autor nunca é exibido, apenas o destinatário (pessoa ou setor).
+              Apuração dos elogios da urna. Registre os elogios como rascunho e,
+              ao final, use <strong>Publicar pendentes</strong> para revelá-los de
+              uma vez. O autor nunca é exibido, apenas o destinatário.
             </span>
           </div>
 
           {canManage && (
-            <button
-              className="form-button form-button--add"
-              onClick={() => setIsModalOpen(true)}
-            >
-              + Publicar Elogio
-            </button>
+            <div className="praise-header-actions">
+              {pendingCount > 0 && (
+                <button
+                  className="form-button"
+                  onClick={handlePublishAll}
+                  disabled={isPublishing}
+                >
+                  {isPublishing
+                    ? "Publicando..."
+                    : `Publicar pendentes (${pendingCount})`}
+                </button>
+              )}
+              <button
+                className="form-button form-button--add"
+                onClick={() => setIsModalOpen(true)}
+              >
+                + Registrar Elogio
+              </button>
+            </div>
           )}
         </div>
 
@@ -174,51 +155,12 @@ const PraiseWall: React.FC = () => {
           <>
             <div className="praise-grid">
               {praises.map((p) => (
-                <article key={p.id} className="praise-card">
-                  <header className="praise-card-head">
-                    <div className="praise-card-recipient">
-                      {p.recipient_name ? (
-                        <>
-                          <span className="praise-recipient-name">
-                            {p.recipient_name}
-                          </span>
-                          {(p.recipient_cargo || p.recipient_setor) && (
-                            <span className="praise-recipient-role">
-                              {[p.recipient_cargo, p.recipient_setor]
-                                .filter(Boolean)
-                                .join(" · ")}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <span className="praise-recipient-name">
-                            {p.recipient_setor}
-                          </span>
-                          <span className="praise-recipient-role">Setor</span>
-                        </>
-                      )}
-                    </div>
-                    {canManage && (
-                      <button
-                        className="form-icon-delete praise-delete"
-                        title="Remover elogio"
-                        aria-label="Remover elogio"
-                        onClick={() => handleDeleteClick(p.id)}
-                      >
-                        <FiTrash2 />
-                      </button>
-                    )}
-                  </header>
-
-                  <PraiseMessage text={p.message} />
-
-                  <footer className="praise-card-foot">
-                    <span className="praise-date">
-                      {formatDate(p.created_at)}
-                    </span>
-                  </footer>
-                </article>
+                <PraiseCard
+                  key={p.id}
+                  praise={p}
+                  showStatus
+                  onDelete={canManage ? handleDeleteClick : undefined}
+                />
               ))}
             </div>
 

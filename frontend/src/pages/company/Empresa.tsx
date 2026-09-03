@@ -6,6 +6,7 @@ import Footer from "../../components/layout/Footer.tsx";
 import UserCard from "./UserCard.tsx";
 import { useNavigate } from "react-router-dom";
 import UserDetailModal from "./UserDetailModal.tsx";
+import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
 
 import { FiTarget, FiEye } from "react-icons/fi";
 import { RiVipDiamondLine } from "react-icons/ri";
@@ -15,6 +16,7 @@ const Empresa: React.FC = () => {
   const navigate = useNavigate();
   const [internalUsers, setInternalUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [setorPraises, setSetorPraises] = useState<Praise[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -24,8 +26,22 @@ const Empresa: React.FC = () => {
         .get("/api/users/internal")
         .then((res) => setInternalUsers(res.data))
         .catch((err) => console.error("Erro ao buscar equipe", err));
+      api
+        .get("/api/praises/setores")
+        .then((res) => setSetorPraises(res.data))
+        .catch((err) => console.error("Erro ao buscar elogios de setores", err));
     }
   }, [user, loading, navigate]);
+
+  // Agrupa os elogios de setor por nome do setor (mantém a ordem do backend).
+  const praisesBySetor = setorPraises.reduce<Record<string, Praise[]>>(
+    (acc, p) => {
+      const key = p.recipient_setor || "Setor";
+      (acc[key] = acc[key] || []).push(p);
+      return acc;
+    },
+    {},
+  );
 
   const handleOpenModal = (userToShow: any) => {
     setSelectedUser(userToShow);
@@ -44,49 +60,17 @@ const Empresa: React.FC = () => {
       <div className="content-area">
         <section className="info-section">
           <div className="page-header">
-            <h2>Quem Somos</h2>
+            <h2 >Nossos Valores</h2>
+            <p className="page-description">
+              Na V-Corp, acreditamos que grandes resultados nascem de pessoas comprometidas, relações de confiança e decisões guiadas por propósito. Atuamos com ética, transparência, responsabilidade e respeito, valorizando a colaboração, a inovação e o desenvolvimento contínuo. Temos senso de dono, buscamos soluções com proatividade e excelência e acreditamos que a forma como alcançamos nossos resultados é tão importante quanto os próprios resultados. Somos uma empresa em constante evolução, movida por pessoas, propósito e transformação.
+            </p>
           </div>
-          <div className="identidade-container">
-            <div className="identidade-item">
-              <FiTarget />
-              <h3>Missão</h3>
-              <p>
-                Somos uma empresa de inteligência tributária que une
-                conhecimentos administrativos e contábeis para construir
-                soluções que fazem sentido para quem está na linha de frente dos
-                negócios.
-                <br />
-                Buscamos incessantemente ser os melhores – nada menos que os
-                melhores.
-              </p>
-            </div>
-            <div className="identidade-item">
-              <FiEye />
-              <h3>Visão</h3>
-              <p>
-                Ser referência nacional em nosso segmento, por meio de um
-                trabalho extremamente técnico, ético e de excelência. Cumprir o
-                nosso propósito, alinhado ao projeto de expansão para todo o
-                território brasileiro, buscando o equilíbrio entre a
-                lucratividade e a consciência social
-              </p>
-            </div>
-            <div className="identidade-item">
-              <RiVipDiamondLine />
-              <h3>Valores</h3>
-              <p>
-                Somos uma empresa comprometida com a ética, integridade e
-                honestidade. Trabalhamos de forma transparente e entregamos
-                serviços de excelência com foco na geração de resultados que
-                superem as expectativas de nossos clientes.
-              </p>
-            </div>
-          </div>
+            
         </section>
 
         <section className="info-section">
           <div className="page-header">
-            <h2>Nossa Equipe</h2>
+            <h2 >Nossa Equipe</h2>
           </div>
 
           <div className="equipe-layout">
@@ -103,6 +87,32 @@ const Empresa: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {setorPraises.length > 0 && (
+          <section className="info-section">
+            <div className="page-header">
+              <h2 >Elogios aos Setores</h2>
+              <p className="page-description">
+                Confira os elogios recebidos pelos nossos setores
+              </p>
+            </div>
+            {Object.entries(praisesBySetor).map(([setorNome, list]) => (
+              <div key={setorNome} className="setor-praise-group">
+                <h3 className="setor-praise-group-title">{setorNome}</h3>
+                <div className="praise-grid praise-grid--testimonial">
+                  {list.map((p) => (
+                    <PraiseCard
+                      key={p.id}
+                      praise={p}
+                      showRecipient={false}
+                      variant="testimonial"
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
       </div>
       <Footer />
       <UserDetailModal

@@ -376,7 +376,7 @@ input[type="checkbox"]:checked {
 
 .modal-content {
   position: relative;
-  background: var(--glass-surface), var(--bg-secondary);
+  background: var(--bg-secondary);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   backdrop-filter: blur(10px);

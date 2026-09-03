@@ -12,113 +12,6 @@
   padding: 40px 0 0 0;
 }
 
-/* Estilos da seção "Quem Somos" */
-.identidade-container {
-  display: flex;
-  justify-content: space-around;
-  text-align: center;
-  gap: 30px;
-  margin-top: 30px;
-  flex-wrap: wrap;
-}
-
-.identidade-item {
-  flex: 1;
-  max-width: 380px;
-  min-width: 200px;
-  padding: 20px;
-}
-
-.identidade-item svg {
-  color: var(--accent-color);
-  font-size: 60px;
-  margin-bottom: 15px;
-}
-
-.identidade-item h3 {
-  margin: 0 0 10px 0;
-  font-size: 1.2rem;
-  color: var(--text-primary);
-}
-
-.identidade-item p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-/* Seção Nossa História */
-.timeline-container {
-  display: flex;
-  justify-content: space-between;
-  position: relative;
-  margin-top: 20px;
-  padding: 20px 0;
-}
-
-.timeline-container::before {
-  content: "";
-  position: absolute;
-  top: 208px;
-  left: 5%;
-  right: 5%;
-  height: 2px;
-  background-color: var(--border-strong);
-  z-index: 1;
-}
-
-.timeline-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  width: 22%;
-  position: relative;
-  z-index: 2;
-}
-
-.timeline-image-placeholder {
-  width: 100%;
-  height: 170px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.timeline-image-placeholder img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.timeline-dot {
-  width: 16px;
-  height: 16px;
-  background-color: var(--accent-color);
-  border-radius: 50%;
-  border: 3px solid var(--bg-primary);
-  margin-top: -8px;
-  margin-bottom: 20px;
-}
-
-.timeline-content h4 {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin: 0 0 10px 0;
-  color: var(--text-primary);
-}
-
-.timeline-content p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
 /* Estilos da seção "Nossa Equipe" */
 .equipe-layout {
   display: flex;
@@ -261,8 +154,7 @@
    Largura fixa em proporção de retrato (3:4) para casar com as fotos reais,
    que usam height:300px / width:auto. */
 .corp-user-card-photo-fallback {
-  width: 225px;
-  max-width: 100%;
+  width: 500px;
   height: 300px;
   display: flex;
   align-items: center;
@@ -271,7 +163,7 @@
   font-weight: 600;
   letter-spacing: 2px;
   color: var(--text-white);
-  background: linear-gradient(135deg, var(--accent-color), #6d5528);
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-light));
 }
 
 .corp-user-card-info {
@@ -315,6 +207,7 @@
 /* Estilo para o modal de usuário */
 
 .user-detail-modal-content {
+  background: var(--bg-primary);
   max-width: 800px;
   width: 90%;
   padding: 0;
@@ -352,6 +245,7 @@
   align-items: flex-end;
   justify-content: center;
   color: var(--text-inverted);
+  border-radius: 0 0 18px 0;
 }
 
 .user-detail-photo img {
@@ -370,7 +264,6 @@
 .user-detail-info {
   flex-grow: 1;
   padding: 40px;
-  background-color: var(--bg-primary);
 }
 
 .user-detail-info p,

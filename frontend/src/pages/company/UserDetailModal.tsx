@@ -1,6 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { FaHeart } from "react-icons/fa";
+import api from "../../api.ts";
+import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
 
 interface User {
+  id: number;
   nome: string;
   corporate_photo_url?: string;
   unit_id?: number;
@@ -35,6 +39,32 @@ const formatarAniversario = (data?: string): string => {
 };
 
 const UserDetailModal: React.FC<ModalProps> = ({ isOpen, onClose, user }) => {
+  const [praises, setPraises] = useState<Praise[]>([]);
+  const [loadingPraises, setLoadingPraises] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !user) {
+      setPraises([]);
+      return;
+    }
+    let active = true;
+    setLoadingPraises(true);
+    api
+      .get(`/api/praises/for-user/${user.id}`)
+      .then((res) => {
+        if (active) setPraises(res.data as Praise[]);
+      })
+      .catch(() => {
+        if (active) setPraises([]);
+      })
+      .finally(() => {
+        if (active) setLoadingPraises(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isOpen, user]);
+
   if (!isOpen || !user) {
     return null;
   }
@@ -80,6 +110,25 @@ const UserDetailModal: React.FC<ModalProps> = ({ isOpen, onClose, user }) => {
             </p>
           </div>
         </div>
+
+        {!loadingPraises && praises.length > 0 && (
+          <div className="user-detail-praises">
+            <div className="user-detail-praises-header">
+              <FaHeart className="user-detail-praises-icon" aria-hidden="true" />
+              <h4 className="user-detail-praises-title">Elogios recebidos</h4>
+            </div>
+            <div className="praise-grid praise-grid--testimonial">
+              {praises.map((p) => (
+                <PraiseCard
+                  key={p.id}
+                  praise={p}
+                  showRecipient={false}
+                  variant="testimonial"
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -37,6 +37,7 @@
 
   /* cores de destaque */
   --accent-color: #8a6c35;
+  --accent-color-light: #463008;
   --action-primary: #04a146;
   --action-secondary: #778088;
   --action-edit: #2365c8;
@@ -123,6 +124,7 @@ body.dark-theme {
 
   /* cores de destaque */
   --accent-color: #8a6c35;
+  --accent-color-light: #463008;
   --action-primary: #04a146;
   --action-secondary: #555;
   --action-edit: #2a62e2;
