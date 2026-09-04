@@ -223,7 +223,7 @@ Funciona em qualquer site (com ou sem framework) — o botão flutuante, o formu
 
 | Comando     | Descrição                                          |
 | ----------- | -------------------------------------------------- |
-| `npm start` | Inicia o servidor (`node app.js`) + roda migrations |
+| `node app.js` | Inicia o servidor e roda migrations |
 
 **Frontend** (`frontend/`)
 

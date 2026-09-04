@@ -44,7 +44,7 @@ body.dark-theme .p-2 .main-menu {
 /* Regra única e orientada por tokens (mesmo padrão nos dois temas). */
 :is(
     .gestao-module-card,
-    .chamado-card,
+    .chamado-detail,
     .widget-tenant-card,
     .meeting-card,
     .course-card,

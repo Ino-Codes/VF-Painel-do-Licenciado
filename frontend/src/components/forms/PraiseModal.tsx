@@ -3,7 +3,6 @@ import Select, { StylesConfig, SingleValue } from "react-select";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import Modal from "../ui/Modal.tsx";
-import { useAuth } from "../../context/AuthContext.tsx";
 import { useTheme } from "../../context/ThemeContext.tsx";
 
 interface InternalUser {
@@ -31,7 +30,6 @@ type TargetType = "user" | "setor";
 const MAX_LEN = 500;
 
 const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
-  const { user } = useAuth();
   const { theme } = useTheme();
   const [internalUsers, setInternalUsers] = useState<InternalUser[]>([]);
   const [setores, setSetores] = useState<Setor[]>([]);
@@ -52,14 +50,15 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
       .catch(() => toast.error("Não foi possível carregar os setores."));
   }, []);
 
-  // Colegas para elogio individual (não é possível elogiar a si mesmo).
+  // Todos os colaboradores internos, inclusive o próprio curador: a apuração
+  // vem da urna física, então ele pode ser o destinatário de um elogio.
   const personOptions = useMemo<OptionType[]>(
     () =>
       internalUsers
-        .filter((u) => u.id !== user?.id)
+        .slice()
         .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
         .map((u) => ({ value: u.id, label: u.nome })),
-    [internalUsers, user?.id],
+    [internalUsers],
   );
 
   const setorOptions = useMemo<OptionType[]>(
@@ -72,6 +71,13 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
     const getCssVar = (v: string) =>
       getComputedStyle(document.body).getPropertyValue(v).trim();
     return {
+      // .form-row é flex: sem largura fixa o select encolhe/expande conforme
+      // o texto digitado. Fixa o container à largura da linha do modal.
+      container: (provided) => ({
+        ...provided,
+        width: "100%",
+        minWidth: 0,
+      }),
       control: (provided) => ({
         ...provided,
         backgroundColor: getCssVar("--bg-primary"),
@@ -108,11 +114,11 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (targetType === "user" && !selectedPerson) {
-      toast.error("Selecione quem você quer elogiar.");
+      toast.error("Selecione quem recebeu o elogio.");
       return;
     }
     if (targetType === "setor" && !selectedSetor) {
-      toast.error("Selecione o setor que você quer elogiar.");
+      toast.error("Selecione o setor que recebeu o elogio.");
       return;
     }
     if (message.trim().length < 3) {
@@ -141,10 +147,7 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
   return (
     <Modal onClose={onClose} title="Registrar um elogio">
       <form onSubmit={handleSubmit} className="modal-body">
-        <p className="praise-anon-note">
-          🔒 O mural <strong>não exibe quem publicou</strong> — apenas o
-          destinatário (pessoa ou setor) do elogio.
-        </p>
+        
 
         {/* Alvo do elogio: pessoa ou setor */}
         <div className="form-row">
@@ -177,7 +180,7 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
         {targetType === "user" ? (
           <>
             <div className="form-row">
-              <label htmlFor="praise-recipient">Quem você quer elogiar?</label>
+              <label htmlFor="praise-recipient">Quem recebeu o elogio?</label>
             </div>
             <div className="form-row">
               <Select<OptionType>
@@ -189,7 +192,7 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
                   setSelectedPerson(opt)
                 }
                 styles={selectStyles}
-                placeholder="Digite para buscar um colega…"
+                placeholder="Digite para buscar um colaborador…"
                 noOptionsMessage={() => "Nenhum colega encontrado"}
                 isClearable
                 menuPortalTarget={portalTarget}
@@ -200,7 +203,7 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
         ) : (
           <>
             <div className="form-row">
-              <label htmlFor="praise-setor">Qual setor você quer elogiar?</label>
+              <label htmlFor="praise-setor">Qual setor recebeu o elogio?</label>
             </div>
             <div className="form-row">
               <Select<OptionType>

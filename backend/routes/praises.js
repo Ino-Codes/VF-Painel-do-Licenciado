@@ -172,9 +172,8 @@ module.exports = function (pool, logActivity) {
           error: "Selecione uma pessoa ou um setor para o elogio.",
         });
       }
-      if (recipientId && recipientId === authorId) {
-        return res.status(400).json({ error: "Você não pode enviar um elogio para si mesmo." });
-      }
+      // Auto-elogio é permitido: o curador transcreve elogios da urna física e
+      // pode ele mesmo ser o destinatário de um deles.
       if (message.length < MIN_LEN) {
         return res.status(400).json({ error: "Escreva uma mensagem de elogio." });
       }

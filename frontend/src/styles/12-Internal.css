@@ -130,44 +130,112 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Meus Chamados — lista de acompanhamento (/internal/meus-chamados)
+   Meus Chamados — consulta de andamento (/internal/meus-chamados)
    ═══════════════════════════════════════════════════════════════ */
 
-.meus-chamados-wrap {
-  max-width: 560px;
+.chamados-page {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Painel de busca ── */
+.chamado-search-panel {
+  max-width: 620px;
+  margin: 8px auto 0;
+  padding: 32px 28px;
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  text-align: center;
+}
+
+.chamado-search-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: var(--bg-accent-color-light);
+  color: var(--accent-color);
+  font-size: 26px;
+}
+
+.chamado-search-title {
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.chamado-search-hint {
+  margin: 0 auto 24px;
+  max-width: 440px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
 .chamado-search-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 420px;
-}
-
-.chamado-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: border-color 0.15s ease;
-}
-.chamado-card.is-open {
-  border-color: var(--border-strong);
-}
-
-.chamado-card-head {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 150px 1fr;
   gap: 14px;
-  width: 100%;
-  padding: 16px 18px;
-  background: var(--bg-secondary);
-  border: none;
-  cursor: pointer;
   text-align: left;
 }
-.chamado-card-head--static {
-  cursor: default;
+
+.chamado-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chamado-input-group label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.chamado-search-btn {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.chamado-alert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--bg-result-red);
+  color: var(--status-danger);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+/* ── Card de detalhe do chamado ── */
+/* O tratamento de vidro (fundo/borda/sombra) vem da regra única em
+   20-Brand.css, que já inclui .chamado-detail. */
+.chamado-detail {
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.chamado-detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--glass-border);
+  background: linear-gradient(180deg, var(--bg-accent-color-light), transparent);
 }
 
 .chamado-type {
@@ -175,84 +243,267 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--type-color) 14%, transparent);
-}
-.chamado-type svg {
-  color: var(--type-color);
-  font-size: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--type-color) 16%, transparent);
 }
 
-.chamado-main {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+.chamado-type svg {
+  color: var(--type-color);
+  font-size: 18px;
+}
+
+.chamado-detail-headings {
   flex: 1;
   min-width: 0;
 }
-.chamado-title {
-  font-size: 15px;
-  font-weight: 600;
+
+.chamado-detail-title {
+  margin: 0 0 6px;
+  font-size: 1.12rem;
+  line-height: 1.4;
   color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
-.chamado-sub {
-  font-size: 12px;
+
+.chamado-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.8rem;
   color: var(--text-secondary);
+}
+
+.chamado-detail-meta span:not(:first-child)::before {
+  content: "·";
+  margin-right: 10px;
+}
+
+.chamado-protocol {
+  font-weight: 700;
+  color: var(--accent-color);
 }
 
 .chamado-status {
   flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--status-color);
-  background: color-mix(in srgb, var(--status-color) 14%, transparent);
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--status-color);
+  background: color-mix(in srgb, var(--status-color) 16%, transparent);
 }
 
-.chamado-card-body {
-  padding: 18px 18px 18px 66px;
-  border-top: 1px solid var(--border-color);
+/* ── Timeline de andamento ── */
+.chamado-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 26px 24px 8px;
+  display: flex;
+}
+
+.chamado-step {
+  position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+/* Linha conectora entre as etapas. */
+.chamado-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border-color);
+  z-index: 0;
+}
+
+.chamado-step.is-done::after {
+  background: var(--accent-color);
+}
+
+.chamado-step-dot {
+  position: relative;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.chamado-step.is-done .chamado-step-dot {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--text-white);
+}
+
+.chamado-step.is-current .chamado-step-dot {
+  background: var(--bg-primary);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  box-shadow: 0 0 0 5px var(--bg-accent-color-light);
+}
+
+.chamado-step.is-paused .chamado-step-dot {
+  border-color: var(--action-secondary);
+  color: var(--action-secondary);
+  box-shadow: none;
+}
+
+.chamado-step-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.chamado-step.is-current .chamado-step-label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.chamado-paused-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 24px 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.83rem;
+}
+
+/* ── Campos do chamado ── */
+.chamado-detail-body {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+}
+
+.chamado-detail-body:empty {
+  display: none;
 }
 
 .chamado-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  min-width: 0;
 }
+
 .chamado-field-label {
-  font-size: 12px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--text-secondary);
 }
+
 .chamado-field p {
-  font-size: 14px;
-  color: var(--text-primary);
-  line-height: 1.55;
-  white-space: pre-wrap;
   margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
+/* Resolução: destaque verde translúcido (funciona nos dois temas). */
 .chamado-resolution {
-  padding-top: 14px;
-  border-top: 1px solid var(--border-color);
+  grid-column: 1 / -1;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--bg-result-green);
+  border: 1px solid color-mix(in srgb, var(--status-success) 35%, transparent);
 }
 
-.chamado-card-foot {
-  padding: 0 18px 18px 66px;
+.chamado-resolution .chamado-field-label {
+  color: var(--status-success);
 }
 
-@media (max-width: 600px) {
-  .chamado-card-body,
-  .chamado-card-foot {
-    padding-left: 18px;
+/* ── Anexos ── */
+.chamado-attach-block {
+  grid-column: 1 / -1;
+}
+
+.chamado-attachments {
+  list-style: none;
+  margin: 3px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chamado-attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.chamado-attach-chip:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.chamado-detail-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 24px 22px;
+}
+
+@media (max-width: 560px) {
+  .chamado-search-panel {
+    padding: 26px 18px;
+  }
+
+  .chamado-search-form {
+    grid-template-columns: 1fr;
+  }
+
+  .chamado-detail-head {
+    flex-wrap: wrap;
+  }
+
+  .chamado-timeline {
+    padding: 22px 12px 8px;
+  }
+
+  .chamado-step-label {
+    font-size: 0.7rem;
   }
 }
