@@ -667,6 +667,53 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     }
   });
 
+  // ── GET /api/tickets/mine (protegido — chamados do usuário logado) ───────
+  // Lista os chamados abertos com o e-mail do usuário logado, na mesma forma
+  // pública da consulta por protocolo (sem campos internos de atendimento).
+  router.get("/mine", isLoggedIn, async (req, res) => {
+    const email = req.user?.email;
+    if (!email) {
+      return res.status(400).json({ error: "Usuário sem e-mail cadastrado." });
+    }
+
+    try {
+      const result = await pool.query(
+        `SELECT t.*, wt.name AS tenant_name,
+                COALESCE(
+                  (
+                    SELECT json_agg(
+                             json_build_object(
+                               'id', a.id,
+                               'file_url', a.file_url,
+                               'file_name', a.file_name,
+                               'file_type', a.file_type
+                             )
+                             ORDER BY a.id ASC
+                           )
+                    FROM ticket_attachments a
+                    WHERE a.ticket_id = t.id
+                  ),
+                  '[]'
+                ) AS attachments
+         FROM tickets t
+         LEFT JOIN widget_tenants wt ON t.tenant_id = wt.id
+         WHERE LOWER(t.requester_email) = LOWER($1)
+         ORDER BY t.created_at DESC`,
+        [String(email).trim()],
+      );
+
+      res.json(
+        result.rows.map((t) => ({
+          ...publicTicketView(t),
+          attachments: t.attachments || [],
+        })),
+      );
+    } catch (err) {
+      console.error("Erro ao listar os chamados do usuário:", err);
+      res.status(500).json({ error: "Erro ao listar os seus chamados." });
+    }
+  });
+
   // ── GET /api/tickets (protegido — painel interno) ───────────────────────
   router.get("/", isLoggedIn, checkPermission("tickets.view"), async (req, res) => {
     const { tenant_id, status, type } = req.query;

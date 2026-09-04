@@ -130,7 +130,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Meus Chamados — consulta de andamento (/internal/meus-chamados)
+   Meus Chamados — lista + consulta por protocolo
+   (/internal/meus-chamados)
    ═══════════════════════════════════════════════════════════════ */
 
 .chamados-page {
@@ -139,103 +140,56 @@
   width: 100%;
 }
 
-/* ── Painel de busca ── */
-.chamado-search-panel {
-  max-width: 620px;
-  margin: 8px auto 0;
-  padding: 32px 28px;
-  background: var(--glass-surface);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: var(--glass-shadow);
-  text-align: center;
-}
-
-.chamado-search-icon {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 16px;
+.chamados-page .document-header {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  background: var(--bg-accent-color-light);
-  color: var(--accent-color);
-  font-size: 26px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
-.chamado-search-title {
-  margin: 0 0 6px;
-  font-size: 1.25rem;
-  color: var(--text-primary);
-}
-
-.chamado-search-hint {
-  margin: 0 auto 24px;
-  max-width: 440px;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-.chamado-search-form {
-  display: grid;
-  grid-template-columns: 150px 1fr;
-  gap: 14px;
-  text-align: left;
-}
-
-.chamado-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.chamado-input-group label {
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--text-secondary);
-}
-
-.chamado-search-btn {
-  grid-column: 1 / -1;
+.chamados-page .document-header .form-button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
-.chamado-alert {
+/* ── Lista de chamados ── */
+.chamado-list {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 18px 0 0;
-  padding: 11px 14px;
-  border-radius: 10px;
-  background: var(--bg-result-red);
-  color: var(--status-danger);
-  font-size: 0.86rem;
-  font-weight: 600;
+  flex-direction: column;
+  gap: 14px;
 }
 
-/* ── Card de detalhe do chamado ── */
 /* O tratamento de vidro (fundo/borda/sombra) vem da regra única em
    20-Brand.css, que já inclui .chamado-detail. */
 .chamado-detail {
-  margin-top: 8px;
   overflow: hidden;
 }
 
+/* Cabeçalho: é um <button> na lista (accordion) e um <div> no modal. */
 .chamado-detail-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
-  padding: 22px 24px;
+  width: 100%;
+  padding: 18px 20px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chamado-detail-head--static {
+  cursor: default;
+}
+
+.chamado-detail.is-open .chamado-detail-head {
   border-bottom: 1px solid var(--glass-border);
-  background: linear-gradient(180deg, var(--bg-accent-color-light), transparent);
 }
 
 .chamado-type {
@@ -255,13 +209,16 @@
 }
 
 .chamado-detail-headings {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   flex: 1;
   min-width: 0;
 }
 
 .chamado-detail-title {
-  margin: 0 0 6px;
-  font-size: 1.12rem;
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
   overflow-wrap: anywhere;
@@ -272,12 +229,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-secondary);
 }
 
-.chamado-detail-meta span:not(:first-child)::before {
+.chamado-detail-meta > span:not(:first-child)::before {
   content: "·";
   margin-right: 10px;
 }
@@ -291,11 +247,22 @@
   flex-shrink: 0;
   padding: 6px 14px;
   border-radius: 20px;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   font-weight: 700;
   white-space: nowrap;
   color: var(--status-color);
   background: color-mix(in srgb, var(--status-color) 16%, transparent);
+}
+
+.chamado-chevron {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.chamado-detail.is-open .chamado-chevron {
+  transform: rotate(180deg);
 }
 
 /* ── Timeline de andamento ── */
@@ -395,14 +362,10 @@
 
 /* ── Campos do chamado ── */
 .chamado-detail-body {
-  padding: 24px;
+  padding: 22px 24px 24px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
-}
-
-.chamado-detail-body:empty {
-  display: none;
 }
 
 .chamado-field {
@@ -486,17 +449,125 @@
   padding: 0 24px 22px;
 }
 
-@media (max-width: 560px) {
-  .chamado-search-panel {
-    padding: 26px 18px;
-  }
+/* ── Esqueleto de carregamento da lista ── */
+.chamado-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+}
 
+.chamado-skeleton-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Consulta por protocolo (dentro do modal) ── */
+.chamado-search-hint {
+  margin: 0 0 18px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.chamado-search-form {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 14px;
+}
+
+.chamado-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chamado-input-group label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.chamado-search-btn {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.chamado-alert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--bg-result-red);
+  color: var(--status-danger);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+/* Resultado da consulta dentro do modal: o conteúdo flui direto na superfície
+   do modal — sem moldura própria (evita "caixa dentro de caixa") e sem repetir
+   o padding lateral que o modal já aplica.
+   Dupla classe no seletor de propósito: a regra de vidro em 20-Brand.css usa
+   :is(), que pesa como uma classe, e vem depois no bundle — precisamos ganhar
+   dela por especificidade. */
+.chamado-detail.chamado-detail--in-modal {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: visible;
+}
+
+.chamado-detail--in-modal .chamado-detail-head,
+.chamado-detail--in-modal .chamado-timeline,
+.chamado-detail--in-modal .chamado-detail-body,
+.chamado-detail--in-modal .chamado-detail-foot {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.chamado-detail--in-modal .chamado-detail-head {
+  padding-top: 0;
+  padding-bottom: 16px;
+  background: none;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.chamado-detail--in-modal .chamado-paused-note {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.chamado-detail--in-modal .chamado-detail-body {
+  padding-bottom: 20px;
+}
+
+.chamado-detail--in-modal .chamado-detail-foot {
+  padding-bottom: 0;
+}
+
+@media (max-width: 600px) {
   .chamado-search-form {
     grid-template-columns: 1fr;
   }
 
   .chamado-detail-head {
     flex-wrap: wrap;
+    padding: 16px;
   }
 
   .chamado-timeline {
@@ -505,5 +576,9 @@
 
   .chamado-step-label {
     font-size: 0.7rem;
+  }
+
+  .chamado-detail-body {
+    padding: 18px 16px 20px;
   }
 }

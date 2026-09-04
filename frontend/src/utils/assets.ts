@@ -14,6 +14,7 @@ import {
   PiQuestion,
   PiChartPieSliceFill,
   PiHandHeart,
+  PiHeadset,
 } from "react-icons/pi";
 import { TbError404 } from "react-icons/tb";
 
@@ -23,6 +24,7 @@ export type IconKey =
   | "arquivos"
   | "avisos"
   | "certificado"
+  | "chamados"
   | "cursos"
   | "dashs"
   | "documentos"
@@ -38,6 +40,7 @@ export const iconMap: Record<IconKey, IconType> = {
   arquivos: PiArchive,
   avisos: PiInfo,
   certificado: PiCertificate,
+  chamados: PiHeadset,
   cursos: PiGraduationCap,
   dashs: PiChartDonut,
   documentos: PiFolderOpen,
