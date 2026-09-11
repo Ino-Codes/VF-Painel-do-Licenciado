@@ -211,7 +211,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     if (!whatsapp.isConfigured() || !ticket.requester_email) return;
 
     const found = await pool.query(
-      `SELECT u.telefone
+      `SELECT u.nome, u.telefone
          FROM users u
         WHERE LOWER(u.email) = LOWER($1)
           AND u.telefone IS NOT NULL
@@ -229,17 +229,27 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     const to = whatsapp.toZenviaNumber(found.rows[0].telefone);
     if (!to) return;
 
+    // Primeiro nome para a saudação: preferimos o cadastro do Painel e caímos
+    // para o nome gravado no chamado (widget/e-mail podem trazer outro).
+    const primeiroNome =
+      String(found.rows[0].nome || ticket.name || "")
+        .trim()
+        .split(" ")[0] || "colaborador";
+
     const templateId = process.env.ZENVIA_TEMPLATE_TICKET_DONE;
 
     if (templateId) {
       // Os campos precisam casar exatamente com as variáveis do template
-      // aprovado pela Meta, que são apenas estas três — o modelo não tem
-      // variável de link (URL em variável é reprovada na avaliação), ele
-      // remete o usuário a "Meus Chamados" no Painel em texto fixo.
+      // aprovado pela Meta — mandar um campo que o modelo não declara faz a
+      // Zenvia recusar o envio. O modelo em uso tem `nome`, `protocolo`,
+      // `titulo` e `resolucao` no corpo, mais `token` na URL do botão de
+      // acompanhamento (https://…/acompanhar?t={{token}}).
       await whatsapp.sendTemplate(to, templateId, {
+        nome: primeiroNome,
         protocolo: String(ticket.id),
         titulo: ticket.title,
         resolucao: ticket.resolution_notes || "Sem instruções adicionais.",
+        token: ticket.tracking_token,
       });
       return;
     }
@@ -249,9 +259,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     const trackUrl = `${FRONTEND_URL}/acompanhar?t=${ticket.tracking_token}`;
 
     const linhas = [
-      `✅ Seu chamado *#${ticket.id}* foi concluído.`,
+      `Olá, ${primeiroNome}!`,
       "",
-      `*Assunto:* ${ticket.title}`,
+      `✅ Seu chamado *#${ticket.id} — ${ticket.title}* foi concluído.`,
     ];
     if (ticket.resolution_notes) {
       linhas.push("", "*Instruções de resolução:*", ticket.resolution_notes);

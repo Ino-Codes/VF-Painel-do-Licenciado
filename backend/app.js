@@ -181,7 +181,12 @@ const archivesRoutes = require("./routes/archives.js")(
 );
 const praisesRoutes = require("./routes/praises.js")(pool, logActivity);
 const setoresRoutes = require("./routes/setores.js")(pool);
-const whatsappRoutes = require("./routes/whatsapp.js")(pool, logActivity);
+const whatsappRoutes = require("./routes/whatsapp.js")(
+  pool,
+  logActivity,
+  resend,
+  cloudinary,
+);
 
 cronFunctions.initializeCron(pool, resend);
 

@@ -1,28 +1,24 @@
 // backend/routes/whatsapp.js
-// Bot de atendimento no WhatsApp — abertura guiada de chamados pelos
-// colaboradores internos. O envio e o recebimento passam pela Zenvia (BSP
-// oficial da Meta): falamos só com a Zenvia, e ela fala com o WhatsApp.
+// Bot de atendimento no WhatsApp, via Zenvia (BSP oficial da Meta).
 //
-// Regras:
-//   - O canal é restrito: o telefone do remetente precisa bater com o
-//     `telefone` de um usuário que tenha a permissão `internal_access`.
-//     Quem não é reconhecido recebe uma resposta e nada é criado.
-//   - O e-mail do usuário identificado vira o `requester_email` do chamado,
-//     então ele aparece automaticamente em Meus Chamados no Painel e recebe
-//     os e-mails de andamento que já existem.
-//   - O fluxo é guiado por etapas (tipo → assunto → descrição → confirmação),
-//     com o estado em `whatsapp_sessions` (o webhook é sem estado).
+// Fluxos:
+//   • Menu inicial → abrir chamado ou consultar os seus chamados.
+//   • Abertura guiada: tipo → assunto → descrição → confirmação.
+//     A descrição ACUMULA várias mensagens (no WhatsApp as pessoas escrevem
+//     em frases curtas), encerrada por um botão; arquivos enviados no meio do
+//     caminho viram anexos do chamado.
+//   • Vínculo de telefone: número desconhecido informa o e-mail corporativo e
+//     confirma um código de 6 dígitos enviado por e-mail — aí o telefone é
+//     salvo no perfil e a pessoa passa a ser reconhecida.
+//
+// O canal é restrito a quem tem `internal_access`. O e-mail do usuário
+// identificado vira o `requester_email` do chamado, então ele aparece em Meus
+// Chamados no Painel e recebe as notificações que já existem.
 //
 // Variáveis de ambiente:
-//   ZENVIA_API_TOKEN         → X-API-Token da Zenvia (envio de mensagens)
-//   ZENVIA_FROM              → número remetente conectado na Zenvia
-//                              (só dígitos, ex.: 555196354886)
-//   WHATSAPP_WEBHOOK_SECRET  → segredo exigido na URL do webhook. A Zenvia
-//                              NÃO assina os webhooks de entrada (o HMAC dela
-//                              é para autenticar chamadas à API), então a
-//                              proteção é o segredo na própria URL.
-//   WHATSAPP_DEBUG           → "true" registra no log o payload recebido,
-//                              útil para conferir o formato real na largada.
+//   ZENVIA_API_TOKEN, ZENVIA_FROM  → envio (ver ../whatsappSender.js)
+//   WHATSAPP_WEBHOOK_SECRET        → segredo exigido na URL do webhook
+//   WHATSAPP_DEBUG                 → "true" registra o payload recebido
 const express = require("express");
 const crypto = require("crypto");
 const { sendText, sendButtons } = require("../whatsappSender.js");
@@ -34,26 +30,65 @@ const SESSION_TTL_MINUTES = 24 * 60;
 const TITLE_MAX = 120;
 const DESCRIPTION_MAX = 2000;
 
-const TYPE_LABELS = {
-  help: "Ajuda",
-  bug: "Bug",
-  suggestion: "Sugestão",
-};
+// Mesmas restrições do upload pelo Painel (routes/tickets.js).
+const ATTACHMENT_MAX_FILES = 3;
+const ATTACHMENT_MAX_SIZE = 10 * 1024 * 1024;
+const ATTACHMENT_ALLOWED_MIMES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain",
+]);
 
-// Opções do passo "tipo", na ordem em que aparecem nos botões. O índice serve
-// de atalho digitado (1, 2, 3) quando os botões não chegam renderizados.
+// Vínculo de telefone.
+const LINK_CODE_TTL_MINUTES = 15;
+const LINK_MAX_ATTEMPTS = 5;
+
+const TYPE_LABELS = { help: "Ajuda", bug: "Bug", suggestion: "Sugestão" };
+
+// Opções do passo "tipo". O índice serve de atalho digitado (1, 2, 3) quando
+// os botões não chegam renderizados.
 const TYPE_OPTIONS = [
   { key: "help", title: "Ajuda" },
   { key: "bug", title: "Bug" },
   { key: "suggestion", title: "Sugestão" },
 ];
 
+const MENU_OPTIONS = [
+  { key: "new", title: "Abrir chamado", aliases: ["abrir", "novo"] },
+  { key: "list", title: "Meus chamados", aliases: ["consultar", "meus"] },
+];
+
+const CONFIRM_OPTIONS = [
+  { key: "yes", title: "Confirmar", aliases: ["sim", "s", "ok", "confirmo"] },
+  { key: "no", title: "Cancelar", aliases: ["nao", "n"] },
+];
+
+// Rótulos de status para a consulta de chamados (inclui `analise`, que existe
+// no backend e ficava sem tradução).
+const STATUS_LABELS = {
+  novo: "Recebido",
+  analise: "Em análise",
+  andamento: "Em atendimento",
+  concluido: "Concluído",
+  pausado: "Pausado",
+};
+
 const FRONTEND_URL =
   process.env.FRONTEND_URL || "https://painel.vcorporate.com.br";
 
 const firstName = (nome) => String(nome || "").trim().split(" ")[0] || "";
 
-module.exports = function (pool, logActivity) {
+const formatDate = (value) =>
+  new Date(value).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+module.exports = function (pool, logActivity, resend, cloudinary) {
   const WHATSAPP_TENANT_TOKEN = "__whatsapp__";
 
   const debug = (...args) => {
@@ -62,9 +97,14 @@ module.exports = function (pool, logActivity) {
     }
   };
 
-  // ─── Envio ────────────────────────────────────────────────────────────────
-  // O cliente da Zenvia vive em ../whatsappSender.js, compartilhado com as
-  // notificações de chamado.
+  // ─── Perguntas recorrentes ────────────────────────────────────────────────
+
+  const askMenu = (to, intro) =>
+    sendButtons(
+      to,
+      intro,
+      MENU_OPTIONS.map((o) => ({ id: `menu:${o.key}`, title: o.title })),
+    );
 
   const askType = (to, intro) =>
     sendButtons(
@@ -79,31 +119,52 @@ module.exports = function (pool, logActivity) {
       { id: "confirm:no", title: "Cancelar" },
     ]);
 
+  const askDescriptionDone = (to, body) =>
+    sendButtons(to, body, [{ id: "desc:done", title: "Pronto, pode abrir" }]);
+
   // ─── Identificação do colaborador ─────────────────────────────────────────
 
   // O telefone chega como 55 + DDD + número e, no Brasil, pode vir sem o nono
   // dígito. Comparar DDD + os 8 últimos dígitos é estável nos dois formatos.
-  const findInternalUserByPhone = async (waId) => {
+  const splitPhone = (waId) => {
     const digits = String(waId || "").replace(/\D/g, "");
     const national = digits.startsWith("55") ? digits.slice(2) : digits;
     if (national.length < 10) return null;
+    return { national, ddd: national.slice(0, 2), last8: national.slice(-8) };
+  };
 
-    const ddd = national.slice(0, 2);
-    const last8 = national.slice(-8);
+  const INTERNAL_EXISTS = `
+    EXISTS (
+      SELECT 1 FROM group_permissions gp
+       WHERE gp.group_id = u.group_id
+         AND gp.permission_key = 'internal_access'
+    )`;
+
+  const findInternalUserByPhone = async (waId) => {
+    const parts = splitPhone(waId);
+    if (!parts) return null;
 
     const result = await pool.query(
       `SELECT u.id, u.nome, u.email
-       FROM users u
-       WHERE u.telefone IS NOT NULL
-         AND LEFT(REGEXP_REPLACE(u.telefone, '[^0-9]', '', 'g'), 2) = $1
-         AND RIGHT(REGEXP_REPLACE(u.telefone, '[^0-9]', '', 'g'), 8) = $2
-         AND EXISTS (
-           SELECT 1 FROM group_permissions gp
-           WHERE gp.group_id = u.group_id
-             AND gp.permission_key = 'internal_access'
-         )
-       LIMIT 1`,
-      [ddd, last8],
+         FROM users u
+        WHERE u.telefone IS NOT NULL
+          AND LEFT(REGEXP_REPLACE(u.telefone, '[^0-9]', '', 'g'), 2) = $1
+          AND RIGHT(REGEXP_REPLACE(u.telefone, '[^0-9]', '', 'g'), 8) = $2
+          AND ${INTERNAL_EXISTS}
+        LIMIT 1`,
+      [parts.ddd, parts.last8],
+    );
+    return result.rows[0] || null;
+  };
+
+  const findInternalUserByEmail = async (email) => {
+    const result = await pool.query(
+      `SELECT u.id, u.nome, u.email, u.telefone
+         FROM users u
+        WHERE LOWER(u.email) = LOWER($1)
+          AND ${INTERNAL_EXISTS}
+        LIMIT 1`,
+      [String(email).trim()],
     );
     return result.rows[0] || null;
   };
@@ -113,41 +174,55 @@ module.exports = function (pool, logActivity) {
   const getSession = async (waId) => {
     const result = await pool.query(
       `SELECT * FROM whatsapp_sessions
-       WHERE wa_id = $1
-         AND updated_at > NOW() - make_interval(mins => $2)`,
+        WHERE wa_id = $1
+          AND updated_at > NOW() - make_interval(mins => $2)`,
       [waId, SESSION_TTL_MINUTES],
     );
     return result.rows[0] || null;
   };
 
+  // Grava o estado inteiro: o upsert substitui todas as colunas, então quem
+  // chama deve espalhar a sessão atual (`{ ...session, ... }`) para não perder
+  // o que não está mudando.
   const saveSession = async (waId, userId, state) => {
     await pool.query(
       `INSERT INTO whatsapp_sessions
-         (wa_id, user_id, step, ticket_type, title, description, last_message_id, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+         (wa_id, user_id, step, ticket_type, title, description,
+          last_message_id, link_email, link_code_hash, link_code_expires_at,
+          link_attempts, attachments, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
        ON CONFLICT (wa_id) DO UPDATE
-         SET user_id         = EXCLUDED.user_id,
-             step            = EXCLUDED.step,
-             ticket_type     = EXCLUDED.ticket_type,
-             title           = EXCLUDED.title,
-             description     = EXCLUDED.description,
-             last_message_id = EXCLUDED.last_message_id,
-             updated_at      = NOW()`,
+         SET user_id              = EXCLUDED.user_id,
+             step                 = EXCLUDED.step,
+             ticket_type          = EXCLUDED.ticket_type,
+             title                = EXCLUDED.title,
+             description          = EXCLUDED.description,
+             last_message_id      = EXCLUDED.last_message_id,
+             link_email           = EXCLUDED.link_email,
+             link_code_hash       = EXCLUDED.link_code_hash,
+             link_code_expires_at = EXCLUDED.link_code_expires_at,
+             link_attempts        = EXCLUDED.link_attempts,
+             attachments          = EXCLUDED.attachments,
+             updated_at           = NOW()`,
       [
         waId,
-        userId,
+        userId ?? null,
         state.step,
         state.ticket_type ?? null,
         state.title ?? null,
         state.description ?? null,
         state.last_message_id ?? null,
+        state.link_email ?? null,
+        state.link_code_hash ?? null,
+        state.link_code_expires_at ?? null,
+        state.link_attempts ?? 0,
+        JSON.stringify(state.attachments ?? []),
       ],
     );
   };
 
   // ─── Criação do chamado ───────────────────────────────────────────────────
 
-  // Tenant próprio do canal, na mesma ideia do canal de e-mail.
   const getOrCreateWhatsappTenant = async () => {
     const found = await pool.query(
       "SELECT id FROM widget_tenants WHERE token = $1 LIMIT 1",
@@ -183,6 +258,9 @@ module.exports = function (pool, logActivity) {
   const createTicket = async (session, user, sourceMessageId) => {
     const tenantId = await getOrCreateWhatsappTenant();
     const trackingToken = crypto.randomBytes(32).toString("hex");
+    const attachments = Array.isArray(session.attachments)
+      ? session.attachments
+      : [];
 
     try {
       return await withTransaction(async (client) => {
@@ -203,7 +281,18 @@ module.exports = function (pool, logActivity) {
             sourceMessageId,
           ],
         );
-        return inserted.rows[0];
+        const ticket = inserted.rows[0];
+
+        for (const att of attachments) {
+          await client.query(
+            `INSERT INTO ticket_attachments
+               (ticket_id, file_url, file_name, file_type)
+             VALUES ($1, $2, $3, $4)`,
+            [ticket.id, att.file_url, att.file_name, att.file_type],
+          );
+        }
+
+        return ticket;
       });
     } catch (err) {
       // 23505 = violação de índice único → a mensagem já virou chamado.
@@ -218,25 +307,114 @@ module.exports = function (pool, logActivity) {
     }
   };
 
+  // ─── Anexos ───────────────────────────────────────────────────────────────
+
+  const uploadToCloudinary = (buffer) =>
+    new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "tickets", resource_type: "auto" },
+        (error, result) => (error ? reject(error) : resolve(result)),
+      );
+      stream.end(buffer);
+    });
+
+  // Baixa o arquivo da Zenvia e sobe para o Cloudinary na hora, para não
+  // depender da URL de origem continuar válida até a criação do chamado.
+  // Devolve { ok, attachment } ou { ok: false, reason }.
+  const storeAttachment = async (file) => {
+    const mime = String(file.fileMimeType || "").split(";")[0].trim();
+    if (!ATTACHMENT_ALLOWED_MIMES.has(mime)) {
+      return { ok: false, reason: "tipo" };
+    }
+    try {
+      const response = await fetch(file.fileUrl);
+      if (!response.ok) {
+        console.error("[whatsapp] Falha ao baixar anexo:", response.status);
+        return { ok: false, reason: "download" };
+      }
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.length > ATTACHMENT_MAX_SIZE) {
+        return { ok: false, reason: "tamanho" };
+      }
+
+      const uploaded = await uploadToCloudinary(buffer);
+      return {
+        ok: true,
+        attachment: {
+          file_url: uploaded.secure_url,
+          file_name: file.fileName || `anexo.${uploaded.format || "bin"}`,
+          file_type: mime,
+        },
+      };
+    } catch (err) {
+      console.error("[whatsapp] Erro ao processar anexo:", err);
+      return { ok: false, reason: "erro" };
+    }
+  };
+
+  // ─── Consulta de chamados ─────────────────────────────────────────────────
+
+  const listMyTickets = async (user) => {
+    const result = await pool.query(
+      `SELECT id, title, status, created_at
+         FROM tickets
+        WHERE LOWER(requester_email) = LOWER($1)
+        ORDER BY created_at DESC
+        LIMIT 5`,
+      [user.email],
+    );
+    return result.rows;
+  };
+
+  // ─── Vínculo de telefone ──────────────────────────────────────────────────
+
+  const hashCode = (code) =>
+    crypto.createHash("sha256").update(String(code)).digest("hex");
+
+  const sendLinkCodeEmail = async (user, code) => {
+    if (!resend) {
+      console.warn("[whatsapp] resend ausente — código não enviado.");
+      return false;
+    }
+    try {
+      await resend.emails.send({
+        from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
+        to: user.email,
+        subject: "Código para vincular seu WhatsApp - Painel V-CORP",
+        html: `
+          <p>Olá, ${firstName(user.nome)}!</p>
+          <p>Use o código abaixo no WhatsApp para vincular o seu número ao Painel da V-CORP:</p>
+          <p style="font-size:28px;font-weight:bold;letter-spacing:6px;">${code}</p>
+          <p>O código vale por ${LINK_CODE_TTL_MINUTES} minutos.</p>
+          <p style="font-size:13px;color:#6c757d;">Se não foi você que pediu, ignore este e-mail e avise o time de TI.</p>
+        `,
+      });
+      return true;
+    } catch (err) {
+      console.error("[whatsapp] Falha ao enviar código por e-mail:", err);
+      return false;
+    }
+  };
+
   // ─── Leitura do payload da Zenvia ─────────────────────────────────────────
 
   // Envelope esperado:
   //   { type: "MESSAGE", direction: "IN", message: { id, from, to, contents } }
   // O clique em botão chega como conteúdo `text` com um campo `payload`
-  // contendo o `id` do botão enviado.
+  // contendo o `id` do botão enviado. Mídia chega como conteúdo `file`.
   const parseInbound = (event) => {
     const message = event?.message || {};
     const contents = Array.isArray(message.contents) ? message.contents : [];
-    const content =
-      contents.find((c) => c && (c.type === "text" || c.payload)) ||
-      contents[0] ||
-      {};
+    const textual =
+      contents.find((c) => c && (c.type === "text" || c.payload)) || {};
+    const file = contents.find((c) => c && c.type === "file") || null;
 
     return {
       waId: message.from ? String(message.from) : null,
       messageId: String(message.id || event?.id || ""),
-      text: String(content.text || "").trim(),
-      payload: content.payload ? String(content.payload) : null,
+      text: String(textual.text || "").trim(),
+      payload: textual.payload ? String(textual.payload) : null,
+      file,
     };
   };
 
@@ -272,26 +450,12 @@ module.exports = function (pool, logActivity) {
     return byLabel ? byLabel.key : null;
   };
 
-  const CONFIRM_OPTIONS = [
-    { key: "yes", title: "Confirmar", aliases: ["sim", "s", "ok", "confirmo"] },
-    { key: "no", title: "Cancelar", aliases: ["nao", "n"] },
-  ];
-
-  // ─── Máquina de estados da conversa ───────────────────────────────────────
+  // ─── Máquina de estados ───────────────────────────────────────────────────
 
   const handleMessage = async (event) => {
-    const { waId, messageId, text, payload } = parseInbound(event);
+    const { waId, messageId, text, payload, file } = parseInbound(event);
     if (!waId) {
       debug("mensagem sem remetente, ignorada:", JSON.stringify(event));
-      return;
-    }
-
-    const user = await findInternalUserByPhone(waId);
-    if (!user) {
-      await sendText(
-        waId,
-        "Este canal é exclusivo para colaboradores da V-CORP. Se você faz parte da equipe, peça para cadastrarem este número de telefone no seu perfil do Painel.",
-      );
       return;
     }
 
@@ -302,35 +466,55 @@ module.exports = function (pool, logActivity) {
       return;
     }
 
-    const startFlow = async (intro) => {
+    const user = await findInternalUserByPhone(waId);
+
+    // ── Número não reconhecido → fluxo de vínculo ──
+    if (!user) {
+      await handleLinkFlow({ waId, messageId, text, session });
+      return;
+    }
+
+    const startFlow = async () => {
       await saveSession(waId, user.id, {
         step: "type",
         last_message_id: messageId,
+        attachments: [],
       });
-      await askType(waId, intro);
+      await askType(waId, "Qual é o tipo do chamado?");
+    };
+
+    const showMenu = async (intro) => {
+      await saveSession(waId, user.id, {
+        step: "menu",
+        last_message_id: messageId,
+        attachments: [],
+      });
+      await askMenu(waId, intro);
     };
 
     // Encerra a conversa mantendo o `last_message_id`: se o provedor reenviar
-    // a mensagem que concluiu (ou cancelou) o fluxo, o guarda de reentrega
-    // acima reconhece e ignora, em vez de abrir uma conversa nova. O registro
-    // desaparece sozinho pelo TTL.
+    // a mensagem que concluiu o fluxo, o guarda de reentrega acima reconhece
+    // e ignora, em vez de abrir uma conversa nova.
     const finishSession = () =>
-      saveSession(waId, user.id, { step: "done", last_message_id: messageId });
+      saveSession(waId, user.id, {
+        step: "done",
+        last_message_id: messageId,
+        attachments: [],
+      });
 
     // Saída disponível em qualquer etapa.
-    if (["cancelar", "sair", "parar"].includes(text.toLowerCase())) {
+    if (["cancelar", "sair", "parar"].includes(slug(text))) {
       await finishSession();
       await sendText(
         waId,
-        "Tudo bem, cancelei a abertura do chamado. Quando quiser começar de novo, é só mandar uma mensagem.",
+        "Tudo bem, cancelei. Quando quiser, é só mandar uma mensagem.",
       );
       return;
     }
 
-    // Sem conversa em andamento (ou expirada) → começa o fluxo.
-    if (!session) {
-      await startFlow(
-        `Olá, ${firstName(user.nome)}! Vou te ajudar a abrir um chamado. Qual é o tipo?`,
+    if (!session || session.step === "done") {
+      await showMenu(
+        `Olá, ${firstName(user.nome)}! Sou o atendimento da V-CORP. O que você precisa?`,
       );
       return;
     }
@@ -338,14 +522,43 @@ module.exports = function (pool, logActivity) {
     const base = { ...session, last_message_id: messageId };
 
     switch (session.step) {
+      case "menu": {
+        const choice = resolveChoice(payload, text, "menu", MENU_OPTIONS);
+        if (choice === "new") {
+          await startFlow();
+          return;
+        }
+        if (choice === "list") {
+          const tickets = await listMyTickets(user);
+          if (!tickets.length) {
+            await showMenu(
+              "Você ainda não tem chamados abertos com este número. Quer abrir um agora?",
+            );
+            return;
+          }
+          const linhas = tickets.map(
+            (t) =>
+              `*#${t.id}* — ${t.title}\n   ${
+                STATUS_LABELS[t.status] || t.status
+              } · ${formatDate(t.created_at)}`,
+          );
+          await sendText(
+            waId,
+            `Seus chamados mais recentes:\n\n${linhas.join("\n\n")}`,
+          );
+          await showMenu("Posso ajudar em algo mais?");
+          return;
+        }
+        await saveSession(waId, user.id, base);
+        await askMenu(waId, "Não entendi. Escolha uma opção:");
+        return;
+      }
+
       case "type": {
         const type = resolveChoice(payload, text, "type", TYPE_OPTIONS);
         if (!type) {
           await saveSession(waId, user.id, base);
-          await askType(
-            waId,
-            "Não entendi. Escolha o tipo do chamado:",
-          );
+          await askType(waId, "Não entendi. Escolha o tipo do chamado:");
           return;
         }
         await saveSession(waId, user.id, {
@@ -369,37 +582,101 @@ module.exports = function (pool, logActivity) {
           );
           return;
         }
+        const truncated = text.length > TITLE_MAX;
         await saveSession(waId, user.id, {
           ...base,
           step: "description",
           title: text.slice(0, TITLE_MAX),
         });
-        await sendText(
+        await askDescriptionDone(
           waId,
-          "Anotado. Agora descreva o que está acontecendo, com o máximo de detalhes que puder.",
+          `${
+            truncated
+              ? `Ficou longo, então resumi o assunto para os primeiros ${TITLE_MAX} caracteres.\n\n`
+              : ""
+          }Agora descreva o que está acontecendo. Pode mandar em várias mensagens e anexar fotos ou arquivos — quando terminar, toque em *Pronto, pode abrir*.`,
         );
         return;
       }
 
       case "description": {
-        if (!text) {
-          await saveSession(waId, user.id, base);
-          await sendText(
+        // Encerrou a coleta?
+        if (payload === "desc:done" || slug(text) === "pronto") {
+          const atuais = Array.isArray(session.attachments)
+            ? session.attachments
+            : [];
+          if (!session.description && !atuais.length) {
+            await saveSession(waId, user.id, base);
+            await askDescriptionDone(
+              waId,
+              "Preciso de pelo menos uma descrição antes de abrir. O que está acontecendo?",
+            );
+            return;
+          }
+          await saveSession(waId, user.id, { ...base, step: "confirm" });
+          await askConfirm(
             waId,
-            "Preciso da descrição em texto, por favor. Se tiver imagens ou arquivos, anexe depois pelo Painel.",
+            `Confira antes de eu abrir:\n\n*Tipo:* ${
+              TYPE_LABELS[session.ticket_type] || session.ticket_type
+            }\n*Assunto:* ${session.title}\n*Descrição:* ${
+              session.description || "(sem texto)"
+            }${atuais.length ? `\n*Anexos:* ${atuais.length}` : ""}`,
           );
           return;
         }
-        const description = text.slice(0, DESCRIPTION_MAX);
-        await saveSession(waId, user.id, {
-          ...base,
-          step: "confirm",
-          description,
-        });
-        await askConfirm(
-          waId,
-          `Confira antes de eu abrir:\n\n*Tipo:* ${TYPE_LABELS[session.ticket_type] || session.ticket_type}\n*Assunto:* ${session.title}\n*Descrição:* ${description}`,
-        );
+
+        const atuais = Array.isArray(session.attachments)
+          ? session.attachments
+          : [];
+        let attachments = atuais;
+        const avisos = [];
+
+        // Arquivo enviado no meio da descrição vira anexo do chamado.
+        if (file) {
+          if (attachments.length >= ATTACHMENT_MAX_FILES) {
+            avisos.push(
+              `Só consigo anexar ${ATTACHMENT_MAX_FILES} arquivos por chamado, então este ficou de fora.`,
+            );
+          } else {
+            const stored = await storeAttachment(file);
+            if (stored.ok) {
+              attachments = [...attachments, stored.attachment];
+              avisos.push(`Anexo recebido (${attachments.length}/${ATTACHMENT_MAX_FILES}).`);
+            } else if (stored.reason === "tipo") {
+              avisos.push("Esse tipo de arquivo não é aceito, então ignorei o anexo.");
+            } else if (stored.reason === "tamanho") {
+              avisos.push("O arquivo passou de 10 MB, então ignorei o anexo.");
+            } else {
+              avisos.push("Não consegui baixar esse anexo, pode tentar de novo?");
+            }
+          }
+        }
+
+        // Texto (ou legenda do arquivo) acumula na descrição.
+        const trecho = text || String(file?.fileCaption || "").trim();
+        let description = session.description || "";
+        if (trecho) {
+          const juntos = description ? `${description}\n${trecho}` : trecho;
+          if (juntos.length > DESCRIPTION_MAX) {
+            description = juntos.slice(0, DESCRIPTION_MAX);
+            avisos.push(
+              `A descrição atingiu o limite de ${DESCRIPTION_MAX} caracteres, então o resto não entrou.`,
+            );
+          } else {
+            description = juntos;
+          }
+        }
+
+        await saveSession(waId, user.id, { ...base, description, attachments });
+
+        // Silêncio a cada frase seria ruim; repetir a instrução inteira toda
+        // vez também. Só falamos quando há um aviso relevante.
+        if (avisos.length) {
+          await askDescriptionDone(
+            waId,
+            `${avisos.join(" ")}\n\nPode continuar ou tocar em *Pronto, pode abrir*.`,
+          );
+        }
         return;
       }
 
@@ -420,10 +697,15 @@ module.exports = function (pool, logActivity) {
         }
 
         const ticket = await createTicket(session, user, messageId);
+        const anexos = Array.isArray(session.attachments)
+          ? session.attachments.length
+          : 0;
         await finishSession();
         await sendText(
           waId,
-          `Chamado aberto! ✅\n\n*Protocolo:* #${ticket.id}\n\nVocê pode acompanhar o andamento por aqui:\n${FRONTEND_URL}/acompanhar?t=${ticket.tracking_token}\n\nEle também já aparece em *Meus Chamados* no Painel.`,
+          `Chamado aberto! ✅\n\n*Protocolo:* #${ticket.id}${
+            anexos ? `\n*Anexos:* ${anexos}` : ""
+          }\n\nVocê pode acompanhar o andamento por aqui:\n${FRONTEND_URL}/acompanhar?t=${ticket.tracking_token}\n\nEle também já aparece em *Meus Chamados* no Painel.`,
         );
 
         try {
@@ -440,24 +722,199 @@ module.exports = function (pool, logActivity) {
         return;
       }
 
-      case "done": {
-        // Conversa anterior já encerrada e esta é uma mensagem nova (a
-        // reentrega foi filtrada antes) → abre um fluxo novo.
-        await startFlow(
-          `Olá, ${firstName(user.nome)}! Vamos abrir outro chamado. Qual é o tipo?`,
-        );
-        return;
-      }
-
       default: {
-        // Etapa desconhecida (ex.: schema alterado) → reinicia o fluxo.
-        await startFlow("Vamos começar de novo. Qual é o tipo do chamado?");
+        await showMenu("Vamos começar de novo. O que você precisa?");
         return;
       }
     }
   };
 
-  // A Zenvia envia um evento por requisição, mas aceitamos lote por segurança.
+  // ─── Fluxo de vínculo de telefone ─────────────────────────────────────────
+
+  const handleLinkFlow = async ({ waId, messageId, text, session }) => {
+    const step = session?.step;
+
+    // Pedido do e-mail (entrada no fluxo ou repetição).
+    if (step !== "link_email" && step !== "link_code") {
+      await saveSession(waId, null, {
+        step: "link_email",
+        last_message_id: messageId,
+        attachments: [],
+      });
+      await sendText(
+        waId,
+        "Olá! Este canal é o atendimento interno da V-CORP e ainda não reconheço este número.\n\nSe você é da equipe, me diga o seu *e-mail corporativo* que eu envio um código para vincular o seu WhatsApp.",
+      );
+      return;
+    }
+
+    if (step === "link_email") {
+      const email = text.toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        await saveSession(waId, null, {
+          ...session,
+          last_message_id: messageId,
+        });
+        await sendText(
+          waId,
+          "Isso não parece um e-mail. Me manda o seu e-mail corporativo, por favor.",
+        );
+        return;
+      }
+
+      const user = await findInternalUserByEmail(email);
+      // Resposta idêntica em qualquer caso: confirmar se um e-mail existe (ou
+      // se é de um colaborador interno) daria uma pista a quem está tentando
+      // adivinhar endereços.
+      const respostaNeutra =
+        "Se esse e-mail for de um colaborador, enviei um código de 6 dígitos para ele agora. Me manda o código aqui.";
+
+      if (!user) {
+        await saveSession(waId, null, {
+          step: "link_code",
+          last_message_id: messageId,
+          link_email: email,
+          link_code_hash: null,
+          link_code_expires_at: null,
+          link_attempts: 0,
+          attachments: [],
+        });
+        await sendText(waId, respostaNeutra);
+        return;
+      }
+
+      // Número já usado por outra pessoa: vincular sobrescreveria o cadastro
+      // dela, então paramos e mandamos para o time de TI.
+      const parts = splitPhone(waId);
+      const emUso = await pool.query(
+        `SELECT 1 FROM users u
+          WHERE u.id <> $1
+            AND u.telefone IS NOT NULL
+            AND LEFT(REGEXP_REPLACE(u.telefone, '[^0-9]', '', 'g'), 2) = $2
+            AND RIGHT(REGEXP_REPLACE(u.telefone, '[^0-9]', '', 'g'), 8) = $3
+          LIMIT 1`,
+        [user.id, parts.ddd, parts.last8],
+      );
+      if (emUso.rowCount) {
+        await saveSession(waId, null, {
+          step: "done",
+          last_message_id: messageId,
+          attachments: [],
+        });
+        await sendText(
+          waId,
+          "Este número já está cadastrado no perfil de outra pessoa. Fale com o time de TI para ajustar antes de usar o atendimento por aqui.",
+        );
+        return;
+      }
+
+      const code = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+      const expires = new Date(Date.now() + LINK_CODE_TTL_MINUTES * 60 * 1000);
+      await sendLinkCodeEmail(user, code);
+
+      await saveSession(waId, null, {
+        step: "link_code",
+        last_message_id: messageId,
+        link_email: user.email,
+        link_code_hash: hashCode(code),
+        link_code_expires_at: expires,
+        link_attempts: 0,
+        attachments: [],
+      });
+      await sendText(waId, respostaNeutra);
+      return;
+    }
+
+    // step === "link_code"
+    const informado = text.replace(/\D/g, "");
+    const tentativas = Number(session.link_attempts || 0) + 1;
+
+    if (tentativas > LINK_MAX_ATTEMPTS) {
+      await saveSession(waId, null, {
+        step: "done",
+        last_message_id: messageId,
+        attachments: [],
+      });
+      await sendText(
+        waId,
+        "Muitas tentativas. Por segurança, encerrei por aqui — mande uma mensagem para começar de novo.",
+      );
+      return;
+    }
+
+    const expirado =
+      !session.link_code_expires_at ||
+      new Date(session.link_code_expires_at).getTime() < Date.now();
+    const confere =
+      Boolean(session.link_code_hash) &&
+      informado.length === 6 &&
+      hashCode(informado) === session.link_code_hash;
+
+    if (!confere || expirado) {
+      await saveSession(waId, null, {
+        ...session,
+        last_message_id: messageId,
+        link_attempts: tentativas,
+      });
+      await sendText(
+        waId,
+        expirado && session.link_code_hash
+          ? "Esse código expirou. Me manda o seu e-mail corporativo de novo que eu envio outro."
+          : `Código incorreto. Tente novamente (tentativa ${tentativas} de ${LINK_MAX_ATTEMPTS}).`,
+      );
+      if (expirado && session.link_code_hash) {
+        await saveSession(waId, null, {
+          step: "link_email",
+          last_message_id: messageId,
+          attachments: [],
+        });
+      }
+      return;
+    }
+
+    const user = await findInternalUserByEmail(session.link_email);
+    if (!user) {
+      await saveSession(waId, null, {
+        step: "done",
+        last_message_id: messageId,
+        attachments: [],
+      });
+      await sendText(waId, "Não consegui concluir o vínculo. Fale com o time de TI.");
+      return;
+    }
+
+    // Grava no formato do Painel (nacional, só dígitos).
+    const parts = splitPhone(waId);
+    await pool.query("UPDATE users SET telefone = $1 WHERE id = $2", [
+      parts.national,
+      user.id,
+    ]);
+
+    try {
+      await logActivity(
+        user.id,
+        user.email,
+        "WhatsApp Vinculado",
+        "Telefone vinculado ao perfil pelo bot de WhatsApp (código por e-mail).",
+        null,
+      );
+    } catch (e) {
+      console.warn("[whatsapp] Falha ao registrar log:", e);
+    }
+
+    await saveSession(waId, user.id, {
+      step: "menu",
+      last_message_id: messageId,
+      attachments: [],
+    });
+    await askMenu(
+      waId,
+      `Tudo certo, ${firstName(user.nome)}! Seu WhatsApp está vinculado ao Painel. O que você precisa?`,
+    );
+  };
+
+  // ─── Webhook ──────────────────────────────────────────────────────────────
+
   const handleWebhook = async (body) => {
     debug("payload recebido:", JSON.stringify(body));
 
@@ -483,14 +940,9 @@ module.exports = function (pool, logActivity) {
     }
   };
 
-  // ─── Webhook ──────────────────────────────────────────────────────────────
-
   // A Zenvia não assina os webhooks de entrada, então a autenticidade vem de
-  // um segredo na própria URL cadastrada:
-  //   https://.../api/whatsapp/webhook?token=<WHATSAPP_WEBHOOK_SECRET>
-  // O segredo é aceito como query (`?token=…`) ou como último segmento do
-  // caminho (`/webhook/<segredo>`), porque alguns painéis de provedor não
-  // aceitam query string no campo da URL.
+  // um segredo na própria URL. Aceito como query (`?token=…`) ou como último
+  // segmento do caminho (`/webhook/<segredo>`).
   const hasValidSecret = (req) => {
     const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
     if (!expected) return true; // sem segredo → não valida (ambiente de teste)
@@ -505,13 +957,11 @@ module.exports = function (pool, logActivity) {
     }
   };
 
-  // Conferência rápida de que a URL está no ar e o segredo bate.
   const healthHandler = (req, res) => {
     if (!hasValidSecret(req)) return res.sendStatus(403);
     return res.status(200).json({ ok: true, channel: "whatsapp" });
   };
 
-  // Mensagens recebidas.
   const webhookHandler = (req, res) => {
     if (!hasValidSecret(req)) {
       return res.status(403).json({ error: "Segredo inválido." });
