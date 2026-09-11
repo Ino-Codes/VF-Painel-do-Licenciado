@@ -181,6 +181,7 @@ const archivesRoutes = require("./routes/archives.js")(
 );
 const praisesRoutes = require("./routes/praises.js")(pool, logActivity);
 const setoresRoutes = require("./routes/setores.js")(pool);
+const whatsappRoutes = require("./routes/whatsapp.js")(pool, logActivity);
 
 cronFunctions.initializeCron(pool, resend);
 
@@ -214,6 +215,11 @@ app.use("/api/meeting-records", corsRestrito, meetingRecordsRoutes);
 app.use("/api/archives", corsRestrito, archivesRoutes);
 app.use("/api/praises", corsRestrito, praisesRoutes);
 app.use("/api/setores", corsRestrito, setoresRoutes);
+
+// Webhook do bot de WhatsApp (via Zenvia). Chamada servidor-a-servidor, sem
+// origem de navegador; a autenticidade vem do segredo na URL cadastrada na
+// Zenvia (ela não assina os webhooks de entrada).
+app.use("/api/whatsapp", corsAberto, whatsappRoutes);
 
 // ── Rota pública do widget — CORS aberto, sem autenticação ────────────────────
 app.use("/api/ticket", corsAberto, ticketsRoutes);
