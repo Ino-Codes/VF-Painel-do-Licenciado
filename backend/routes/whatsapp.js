@@ -25,9 +25,8 @@
 //                              útil para conferir o formato real na largada.
 const express = require("express");
 const crypto = require("crypto");
+const { sendText, sendButtons } = require("../whatsappSender.js");
 const router = express.Router();
-
-const ZENVIA_API_URL = "https://api.zenvia.com/v2/channels/whatsapp/messages";
 
 // Conversa abandonada expira: a próxima mensagem começa um fluxo novo.
 const SESSION_TTL_MINUTES = 24 * 60;
@@ -63,55 +62,9 @@ module.exports = function (pool, logActivity) {
     }
   };
 
-  // ─── Envio (API da Zenvia) ────────────────────────────────────────────────
-
-  const sendContents = async (to, contents) => {
-    const token = process.env.ZENVIA_API_TOKEN;
-    const from = process.env.ZENVIA_FROM;
-    if (!token || !from) {
-      console.warn(
-        "[whatsapp] ZENVIA_API_TOKEN/ZENVIA_FROM ausentes — resposta não enviada.",
-      );
-      return false;
-    }
-    try {
-      const response = await fetch(ZENVIA_API_URL, {
-        method: "POST",
-        headers: {
-          "X-API-TOKEN": token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ from, to, contents }),
-      });
-      if (!response.ok) {
-        console.error(
-          "[whatsapp] Falha ao enviar mensagem:",
-          response.status,
-          await response.text(),
-        );
-        return false;
-      }
-      return true;
-    } catch (err) {
-      console.error("[whatsapp] Erro ao enviar mensagem:", err);
-      return false;
-    }
-  };
-
-  const sendText = (to, text) => sendContents(to, [{ type: "text", text }]);
-
-  // Botões de resposta rápida. Se a Zenvia recusar o conteúdo interativo,
-  // cai para uma lista numerada em texto — a máquina de estados aceita as
-  // duas formas de resposta, então o fluxo não trava.
-  const sendButtons = async (to, body, buttons) => {
-    const ok = await sendContents(to, [{ type: "button", body, buttons }]);
-    if (ok) return;
-
-    const numbered = buttons
-      .map((b, i) => `${i + 1}. ${b.title}`)
-      .join("\n");
-    await sendText(to, `${body}\n\n${numbered}\n\nResponda com o número.`);
-  };
+  // ─── Envio ────────────────────────────────────────────────────────────────
+  // O cliente da Zenvia vive em ../whatsappSender.js, compartilhado com as
+  // notificações de chamado.
 
   const askType = (to, intro) =>
     sendButtons(

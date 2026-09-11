@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const multer = require("multer");
 const router = express.Router();
 const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
+const whatsapp = require("../whatsappSender.js");
 
 // ── Anexos do chamado ──────────────────────────────────────────────────────
 const ATTACHMENT_MAX_FILES = 3;
@@ -196,6 +197,69 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     attendant_name: t.attendant_name || null,
     resolution_notes: t.status === "concluido" ? t.resolution_notes : null,
   });
+
+  // ── Notificação de conclusão no WhatsApp ──────────────────────────────────
+  // Vale para solicitantes que são colaboradores internos com telefone
+  // cadastrado (os mesmos que o bot reconhece).
+  //
+  // ⚠️ O WhatsApp só entrega mensagem livre dentro de 24h desde a última
+  // mensagem do usuário. Como a conclusão costuma acontecer dias depois da
+  // abertura, o caminho confiável é TEMPLATE aprovado: se
+  // ZENVIA_TEMPLATE_TICKET_DONE estiver configurado, usamos o template; se
+  // não, tentamos texto livre — que funciona só em conclusões rápidas.
+  const notifyClosedOnWhatsapp = async (ticket) => {
+    if (!whatsapp.isConfigured() || !ticket.requester_email) return;
+
+    const found = await pool.query(
+      `SELECT u.telefone
+         FROM users u
+        WHERE LOWER(u.email) = LOWER($1)
+          AND u.telefone IS NOT NULL
+          AND TRIM(u.telefone) <> ''
+          AND EXISTS (
+            SELECT 1 FROM group_permissions gp
+             WHERE gp.group_id = u.group_id
+               AND gp.permission_key = 'internal_access'
+          )
+        LIMIT 1`,
+      [ticket.requester_email],
+    );
+    if (!found.rowCount) return;
+
+    const to = whatsapp.toZenviaNumber(found.rows[0].telefone);
+    if (!to) return;
+
+    const templateId = process.env.ZENVIA_TEMPLATE_TICKET_DONE;
+
+    if (templateId) {
+      // Os campos precisam casar exatamente com as variáveis do template
+      // aprovado pela Meta, que são apenas estas três — o modelo não tem
+      // variável de link (URL em variável é reprovada na avaliação), ele
+      // remete o usuário a "Meus Chamados" no Painel em texto fixo.
+      await whatsapp.sendTemplate(to, templateId, {
+        protocolo: String(ticket.id),
+        titulo: ticket.title,
+        resolucao: ticket.resolution_notes || "Sem instruções adicionais.",
+      });
+      return;
+    }
+
+    // Texto livre não passa por avaliação, então aqui cabe o link direto de
+    // acompanhamento — mais útil que remeter o usuário ao Painel.
+    const trackUrl = `${FRONTEND_URL}/acompanhar?t=${ticket.tracking_token}`;
+
+    const linhas = [
+      `✅ Seu chamado *#${ticket.id}* foi concluído.`,
+      "",
+      `*Assunto:* ${ticket.title}`,
+    ];
+    if (ticket.resolution_notes) {
+      linhas.push("", "*Instruções de resolução:*", ticket.resolution_notes);
+    }
+    linhas.push("", `Detalhes: ${trackUrl}`);
+
+    await whatsapp.sendText(to, linhas.join("\n"));
+  };
 
   // ── POST /api/ticket (público — chamado pelo widget) ────────────────────
   router.post("/", async (req, res) => {
@@ -933,7 +997,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       const { resolution_notes } = req.body;
 
       try {
-        const ticket = await withTransaction(async (client) => {
+        const { wasAlreadyClosed, ...ticket } = await withTransaction(async (
+          client,
+        ) => {
           const cur = await client.query(
             "SELECT status FROM tickets WHERE id = $1 FOR UPDATE",
             [id],
@@ -962,7 +1028,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
             });
           }
 
-          return result.rows[0];
+          // `wasAlreadyClosed` evita notificar de novo quando o chamado é
+          // encerrado uma segunda vez.
+          return { ...result.rows[0], wasAlreadyClosed: from === "concluido" };
         });
 
         // Busca o e-mail do atendente para colocar em cópia (CC)
@@ -1007,6 +1075,19 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
             await resend.emails.send(payload);
           } catch (mailErr) {
             console.warn("Falha ao enviar e-mail de conclusão:", mailErr);
+          }
+        }
+
+        // ── Notificação de conclusão no WhatsApp ──
+        // Nunca deixa uma falha no WhatsApp derrubar o encerramento.
+        if (!wasAlreadyClosed) {
+          try {
+            await notifyClosedOnWhatsapp(ticket);
+          } catch (waErr) {
+            console.warn(
+              "Falha ao notificar conclusão no WhatsApp:",
+              waErr,
+            );
           }
         }
 
