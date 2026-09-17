@@ -507,14 +507,14 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       await finishSession();
       await sendText(
         waId,
-        "Tudo bem, cancelei. Quando quiser, é só mandar uma mensagem.",
+        "👍 Tudo bem, cancelei. Quando quiser, é só mandar uma mensagem.",
       );
       return;
     }
 
     if (!session || session.step === "done") {
       await showMenu(
-        `Olá, ${firstName(user.nome)}! Sou o atendimento da V-CORP. O que você precisa?`,
+        `👋 Olá, ${firstName(user.nome)}! Sou o BOT de atendimento do time de TI da V-CORP. Como posso ajudar?`,
       );
       return;
     }
@@ -544,7 +544,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           );
           await sendText(
             waId,
-            `Seus chamados mais recentes:\n\n${linhas.join("\n\n")}`,
+            `📋 Seus chamados mais recentes:\n\n${linhas.join("\n\n")}`,
           );
           await showMenu("Posso ajudar em algo mais?");
           return;
@@ -568,7 +568,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
         });
         await sendText(
           waId,
-          "Perfeito. Agora me diga o *assunto* do chamado, em uma frase curta.",
+          "✏️ Perfeito. Agora me diga o *assunto* do chamado, em uma frase curta.",
         );
         return;
       }
@@ -578,7 +578,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           await saveSession(waId, user.id, base);
           await sendText(
             waId,
-            "Preciso do assunto em texto, por favor — uma frase curta descrevendo o chamado.",
+            "⚠️ Preciso do assunto em texto, por favor — uma frase curta descrevendo o chamado.",
           );
           return;
         }
@@ -594,7 +594,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
             truncated
               ? `Ficou longo, então resumi o assunto para os primeiros ${TITLE_MAX} caracteres.\n\n`
               : ""
-          }Agora descreva o que está acontecendo. Pode mandar em várias mensagens e anexar fotos ou arquivos — quando terminar, toque em *Pronto, pode abrir*.`,
+          }📝 Agora descreva o que está acontecendo. Pode mandar em várias mensagens e anexar fotos ou arquivos — quando terminar, toque em *Pronto, pode abrir*.`,
         );
         return;
       }
@@ -609,14 +609,14 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
             await saveSession(waId, user.id, base);
             await askDescriptionDone(
               waId,
-              "Preciso de pelo menos uma descrição antes de abrir. O que está acontecendo?",
+              "⚠️ Preciso de pelo menos uma descrição antes de abrir. O que está acontecendo?",
             );
             return;
           }
           await saveSession(waId, user.id, { ...base, step: "confirm" });
           await askConfirm(
             waId,
-            `Confira antes de eu abrir:\n\n*Tipo:* ${
+            `👀 Confira antes de eu abrir:\n\n*Tipo:* ${
               TYPE_LABELS[session.ticket_type] || session.ticket_type
             }\n*Assunto:* ${session.title}\n*Descrição:* ${
               session.description || "(sem texto)"
@@ -635,19 +635,19 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
         if (file) {
           if (attachments.length >= ATTACHMENT_MAX_FILES) {
             avisos.push(
-              `Só consigo anexar ${ATTACHMENT_MAX_FILES} arquivos por chamado, então este ficou de fora.`,
+              `⚠️ Só consigo anexar ${ATTACHMENT_MAX_FILES} arquivos por chamado, então este ficou de fora.`,
             );
           } else {
             const stored = await storeAttachment(file);
             if (stored.ok) {
               attachments = [...attachments, stored.attachment];
-              avisos.push(`Anexo recebido (${attachments.length}/${ATTACHMENT_MAX_FILES}).`);
+              avisos.push(`📎 Anexo recebido (${attachments.length}/${ATTACHMENT_MAX_FILES}).`);
             } else if (stored.reason === "tipo") {
-              avisos.push("Esse tipo de arquivo não é aceito, então ignorei o anexo.");
+              avisos.push("⚠️ Esse tipo de arquivo não é aceito, então ignorei o anexo.");
             } else if (stored.reason === "tamanho") {
-              avisos.push("O arquivo passou de 10 MB, então ignorei o anexo.");
+              avisos.push("⚠️ O arquivo passou de 10 MB, então ignorei o anexo.");
             } else {
-              avisos.push("Não consegui baixar esse anexo, pode tentar de novo?");
+              avisos.push("⚠️ Não consegui baixar esse anexo, pode tentar de novo?");
             }
           }
         }
@@ -686,7 +686,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           await finishSession();
           await sendText(
             waId,
-            "Cancelado, nada foi aberto. Se quiser tentar de novo, basta mandar uma mensagem.",
+            "👍 Cancelado, nada foi aberto. Se quiser tentar de novo, basta mandar uma mensagem.",
           );
           return;
         }
@@ -743,7 +743,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       });
       await sendText(
         waId,
-        "Olá! Este canal é o atendimento interno da V-CORP e ainda não reconheço este número.\n\nSe você é da equipe, me diga o seu *e-mail corporativo* que eu envio um código para vincular o seu WhatsApp.",
+        "🔐 Olá! Este canal é o atendimento interno do time de TI da V-CORP.\n\nAinda não reconheço este número. Se você é da equipe, me diga o seu *e-mail corporativo* que eu envio um código para vincular o seu WhatsApp.",
       );
       return;
     }
@@ -757,7 +757,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
         });
         await sendText(
           waId,
-          "Isso não parece um e-mail. Me manda o seu e-mail corporativo, por favor.",
+          "⚠️ Isso não parece um e-mail. Me manda o seu e-mail corporativo, por favor.",
         );
         return;
       }
@@ -767,7 +767,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       // se é de um colaborador interno) daria uma pista a quem está tentando
       // adivinhar endereços.
       const respostaNeutra =
-        "Se esse e-mail for de um colaborador, enviei um código de 6 dígitos para ele agora. Me manda o código aqui.";
+        "📧 Se esse e-mail for de um colaborador, enviarei um código de 6 dígitos para ele agora. Me manda o código aqui.";
 
       if (!user) {
         await saveSession(waId, null, {
@@ -803,7 +803,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
         });
         await sendText(
           waId,
-          "Este número já está cadastrado no perfil de outra pessoa. Fale com o time de TI para ajustar antes de usar o atendimento por aqui.",
+          "⚠️ Este número já está cadastrado no perfil de outra pessoa. Fale com o time de TI para ajustar antes de usar o atendimento por aqui.",
         );
         return;
       }
@@ -837,7 +837,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       });
       await sendText(
         waId,
-        "Muitas tentativas. Por segurança, encerrei por aqui — mande uma mensagem para começar de novo.",
+        "🚫 Muitas tentativas. Por segurança, encerrei por aqui — mande uma mensagem para começar de novo.",
       );
       return;
     }
@@ -860,7 +860,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
         waId,
         expirado && session.link_code_hash
           ? "Esse código expirou. Me manda o seu e-mail corporativo de novo que eu envio outro."
-          : `Código incorreto. Tente novamente (tentativa ${tentativas} de ${LINK_MAX_ATTEMPTS}).`,
+          : `⚠️ Código incorreto. Tente novamente (tentativa ${tentativas} de ${LINK_MAX_ATTEMPTS}).`,
       );
       if (expirado && session.link_code_hash) {
         await saveSession(waId, null, {
@@ -909,7 +909,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     });
     await askMenu(
       waId,
-      `Tudo certo, ${firstName(user.nome)}! Seu WhatsApp está vinculado ao Painel. O que você precisa?`,
+      `✅ Tudo certo, ${firstName(user.nome)}! Seu WhatsApp está vinculado ao Painel. O que você precisa?`,
     );
   };
 
