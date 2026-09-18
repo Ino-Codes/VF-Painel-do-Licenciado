@@ -246,10 +246,16 @@ const TicketKanbanPage: React.FC = () => {
     setObservation(t.observation || "");
   };
 
-  // Aplica o ticket atualizado tanto no board quanto no modal aberto
+  // Aplica o ticket atualizado tanto no board quanto no modal aberto.
+  // Mescla em vez de substituir: um campo que a resposta não trouxer continua
+  // valendo o que já estava na tela, em vez de virar undefined.
   const applyUpdate = (updated: Ticket) => {
-    setTickets((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
-    setDetailTicket(updated);
+    setTickets((prev) =>
+      prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)),
+    );
+    setDetailTicket((atual) =>
+      atual && atual.id === updated.id ? { ...atual, ...updated } : updated,
+    );
   };
 
   // Novo → Em Andamento (registra o atendente)
@@ -316,7 +322,7 @@ const TicketKanbanPage: React.FC = () => {
         .then((res) => {
           const updated: Ticket = res.data;
           setTickets((prev) =>
-            prev.map((f) => (f.id === updated.id ? updated : f)),
+            prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)),
           );
         })
         .catch(() => toast.error("Erro ao salvar observação."));

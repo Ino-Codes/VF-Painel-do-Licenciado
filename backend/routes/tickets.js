@@ -981,7 +981,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           return result.rows[0];
         });
 
-        res.json(updated);
+        // O painel troca o chamado na tela pelo que volta daqui. Sem os
+        // anexos na resposta, eles sumiriam do card até a próxima busca.
+        res.json({ ...updated, attachments: await getAttachments(updated.id) });
       } catch (err) {
         if (err.httpStatus) {
           return res.status(err.httpStatus).json({ error: err.message });
@@ -1046,7 +1048,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           console.warn("Falha ao registrar log:", e);
         }
 
-        res.json(ticket);
+        // O painel troca o chamado na tela pelo que volta daqui. Sem os
+        // anexos na resposta, eles sumiriam do card até a próxima busca.
+        res.json({ ...ticket, attachments: await getAttachments(ticket.id) });
       } catch (err) {
         if (err.httpStatus) {
           return res.status(err.httpStatus).json({ error: err.message });
@@ -1173,7 +1177,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           console.warn("Falha ao registrar log:", e);
         }
 
-        res.json(ticket);
+        // O painel troca o chamado na tela pelo que volta daqui. Sem os
+        // anexos na resposta, eles sumiriam do card até a próxima busca.
+        res.json({ ...ticket, attachments: await getAttachments(ticket.id) });
       } catch (err) {
         if (err.httpStatus) {
           return res.status(err.httpStatus).json({ error: err.message });
