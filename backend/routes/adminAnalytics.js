@@ -4,203 +4,8 @@ const router = express.Router();
 const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 const { sendEventNotifications } = require("../cron.js");
 
-// ───────────────────────────────────────────────────────────────────────────
-// Integração Jira (Estatísticas de Desenvolvimento)
-// As credenciais nunca vão para o frontend: ficam em variáveis de ambiente e
-// todas as chamadas ao Jira passam por este backend, que ainda faz cache.
-// ───────────────────────────────────────────────────────────────────────────
-const JIRA_BASE_URL = (
-  process.env.JIRA_BASE_URL || "https://valorfiscal-team.atlassian.net"
-).replace(/\/$/, "");
-const JIRA_EMAIL = process.env.JIRA_EMAIL || "";
-const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN || "";
-const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY || "SCRUM";
-const JIRA_BOARD_ID = process.env.JIRA_BOARD_ID || "1";
-const JIRA_SPRINT_FIELD = process.env.JIRA_SPRINT_FIELD || "customfield_10020";
-const JIRA_CACHE_MS = 120000; // 2 minutos
-
-const jiraConfigured = () => Boolean(JIRA_EMAIL && JIRA_API_TOKEN);
-const jiraAuthHeader = () =>
-  "Basic " +
-  Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString("base64");
-
-// GET simples na REST API do Jira
-async function jiraFetch(path) {
-  const res = await fetch(`${JIRA_BASE_URL}${path}`, {
-    headers: { Authorization: jiraAuthHeader(), Accept: "application/json" },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Jira ${res.status}: ${body.slice(0, 300)}`);
-  }
-  return res.json();
-}
-
-// Busca issues por JQL, paginando via nextPageToken (endpoint /search/jql)
-async function jiraSearch(jql, fields) {
-  const issues = [];
-  let nextPageToken;
-  let guard = 0;
-  do {
-    const res = await fetch(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
-      method: "POST",
-      headers: {
-        Authorization: jiraAuthHeader(),
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ jql, fields, maxResults: 100, nextPageToken }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      throw new Error(`Jira search ${res.status}: ${body.slice(0, 300)}`);
-    }
-    const data = await res.json();
-    (data.issues || []).forEach((i) => issues.push(i));
-    nextPageToken = data.nextPageToken;
-    guard += 1;
-  } while (nextPageToken && guard < 30);
-  return issues;
-}
-
-// Mapeia a categoria de status do Jira para as 3 colunas do quadro
-const JIRA_CAT = { new: "todo", indeterminate: "inProgress", done: "done" };
-
-async function buildJiraStats() {
-  // 1) Sprint ativa via Agile API (fallback: campo de sprint das próprias issues)
-  let sprint = null;
-  try {
-    const s = await jiraFetch(
-      `/rest/agile/1.0/board/${JIRA_BOARD_ID}/sprint?state=active`,
-    );
-    if (s.values && s.values.length) {
-      const a = s.values[0];
-      sprint = {
-        id: a.id,
-        name: a.name,
-        goal: a.goal || "",
-        startDate: a.startDate || null,
-        endDate: a.endDate || null,
-      };
-    }
-  } catch (e) {
-    // segue para o fallback com o campo customfield das issues
-  }
-
-  // 2) Issues da sprint ativa
-  const sprintIssues = await jiraSearch(
-    `project = ${JIRA_PROJECT_KEY} AND sprint in openSprints()`,
-    ["status", "assignee", "issuetype", "created", "resolutiondate", JIRA_SPRINT_FIELD],
-  );
-
-  if (!sprint) {
-    for (const it of sprintIssues) {
-      const arr = it.fields[JIRA_SPRINT_FIELD];
-      if (Array.isArray(arr)) {
-        const active = arr.find((sp) => sp.state === "active");
-        if (active) {
-          sprint = {
-            id: active.id,
-            name: active.name,
-            goal: active.goal || "",
-            startDate: active.startDate || null,
-            endDate: active.endDate || null,
-          };
-          break;
-        }
-      }
-    }
-  }
-
-  // 3) Agregações da sprint
-  const byCategory = { todo: 0, inProgress: 0, done: 0 };
-  const statusMap = {};
-  const typeMap = {};
-  const devMap = {};
-
-  for (const it of sprintIssues) {
-    const f = it.fields || {};
-    const catKey = f.status?.statusCategory?.key || "new";
-    const cat = JIRA_CAT[catKey] || "todo";
-    byCategory[cat] += 1;
-
-    const stName = f.status?.name || "—";
-    if (!statusMap[stName])
-      statusMap[stName] = { name: stName, count: 0, category: cat };
-    statusMap[stName].count += 1;
-
-    const tp = f.issuetype?.name || "—";
-    typeMap[tp] = (typeMap[tp] || 0) + 1;
-
-    const dev = f.assignee ? f.assignee.displayName : "Sem responsável";
-    const avatar = f.assignee?.avatarUrls?.["48x48"] || null;
-    if (!devMap[dev])
-      devMap[dev] = {
-        name: dev,
-        avatarUrl: avatar,
-        total: 0,
-        todo: 0,
-        inProgress: 0,
-        done: 0,
-      };
-    devMap[dev].total += 1;
-    devMap[dev][cat] += 1;
-  }
-
-  // 4) Tempo médio de conclusão (issues resolvidas nos últimos 90 dias)
-  let avgCompletionHours = null;
-  let resolvedCount = 0;
-  try {
-    const resolved = await jiraSearch(
-      `project = ${JIRA_PROJECT_KEY} AND resolutiondate >= -90d`,
-      ["created", "resolutiondate"],
-    );
-    const durations = [];
-    for (const it of resolved) {
-      const c = it.fields?.created;
-      const r = it.fields?.resolutiondate;
-      if (c && r) {
-        const d = (new Date(r).getTime() - new Date(c).getTime()) / 3600000;
-        if (d >= 0) durations.push(d);
-      }
-    }
-    resolvedCount = durations.length;
-    if (durations.length)
-      avgCompletionHours =
-        durations.reduce((a, b) => a + b, 0) / durations.length;
-  } catch (e) {
-    // mantém null se a consulta de resolvidas falhar
-  }
-
-  let daysRemaining = null;
-  if (sprint?.endDate) {
-    daysRemaining = Math.ceil(
-      (new Date(sprint.endDate).getTime() - Date.now()) / 86400000,
-    );
-  }
-
-  return {
-    configured: true,
-    projectKey: JIRA_PROJECT_KEY,
-    boardUrl: `${JIRA_BASE_URL}/jira/software/projects/${JIRA_PROJECT_KEY}/boards/${JIRA_BOARD_ID}`,
-    sprint: sprint ? { ...sprint, daysRemaining } : null,
-    total: sprintIssues.length,
-    byCategory,
-    byStatus: Object.values(statusMap).sort((a, b) => b.count - a.count),
-    byType: Object.entries(typeMap)
-      .map(([type, count]) => ({ type, count }))
-      .sort((a, b) => b.count - a.count),
-    byAssignee: Object.values(devMap).sort((a, b) => b.total - a.total),
-    avgCompletionHours,
-    resolvedCount,
-    updatedAt: new Date().toISOString(),
-  };
-}
-
 // Unificamos as funções aqui recebendo pool e resend
 module.exports = function (pool, resend) {
-  // Cache em memória compartilhado entre requisições (evita estourar o Jira)
-  let jiraCache = { at: 0, data: null };
   // --- ESTATÍSTICAS AO VIVO ---
   router.get(
     "/system-usage",
@@ -447,6 +252,89 @@ module.exports = function (pool, resend) {
            WHERE c.t1 >= o.t0`,
         );
 
+        // ── Séries para os gráficos ──
+        // Atenção aos fusos: `tickets.created_at` é timestamp SEM fuso
+        // (gravado em UTC) e `ticket_status_history.changed_at` é COM fuso,
+        // por isso a conversão difere entre os dois. Tudo é agrupado no fuso
+        // de São Paulo — senão os chamados do fim da tarde caem no dia
+        // seguinte e o mapa de horários fica 3 horas deslocado.
+        const TZ = "America/Sao_Paulo";
+
+        // Abertos x concluídos por dia (30 dias), sem buracos no eixo.
+        const dailyQuery = pool.query(
+          `WITH dias AS (
+             SELECT generate_series(
+               (NOW() AT TIME ZONE $1)::date - INTERVAL '29 days',
+               (NOW() AT TIME ZONE $1)::date,
+               INTERVAL '1 day'
+             )::date AS dia
+           ), abertos AS (
+             SELECT (created_at AT TIME ZONE 'UTC' AT TIME ZONE $1)::date AS dia,
+                    COUNT(*)::int AS c
+             FROM tickets GROUP BY 1
+           ), concluidos AS (
+             SELECT dia, COUNT(*)::int AS c FROM (
+               SELECT ticket_id, (MIN(changed_at) AT TIME ZONE $1)::date AS dia
+               FROM ticket_status_history
+               WHERE to_status = 'concluido'
+               GROUP BY ticket_id
+             ) x GROUP BY dia
+           )
+           SELECT to_char(d.dia, 'YYYY-MM-DD') AS dia,
+                  COALESCE(a.c, 0) AS abertos,
+                  COALESCE(f.c, 0) AS concluidos
+           FROM dias d
+           LEFT JOIN abertos a ON a.dia = d.dia
+           LEFT JOIN concluidos f ON f.dia = d.dia
+           ORDER BY d.dia`,
+          [TZ],
+        );
+
+        // Mapa de calor: dia da semana x faixa de 4 horas.
+        const heatmapQuery = pool.query(
+          `SELECT EXTRACT(DOW FROM local)::int AS dow,
+                  FLOOR(EXTRACT(HOUR FROM local) / 4)::int AS bloco,
+                  COUNT(*)::int AS c
+             FROM (
+               SELECT created_at AT TIME ZONE 'UTC' AT TIME ZONE $1 AS local
+               FROM tickets
+             ) t
+            GROUP BY 1, 2`,
+          [TZ],
+        );
+
+        // Tempo médio de resolução por mês (6 meses).
+        const monthlyQuery = pool.query(
+          `WITH opened AS (
+             SELECT ticket_id, MIN(changed_at) AS t0
+             FROM ticket_status_history WHERE to_status = 'novo' GROUP BY ticket_id
+           ), closed AS (
+             SELECT ticket_id, MIN(changed_at) AS t1
+             FROM ticket_status_history WHERE to_status = 'concluido' GROUP BY ticket_id
+           )
+           SELECT to_char(date_trunc('month', (c.t1 AT TIME ZONE $1)), 'YYYY-MM') AS mes,
+                  AVG(EXTRACT(EPOCH FROM (c.t1 - o.t0)) / 3600.0) AS horas,
+                  COUNT(*)::int AS concluidos
+             FROM opened o
+             JOIN closed c ON c.ticket_id = o.ticket_id
+            WHERE c.t1 >= o.t0
+              AND c.t1 >= date_trunc('month', NOW()) - INTERVAL '5 months'
+            GROUP BY 1, date_trunc('month', (c.t1 AT TIME ZONE $1))
+            ORDER BY 1`,
+          [TZ],
+        );
+
+        // Chamados concluídos por atendente.
+        const byAttendantQuery = pool.query(
+          `SELECT COALESCE(NULLIF(TRIM(attendant_name), ''), 'Sem atendente') AS name,
+                  COUNT(*)::int AS c
+             FROM tickets
+            WHERE status = 'concluido'
+            GROUP BY 1
+            ORDER BY c DESC
+            LIMIT 8`,
+        );
+
         const [
           totalRes,
           byStatusRes,
@@ -454,6 +342,10 @@ module.exports = function (pool, resend) {
           bySystemRes,
           openedRes,
           avgRes,
+          dailyRes,
+          heatmapRes,
+          monthlyRes,
+          byAttendantRes,
         ] = await Promise.all([
           totalQuery,
           byStatusQuery,
@@ -461,6 +353,10 @@ module.exports = function (pool, resend) {
           bySystemQuery,
           openedQuery,
           avgResolutionQuery,
+          dailyQuery,
+          heatmapQuery,
+          monthlyQuery,
+          byAttendantQuery,
         ]);
 
         const byStatus = {};
@@ -479,6 +375,25 @@ module.exports = function (pool, resend) {
           opened7d: openedRes.rows[0].d7,
           opened30d: openedRes.rows[0].d30,
           avgResolutionHours: avgHours === null ? null : Number(avgHours),
+          daily: dailyRes.rows.map((r) => ({
+            dia: r.dia,
+            abertos: r.abertos,
+            concluidos: r.concluidos,
+          })),
+          byWeekdayHour: heatmapRes.rows.map((r) => ({
+            dow: r.dow,
+            bloco: r.bloco,
+            count: r.c,
+          })),
+          monthly: monthlyRes.rows.map((r) => ({
+            mes: r.mes,
+            horas: r.horas === null ? null : Number(r.horas),
+            concluidos: r.concluidos,
+          })),
+          byAttendant: byAttendantRes.rows.map((r) => ({
+            name: r.name,
+            count: r.c,
+          })),
         });
       } catch (err) {
         console.error("Erro ao buscar estatísticas de chamados:", err);
@@ -487,33 +402,6 @@ module.exports = function (pool, resend) {
     },
   );
 
-  // --- ESTATÍSTICAS DE DESENVOLVIMENTO (JIRA) ---
-  router.get(
-    "/jira",
-    isLoggedIn,
-    checkPermission("analytics.view"),
-    async (req, res) => {
-      // Sem credenciais configuradas: responde 200 com configured=false
-      // para o frontend exibir instruções em vez de um erro.
-      if (!jiraConfigured()) {
-        return res.json({ configured: false });
-      }
-      try {
-        const now = Date.now();
-        if (jiraCache.data && now - jiraCache.at < JIRA_CACHE_MS) {
-          return res.json({ ...jiraCache.data, cached: true });
-        }
-        const data = await buildJiraStats();
-        jiraCache = { at: now, data };
-        res.json({ ...data, cached: false });
-      } catch (err) {
-        console.error("Erro ao buscar estatísticas do Jira:", err.message);
-        res
-          .status(502)
-          .json({ error: "Erro ao consultar o Jira.", detail: err.message });
-      }
-    },
-  );
 
   return router;
 };

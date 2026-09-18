@@ -1,7 +1,7 @@
 .dashboard-elements-child {
   padding: 20px;
   border-radius: 0 8px 8px 8px;
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
 }
@@ -123,7 +123,7 @@
 }
 
 .chart-container-stats {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   padding: 20px;
@@ -275,203 +275,6 @@
   vertical-align: middle;
 }
 
-/* ---------------------------------------------------------------------------
-   Aba "Desenvolvimento" (integração Jira)
-   --------------------------------------------------------------------------- */
-
-.jira-sprint-card {
-  background: var(--glass-surface);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: 16px;
-  padding: 22px 24px;
-  margin-bottom: 25px;
-}
-
-.jira-sprint-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.jira-sprint-head h3 {
-  margin: 4px 0 0 0;
-  font-size: 1.4rem;
-  color: var(--text-primary);
-}
-
-.jira-sprint-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--brand-gold);
-}
-
-.jira-sprint-goal {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 8px 0 0 0;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.jira-board-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--brand-gold);
-  text-decoration: none;
-}
-
-.jira-board-link:hover {
-  text-decoration: underline;
-}
-
-.jira-sprint-meta {
-  margin: 16px 0 10px 0;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.jira-sprint-meta span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.jira-sprint-meta strong {
-  color: var(--text-primary);
-}
-
-.jira-sprint-meta em {
-  font-style: normal;
-  color: var(--brand-gold);
-  font-weight: 600;
-}
-
-.jira-progress-track {
-  width: 100%;
-  height: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--glass-border);
-  border-radius: 100px;
-  overflow: hidden;
-}
-
-.jira-progress-fill {
-  width: var(--bar-width, 0%);
-  height: 100%;
-  background: var(--action-primary);
-  border-radius: 100px;
-  transition: width 0.5s ease;
-}
-
-.jira-progress-label {
-  display: block;
-  margin-top: 8px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-/* Barras horizontais (cards por status) */
-.jira-bar-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.jira-bar-row:last-child {
-  margin-bottom: 0;
-}
-
-.jira-bar-label {
-  width: 170px;
-  flex-shrink: 0;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.jira-bar-track {
-  flex: 1;
-  height: 20px;
-  background: var(--bg-secondary);
-  border-radius: 100px;
-  overflow: hidden;
-}
-
-.jira-bar-fill {
-  display: block;
-  width: var(--bar-width, 0%);
-  height: 100%;
-  background: var(--brand-gold);
-  border-radius: 100px;
-  transition: width 0.5s ease;
-}
-
-.jira-bar-fill.cat-todo {
-  background: var(--text-secondary);
-}
-
-.jira-bar-fill.cat-inProgress {
-  background: var(--brand-gold);
-}
-
-.jira-bar-fill.cat-done {
-  background: var(--action-primary);
-}
-
-.jira-bar-value {
-  width: 34px;
-  flex-shrink: 0;
-  text-align: right;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.jira-dev-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.jira-not-configured {
-  text-align: center;
-  padding: 40px 24px;
-}
-
-.jira-not-configured h3 {
-  margin: 14px 0 8px 0;
-  color: var(--text-primary);
-}
-
-.jira-not-configured p {
-  color: var(--text-secondary);
-  max-width: 520px;
-  margin: 0 auto;
-}
-
-.jira-not-configured code {
-  background: var(--bg-secondary);
-  border: 1px solid var(--glass-border);
-  border-radius: 5px;
-  padding: 1px 6px;
-  font-size: 0.85em;
-}
 
 /* ---------------------------------------------------------------------------
    Classes de refatoração (estilos inline movidos das telas de estatísticas)
@@ -500,4 +303,217 @@
 .admin-table td.stats-empty-cell {
   text-align: center;
   padding: 20px;
+}
+
+/* ---------------------------------------------------------------------------
+   Gráficos da Central de Chamados
+   ---------------------------------------------------------------------------
+   As cores das séries NÃO ficam aqui: vivem em VIZ_PALETTE, dentro de
+   HelpdeskCharts.tsx. Elas são pintadas em canvas e em style inline, e ler
+   variáveis CSS durante o render devolvia as cores do tema anterior (a classe
+   de tema é aplicada num useEffect, depois do render) — o que fazia a legenda
+   sumir ao alternar para o escuro. Só sobra aqui o tom da célula vazia do mapa
+   de calor, que é resolvido pelo CSS na hora da pintura.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --viz-empty: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-theme {
+  --viz-empty: rgba(255, 255, 255, 0.06);
+}
+
+.viz-section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.viz-card {
+  background: var(--glass-surface-flat);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  padding: 20px 22px 22px;
+  min-width: 0;
+}
+
+.viz-card--wide {
+  grid-column: 1 / -1;
+}
+
+.viz-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.viz-card-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.viz-card-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.viz-canvas {
+  position: relative;
+  height: 240px;
+}
+
+.viz-canvas--tall {
+  height: 300px;
+}
+
+.viz-empty {
+  margin: 0;
+  padding: 28px 0;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+/* ── Funil de status: barra empilhada ── */
+/* O gap de 2px entre os segmentos é o vão de superfície que separa fatias
+   adjacentes sem precisar de borda. */
+.viz-stack {
+  display: flex;
+  gap: 2px;
+  height: 34px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.viz-stack-seg {
+  width: var(--seg-w);
+  background: var(--seg-c);
+  transition: opacity 0.15s;
+}
+
+.viz-stack-seg:hover {
+  opacity: 0.85;
+}
+
+.viz-legend {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+}
+
+.viz-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+/* Círculo, igual ao marcador da legenda dos gráficos em canvas — as duas
+   legendas convivem na mesma tela e devem parecer a mesma coisa. */
+.viz-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--seg-c);
+  flex-shrink: 0;
+}
+
+.viz-legend-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.viz-legend-value {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Mapa de calor ── */
+.viz-heat {
+  display: grid;
+  grid-template-columns: 42px repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  align-items: center;
+}
+
+.viz-heat-col {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding-bottom: 2px;
+}
+
+.viz-heat-row {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.viz-heat-cell {
+  height: 34px;
+  border-radius: 6px;
+  background: var(--cell-c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-white);
+  transition: transform 0.12s;
+}
+
+/* Sem chamados: o fundo é quase a superfície, então o número (que nem existe)
+   não precisa de contraste — mas a célula ainda marca a posição na grade. */
+.viz-heat-cell:hover {
+  transform: scale(1.06);
+}
+
+.viz-heat-scale {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 14px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.viz-heat-scale-step {
+  width: 26px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--cell-c);
+}
+
+/* Nesta aba os gráficos já chegam em cards com borda própria, então as linhas
+   de topo das seções seguintes viram traços soltos. O irmão geral (~) alcança
+   todas as seções depois da grade de gráficos. */
+.viz-section ~ .admin-section {
+  border-top: none;
+}
+
+@media (max-width: 900px) {
+  .viz-section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .viz-heat {
+    grid-template-columns: 34px repeat(6, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .viz-heat-cell {
+    height: 28px;
+    font-size: 0.68rem;
+  }
 }

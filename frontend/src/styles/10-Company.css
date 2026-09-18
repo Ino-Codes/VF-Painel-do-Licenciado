@@ -168,7 +168,7 @@
 
 .corp-user-card-info {
   padding: 10px;
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   display: block;
   width: 100%;
   text-align: center;

@@ -48,6 +48,11 @@
      gradiente), senão os cards somem sobre o fundo claro. */
   --brand-gold: #8a6c35;
   --glass-surface: linear-gradient(127deg, #ffffff, #f6f6f8);
+  /* Versão chapada da superfície (o meio do gradiente acima). Um gradiente é
+     pintado no box de cada elemento, então cards de larguras diferentes lado a
+     lado mostram trechos diferentes da rampa e parecem ter fundos distintos.
+     Onde a grade mistura tamanhos, use esta. */
+  --glass-surface-flat: #fbfbfc;
   --glass-border: rgba(0, 0, 0, 0.08);
   --glass-shadow: 0 6px 20px rgba(20, 18, 12, 0.1);
 
@@ -137,6 +142,7 @@ body.dark-theme {
     rgba(255, 255, 255, 0.055),
     rgba(255, 255, 255, 0.025)
   );
+  --glass-surface-flat: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.09);
   --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 

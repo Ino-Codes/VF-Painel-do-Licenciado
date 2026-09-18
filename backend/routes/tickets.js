@@ -5,6 +5,10 @@ const router = express.Router();
 const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 const whatsapp = require("../whatsappSender.js");
 
+// Em ILIKE, "%" e "_" são curingas: se vierem do que o usuário digitou,
+// precisam ser escapados para valerem como caractere literal.
+const escapeLike = (texto) => String(texto).replace(/[\\%_]/g, "\\$&");
+
 // ── Anexos do chamado ──────────────────────────────────────────────────────
 const ATTACHMENT_MAX_FILES = 3;
 const ATTACHMENT_MAX_SIZE = 10 * 1024 * 1024; // 10 MB por arquivo
@@ -790,7 +794,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
 
   // ── GET /api/tickets (protegido — painel interno) ───────────────────────
   router.get("/", isLoggedIn, checkPermission("tickets.view"), async (req, res) => {
-    const { tenant_id, status, type } = req.query;
+    const { tenant_id, status, type, requester, search } = req.query;
 
     try {
       const params = [];
@@ -809,6 +813,62 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       if (type) {
         params.push(type);
         whereClauses.push(`f.type = $${params.length}`);
+      }
+
+      // Busca por solicitante: nome, e-mail ou telefone. O telefone não fica
+      // no chamado, então ele é procurado no cadastro do usuário dono daquele
+      // e-mail — com EXISTS, que filtra sem multiplicar linhas como um JOIN.
+      if (requester && String(requester).trim()) {
+        const termo = String(requester).trim();
+        params.push(`%${escapeLike(termo)}%`);
+        const iTexto = params.length;
+        const alternativas = [
+          `f.name ILIKE $${iTexto}`,
+          `f.requester_email ILIKE $${iTexto}`,
+        ];
+
+        // Menos de 4 dígitos casaria com quase todo mundo.
+        const digitos = termo.replace(/\D/g, "");
+        if (digitos.length >= 4) {
+          params.push(`%${digitos}%`);
+          alternativas.push(
+            `EXISTS (
+               SELECT 1 FROM users u
+                WHERE lower(u.email) = lower(f.requester_email)
+                  AND regexp_replace(COALESCE(u.telefone, ''), '\\D', '', 'g')
+                      LIKE $${params.length}
+             )`,
+          );
+        }
+
+        whereClauses.push(`(${alternativas.join(" OR ")})`);
+      }
+
+      // Busca por título: aceita o código do chamado (#42 ou 42) e também
+      // palavras soltas — todas precisam aparecer no título, em qualquer
+      // ordem, para "erro login" achar "Erro ao fazer login".
+      if (search && String(search).trim()) {
+        const termo = String(search).trim();
+        const alternativas = [];
+
+        const semCerquilha = termo.replace(/^#/, "");
+        if (/^\d+$/.test(semCerquilha)) {
+          params.push(Number(semCerquilha));
+          alternativas.push(`f.id = $${params.length}`);
+        }
+
+        const palavras = termo.split(/\s+/).filter(Boolean);
+        if (palavras.length) {
+          const cada = palavras.map((palavra) => {
+            params.push(`%${escapeLike(palavra)}%`);
+            return `f.title ILIKE $${params.length}`;
+          });
+          alternativas.push(`(${cada.join(" AND ")})`);
+        }
+
+        if (alternativas.length) {
+          whereClauses.push(`(${alternativas.join(" OR ")})`);
+        }
       }
 
       const whereString =

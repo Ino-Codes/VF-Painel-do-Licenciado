@@ -56,7 +56,11 @@ body.dark-theme .p-2 .main-menu {
     .module-item,
     .question-editor-item
   ) {
-  background: var(--glass-surface);
+  /* Superfície chapada, não o gradiente: um gradiente CSS é pintado no box de
+     cada elemento, então cards de tamanhos diferentes mostravam trechos
+     diferentes da rampa e pareciam ter fundos distintos lado a lado. O tom é
+     o meio da rampa, ou seja, o visual não muda — só para de variar. */
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   box-shadow: var(--glass-shadow);

@@ -128,7 +128,7 @@
 }
 
 .notice-card {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border-left: 4px solid var(--accent-color);
   box-shadow: var(--glass-shadow);
   border-radius: 5px;

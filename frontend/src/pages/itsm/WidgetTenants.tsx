@@ -10,9 +10,9 @@ import {
   FiEdit2,
   FiTrash2,
   FiRefreshCw,
-  FiToggleLeft,
-  FiToggleRight,
+  FiChevronRight,
 } from "react-icons/fi";
+import { MdToggleOn, MdToggleOff } from "react-icons/md";
 import { FaArrowLeftLong } from "react-icons/fa6";
 
 interface Tenant {
@@ -43,11 +43,21 @@ const WidgetTenantsPage: React.FC = () => {
   const [editTenant, setEditTenant] = useState<Tenant | null>(null);
   const [formName, setFormName] = useState("");
   const [saving, setSaving] = useState(false);
+  // Os cards começam fechados; vários podem ficar abertos ao mesmo tempo,
+  // porque é comum precisar comparar o token de dois sistemas.
+  const [expandidos, setExpandidos] = useState<number[]>([]);
   // Ação destrutiva aguardando confirmação (substitui window.confirm).
   const [confirmState, setConfirmState] = useState<{
     action: "delete" | "regenerate";
     tenant: Tenant;
   } | null>(null);
+
+  const estaExpandido = (id: number) => expandidos.includes(id);
+
+  const alternarExpansao = (id: number) =>
+    setExpandidos((atuais) =>
+      atuais.includes(id) ? atuais.filter((x) => x !== id) : [...atuais, id],
+    );
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchTenants = async () => {
@@ -228,26 +238,47 @@ const WidgetTenantsPage: React.FC = () => {
                 {/* Linha 1: Nome + status + ações */}
                 <div className="widget-tenant-card-header">
                   <div className="widget-tenant-title-row">
-                    <span className="widget-tenant-name">{t.name}</span>
-                    <span
-                      className={`widget-status-badge ${
-                        t.active
-                          ? "widget-status-badge--active"
-                          : "widget-status-badge--inactive"
+                    <button
+                      type="button"
+                      className={`widget-tenant-toggle${
+                        estaExpandido(t.id)
+                          ? " widget-tenant-toggle--aberto"
+                          : ""
                       }`}
+                      onClick={() => alternarExpansao(t.id)}
+                      aria-expanded={estaExpandido(t.id)}
+                      aria-controls={`sistema-${t.id}-detalhes`}
+                      title={
+                        estaExpandido(t.id)
+                          ? "Ocultar detalhes"
+                          : "Mostrar token, snippet e instruções"
+                      }
                     >
-                      {t.active ? "Ativo" : "Inativo"}
-                    </span>
+                      <FiChevronRight />
+                    </button>
+                    <span className="widget-tenant-name">{t.name}</span>
                   </div>
 
                   <div className="widget-tenant-actions">
-                    {/* Toggle ativo/inativo */}
+                    {/* Toggle ativo/inativo — também é o indicador de estado */}
                     <button
-                      className="form-icon-save"
-                      title={t.active ? "Desativar" : "Ativar"}
+                      className={`widget-tenant-status-toggle${
+                        t.active ? " widget-tenant-status-toggle--ativo" : ""
+                      }`}
+                      aria-pressed={t.active}
+                      title={
+                        t.active
+                          ? "Sistema ativo — clique para desativar"
+                          : "Sistema inativo — clique para ativar"
+                      }
+                      aria-label={
+                        t.active
+                          ? "Sistema ativo — clique para desativar"
+                          : "Sistema inativo — clique para ativar"
+                      }
                       onClick={() => handleToggleActive(t)}
                     >
-                      {t.active ? <FiToggleRight /> : <FiToggleLeft />}
+                      {t.active ? <MdToggleOn /> : <MdToggleOff />}
                     </button>
 
                     {/* Editar nome */}
@@ -281,101 +312,108 @@ const WidgetTenantsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Linha 2: Token */}
-                <div className="widget-tenant-field">
-                  <p className="widget-tenant-field-label">
-                    Token de autenticação
-                  </p>
-                  <div className="widget-tenant-code-box">
-                    <code className="widget-tenant-code">{t.token}</code>
-                    <button
-                      className="form-icon-edit"
-                      title="Copiar token"
-                      onClick={() => copyToken(t)}
-                      disabled={!t.active}
-                    >
-                      <FiCopy size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Linha 3: Snippet */}
-                <div className="widget-tenant-field">
-                  <p className="widget-tenant-field-label">
-                    Code Snippet do Widget
-                  </p>
-                  <div className="widget-tenant-code-box widget-tenant-code-box--top">
-                    <code className="widget-tenant-code widget-tenant-code--sm">
-                      {buildSnippet(t.token)}
-                    </code>
-                    <button
-                      className="form-icon-edit"
-                      title="Copiar snippet"
-                      onClick={() => copySnippet(t)}
-                      disabled={!t.active}
-                    >
-                      <FiCopy size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Instruções de integração */}
-                <div className="widget-tenant-field">
-                  <p className="widget-tenant-field-label">
-                    Instruções de Integração
-                  </p>
-                  <div className="widget-tenant-code-box widget-tenant-code-box--top">
-                    <div className="widget-tenant-steps">
-                      <ol className="widget-steps-list">
-                        <li>
-                          Copie o <strong>Code Snippet do Widget</strong> acima
-                          (no botão de copiar).
-                        </li>
-                        <li>
-                          Abra o arquivo HTML do site onde o widget deve
-                          aparecer. Em sites React, Vue ou Angular, use o{" "}
-                          <code>index.html</code> público do projeto.
-                        </li>
-                        <li>
-                          Cole o código dentro da tag <code>&lt;body&gt;</code>,
-                          logo antes do fechamento <code>&lt;/body&gt;</code>.
-                        </li>
-                        <li>
-                          Salve e publique o site. Um botão flutuante de chamado
-                          aparecerá no canto inferior direito de todas as
-                          páginas.
-                        </li>
-                        <li>
-                          Pronto! Os chamados abertos por esse site chegam
-                          automaticamente na nossa Central de Chamados.
-                        </li>
-                      </ol>
-                      <p className="widget-steps-note">
-                        Não é preciso instalar nada. O mesmo código funciona em
-                        qualquer site, com ou sem framework. O token acima
-                        identifica este sistema — mantenha-o apenas neste site.
+                {estaExpandido(t.id) && (
+                  <div
+                    className="widget-tenant-body"
+                    id={`sistema-${t.id}-detalhes`}
+                  >
+                    {/* Linha 2: Token */}
+                    <div className="widget-tenant-field">
+                      <p className="widget-tenant-field-label">
+                        Token de autenticação
                       </p>
+                      <div className="widget-tenant-code-box">
+                        <code className="widget-tenant-code">{t.token}</code>
+                        <button
+                          className="form-icon-edit"
+                          title="Copiar token"
+                          onClick={() => copyToken(t)}
+                          disabled={!t.active}
+                        >
+                          <FiCopy size={14} />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      className="form-icon-edit"
-                      title="Copiar instruções"
-                      onClick={() => copyInstructions(t)}
-                      disabled={!t.active}
-                    >
-                      <FiCopy size={14} />
-                    </button>
-                  </div>
-                </div>
 
-                {/* Linha 4: Meta */}
-                <p className="widget-tenant-meta">
-                  Cadastrado por <strong>{t.created_by_name || "—"}</strong> em{" "}
-                  {new Date(t.created_at).toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
+                    {/* Linha 3: Snippet */}
+                    <div className="widget-tenant-field">
+                      <p className="widget-tenant-field-label">
+                        Code Snippet do Widget
+                      </p>
+                      <div className="widget-tenant-code-box widget-tenant-code-box--top">
+                        <code className="widget-tenant-code widget-tenant-code--sm">
+                          {buildSnippet(t.token)}
+                        </code>
+                        <button
+                          className="form-icon-edit"
+                          title="Copiar snippet"
+                          onClick={() => copySnippet(t)}
+                          disabled={!t.active}
+                        >
+                          <FiCopy size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Instruções de integração */}
+                    <div className="widget-tenant-field">
+                      <p className="widget-tenant-field-label">
+                        Instruções de Integração
+                      </p>
+                      <div className="widget-tenant-code-box widget-tenant-code-box--top">
+                        <div className="widget-tenant-steps">
+                          <ol className="widget-steps-list">
+                            <li>
+                              Copie o <strong>Code Snippet do Widget</strong> acima
+                              (no botão de copiar).
+                            </li>
+                            <li>
+                              Abra o arquivo HTML do site onde o widget deve
+                              aparecer. Em sites React, Vue ou Angular, use o{" "}
+                              <code>index.html</code> público do projeto.
+                            </li>
+                            <li>
+                              Cole o código dentro da tag <code>&lt;body&gt;</code>,
+                              logo antes do fechamento <code>&lt;/body&gt;</code>.
+                            </li>
+                            <li>
+                              Salve e publique o site. Um botão flutuante de chamado
+                              aparecerá no canto inferior direito de todas as
+                              páginas.
+                            </li>
+                            <li>
+                              Pronto! Os chamados abertos por esse site chegam
+                              automaticamente na nossa Central de Chamados.
+                            </li>
+                          </ol>
+                          <p className="widget-steps-note">
+                            Não é preciso instalar nada. O mesmo código funciona em
+                            qualquer site, com ou sem framework. O token acima
+                            identifica este sistema — mantenha-o apenas neste site.
+                          </p>
+                        </div>
+                        <button
+                          className="form-icon-edit"
+                          title="Copiar instruções"
+                          onClick={() => copyInstructions(t)}
+                          disabled={!t.active}
+                        >
+                          <FiCopy size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Linha 4: Meta */}
+                    <p className="widget-tenant-meta">
+                      Cadastrado por <strong>{t.created_by_name || "—"}</strong> em{" "}
+                      {new Date(t.created_at).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

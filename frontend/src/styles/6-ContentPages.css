@@ -257,7 +257,7 @@
 }
 
 .lesson-content-text {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   padding: 25px;
@@ -268,7 +268,7 @@
 }
 
 .lesson-sidebar {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 15px;
@@ -647,7 +647,7 @@
   padding: 7px 16px;
   border: 1px solid var(--glass-border);
   border-radius: 999px;
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;

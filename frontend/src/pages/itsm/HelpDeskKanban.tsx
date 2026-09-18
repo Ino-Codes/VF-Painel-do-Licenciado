@@ -13,6 +13,7 @@ import {
   FiRotateCcw,
 } from "react-icons/fi";
 import { IoCloseSharp } from "react-icons/io5";
+import { MdRefresh } from "react-icons/md";
 import {
   FaLaptopCode,
   FaCheckCircle,
@@ -172,7 +173,14 @@ const TicketKanbanPage: React.FC = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedTenant, setSelectedTenant] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("");
+  // O que está digitado x o que já foi para a busca: o debounce separa os
+  // dois para não disparar uma requisição a cada tecla.
+  const [requesterInput, setRequesterInput] = useState("");
+  const [titleInput, setTitleInput] = useState("");
+  const [requesterQuery, setRequesterQuery] = useState("");
+  const [titleQuery, setTitleQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [detailTicket, setDetailTicket] = useState<Ticket | null>(null);
   const [attending, setAttending] = useState(false);
@@ -186,6 +194,8 @@ const TicketKanbanPage: React.FC = () => {
       const params: Record<string, string> = {};
       if (selectedTenant) params.tenant_id = selectedTenant;
       if (selectedType) params.type = selectedType;
+      if (requesterQuery.trim()) params.requester = requesterQuery.trim();
+      if (titleQuery.trim()) params.search = titleQuery.trim();
 
       const res = await api.get("/api/tickets", { params });
       setTickets(res.data);
@@ -208,9 +218,27 @@ const TicketKanbanPage: React.FC = () => {
   useEffect(() => {
     fetchTenants();
   }, []);
+  // Espera a digitação parar antes de consultar o servidor.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setRequesterQuery(requesterInput);
+      setTitleQuery(titleInput);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [requesterInput, titleInput]);
+
   useEffect(() => {
     fetchTickets();
-  }, [selectedTenant, selectedType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenant, selectedType, requesterQuery, titleQuery]);
+
+  // Recarrega mantendo os filtros atuais. O estado próprio evita piscar a
+  // tela inteira de "Carregando..." a cada atualização manual.
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchTickets();
+    setRefreshing(false);
+  };
 
   const openDetail = (t: Ticket) => {
     setDetailTicket(t);
@@ -321,6 +349,14 @@ const TicketKanbanPage: React.FC = () => {
             <h1 className="page-title">Central de Chamados</h1>
             <div className="page-actions">
               <button
+                className="form-icon-edit"
+                onClick={handleRefresh}
+                disabled={refreshing}
+              >
+                <MdRefresh />
+                {refreshing ? "Atualizando..." : "Atualizar"}
+              </button>
+              <button
                 className="form-button btn-icon-text"
                 onClick={() => navigate("/admin/widget-tenants")}
               >
@@ -333,7 +369,11 @@ const TicketKanbanPage: React.FC = () => {
           {/* Filtros */}
           <div className="page-filters">
             <div className="filter-group">
+              <label className="filter-label" htmlFor="filtro-sistema">
+                Tipo de Sistema
+              </label>
               <select
+                id="filtro-sistema"
                 className="form-select"
                 value={selectedTenant}
                 onChange={(e) => setSelectedTenant(e.target.value)}
@@ -347,7 +387,11 @@ const TicketKanbanPage: React.FC = () => {
               </select>
             </div>
             <div className="filter-group">
+              <label className="filter-label" htmlFor="filtro-tipo">
+                Tipo de Chamado
+              </label>
               <select
+                id="filtro-tipo"
                 className="form-select"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
@@ -357,6 +401,32 @@ const TicketKanbanPage: React.FC = () => {
                 <option value="bug">Bug</option>
                 <option value="suggestion">Sugestão</option>
               </select>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label" htmlFor="filtro-solicitante">
+                Solicitante
+              </label>
+              <input
+                id="filtro-solicitante"
+                type="text"
+                className="form-input"
+                placeholder="Nome, e-mail ou telefone"
+                value={requesterInput}
+                onChange={(e) => setRequesterInput(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label className="filter-label" htmlFor="filtro-titulo">
+                Título ou Código
+              </label>
+              <input
+                id="filtro-titulo"
+                type="text"
+                className="form-input"
+                placeholder="#42 ou palavras do título"
+                value={titleInput}
+                onChange={(e) => setTitleInput(e.target.value)}
+              />
             </div>
           </div>
 

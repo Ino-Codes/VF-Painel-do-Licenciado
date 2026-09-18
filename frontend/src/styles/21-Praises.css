@@ -10,7 +10,7 @@
 }
 
 .praise-card {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   border-left: 4px solid var(--accent-color);
   border-radius: 12px;
@@ -102,7 +102,7 @@
   padding: 8px 12px;
   border: 1px solid var(--glass-border);
   border-radius: 8px;
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   color: var(--text-secondary);
   font-weight: 600;
   font-size: 0.9rem;
@@ -209,7 +209,7 @@
   border-radius: 14px;
   padding: 26px 20px 16px 20px;
   gap: 10px;
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
 }
 
 .praise-quote-mark {

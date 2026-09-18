@@ -9,12 +9,15 @@
   padding-bottom: 24px;
 }
 
+/* O padrão lateral de 20px é o mesmo do cabeçalho e da barra de filtros, para
+   que a primeira coluna comece na vertical do título e a última termine na
+   vertical do botão "Sistemas Integrados". */
 .hd-kanban-board {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   align-items: flex-start;
   width: 100%;
-  padding: 4px 2px 16px;
+  padding: 4px 20px 16px;
 }
 
 /* ── Coluna ───────────────────────────────────────────────────── */
@@ -24,7 +27,10 @@
      abaixo de ~240px por coluna o container passa a rolar lateralmente. */
   flex: 1 1 0;
   min-width: 240px;
-  max-width: 420px;
+  /* O teto existe para a coluna não virar um bloco enorme em telas
+     ultralargas; em 420px ele passava a valer cedo demais e sobrava um vazio
+     à direita, com as colunas sem alcançar a margem da página. */
+  max-width: 520px;
   background: var(--bg-primary);
   border-radius: 14px;
   display: flex;
@@ -108,7 +114,7 @@
 /* ── Card ─────────────────────────────────────────────────────── */
 
 .ticket-card {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border-radius: 12px;
   border: 1px solid var(--glass-border);
   overflow: hidden;
@@ -511,15 +517,24 @@
   padding: 20px 24px;
   transition: opacity 0.2s ease;
 }
-.widget-tenant-card--inactive {
+/* Opacidade no card inteiro criaria um grupo: nenhum filho conseguiria ficar
+   mais opaco que o pai. Por isso o esmaecimento vai nas partes, deixando o
+   toggle de fora — ele é o indicador de estado e o caminho de volta. */
+.widget-tenant-card--inactive .widget-tenant-name,
+.widget-tenant-card--inactive .widget-tenant-toggle,
+.widget-tenant-card--inactive .widget-tenant-body,
+.widget-tenant-card--inactive
+  .widget-tenant-actions
+  > *:not(.widget-tenant-status-toggle):not(.form-icon-delete) {
   opacity: 0.6;
 }
 
+/* Sem margem aqui: fechado, o card é só esta linha. O respiro pertence ao
+   corpo que abre. */
 .widget-tenant-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
 }
 
 .widget-tenant-title-row {
@@ -528,27 +543,74 @@
   gap: 12px;
 }
 
+/* A seta aponta para a direita quando fechado e gira para baixo ao abrir —
+   uma só marcação, sem trocar de ícone. */
+.widget-tenant-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 0;
+  border-radius: 6px;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.widget-tenant-toggle:hover {
+  color: var(--text-primary);
+}
+
+.widget-tenant-toggle--aberto {
+  transform: rotate(90deg);
+}
+
+.widget-tenant-body {
+  margin-top: 16px;
+}
+
 .widget-tenant-name {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.widget-status-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
+/* Declarada nos dois estados para o esmaecimento animar na ida e na volta. */
+.widget-tenant-name,
+.widget-tenant-body {
+  transition: opacity 0.2s ease;
 }
-.widget-status-badge--active {
-  background: var(--bg-result-green);
-  color: var(--action-primary);
-  border: 1px solid var(--action-primary);
+
+/* O toggle é ao mesmo tempo o controle e o indicador de estado: cheio e verde
+   com a chave à direita quando ativo, vazado e à esquerda quando inativo. A
+   diferença não é só de cor (preenchimento + posição da chave), então continua
+   legível para quem não distingue as cores. */
+.widget-tenant-status-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  /* Cinza de ação secundária: presente, mas de baixo contraste com a
+     superfície nos dois temas, para o desligado não competir com o ligado. */
+  color: var(--action-secondary);
+  cursor: pointer;
+  font-size: 28px;
+  line-height: 0;
+  border-radius: 6px;
+  transition: color 0.18s ease;
 }
-.widget-status-badge--inactive {
-  background: var(--bg-result-red);
-  color: var(--text-secondary);
-  border: 1px solid var(--action-danger);
+
+.widget-tenant-status-toggle:hover {
+  color: var(--text-primary);
+}
+
+.widget-tenant-status-toggle--ativo,
+.widget-tenant-status-toggle--ativo:hover {
+  color: var(--status-success);
 }
 
 .widget-tenant-actions {

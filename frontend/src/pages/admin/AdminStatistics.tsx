@@ -12,13 +12,10 @@ import {
   HiOutlineInbox,
   HiOutlineClock,
   HiOutlineCheckCircle,
-  HiOutlineCalendar,
-  HiOutlineViewBoards,
-  HiOutlineFlag,
-  HiOutlineExternalLink,
 } from "react-icons/hi";
-import { FaHeadset, FaJira } from "react-icons/fa";
+import { FaHeadset } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
+import HelpdeskCharts from "./HelpdeskCharts.tsx";
 
 interface SystemStats {
   todayLogins: number;
@@ -28,43 +25,16 @@ interface SystemStats {
   topDownloads: { name: string; count: number }[];
 }
 
-interface JiraStats {
-  configured: boolean;
-  projectKey?: string;
-  boardUrl?: string;
-  sprint?: {
-    name: string;
-    goal: string;
-    startDate: string | null;
-    endDate: string | null;
-    daysRemaining: number | null;
-  } | null;
-  total?: number;
-  byCategory?: { todo: number; inProgress: number; done: number };
-  byStatus?: { name: string; count: number; category: string }[];
-  byType?: { type: string; count: number }[];
-  byAssignee?: {
-    name: string;
-    avatarUrl: string | null;
-    total: number;
-    todo: number;
-    inProgress: number;
-    done: number;
-  }[];
-  avgCompletionHours?: number | null;
-  resolvedCount?: number;
-  updatedAt?: string;
-}
 
 interface TicketStats {
   total: number;
   byStatus: Record<string, number>;
   byType: { type: string; count: number }[];
   bySystem: { name: string; count: number }[];
-  openedToday: number;
-  opened7d: number;
-  opened30d: number;
-  avgResolutionHours: number | null;
+  daily: { dia: string; abertos: number; concluidos: number }[];
+  byWeekdayHour: { dow: number; bloco: number; count: number }[];
+  monthly: { mes: string; horas: number | null; concluidos: number }[];
+  byAttendant: { name: string; count: number }[];
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -76,38 +46,12 @@ const TYPE_LABELS: Record<string, string> = {
   sugestao_melhoria: "Sugestão (melhoria)",
 };
 
-const formatHours = (h: number | null): string => {
-  if (h === null || Number.isNaN(h)) return "—";
-  if (h < 1) return `${Math.round(h * 60)} min`;
-  if (h < 24) return `${h.toFixed(1)} h`;
-  const d = Math.floor(h / 24);
-  const rem = Math.round(h % 24);
-  return `${d}d ${rem}h`;
-};
-
-const formatDate = (iso: string | null | undefined): string => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-};
-
-// Rótulo e cor (via classe) de cada categoria do quadro
-const CATEGORY_LABEL: Record<string, string> = {
-  todo: "A fazer",
-  inProgress: "Em andamento",
-  done: "Concluído",
-};
 
 const AdminStatistics: React.FC = () => {
   const { user, loading } = useAuth();
 
   const [activeTab, setActiveTab] = useState<
-    "sistema" | "chamados" | "jira"
+    "sistema" | "chamados"
   >("sistema");
 
   const [stats, setStats] = useState<SystemStats | null>(null);
@@ -115,9 +59,6 @@ const AdminStatistics: React.FC = () => {
 
   const [ticketStats, setTicketStats] = useState<TicketStats | null>(null);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
-
-  const [jiraStats, setJiraStats] = useState<JiraStats | null>(null);
-  const [isLoadingJira, setIsLoadingJira] = useState(true);
 
   // Acesso é garantido centralmente pelo ProtectedRoute (analytics.view).
 
@@ -147,31 +88,17 @@ const AdminStatistics: React.FC = () => {
     }
   };
 
-  const fetchJiraStats = async () => {
-    setIsLoadingJira(true);
-    try {
-      const res = await api.get("/api/admin/analytics/jira");
-      setJiraStats(res.data);
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao carregar estatísticas do Jira.");
-    } finally {
-      setIsLoadingJira(false);
-    }
-  };
 
   const refreshActive = () => {
     if (activeTab === "sistema") fetchStats();
-    else if (activeTab === "chamados") fetchTicketStats();
-    else fetchJiraStats();
+    else fetchTicketStats();
   };
 
-  // Busca os dados da aba ativa (e atualiza a cada 60s para efeito "ao vivo").
+  // Busca os dados uma vez ao entrar na aba. A partir daí a atualização é
+  // sempre manual, pelo botão "Atualizar".
   useEffect(() => {
     if (!user) return;
     refreshActive();
-    const interval = setInterval(refreshActive, 60000);
-    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, activeTab]);
 
@@ -201,12 +128,6 @@ const AdminStatistics: React.FC = () => {
             onClick={() => setActiveTab("chamados")}
           >
             Central de Chamados
-          </button>
-          <button
-            className={`tab-item ${activeTab === "jira" ? "active" : ""}`}
-            onClick={() => setActiveTab("jira")}
-          >
-            Desenvolvimento
           </button>
         </div>
 
@@ -349,48 +270,12 @@ const AdminStatistics: React.FC = () => {
                     <p>Concluídos</p>
                   </div>
                 </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineStatusOnline />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{ticketStats.openedToday}</h3>
-                    <p>Abertos Hoje</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineCalendar />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{ticketStats.opened7d}</h3>
-                    <p>Abertos (7 dias)</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineCalendar />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{ticketStats.opened30d}</h3>
-                    <p>Abertos (30 dias)</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineClock />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{formatHours(ticketStats.avgResolutionHours)}</h3>
-                    <p>Tempo Médio de Resolução</p>
-                  </div>
-                </div>
               </div>
 
+              <HelpdeskCharts stats={ticketStats} />
+
+              {/* As tabelas abaixo são a leitura textual dos gráficos —
+                  garantem os números exatos e a acessibilidade. */}
               <div className="admin-section">
                 <h3>Chamados por Sistema</h3>
                 <div className="table-container">
@@ -459,237 +344,6 @@ const AdminStatistics: React.FC = () => {
             <p>Não foi possível carregar os dados.</p>
           ))}
 
-        {/* ───────────────────── ABA: DESENVOLVIMENTO (JIRA) ───────────────────── */}
-        {activeTab === "jira" &&
-          (isLoadingJira ? (
-            <div className="tela-loading stats-loading-box">
-              Carregando dados...
-            </div>
-          ) : jiraStats && jiraStats.configured === false ? (
-            <div className="on-screen-form jira-not-configured">
-              <FaJira size={40} color="var(--brand-gold)" />
-              <h3>Integração com o Jira não configurada</h3>
-              <p>
-                Defina as variáveis de ambiente <code>JIRA_EMAIL</code> e{" "}
-                <code>JIRA_API_TOKEN</code> no servidor para exibir as
-                estatísticas de desenvolvimento aqui.
-              </p>
-            </div>
-          ) : jiraStats && jiraStats.configured ? (
-            <div className="stats-dashboard">
-              {/* Cabeçalho da sprint atual */}
-              {jiraStats.sprint && (
-                <div className="jira-sprint-card">
-                  <div className="jira-sprint-head">
-                    <div>
-                      <span className="jira-sprint-eyebrow">
-                        <HiOutlineViewBoards /> Sprint atual
-                      </span>
-                      <h3>{jiraStats.sprint.name}</h3>
-                      {jiraStats.sprint.goal && (
-                        <p className="jira-sprint-goal">
-                          <HiOutlineFlag /> {jiraStats.sprint.goal}
-                        </p>
-                      )}
-                    </div>
-                    {jiraStats.boardUrl && (
-                      <a
-                        className="jira-board-link"
-                        href={jiraStats.boardUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Abrir no Jira <HiOutlineExternalLink />
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="jira-sprint-meta">
-                    <span>
-                      <HiOutlineCalendar /> Conclusão em{" "}
-                      <strong>{formatDate(jiraStats.sprint.endDate)}</strong>
-                      {jiraStats.sprint.daysRemaining !== null &&
-                        (jiraStats.sprint.daysRemaining >= 0 ? (
-                          <em> ({jiraStats.sprint.daysRemaining} dias restantes)</em>
-                        ) : (
-                          <em> (encerrada)</em>
-                        ))}
-                    </span>
-                  </div>
-
-                  {/* Progresso: concluídos / total */}
-                  <div className="jira-progress-track">
-                    <div
-                      className="jira-progress-fill"
-                      style={
-                        {
-                          "--bar-width": `${
-                            jiraStats.total
-                              ? Math.round(
-                                  ((jiraStats.byCategory?.done || 0) /
-                                    jiraStats.total) *
-                                    100,
-                                )
-                              : 0
-                          }%`,
-                        } as React.CSSProperties
-                      }
-                    />
-                  </div>
-                  <span className="jira-progress-label">
-                    {jiraStats.byCategory?.done || 0} de {jiraStats.total || 0}{" "}
-                    cards concluídos
-                  </span>
-                </div>
-              )}
-
-              {/* Cartões de resumo */}
-              <div className="stats-grid">
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <FaJira />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{jiraStats.total || 0}</h3>
-                    <p>Cards na Sprint</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineInbox />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{jiraStats.byCategory?.todo || 0}</h3>
-                    <p>A Fazer</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineClock />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{jiraStats.byCategory?.inProgress || 0}</h3>
-                    <p>Em Andamento</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineCheckCircle />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{jiraStats.byCategory?.done || 0}</h3>
-                    <p>Concluídos</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineClock />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{formatHours(jiraStats.avgCompletionHours ?? null)}</h3>
-                    <p>Tempo Médio de Conclusão (90d)</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Gráfico: cards por status */}
-              <div className="admin-section">
-                <h3>Cards por Status</h3>
-                <div className="chart-container-stats">
-                  {jiraStats.byStatus && jiraStats.byStatus.length ? (
-                    jiraStats.byStatus.map((s, i) => {
-                      const max = Math.max(
-                        ...jiraStats.byStatus!.map((x) => x.count),
-                        1,
-                      );
-                      return (
-                        <div className="jira-bar-row" key={i}>
-                          <span className="jira-bar-label">{s.name}</span>
-                          <span className="jira-bar-track">
-                            <span
-                              className={`jira-bar-fill cat-${s.category}`}
-                              style={
-                                {
-                                  "--bar-width": `${Math.round(
-                                    (s.count / max) * 100,
-                                  )}%`,
-                                } as React.CSSProperties
-                              }
-                            />
-                          </span>
-                          <span className="jira-bar-value">{s.count}</span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="stats-empty-cell">Sem cards na sprint.</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Tabela/gráfico: cards por desenvolvedor */}
-              <div className="admin-section">
-                <h3>Cards por Desenvolvedor</h3>
-                <div className="table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Desenvolvedor</th>
-                        <th className="stats-th-center">A fazer</th>
-                        <th className="stats-th-center">Em andamento</th>
-                        <th className="stats-th-center">Concluídos</th>
-                        <th className="stats-th-center">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {jiraStats.byAssignee &&
-                        jiraStats.byAssignee.map((dev, i) => (
-                          <tr key={i}>
-                            <td className="file-cell">
-                              {dev.avatarUrl ? (
-                                <img
-                                  className="jira-dev-avatar"
-                                  src={dev.avatarUrl}
-                                  alt={dev.name}
-                                />
-                              ) : (
-                                <HiOutlineUsers
-                                  size={20}
-                                  color="var(--text-secondary)"
-                                />
-                              )}
-                              {dev.name}
-                            </td>
-                            <td className="stats-count-cell">{dev.todo}</td>
-                            <td className="stats-count-cell">
-                              {dev.inProgress}
-                            </td>
-                            <td className="stats-count-cell">{dev.done}</td>
-                            <td className="stats-count-cell">
-                              <span className="count-badge">{dev.total}</span>
-                            </td>
-                          </tr>
-                        ))}
-                      {(!jiraStats.byAssignee ||
-                        jiraStats.byAssignee.length === 0) && (
-                        <tr>
-                          <td colSpan={5} className="stats-empty-cell">
-                            Nenhum card atribuído na sprint.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p>Não foi possível carregar os dados.</p>
-          ))}
       </div>
       <Footer />
     </div>

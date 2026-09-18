@@ -38,7 +38,7 @@
 }
 
 .admin-form {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
 
   border-radius: 8px;
 }
@@ -150,7 +150,7 @@
 }
 
 .on-screen-form {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   padding: 20px;
@@ -1125,7 +1125,7 @@
 }
 
 .perm-category {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   border-radius: 14px;
   padding: 6px 16px 10px;

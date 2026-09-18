@@ -12,7 +12,7 @@
 }
 
 .kanban-column {
-  background: var(--glass-surface);
+  background: var(--glass-surface-flat);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 8px;
@@ -292,8 +292,30 @@
   text-align: left;
 }
 
+/* Todos os filtros com a mesma largura: os grupos dividem a linha e param de
+   crescer em 280px. Sem isso cada campo herdaria a largura do seu conteúdo —
+   o select pelo maior texto da lista, o input pelo tamanho padrão do
+   navegador — e a barra ficaria irregular. */
 .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 220px;
   max-width: 280px;
+}
+
+/* O rótulo diz o que o filtro busca; o placeholder fica livre para mostrar o
+   formato esperado, em vez de repetir o nome do campo. */
+.filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.filter-group .form-input,
+.filter-group .form-select {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* --- STAGES MODAL --- */

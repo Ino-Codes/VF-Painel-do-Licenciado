@@ -15,7 +15,9 @@
 }
 
 .gestao-module-card {
-  background-color: var(--glass-background);
+  /* --glass-background nunca existiu: a declaração era inválida e só não
+     aparecia porque a regra de cards do 20-Brand.css cobre este seletor. */
+  background-color: var(--glass-surface-flat);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 30px;
