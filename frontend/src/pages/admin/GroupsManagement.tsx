@@ -7,6 +7,7 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import toast from "react-hot-toast";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { HiOutlineUserGroup } from "react-icons/hi";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface Group {
   id: number;
@@ -160,7 +161,7 @@ const GroupsManagement: React.FC = () => {
   };
 
   if (loading || !user)
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
 
   return (
     <div className="p-2">
@@ -179,9 +180,7 @@ const GroupsManagement: React.FC = () => {
         </div>
 
         {isLoading ? (
-          <div className="tela-loading stats-loading-box">
-            Carregando dados...
-          </div>
+          <LoadingSpinner variant="inline" label="Carregando dados" />
         ) : (
           <div className="table-container">
             <table className="admin-table">

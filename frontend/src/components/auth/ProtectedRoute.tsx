@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
+import LoadingSpinner from "../ui/LoadingSpinner.tsx";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, loading, hasPermission, hasAnyPermission } = useAuth();
 
   if (loading) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   if (!user) {

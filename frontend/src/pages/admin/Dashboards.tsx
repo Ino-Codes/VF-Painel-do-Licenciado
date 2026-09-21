@@ -6,6 +6,7 @@ import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import EnneagramStats from "./EnneagramStats.tsx";
 import CourseEngagementDash from "./CourseEngagementDash.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const Dashboard: React.FC = () => {
   const { user, loading, hasPermission } = useAuth();
@@ -15,7 +16,7 @@ const Dashboard: React.FC = () => {
   );
 
   if (loading) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
   if (!user) {
     return null;

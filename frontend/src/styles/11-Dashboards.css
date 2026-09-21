@@ -280,11 +280,6 @@
    Classes de refatoração (estilos inline movidos das telas de estatísticas)
    --------------------------------------------------------------------------- */
 
-/* AdminStatistics: caixa de loading com altura fixa (vence .tela-loading) */
-.tela-loading.stats-loading-box {
-  height: 200px;
-}
-
 /* AdminStatistics: cabeçalho "Qtd. Downloads" centralizado
    (vence `.admin-table th` que define text-align: left) */
 .admin-table th.stats-th-center {

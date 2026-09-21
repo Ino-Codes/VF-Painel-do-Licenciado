@@ -10,6 +10,7 @@ import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import { FiTrash2, FiCopy, FiImage, FiDownload } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const SocialMedia: React.FC = () => {
   const { user, loading, hasPermission } = useAuth();
@@ -119,7 +120,7 @@ const SocialMedia: React.FC = () => {
     fetchSocialContent();
   };
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
   if (!user) return null;
 
   return (

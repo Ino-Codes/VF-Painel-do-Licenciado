@@ -16,6 +16,7 @@ import {
 import { FaHeadset } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
 import HelpdeskCharts from "./HelpdeskCharts.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface SystemStats {
   todayLogins: number;
@@ -103,7 +104,7 @@ const AdminStatistics: React.FC = () => {
   }, [user, activeTab]);
 
   if (loading || !user)
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
 
   return (
     <div className="p-2">
@@ -134,9 +135,7 @@ const AdminStatistics: React.FC = () => {
         {/* ───────────────────────── ABA: SISTEMA ───────────────────────── */}
         {activeTab === "sistema" &&
           (isLoadingData ? (
-            <div className="tela-loading stats-loading-box">
-              Carregando dados...
-            </div>
+            <LoadingSpinner variant="inline" label="Carregando dados" />
           ) : stats ? (
             <div className="stats-dashboard">
               <div className="stats-grid">
@@ -225,9 +224,7 @@ const AdminStatistics: React.FC = () => {
         {/* ──────────────────── ABA: CENTRAL DE CHAMADOS ──────────────────── */}
         {activeTab === "chamados" &&
           (isLoadingTickets ? (
-            <div className="tela-loading stats-loading-box">
-              Carregando dados...
-            </div>
+            <LoadingSpinner variant="inline" label="Carregando dados" />
           ) : ticketStats ? (
             <div className="stats-dashboard">
               <div className="stats-grid">

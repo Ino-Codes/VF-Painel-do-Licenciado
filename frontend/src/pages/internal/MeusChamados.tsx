@@ -19,6 +19,7 @@ import {
   FiChevronDown,
 } from "react-icons/fi";
 import { IconType } from "react-icons";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface TicketAttachment {
   id: number;
@@ -277,7 +278,7 @@ const MeusChamados: React.FC = () => {
   };
 
   if (loading || !user) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

@@ -10,13 +10,18 @@
    --glass-shadow) vivem no 1-global.css e valem para os dois temas. */
 
 /* ── Fundo branded da página ─────────────────────────────────── */
-body:not(.dark-theme) .p-2 {
+/* A tela de carregamento entra no mesmo fundo da página: sem isso a
+   transição do loader para o conteúdo passa por um branco (ou preto)
+   diferente do restante. */
+body:not(.dark-theme) .p-2,
+body:not(.dark-theme) .vf-loading--page {
   /* Branco neutro e limpo (sem calor/dourado) */
   background: linear-gradient(160deg, #fafafa 0%, #f5f5f7 55%, #f1f1f3 100%);
   background-attachment: fixed;
 }
 
-body.dark-theme .p-2 {
+body.dark-theme .p-2,
+body.dark-theme .vf-loading--page {
   background:
     radial-gradient(
       1100px 560px at 12% -10%,

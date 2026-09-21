@@ -13,6 +13,7 @@ import EmptyState from "../../components/ui/EmptyState.tsx";
 import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import { IconKey } from "../../utils/assets.ts";
 import { FiEdit, FiTrash2, FiDownload } from "react-icons/fi";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface FileData {
   id: number;
@@ -216,7 +217,7 @@ const ContentLibrary: React.FC<ContentLibraryProps> = ({
   });
 
   if (loading) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   if (!user) {

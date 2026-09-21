@@ -26,6 +26,7 @@ import {
 } from "@dnd-kit/sortable";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { FiTrash2 } from "react-icons/fi";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const AdminCourseEditor: React.FC = () => {
   const { user, loading } = useAuth();
@@ -278,7 +279,7 @@ const AdminCourseEditor: React.FC = () => {
   };
 
   if (loading || !course) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

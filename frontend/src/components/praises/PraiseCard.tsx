@@ -7,6 +7,8 @@ export interface Praise {
   message: string;
   created_at: string;
   published_at?: string | null;
+  /** Competência mensal, "YYYY-MM" (mês da urna, não o da digitação). */
+  reference_month?: string | null;
   recipient_id?: number | null;
   recipient_name?: string | null;
   recipient_cargo?: string | null;

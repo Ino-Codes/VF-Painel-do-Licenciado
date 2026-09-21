@@ -13,6 +13,7 @@ import { IoMdDocument } from "react-icons/io";
 import { MdPlayLesson, MdPlayCircle } from "react-icons/md";
 import { RiQuestionnaireFill } from "react-icons/ri";
 import { FaHeadset, FaArrowRight } from "react-icons/fa";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface Notice {
   id: number;
@@ -81,7 +82,7 @@ const Home: React.FC = () => {
   }, [user, fetchNotices, fetchMonthlyEvents]);
 
   if (loading) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
   if (!user) {
     return null;

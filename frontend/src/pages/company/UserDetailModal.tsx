@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { FaHeart } from "react-icons/fa";
 import api from "../../api.ts";
 import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
+import {
+  agruparPorMes,
+  mesTitulo,
+} from "../../components/praises/praiseMonths.ts";
 
 interface User {
   id: number;
@@ -117,16 +121,26 @@ const UserDetailModal: React.FC<ModalProps> = ({ isOpen, onClose, user }) => {
               <FaHeart className="user-detail-praises-icon" aria-hidden="true" />
               <h4 className="user-detail-praises-title">Elogios recebidos</h4>
             </div>
-            <div className="praise-grid praise-grid--testimonial">
-              {praises.map((p) => (
-                <PraiseCard
-                  key={p.id}
-                  praise={p}
-                  showRecipient={false}
-                  variant="testimonial"
-                />
-              ))}
-            </div>
+            {agruparPorMes(praises).map(({ mes, itens }) => (
+              <div key={mes || "sem-mes"} className="praise-month-block">
+                <div className="praise-month-block-head">
+                  <h5 className="praise-month-block-title">{mesTitulo(mes)}</h5>
+                  <span className="praise-month-block-count">
+                    {itens.length}
+                  </span>
+                </div>
+                <div className="praise-grid praise-grid--testimonial">
+                  {itens.map((p) => (
+                    <PraiseCard
+                      key={p.id}
+                      praise={p}
+                      showRecipient={false}
+                      variant="testimonial"
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

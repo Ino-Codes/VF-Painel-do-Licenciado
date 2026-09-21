@@ -10,6 +10,7 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import { FiTrash2, FiEdit } from "react-icons/fi";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface VideoData {
   id: number;
@@ -185,7 +186,7 @@ const Videos: React.FC = () => {
     fetchCategories();
   };
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
   if (!user) return null;
 
   return (
@@ -229,7 +230,7 @@ const Videos: React.FC = () => {
         </div>
 
         {isInitialLoading ? (
-          <div className="tela-loading">Carregando vídeos...</div>
+          <LoadingSpinner variant="inline" label="Carregando vídeos" />
         ) : (
           <>
             {videos.length > 0 ? (

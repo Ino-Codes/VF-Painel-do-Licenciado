@@ -9,6 +9,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
 import EventModal from "../../components/forms/EventModal.tsx";
 import { useAuth } from "../../context/AuthContext.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const AdminCalendar: React.FC = () => {
   const { user, loading, hasPermission } = useAuth();
@@ -110,7 +111,7 @@ const AdminCalendar: React.FC = () => {
   };
 
   if (loading || !user) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

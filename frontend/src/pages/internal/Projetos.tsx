@@ -282,7 +282,7 @@ const Projetos: React.FC = () => {
             )}
 
             {isLoadingProjects ? (
-              <LoadingSpinner />
+              <LoadingSpinner variant="inline" label="Carregando projetos" />
             ) : projects.length === 0 ? (
               <EmptyState
                 imageKey="projetos"
@@ -384,7 +384,9 @@ const Projetos: React.FC = () => {
             )}
 
             {/* Loading */}
-            {selectedProjectId && isLoadingTasks && <LoadingSpinner />}
+            {selectedProjectId && isLoadingTasks && (
+              <LoadingSpinner variant="inline" label="Carregando tarefas" />
+            )}
 
             {/* Gantt */}
             {selectedProjectId && !isLoadingTasks && (

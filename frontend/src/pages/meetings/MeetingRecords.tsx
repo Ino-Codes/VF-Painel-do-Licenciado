@@ -15,6 +15,7 @@ import {
   FiUsers,
   FiDownload,
 } from "react-icons/fi";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -136,7 +137,7 @@ const MeetingRecords: React.FC = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
   if (!user) return null;
 
   const canManage = hasPermission("meeting_records.manage");
@@ -175,9 +176,7 @@ const MeetingRecords: React.FC = () => {
 
         {/* ── Lista ── */}
         {isLoading ? (
-          <div className="tela-loading meeting-loading">
-            Carregando atas...
-          </div>
+          <LoadingSpinner variant="inline" label="Carregando atas" />
         ) : meetings.length > 0 ? (
           <div className="meeting-list">
             {meetings.map((meeting) => {

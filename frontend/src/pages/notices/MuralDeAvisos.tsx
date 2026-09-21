@@ -13,6 +13,7 @@ import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import { sanitizeHtml } from "../../utils/sanitize.ts";
 import toast from "react-hot-toast";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -178,7 +179,7 @@ const MuralDeAvisos: React.FC = () => {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
   if (!user) return null;
 
   const canManage = hasPermission("notices.manage");
@@ -215,9 +216,7 @@ const MuralDeAvisos: React.FC = () => {
 
         {/* ── Lista de Avisos ── */}
         {isLoading ? (
-          <div className="tela-loading notice-loading-box">
-            Carregando avisos...
-          </div>
+          <LoadingSpinner variant="inline" label="Carregando avisos" />
         ) : notices.length > 0 ? (
           <div className="notice-list">
             {notices.map((notice) => (

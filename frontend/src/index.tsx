@@ -9,6 +9,7 @@ import {
 import { Toaster } from "react-hot-toast";
 
 import { ThemeProvider } from "./context/ThemeContext.tsx";
+import { safeStorage } from "./utils/safeStorage.ts";
 import App from "./pages/public/App.tsx";
 import Home from "./pages/home/Home.tsx";
 import Dashboards from "./pages/admin/Dashboards.tsx";
@@ -384,6 +385,13 @@ const AppRouter: React.FC = () => {
     </AuthProvider>
   );
 };
+
+// O tema precisa valer no primeiro pixel. O ThemeProvider aplica a classe
+// num efeito, que só roda DEPOIS da primeira renderização — e a tela de
+// carregamento, que aparece justamente nesse instante, saía com as cores do
+// tema claro para quem escolheu o escuro.
+const temaInicial = safeStorage.get("theme") === "dark" ? "dark" : "light";
+document.body.classList.add(`${temaInicial}-theme`);
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement,

@@ -11,6 +11,10 @@ import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import AvatarModal from "../../components/forms/AvatarModal.tsx";
 import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
+import {
+  mesCurto,
+  mesTitulo,
+} from "../../components/praises/praiseMonths.ts";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { FiEdit, FiEye, FiCamera, FiLogOut } from "react-icons/fi";
 import { PiPencilSimpleLineBold } from "react-icons/pi";
@@ -83,6 +87,10 @@ const Perfil: React.FC = () => {
   const [certificates, setCertificates] = useState<CertificateData[]>([]);
   const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
   const [myPraises, setMyPraises] = useState<Praise[]>([]);
+  // Mês em foco nos elogios (null = o mais recente) e se a lista do mês está
+  // aberta além dos primeiros.
+  const [praiseMonth, setPraiseMonth] = useState<string | null>(null);
+  const [showAllPraises, setShowAllPraises] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     nome: "",
@@ -251,7 +259,36 @@ const Perfil: React.FC = () => {
 
   // ─── Guards de render ─────────────────────────────────────────────────────
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  // Quantos elogios do mês aparecem antes do "Ver mais".
+  const PRAISES_VISIVEIS = 3;
+
+  // Meses com elogios, do mais recente ao mais antigo (a lista já vem
+  // ordenada por competência do backend; aqui só tiramos as repetições).
+  const praiseMonths = myPraises.reduce<string[]>((acc, p) => {
+    const mes = p.reference_month || "";
+    if (mes && !acc.includes(mes)) acc.push(mes);
+    return acc;
+  }, []);
+
+  const praiseMonthAtivo = praiseMonth || praiseMonths[0] || null;
+
+  const praisesDoMes = myPraises.filter(
+    (p) => !praiseMonthAtivo || p.reference_month === praiseMonthAtivo,
+  );
+
+  const praisesVisiveis = showAllPraises
+    ? praisesDoMes
+    : praisesDoMes.slice(0, PRAISES_VISIVEIS);
+
+  const praisesRestantes = praisesDoMes.length - praisesVisiveis.length;
+
+  const trocarMesElogios = (mes: string) => {
+    setPraiseMonth(mes);
+    // Mês novo começa recolhido, senão a lista voltaria a ser longa.
+    setShowAllPraises(false);
+  };
+
+  if (loading) return <LoadingSpinner />;
   if (!user) return null;
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -419,8 +456,51 @@ const Perfil: React.FC = () => {
                   Reconhecimentos recebidos por você ou pelo seu setor. Quem
                   escreveu permanece anônimo. 💛
                 </p>
+                {praiseMonths.length > 1 && (
+                  <div
+                    className="praise-month-tabs"
+                    role="tablist"
+                    aria-label="Mês dos elogios"
+                  >
+                    {praiseMonths.map((mes) => (
+                      <button
+                        key={mes}
+                        type="button"
+                        role="tab"
+                        aria-selected={mes === praiseMonthAtivo}
+                        className={`praise-month-tab${
+                          mes === praiseMonthAtivo
+                            ? " praise-month-tab--active"
+                            : ""
+                        }`}
+                        onClick={() => trocarMesElogios(mes)}
+                      >
+                        <span className="praise-month-tab-label">
+                          {mesCurto(mes)}
+                        </span>
+                        <span className="praise-month-tab-count">
+                          {
+                            myPraises.filter((p) => p.reference_month === mes)
+                              .length
+                          }
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="praise-month-summary">
+                  <h4 className="praise-month-title">
+                    {mesTitulo(praiseMonthAtivo)}
+                  </h4>
+                  <span className="praise-month-meta">
+                    {praisesDoMes.length} elogio
+                    {praisesDoMes.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+
                 <div className="praise-grid praise-grid--testimonial">
-                  {myPraises.map((p) => (
+                  {praisesVisiveis.map((p) => (
                     <PraiseCard
                       key={p.id}
                       praise={p}
@@ -429,6 +509,20 @@ const Perfil: React.FC = () => {
                     />
                   ))}
                 </div>
+
+                {(praisesRestantes > 0 || showAllPraises) && (
+                  <div className="praise-more-row">
+                    <button
+                      type="button"
+                      className="list-button"
+                      onClick={() => setShowAllPraises((v) => !v)}
+                    >
+                      {showAllPraises
+                        ? "Ver menos"
+                        : `Ver mais (${praisesRestantes})`}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -509,7 +603,7 @@ const Perfil: React.FC = () => {
         {activeTab === "certificates" && (
           <div className="profile-tab-content">
             {isLoadingCertificates ? (
-              <LoadingSpinner />
+              <LoadingSpinner variant="inline" label="Carregando certificados" />
             ) : (
               <div className="certificates-grid">
                 {certificates.length > 0 ? (

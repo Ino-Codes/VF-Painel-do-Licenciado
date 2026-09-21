@@ -4,6 +4,8 @@ import api from "../../api.ts";
 import toast from "react-hot-toast";
 import Modal from "../ui/Modal.tsx";
 import { useTheme } from "../../context/ThemeContext.tsx";
+import { mesAtual, mesLongo } from "../praises/praiseMonths.ts";
+import MonthPicker from "./MonthPicker.tsx";
 
 interface InternalUser {
   id: number;
@@ -23,13 +25,19 @@ interface OptionType {
 interface PraiseModalProps {
   onClose: () => void;
   onSuccess: (created: any) => void;
+  /** Competência sugerida — o mês que a apuração está vendo. */
+  defaultMonth?: string;
 }
 
 type TargetType = "user" | "setor";
 
 const MAX_LEN = 500;
 
-const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
+const PraiseModal: React.FC<PraiseModalProps> = ({
+  onClose,
+  onSuccess,
+  defaultMonth,
+}) => {
   const { theme } = useTheme();
   const [internalUsers, setInternalUsers] = useState<InternalUser[]>([]);
   const [setores, setSetores] = useState<Setor[]>([]);
@@ -37,6 +45,9 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
   const [selectedPerson, setSelectedPerson] = useState<OptionType | null>(null);
   const [selectedSetor, setSelectedSetor] = useState<OptionType | null>(null);
   const [message, setMessage] = useState("");
+  const [referenceMonth, setReferenceMonth] = useState(
+    defaultMonth || mesAtual(),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -125,12 +136,21 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
       toast.error("Escreva uma mensagem de elogio.");
       return;
     }
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(referenceMonth)) {
+      toast.error("Informe o mês de referência do elogio.");
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const payload =
+      const destinatario =
         targetType === "user"
-          ? { recipientId: Number(selectedPerson!.value), message: message.trim() }
-          : { recipientSetor: String(selectedSetor!.value), message: message.trim() };
+          ? { recipientId: Number(selectedPerson!.value) }
+          : { recipientSetor: String(selectedSetor!.value) };
+      const payload = {
+        ...destinatario,
+        message: message.trim(),
+        referenceMonth,
+      };
       const res = await api.post("/api/praises", payload);
       toast.success("Elogio registrado como rascunho.");
       onSuccess(res.data);
@@ -243,6 +263,21 @@ const PraiseModal: React.FC<PraiseModalProps> = ({ onClose, onSuccess }) => {
         <div className="praise-char-count">
           {message.length}/{MAX_LEN}
         </div>
+
+        <div className="form-row">
+          <label htmlFor="praise-month">Mês de referência</label>
+        </div>
+        <div className="form-row">
+          <MonthPicker
+            inputId="praise-month"
+            value={referenceMonth}
+            onChange={setReferenceMonth}
+          />
+        </div>
+        <p className="praise-month-hint">
+          É o mês da urna, não o da digitação: elogios de {mesLongo(referenceMonth)}{" "}
+          continuam contando nesse mês mesmo se forem transcritos depois.
+        </p>
 
         <div className="modal-actions">
           <button type="button" onClick={onClose} className="form-button-cancel">

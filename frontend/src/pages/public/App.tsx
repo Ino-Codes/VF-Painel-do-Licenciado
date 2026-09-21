@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import ForcePasswordResetModal from "../../components/ui/ForcePasswordResetModal.tsx";
 import Logo from "../../img/textobranco2.png";
 import { toast } from "react-hot-toast";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const App: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -161,7 +162,7 @@ const App: React.FC = () => {
   // Evita exibir a tela de login enquanto a sessão é lida (loading) ou quando
   // já há sessão e o redirecionamento para /home está prestes a acontecer.
   if (loading || (user && !needsPasswordReset)) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

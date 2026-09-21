@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import UserFormModal from "../../components/forms/UserFormModal.tsx";
 import TabContent from "./TabContent.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface User {
   id: number;
@@ -192,7 +193,7 @@ const AdminUsers: React.FC = () => {
   };
 
   if (loading || !user)
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
 
   return (
     <div className="p-2">

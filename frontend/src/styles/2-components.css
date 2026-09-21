@@ -1145,3 +1145,78 @@ input[type="radio"]:checked {
 .chamado-attachments a:hover {
   text-decoration: underline;
 }
+
+/* ── Tela de carregamento ──────────────────────────────────────────────────
+   Marca da V-CORP parada no centro, anel dourado girando em volta e o rótulo
+   em caixa alta espaçada. Um só componente serve a rota inteira e os blocos
+   internos, pela variante.
+   -------------------------------------------------------------------------- */
+
+.vf-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+/* A variante de página pinta a própria superfície: ela aparece quando a tela
+   ainda não existe, e o body tem um véu escuro fixo (body::before) que
+   deixaria o texto do tema claro quase ilegível. */
+.vf-loading--page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.vf-loading--inline {
+  min-height: 220px;
+  padding: 32px 0;
+}
+
+.vf-loading-mark {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  display: grid;
+  place-items: center;
+}
+
+.vf-loading-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--glass-border);
+  border-top-color: var(--brand-gold);
+  animation: vf-loading-spin 0.9s linear infinite;
+}
+
+.vf-loading-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  /* Brilho dourado discreto, para a marca não parecer colada sobre o fundo. */
+  box-shadow: 0 0 22px rgba(138, 108, 53, 0.18);
+}
+
+.vf-loading-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+@keyframes vf-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Quem pede menos movimento continua precisando saber que algo está em curso:
+   o anel gira, mas devagar o bastante para não incomodar. */
+@media (prefers-reduced-motion: reduce) {
+  .vf-loading-ring {
+    animation-duration: 3s;
+  }
+}

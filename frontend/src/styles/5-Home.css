@@ -301,10 +301,6 @@
 }
 
 /* Mural de Avisos: caixa de loading da lista */
-.notice-loading-box {
-  height: 200px;
-}
-
 /* NoticeModal: opção de destinatário (estado selecionado) */
 .notice-recipient-option {
   background-color: transparent;

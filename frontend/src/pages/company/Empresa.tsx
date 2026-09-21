@@ -7,9 +7,14 @@ import UserCard from "./UserCard.tsx";
 import { useNavigate } from "react-router-dom";
 import UserDetailModal from "./UserDetailModal.tsx";
 import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
+import {
+  mesCurto,
+  mesTitulo,
+} from "../../components/praises/praiseMonths.ts";
 
 import { FiTarget, FiEye } from "react-icons/fi";
 import { RiVipDiamondLine } from "react-icons/ri";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const Empresa: React.FC = () => {
   const { user, loading } = useAuth();
@@ -17,6 +22,8 @@ const Empresa: React.FC = () => {
   const [internalUsers, setInternalUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [setorPraises, setSetorPraises] = useState<Praise[]>([]);
+  // Mês em foco na seção de setores (null = ainda não escolhido).
+  const [setorMonth, setSetorMonth] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -33,15 +40,24 @@ const Empresa: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  // Agrupa os elogios de setor por nome do setor (mantém a ordem do backend).
-  const praisesBySetor = setorPraises.reduce<Record<string, Praise[]>>(
-    (acc, p) => {
+  // Meses que têm elogios de setor, do mais recente para o mais antigo. A
+  // lista já vem ordenada por competência, então basta remover repetições.
+  const setorMonths = setorPraises.reduce<string[]>((acc, p) => {
+    const mes = p.reference_month || "";
+    if (mes && !acc.includes(mes)) acc.push(mes);
+    return acc;
+  }, []);
+
+  const mesAtivo = setorMonth || setorMonths[0] || null;
+
+  // Dentro do mês em foco, agrupa por setor (mantém a ordem do backend).
+  const praisesBySetor = setorPraises
+    .filter((p) => !mesAtivo || p.reference_month === mesAtivo)
+    .reduce<Record<string, Praise[]>>((acc, p) => {
       const key = p.recipient_setor || "Setor";
       (acc[key] = acc[key] || []).push(p);
       return acc;
-    },
-    {},
-  );
+    }, {});
 
   const handleOpenModal = (userToShow: any) => {
     setSelectedUser(userToShow);
@@ -51,7 +67,7 @@ const Empresa: React.FC = () => {
   };
 
   if (loading || !user) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   return (
@@ -96,6 +112,42 @@ const Empresa: React.FC = () => {
                 Confira os elogios recebidos pelos nossos setores
               </p>
             </div>
+
+            {setorMonths.length > 1 && (
+              <div
+                className="praise-month-tabs"
+                role="tablist"
+                aria-label="Mês dos elogios aos setores"
+              >
+                {setorMonths.map((mes) => (
+                  <button
+                    key={mes}
+                    type="button"
+                    role="tab"
+                    aria-selected={mes === mesAtivo}
+                    className={`praise-month-tab${
+                      mes === mesAtivo ? " praise-month-tab--active" : ""
+                    }`}
+                    onClick={() => setSetorMonth(mes)}
+                  >
+                    <span className="praise-month-tab-label">
+                      {mesCurto(mes)}
+                    </span>
+                    <span className="praise-month-tab-count">
+                      {
+                        setorPraises.filter((p) => p.reference_month === mes)
+                          .length
+                      }
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {mesAtivo && (
+              <h3 className="praise-month-title">{mesTitulo(mesAtivo)}</h3>
+            )}
+
             {Object.entries(praisesBySetor).map(([setorNome, list]) => (
               <div key={setorNome} className="setor-praise-group">
                 <h3 className="setor-praise-group-title">{setorNome}</h3>

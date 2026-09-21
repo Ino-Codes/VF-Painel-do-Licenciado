@@ -17,12 +17,13 @@ import {
 } from "react-icons/fa";
 import { FaMagnifyingGlassChart } from "react-icons/fa6";
 import { MdFeedback } from "react-icons/md";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const AdminGestao: React.FC = () => {
   const { loading, hasPermission } = useAuth();
   const navigate = useNavigate();
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
 
   // Hub único de administração (RH consolidado aqui).
   // Cada card só aparece para quem tem o `.view`/`.manage` da tela.

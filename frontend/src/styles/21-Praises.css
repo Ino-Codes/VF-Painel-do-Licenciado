@@ -283,3 +283,142 @@
   color: var(--accent-color);
   font-size: 1.1rem;
 }
+
+/* ── Competência mensal ────────────────────────────────────────────────────
+   A apuração é mensal, então as telas mostram um mês por vez (fichas) ou
+   separam a lista por mês (blocos com título).
+   -------------------------------------------------------------------------- */
+
+.praise-month-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 20px;
+}
+
+.praise-month-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-surface-flat);
+  color: var(--text-secondary);
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.praise-month-tab:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+/* O mês em foco é marcado pela borda e pelo peso do texto, não por um
+   preenchimento cheio: são muitas fichas numa linha. */
+.praise-month-tab--active,
+.praise-month-tab--active:hover {
+  color: var(--text-primary);
+  border-color: var(--brand-gold);
+}
+
+.praise-month-tab-count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-secondary) 14%, transparent);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.praise-month-tab--active .praise-month-tab-count {
+  background: color-mix(in srgb, var(--brand-gold) 20%, transparent);
+  color: var(--text-primary);
+}
+
+/* Ponto dourado: o mês ainda tem rascunho para publicar. */
+.praise-month-tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand-gold);
+}
+
+.praise-month-summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.praise-month-title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.praise-month-meta {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Blocos por mês (modal da pessoa e Perfil) ── */
+.praise-month-block + .praise-month-block {
+  margin-top: 22px;
+}
+
+.praise-month-block-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.praise-month-block-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.praise-month-block-count {
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-gold) 16%, transparent);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A linha separa os meses sem precisar de borda em cada cartão. */
+.praise-month-block + .praise-month-block .praise-month-block-head {
+  padding-top: 20px;
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Explicação do campo de mês no modal de registro. */
+.praise-month-hint {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* Linha do "Ver mais" dentro de um mês de elogios. */
+.praise-more-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}

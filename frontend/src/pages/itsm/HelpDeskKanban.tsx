@@ -22,6 +22,7 @@ import {
   FaLifeRing,
   FaRegLightbulb,
 } from "react-icons/fa";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -439,7 +440,7 @@ const TicketKanbanPage: React.FC = () => {
           {/* Board */}
           <div className="hd-kanban-container">
             {loading ? (
-              <div className="loading-state">Carregando...</div>
+              <LoadingSpinner variant="inline" label="Carregando chamados" />
             ) : (
               <>
               {loadError && (

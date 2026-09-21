@@ -9,6 +9,7 @@ import { FiTrash2, FiEdit, FiEye } from "react-icons/fi";
 import FeedbackInitiateModal from "../../components/forms/FeedbackInitiateModal.tsx";
 import FeedbackFillModal from "../../components/forms/FeedbackFillModal.tsx";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const Feedbacks: React.FC = () => {
   const { user, loading, hasPermission } = useAuth();
@@ -84,7 +85,7 @@ const Feedbacks: React.FC = () => {
   };
 
   if (loading || !user)
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
 
   return (
     <div className="p-2">

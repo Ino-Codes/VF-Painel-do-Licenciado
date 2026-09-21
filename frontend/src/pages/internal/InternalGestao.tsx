@@ -6,12 +6,13 @@ import Footer from "../../components/layout/Footer.tsx";
 import { onKeyActivate } from "../../utils/a11y.ts";
 
 import { FaBuilding, FaFileAlt, FaHeadset } from "react-icons/fa";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const InternalGestao: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
 
   const modules = [
     {

@@ -9,6 +9,7 @@ import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import { useNavigate } from "react-router-dom";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface FaqData {
   id: number;
@@ -125,7 +126,7 @@ const Faq: React.FC = () => {
 
   const baseURL = api.defaults.baseURL;
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
   if (!user) return null;
 
   return (

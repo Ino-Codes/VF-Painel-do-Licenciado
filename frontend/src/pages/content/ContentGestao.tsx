@@ -10,12 +10,13 @@ import { RiQuestionnaireFill } from "react-icons/ri";
 import { IoShareSocialSharp } from "react-icons/io5";
 import { HiSpeakerphone } from "react-icons/hi";
 import { FaArchive } from "react-icons/fa";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 const ContentGestao: React.FC = () => {
   const { loading } = useAuth();
   const navigate = useNavigate();
 
-  if (loading) return <div className="tela-loading">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
 
   const modules = [
     {

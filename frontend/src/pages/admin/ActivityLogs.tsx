@@ -4,6 +4,7 @@ import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface Log {
   id: number;
@@ -78,7 +79,7 @@ const ActivityLogs: React.FC = () => {
   };
 
   if (loading || !user) {
-    return <div className="tela-loading">Carregando...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

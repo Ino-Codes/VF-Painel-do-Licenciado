@@ -512,6 +512,21 @@
   cursor: not-allowed;
 }
 
+/* ── Seleção de mês (MonthPicker) ──
+   Reaproveita o dropdown e o cabeçalho do DatePicker; muda só a grade:
+   12 meses em 3 colunas, em pastilhas largas o bastante para o nome. */
+.month-picker-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.month-picker-month {
+  width: 62px;
+  height: 36px;
+  border-radius: 8px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

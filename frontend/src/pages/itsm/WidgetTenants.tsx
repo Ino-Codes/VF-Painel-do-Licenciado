@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 import { MdToggleOn, MdToggleOff } from "react-icons/md";
 import { FaArrowLeftLong } from "react-icons/fa6";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface Tenant {
   id: number;
@@ -192,7 +193,7 @@ const WidgetTenantsPage: React.FC = () => {
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
-  if (loading) return <div className="loading-state">Carregando...</div>;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="p-2">
