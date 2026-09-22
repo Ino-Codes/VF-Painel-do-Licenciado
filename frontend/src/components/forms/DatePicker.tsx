@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import PickerDropdown from "./PickerDropdown.tsx";
 
 interface DatePickerProps {
   value: string; // Formato "AAAA-MM-DD"
@@ -19,23 +20,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        // Ao fechar, se o input estiver inválido ou incompleto, reseta para o valor salvo
-        if (value) {
-          setInputValue(value.split("-").reverse().join("/"));
-        } else {
-          setInputValue("");
-        }
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+  // Ao fechar, se o input estiver inválido ou incompleto, reseta para o valor
+  // salvo. O clique fora é detectado pelo PickerDropdown, que também precisa
+  // considerar o painel (ele vive no body, não aqui dentro).
+  const fechar = useCallback(() => {
+    setIsOpen(false);
+    setInputValue(value ? value.split("-").reverse().join("/") : "");
   }, [value]);
 
   // Sincroniza o input quando o valor externo muda (ex: seleção no calendário)
@@ -161,7 +151,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
         // readOnly removido
       />
       {isOpen && (
-        <div className="date-picker-dropdown">
+        <PickerDropdown
+          anchorRef={wrapperRef}
+          onRequestClose={fechar}
+          className="date-picker-dropdown"
+        >
           <div className="date-picker-header">
             <button type="button" onClick={() => changeMonth(-1)}>
               &lt;
@@ -206,7 +200,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
               );
             })}
           </div>
-        </div>
+        </PickerDropdown>
       )}
     </div>
   );

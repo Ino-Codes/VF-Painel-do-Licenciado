@@ -1,5 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════
    19-Tracking.css — Página pública de acompanhamento de chamado (/acompanhar)
+
+   Só o invólucro público (o cartão com a marca) vive aqui. O chamado em si é
+   desenhado pelas classes .chamado-* do 12-Internal.css, as mesmas de Meus
+   Chamados — a página pública e a interna mostram a mesma coisa e devem
+   continuar iguais sem depender de alguém lembrar de atualizar as duas.
    ═══════════════════════════════════════════════════════════════ */
 
 .track-page {
@@ -19,6 +24,19 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--box-shadow);
+  transition: max-width 0.2s ease;
+}
+
+/* Com o chamado na tela o cartão precisa de mais largura: a linha do tempo e
+   os campos não cabem bem nos 460px do formulário de consulta. */
+.track-card--result {
+  max-width: 640px;
+}
+
+/* Com o resultado logo abaixo, o título da página precisa de mais folga:
+   6px colariam nele o título do chamado. */
+.track-card--result .track-title {
+  margin-bottom: 18px;
 }
 
 .track-card-header {
@@ -49,94 +67,4 @@
   color: var(--text-secondary);
   margin: 0 0 18px;
   line-height: 1.5;
-}
-
-.track-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.track-error {
-  margin-top: 14px;
-  font-size: 13px;
-  color: var(--action-danger);
-}
-
-/* ── Resultado ─────────────────────────────────────────────────── */
-
-.track-result-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.track-type {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-.track-type svg {
-  color: var(--type-color);
-  font-size: 15px;
-}
-
-.track-protocol {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.track-ticket-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.35;
-  margin: 0 0 14px;
-}
-
-.track-status {
-  display: inline-flex;
-  align-items: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--status-color);
-  background: color-mix(in srgb, var(--status-color) 14%, transparent);
-  padding: 5px 14px;
-  border-radius: 20px;
-  margin-bottom: 16px;
-}
-
-.track-meta {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 4px 0 0;
-}
-
-.track-resolution {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color);
-}
-.track-resolution-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-.track-resolution p {
-  font-size: 14px;
-  color: var(--text-primary);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  margin: 0;
-}
-
-.track-new-search {
-  margin-top: 20px;
-  width: 100%;
 }

@@ -1,44 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../../api.ts";
-import { FaBug, FaLifeRing, FaRegLightbulb } from "react-icons/fa";
-import { IconType } from "react-icons";
+import { FiSearch, FiAlertCircle } from "react-icons/fi";
 import Logo from "../../img/textobranco.png";
-
-interface TicketAttachment {
-  id: number;
-  file_url: string;
-  file_name: string | null;
-  file_type: string | null;
-}
-
-interface PublicTicket {
-  id: number;
-  type: "help" | "suggestion" | "bug";
-  title: string;
-  status: string;
-  created_at: string;
-  tenant_name: string | null;
-  attendant_name: string | null;
-  resolution_notes: string | null;
-  attachments?: TicketAttachment[];
-}
-
-const TYPE_CONFIG: Record<
-  string,
-  { label: string; color: string; Icon: IconType }
-> = {
-  help: { label: "Ajuda", color: "#f59e0b", Icon: FaLifeRing },
-  bug: { label: "Bug", color: "#ef4444", Icon: FaBug },
-  suggestion: { label: "Sugestão", color: "#6366f1", Icon: FaRegLightbulb },
-};
-
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  novo: { label: "Recebido", color: "#6366f1" },
-  andamento: { label: "Em atendimento", color: "#f59e0b" },
-  concluido: { label: "Concluído", color: "#22c55e" },
-  pausado: { label: "Pausado", color: "#94a3b8" },
-};
+import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import {
+  PublicTicket,
+  TicketHead,
+  TicketBody,
+} from "../../components/tickets/TicketDetail.tsx";
 
 const Acompanhar: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -87,13 +57,9 @@ const Acompanhar: React.FC = () => {
     setFormEmail("");
   };
 
-  const typeInfo = ticket ? TYPE_CONFIG[ticket.type] : null;
-  const statusInfo = ticket ? STATUS_CONFIG[ticket.status] : null;
-  const TypeIcon = typeInfo?.Icon;
-
   return (
     <div className="track-page">
-      <div className="track-card">
+      <div className={`track-card${ticket ? " track-card--result" : ""}`}>
         <div className="track-card-header">
           <img src={Logo} alt="V-CORP" className="track-logo" />
         </div>
@@ -101,7 +67,9 @@ const Acompanhar: React.FC = () => {
         <div className="track-card-body">
           <h1 className="track-title">Acompanhar chamado</h1>
 
-          {loading && <p className="track-muted">Carregando...</p>}
+          {loading && (
+            <LoadingSpinner variant="inline" label="Carregando chamado" />
+          )}
 
           {!loading && !ticket && (
             <>
@@ -109,94 +77,57 @@ const Acompanhar: React.FC = () => {
                 Informe o número do protocolo e o e-mail usado na abertura do
                 chamado.
               </p>
-              <form className="track-form" onSubmit={handleManualSearch}>
-                <input
-                  className="form-input"
-                  placeholder="Protocolo (ex.: 27)"
-                  value={formId}
-                  onChange={(e) => setFormId(e.target.value)}
-                />
-                <input
-                  className="form-input"
-                  type="email"
-                  placeholder="E-mail do solicitante"
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                />
-                <button className="form-button" type="submit">
-                  Consultar
+              <form className="chamado-search-form" onSubmit={handleManualSearch}>
+                <div className="chamado-input-group chamado-input-group--id">
+                  <label htmlFor="track-protocolo">Protocolo</label>
+                  <input
+                    id="track-protocolo"
+                    className="form-input"
+                    placeholder="Ex.: 27"
+                    value={formId}
+                    onChange={(e) => setFormId(e.target.value)}
+                  />
+                </div>
+                <div className="chamado-input-group">
+                  <label htmlFor="track-email">E-mail do solicitante</label>
+                  <input
+                    id="track-email"
+                    className="form-input"
+                    type="email"
+                    placeholder="nome@vcorporate.com.br"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                  />
+                </div>
+                <button
+                  className="form-button chamado-search-btn"
+                  type="submit"
+                  disabled={loading}
+                >
+                  <FiSearch aria-hidden="true" />
+                  {loading ? "Consultando..." : "Consultar"}
                 </button>
               </form>
             </>
           )}
 
-          {error && <p className="track-error">{error}</p>}
+          {error && (
+            <p className="chamado-alert" role="alert">
+              <FiAlertCircle aria-hidden="true" /> {error}
+            </p>
+          )}
 
-          {!loading && ticket && typeInfo && statusInfo && (
-            <div className="track-result">
-              <div className="track-result-head">
-                <span
-                  className="track-type"
-                  style={
-                    { "--type-color": typeInfo.color } as React.CSSProperties
-                  }
-                >
-                  {TypeIcon && <TypeIcon aria-hidden="true" />}
-                  {typeInfo.label}
-                </span>
-                <span className="track-protocol">#{ticket.id}</span>
+          {!loading && ticket && (
+            <div className="chamado-detail chamado-detail--in-modal">
+              <div className="chamado-detail-head chamado-detail-head--static">
+                <TicketHead ticket={ticket} />
               </div>
-
-              <h2 className="track-ticket-title">{ticket.title}</h2>
-
-              <span
-                className="track-status"
-                style={
-                  { "--status-color": statusInfo.color } as React.CSSProperties
-                }
-              >
-                {statusInfo.label}
-              </span>
-
-              <p className="track-meta">
-                Aberto em {new Date(ticket.created_at).toLocaleString("pt-BR")}
-              </p>
-              {ticket.attendant_name && (
-                <p className="track-meta">
-                  Atendente: {ticket.attendant_name}
-                </p>
-              )}
-
-              {ticket.status === "concluido" && ticket.resolution_notes && (
-                <div className="track-resolution">
-                  <span className="track-resolution-label">
-                    Instruções de resolução
-                  </span>
-                  <p>{ticket.resolution_notes}</p>
-                </div>
-              )}
-
-              {ticket.attachments && ticket.attachments.length > 0 && (
-                <div className="track-resolution">
-                  <span className="track-resolution-label">Anexos</span>
-                  <ul className="chamado-attachments">
-                    {ticket.attachments.map((att) => (
-                      <li key={att.id}>
-                        <a href={att.file_url} target="_blank" rel="noreferrer">
-                          {att.file_name || "arquivo"}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <button
-                className="form-button-cancel track-new-search"
-                onClick={resetSearch}
-              >
-                Consultar outro chamado
-              </button>
+              <TicketBody ticket={ticket} />
+              <div className="chamado-detail-foot">
+                <button className="form-button-cancel" onClick={resetSearch}>
+                  Consultar outro chamado
+                </button>
+              </div>
             </div>
           )}
         </div>

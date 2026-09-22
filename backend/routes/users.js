@@ -129,7 +129,15 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         const countSql = `SELECT COUNT(*) FROM users ${whereString}`;
 
-        const allowedSortBy = ["nome", "email", "role", "unidade"];
+        // "role" é legado e inconsistente entre os usuários; a ordenação da
+        // coluna Tipo usa o nome do grupo, que é o dado vigente.
+        const allowedSortBy = [
+          "nome",
+          "email",
+          "role",
+          "group_name",
+          "unidade",
+        ];
         let orderByClause = "ORDER BY nome ASC"; // Padrão
 
         if (
@@ -139,7 +147,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           orderByClause = `ORDER BY "${sortBy}" ${sortOrder.toUpperCase()}`;
         }
 
-        const usersSql = `SELECT id, nome, nickname, email, role, group_id, avatar_url, corporate_photo_url, birth_date, cargo, setor, setor_id, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
+        // Subconsulta em vez de JOIN: as cláusulas do WHERE (e o COUNT) usam
+        // `users` sem apelido, e trocar isso mexeria em coisas que funcionam.
+        const usersSql = `SELECT id, nome, nickname, email, role, group_id,
+          (SELECT g.name FROM user_groups g WHERE g.id = users.group_id) AS group_name,
+          avatar_url, corporate_photo_url, birth_date, cargo, setor, setor_id, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 

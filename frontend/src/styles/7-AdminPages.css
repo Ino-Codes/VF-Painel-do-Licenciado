@@ -452,6 +452,17 @@
   color: var(--text-primary);
 }
 
+/* Painel ancorado por portal no <body>: vence o `absolute` da regra acima
+   (mesmo arquivo, origem posterior) e passa por cima do modal, em vez de ser
+   recortado pela rolagem dele. As coordenadas vêm do componente. */
+.picker-portal {
+  position: fixed;
+  top: var(--picker-top);
+  left: var(--picker-left);
+  visibility: var(--picker-visibility, visible);
+  z-index: 9999;
+}
+
 .date-picker-header {
   display: flex;
   justify-content: space-between;
@@ -793,8 +804,11 @@
 }
 
 /* TabContent: célula "Tipo" (role) capitalizada */
+/* O capitalize existia para embelezar os valores minúsculos do `role` antigo.
+   O nome do grupo já vem grafado como deve ("Co-Administrador", "V-Partner"),
+   e forçar a transformação só arriscaria descaracterizá-lo. */
 .tab-users-role-cell {
-  text-transform: capitalize;
+  white-space: nowrap;
 }
 
 /* ═══════════════════════════════════════════════════════════════

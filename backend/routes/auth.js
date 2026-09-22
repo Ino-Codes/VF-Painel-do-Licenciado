@@ -41,7 +41,7 @@ module.exports = function (pool, resend, logActivity) {
               <p style="font-size:14px;color:#6c757d;">Este código é válido por <strong>2 minutos</strong>. Se você não tentou fazer login, ignore este e-mail — sua conta continua segura.</p>
             </td></tr>
             <tr><td align="center" style="background:#f8f9fa;padding:20px;font-size:12px;color:#6c757d;">
-              <p>V-CORP Inteligência Tributária © ${new Date().getFullYear()}</p>
+              <p>V-CORP Soluções Corporativas © ${new Date().getFullYear()}</p>
               <p>Esta é uma mensagem automática. Por favor, não responda a este e-mail.</p>
             </td></tr>
           </table>
@@ -326,7 +326,7 @@ module.exports = function (pool, resend, logActivity) {
 
                   <tr>
                     <td align="center" style="background-color: #f8f9fa; padding: 20px; font-size: 12px; color: #6c757d;">
-                      <p>V-CORP Inteligência Tributária © ${new Date().getFullYear()}</p>
+                      <p>V-CORP Soluções Corporativas © ${new Date().getFullYear()}</p>
                       <p>Esta é uma mensagem automática. Por favor, não responda a este email.</p>
                     </td>
                   </tr>

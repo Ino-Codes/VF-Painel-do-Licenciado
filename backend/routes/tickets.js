@@ -166,7 +166,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
               ${bodyHtml}
             </td></tr>
             <tr><td align="center" style="background:#f8f9fa;padding:20px;font-size:12px;color:#6c757d;">
-              <p>V-CORP Inteligência Tributária © ${new Date().getFullYear()}</p>
+              <p>V-CORP Soluções Corporativas © ${new Date().getFullYear()}</p>
               <p>Esta é uma mensagem automática. Por favor, não responda a este e-mail.</p>
             </td></tr>
           </table>

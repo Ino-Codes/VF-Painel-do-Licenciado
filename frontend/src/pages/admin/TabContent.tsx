@@ -5,19 +5,16 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  role: string;
+  role: string; // legado — mantido no tipo porque outras telas ainda leem
+  group_name?: string | null;
   unit_id?: number;
   unidade?: string; // legacy support
 }
 
-// Rótulo visível do tipo de usuário. O `role` é legado e no banco o valor
-// segue "licenciado"; na interface ele foi renomeado para "V-Partner".
-// (A célula usa text-transform: capitalize para os demais tipos.)
-const ROLE_LABELS: Record<string, string> = {
-  licenciado: "V-Partner",
-};
-const formatRole = (role: string) =>
-  ROLE_LABELS[(role || "").toLowerCase()] || role;
+// A coluna Tipo mostra o GRUPO DE PERMISSÃO, que é o modelo vigente. O `role`
+// ficou congelado com valores de antes da migração ("operacional", "admin",
+// "comercial"…), então a mesma coluna exibia grupo em uma linha e resquício
+// antigo na outra.
 
 interface TabContentProps {
   tab: "licenciados" | "colaboradores";
@@ -90,10 +87,10 @@ const TabContent: React.FC<TabContentProps> = ({
                 Email {getSortIcon("email")}
               </th>
               <th
-                onClick={() => handleSort(tab, "role")}
+                onClick={() => handleSort(tab, "group_name")}
                 className="sortable-header"
               >
-                Tipo {getSortIcon("role")}
+                Tipo {getSortIcon("group_name")}
               </th>
               <th className="tab-users-actions-col">Ações</th>
             </tr>
@@ -104,7 +101,7 @@ const TabContent: React.FC<TabContentProps> = ({
                 <td data-label="Nome">{u.nome}</td>
                 <td data-label="Email">{u.email}</td>
                 <td data-label="Tipo" className="tab-users-role-cell">
-                  {formatRole(u.role)}
+                  {u.group_name || "—"}
                 </td>
                 <td data-label="Ações">
                   <div className="user-actions">

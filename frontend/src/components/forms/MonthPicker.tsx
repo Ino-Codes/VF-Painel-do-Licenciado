@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import PickerDropdown from "./PickerDropdown.tsx";
 
 interface MonthPickerProps {
   value: string; // Formato "AAAA-MM"
@@ -48,19 +49,10 @@ const MonthPicker: React.FC<MonthPickerProps> = ({
     return `${m}/${ano}`;
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        // Digitação incompleta some ao fechar: o campo volta para o valor salvo.
-        setInputValue(paraTexto(value));
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+  // Digitação incompleta some ao fechar: o campo volta para o valor salvo.
+  const fechar = useCallback(() => {
+    setIsOpen(false);
+    setInputValue(paraTexto(value));
   }, [value]);
 
   // Sincroniza com o valor externo (escolha na grade ou mudança pelo pai).
@@ -110,7 +102,11 @@ const MonthPicker: React.FC<MonthPickerProps> = ({
         maxLength={7}
       />
       {isOpen && (
-        <div className="date-picker-dropdown month-picker-dropdown">
+        <PickerDropdown
+          anchorRef={wrapperRef}
+          onRequestClose={fechar}
+          className="date-picker-dropdown month-picker-dropdown"
+        >
           <div className="date-picker-header">
             <button
               type="button"
@@ -147,7 +143,7 @@ const MonthPicker: React.FC<MonthPickerProps> = ({
               );
             })}
           </div>
-        </div>
+        </PickerDropdown>
       )}
     </div>
   );
