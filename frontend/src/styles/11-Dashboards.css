@@ -490,13 +490,6 @@ body.dark-theme {
   background: var(--cell-c);
 }
 
-/* Nesta aba os gráficos já chegam em cards com borda própria, então as linhas
-   de topo das seções seguintes viram traços soltos. O irmão geral (~) alcança
-   todas as seções depois da grade de gráficos. */
-.viz-section ~ .admin-section {
-  border-top: none;
-}
-
 @media (max-width: 900px) {
   .viz-section {
     grid-template-columns: minmax(0, 1fr);

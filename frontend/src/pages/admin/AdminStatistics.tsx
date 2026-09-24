@@ -12,10 +12,11 @@ import {
   HiOutlineInbox,
   HiOutlineClock,
   HiOutlineCheckCircle,
+  HiOutlinePause,
 } from "react-icons/hi";
 import { FaHeadset } from "react-icons/fa";
-import { MdRefresh } from "react-icons/md";
-import HelpdeskCharts from "./HelpdeskCharts.tsx";
+import { MdRefresh, MdOutlineTimer } from "react-icons/md";
+import HelpdeskCharts, { formatHoursShort } from "./HelpdeskCharts.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface SystemStats {
@@ -34,18 +35,20 @@ interface TicketStats {
   bySystem: { name: string; count: number }[];
   daily: { dia: string; abertos: number; concluidos: number }[];
   byWeekdayHour: { dow: number; bloco: number; count: number }[];
-  monthly: { mes: string; horas: number | null; concluidos: number }[];
+  monthly: {
+    mes: string;
+    horas: number | null;
+    horasP90: number | null;
+    concluidos: number;
+    espera: number | null;
+    esperaP90: number | null;
+    iniciados: number;
+  }[];
   byAttendant: { name: string; count: number }[];
+  /** Mediana, em horas úteis, da abertura ao início do atendimento. */
+  medianWaitHours: number | null;
+  startedCount: number;
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  help: "Ajuda",
-  bug: "Bug",
-  suggestion: "Sugestão",
-  duvida: "Dúvida",
-  solicitacao: "Solicitação",
-  sugestao_melhoria: "Sugestão (melhoria)",
-};
 
 
 const AdminStatistics: React.FC = () => {
@@ -267,75 +270,20 @@ const AdminStatistics: React.FC = () => {
                     <p>Concluídos</p>
                   </div>
                 </div>
+
+                <div className="stat-card">
+                  <div className="stat-icon">
+                    <HiOutlinePause />
+                  </div>
+                  <div className="stat-info">
+                    <h3>{ticketStats.byStatus.pausado || 0}</h3>
+                    <p>Pausados</p>
+                  </div>
+                </div>
+                
               </div>
 
               <HelpdeskCharts stats={ticketStats} />
-
-              {/* As tabelas abaixo são a leitura textual dos gráficos —
-                  garantem os números exatos e a acessibilidade. */}
-              <div className="admin-section">
-                <h3>Chamados por Sistema</h3>
-                <div className="table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Sistema</th>
-                        <th className="stats-th-center">Qtd. Chamados</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ticketStats.bySystem.map((row, index) => (
-                        <tr key={index}>
-                          <td className="file-cell">{row.name}</td>
-                          <td className="stats-count-cell">
-                            <span className="count-badge">{row.count}</span>
-                          </td>
-                        </tr>
-                      ))}
-                      {ticketStats.bySystem.length === 0 && (
-                        <tr>
-                          <td colSpan={2} className="stats-empty-cell">
-                            Nenhum chamado registrado ainda.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="admin-section">
-                <h3>Chamados por Tipo</h3>
-                <div className="table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Tipo</th>
-                        <th className="stats-th-center">Qtd. Chamados</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ticketStats.byType.map((row, index) => (
-                        <tr key={index}>
-                          <td className="file-cell">
-                            {TYPE_LABELS[row.type] || row.type}
-                          </td>
-                          <td className="stats-count-cell">
-                            <span className="count-badge">{row.count}</span>
-                          </td>
-                        </tr>
-                      ))}
-                      {ticketStats.byType.length === 0 && (
-                        <tr>
-                          <td colSpan={2} className="stats-empty-cell">
-                            Nenhum chamado registrado ainda.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             </div>
           ) : (
             <p>Não foi possível carregar os dados.</p>

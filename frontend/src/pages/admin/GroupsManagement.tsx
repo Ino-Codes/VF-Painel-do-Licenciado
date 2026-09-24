@@ -183,7 +183,7 @@ const GroupsManagement: React.FC = () => {
           <LoadingSpinner variant="inline" label="Carregando dados" />
         ) : (
           <div className="table-container">
-            <table className="admin-table">
+            <table className="admin-table groups-table">
               <thead>
                 <tr>
                   <th>Grupo</th>

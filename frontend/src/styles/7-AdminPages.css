@@ -1044,6 +1044,24 @@
   width: 100%;
 }
 
+/* Grupos & Permissões: no layout automático a descrição, sendo o texto mais
+   longo, ficava com metade da tabela e espremia o nome do grupo — que ainda
+   carrega o ícone e o selo "sistema". As duas trocam largura entre si; as
+   colunas de contagem seguem dimensionadas pelo conteúdo.
+   Só no desktop: abaixo de 900px a tabela vira cartões e largura de coluna
+   não faz sentido. */
+@media (min-width: 901px) {
+  .groups-table th:first-child,
+  .groups-table td:first-child {
+    width: 27%;
+  }
+
+  .groups-table th:nth-child(2),
+  .groups-table td:nth-child(2) {
+    width: 41%;
+  }
+}
+
 .group-system-badge {
   margin-left: 8px;
   font-size: 0.7rem;

@@ -42,7 +42,15 @@ export interface HelpdeskSeries {
   bySystem: { name: string; count: number }[];
   daily: { dia: string; abertos: number; concluidos: number }[];
   byWeekdayHour: { dow: number; bloco: number; count: number }[];
-  monthly: { mes: string; horas: number | null; concluidos: number }[];
+  monthly: {
+    mes: string;
+    horas: number | null;
+    horasP90: number | null;
+    concluidos: number;
+    espera: number | null;
+    esperaP90: number | null;
+    iniciados: number;
+  }[];
   byAttendant: { name: string; count: number }[];
 }
 
@@ -81,10 +89,13 @@ const shortMonth = (iso: string) => {
   return `${MONTHS[Number(m) - 1]}/${y.slice(2)}`;
 };
 
-const formatHoursShort = (h: number | null): string => {
-  if (h === null || Number.isNaN(h)) return "—";
+// Exportado para o card de KPI e o gráfico escreverem o mesmo valor do
+// mesmo jeito. Vírgula decimal, como no resto do painel.
+export const formatHoursShort = (h: number | null): string => {
+  // `== null` cobre também undefined (backend anterior sem o campo).
+  if (h == null || Number.isNaN(h)) return "—";
   if (h < 1) return `${Math.round(h * 60)}min`;
-  if (h < 24) return `${h.toFixed(1)}h`;
+  if (h < 24) return `${h.toFixed(1).replace(".", ",")}h`;
   return `${Math.round(h / 24)}d`;
 };
 
@@ -103,7 +114,7 @@ const VIZ_PALETTE = {
   light: {
     seq: ["#cdae6b", "#b8944e", "#9e7c3c", "#836731", "#6a5327"],
     cat1: "#2a78d6",
-    cat2: "#1baf7a",
+    cat2: "#1baf3b",
     neutral: "#9aa1ab",
     grid: "rgba(0, 0, 0, 0.08)",
     text: "#0a0a0a",
@@ -113,7 +124,7 @@ const VIZ_PALETTE = {
   dark: {
     seq: ["#6b5226", "#8a6c35", "#a8843f", "#c9a55c", "#e6c98a"],
     cat1: "#3987e5",
-    cat2: "#199e70",
+    cat2: "#199e48",
     neutral: "#767d88",
     grid: "rgba(255, 255, 255, 0.10)",
     text: "#f5f5f5",
@@ -331,16 +342,35 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       labels: stats.monthly.map((m) => shortMonth(m.mes)),
       datasets: [
         {
-          label: "Horas até concluir",
-          data: stats.monthly.map((m) => (m.horas === null ? null : Number(m.horas.toFixed(1)))),
-          borderColor: palette.seq[3],
-          backgroundColor: `${palette.seq[3]}22`,
+          label: "Tempo de resolução",
+          data: stats.monthly.map((m) =>
+            m.horas == null ? null : Number(m.horas.toFixed(2)),
+          ),
+          borderColor: palette.cat2,
+          backgroundColor: `${palette.cat2}22`,
           borderWidth: 2,
           pointRadius: 4,
           pointHoverRadius: 7,
-          pointBackgroundColor: palette.seq[3],
+          pointBackgroundColor: palette.cat2,
           tension: 0.3,
           fill: true,
+        },
+        {
+          // Tracejada: a distinção entre as duas linhas não fica só na cor.
+          // Mesma estatística e mesma régua da resolução (mediana, horas úteis).
+          label: "Tempo até o início",
+          data: stats.monthly.map((m) =>
+            m.espera == null ? null : Number(m.espera.toFixed(2)),
+          ),
+          borderColor: palette.seq[1],
+          backgroundColor: `${palette.seq[1]}22`,
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: palette.seq[1],
+          tension: 0.3,
+          fill: false,
         },
       ],
     }),
@@ -352,18 +382,37 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       ...baseOptions,
       plugins: {
         ...baseOptions.plugins,
+        legend: {
+          display: true,
+          position: "top" as const,
+          align: "end" as const,
+          labels: {
+            color: palette.text,
+            usePointStyle: true,
+            pointStyle: "circle",
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 20,
+            font: { size: 12, weight: 600 },
+          },
+        },
         tooltip: {
           ...(baseOptions.plugins as any).tooltip,
           callbacks: {
+            // As duas linhas são a mediana; o p90 vai no tooltip para a
+            // cauda (o chamado esquecido) não sumir do gráfico.
             label: (ctx: any) => {
               const m = stats.monthly[ctx.dataIndex];
-              return ` ${formatHoursShort(m?.horas ?? null)} · ${m?.concluidos ?? 0} concluído(s)`;
+              if (ctx.datasetIndex === 1) {
+                return ` Até o início: ${formatHoursShort(m?.espera ?? null)} · 90% em até ${formatHoursShort(m?.esperaP90 ?? null)} · ${m?.iniciados ?? 0} atendido(s)`;
+              }
+              return ` Resolução: ${formatHoursShort(m?.horas ?? null)} · 90% em até ${formatHoursShort(m?.horasP90 ?? null)} · ${m?.concluidos ?? 0} concluído(s)`;
             },
           },
         },
       },
     }),
-    [baseOptions, stats.monthly],
+    [baseOptions, stats.monthly, palette],
   );
 
   // ── 4. Funil de status (barra empilhada em HTML) ──
@@ -555,8 +604,8 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       {/* ── Tempo de resolução ── */}
       <div className="viz-card">
         <div className="viz-card-head">
-          <h3>Tempo médio de resolução</h3>
-          <span className="viz-card-sub">por mês</span>
+          <h3>Tempos de atendimento</h3>
+          <span className="viz-card-sub">mediana por mês · horário comercial</span>
         </div>
         <div className="viz-canvas">
           {stats.monthly.length ? (
