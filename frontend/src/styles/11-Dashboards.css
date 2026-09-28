@@ -442,6 +442,19 @@ body.dark-theme {
   align-items: center;
 }
 
+/* Cabeçalho que agrupa os períodos (Manhã / Tarde / Fora do expediente). */
+.viz-heat-group {
+  grid-column: span var(--span, 1);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-align: center;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
 .viz-heat-col {
   font-size: 0.7rem;
   color: var(--text-secondary);

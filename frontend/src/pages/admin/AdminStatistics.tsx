@@ -34,7 +34,7 @@ interface TicketStats {
   byType: { type: string; count: number }[];
   bySystem: { name: string; count: number }[];
   daily: { dia: string; abertos: number; concluidos: number }[];
-  byWeekdayHour: { dow: number; bloco: number; count: number }[];
+  byWeekdayPeriod: { dow: number; periodo: number; count: number }[];
   monthly: {
     mes: string;
     horas: number | null;

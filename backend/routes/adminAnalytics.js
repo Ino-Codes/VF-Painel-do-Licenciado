@@ -386,10 +386,19 @@ module.exports = function (pool, resend) {
           [TZ],
         );
 
-        // Mapa de calor: dia da semana x faixa de 4 horas.
+        // Mapa de calor: dia da semana x período do dia. Quatro períodos do
+        // expediente e dois fora dele, na ordem de um dia que começa às 8h:
+        //   0: 08–10  1: 10–13  2: 13–15  3: 15–18  4: 18–24  5: 00–08
         const heatmapQuery = pool.query(
           `SELECT EXTRACT(DOW FROM local)::int AS dow,
-                  FLOOR(EXTRACT(HOUR FROM local) / 4)::int AS bloco,
+                  CASE
+                    WHEN EXTRACT(HOUR FROM local) < 8  THEN 5
+                    WHEN EXTRACT(HOUR FROM local) < 10 THEN 0
+                    WHEN EXTRACT(HOUR FROM local) < 13 THEN 1
+                    WHEN EXTRACT(HOUR FROM local) < 15 THEN 2
+                    WHEN EXTRACT(HOUR FROM local) < 18 THEN 3
+                    ELSE 4
+                  END AS periodo,
                   COUNT(*)::int AS c
              FROM (
                SELECT created_at AT TIME ZONE 'UTC' AT TIME ZONE $1 AS local
@@ -534,9 +543,9 @@ module.exports = function (pool, resend) {
             abertos: r.abertos,
             concluidos: r.concluidos,
           })),
-          byWeekdayHour: heatmapRes.rows.map((r) => ({
+          byWeekdayPeriod: heatmapRes.rows.map((r) => ({
             dow: r.dow,
-            bloco: r.bloco,
+            periodo: r.periodo,
             count: r.c,
           })),
           monthly,

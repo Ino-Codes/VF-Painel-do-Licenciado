@@ -41,7 +41,7 @@ export interface HelpdeskSeries {
   byType: { type: string; count: number }[];
   bySystem: { name: string; count: number }[];
   daily: { dia: string; abertos: number; concluidos: number }[];
-  byWeekdayHour: { dow: number; bloco: number; count: number }[];
+  byWeekdayPeriod: { dow: number; periodo: number; count: number }[];
   monthly: {
     mes: string;
     horas: number | null;
@@ -70,7 +70,14 @@ const STATUS_FUNNEL = [
 ];
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const HOUR_BLOCKS = ["00–04", "04–08", "08–12", "12–16", "16–20", "20–24"];
+// Períodos do dia, na ordem de um dia que começa às 8h. Os índices são os
+// mesmos que o backend devolve em `periodo`.
+const PERIODOS = ["08–10", "10–13", "13–15", "15–18", "18–00", "00–08"];
+const GRUPOS_PERIODO = [
+  { rotulo: "Manhã", colunas: 2 },
+  { rotulo: "Tarde", colunas: 2 },
+  { rotulo: "Fora do expediente", colunas: 2 },
+];
 
 const MONTHS = [
   "jan", "fev", "mar", "abr", "mai", "jun",
@@ -435,17 +442,18 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
     return { itens, total };
   }, [stats.byStatus, palette]);
 
-  // ── 5. Mapa de calor (dia da semana x faixa de hora) ──
+  // ── 5. Mapa de calor (dia da semana x período do dia) ──
   const heatmap = useMemo(() => {
-    const grid: number[][] = WEEKDAYS.map(() => HOUR_BLOCKS.map(() => 0));
-    stats.byWeekdayHour.forEach((c) => {
-      if (grid[c.dow] && grid[c.dow][c.bloco] !== undefined) {
-        grid[c.dow][c.bloco] = c.count;
+    const grid: number[][] = WEEKDAYS.map(() => PERIODOS.map(() => 0));
+    // `?? []`: um backend ainda sem o campo não derruba a tela.
+    (stats.byWeekdayPeriod ?? []).forEach((c) => {
+      if (grid[c.dow] && grid[c.dow][c.periodo] !== undefined) {
+        grid[c.dow][c.periodo] = c.count;
       }
     });
     const max = Math.max(0, ...grid.flat());
     return { grid, max };
-  }, [stats.byWeekdayHour]);
+  }, [stats.byWeekdayPeriod]);
 
   const heatColor = (n: number) => {
     if (!heatmap.max || n === 0) return "var(--viz-empty)";
@@ -551,8 +559,8 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       {/* ── Mapa de calor ── */}
       <div className="viz-card viz-card--wide">
         <div className="viz-card-head">
-          <h3>Quando os chamados chegam</h3>
-          <span className="viz-card-sub">dia da semana × faixa de horário</span>
+          <h3>Quando os chamados são abertos</h3>
+          <span className="viz-card-sub">dia da semana × período do dia</span>
         </div>
 
         {heatmap.max === 0 ? (
@@ -561,7 +569,17 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
           <>
             <div className="viz-heat">
               <span />
-              {HOUR_BLOCKS.map((h) => (
+              {GRUPOS_PERIODO.map((g) => (
+                <span
+                  key={g.rotulo}
+                  className="viz-heat-group"
+                  style={{ "--span": g.colunas } as React.CSSProperties}
+                >
+                  {g.rotulo}
+                </span>
+              ))}
+              <span />
+              {PERIODOS.map((h) => (
                 <span key={h} className="viz-heat-col">
                   {h}
                 </span>
@@ -569,11 +587,11 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
               {WEEKDAYS.map((dia, d) => (
                 <React.Fragment key={dia}>
                   <span className="viz-heat-row">{dia}</span>
-                  {HOUR_BLOCKS.map((bloco, b) => (
+                  {PERIODOS.map((periodo, b) => (
                     <span
-                      key={bloco}
+                      key={periodo}
                       className="viz-heat-cell"
-                      title={`${dia}, ${bloco}h — ${heatmap.grid[d][b]} chamado(s)`}
+                      title={`${dia}, ${periodo}h — ${heatmap.grid[d][b]} chamado(s)`}
                       style={
                         {
                           "--cell-c": heatColor(heatmap.grid[d][b]),
