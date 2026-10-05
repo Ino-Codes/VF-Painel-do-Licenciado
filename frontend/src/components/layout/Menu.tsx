@@ -38,6 +38,7 @@ const ADMIN_SCREENS = [
   "projects.view",
   "units.view",
   "praises.view",
+  "it_assets.view",
 ];
 
 const Menu: React.FC = () => {

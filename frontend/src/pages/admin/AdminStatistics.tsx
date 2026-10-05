@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import Menu from "../../components/layout/Menu.tsx";
@@ -15,8 +16,10 @@ import {
   HiOutlinePause,
 } from "react-icons/hi";
 import { FaHeadset } from "react-icons/fa";
-import { MdRefresh, MdOutlineTimer } from "react-icons/md";
-import HelpdeskCharts, { formatHoursShort } from "./HelpdeskCharts.tsx";
+import { MdRefresh } from "react-icons/md";
+import HelpdeskCharts from "./HelpdeskCharts.tsx";
+import EnneagramStats from "./EnneagramStats.tsx";
+import CourseEngagementDash from "./CourseEngagementDash.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 
 interface SystemStats {
@@ -51,12 +54,29 @@ interface TicketStats {
 }
 
 
+// Abas da tela. A aba aberta fica na URL (?aba=), para dar para linkar
+// direto — o antigo /admin/dashboards redireciona para cá com ?aba=eneagrama.
+const ABAS = [
+  { key: "sistema", label: "Sistema" },
+  { key: "chamados", label: "Central de Chamados" },
+  { key: "eneagrama", label: "Eneagrama" },
+  { key: "cursos", label: "Cursos" },
+] as const;
+type Aba = (typeof ABAS)[number]["key"];
+const ehAba = (v: string | null): v is Aba => ABAS.some((a) => a.key === v);
+
 const AdminStatistics: React.FC = () => {
   const { user, loading } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<
-    "sistema" | "chamados"
-  >("sistema");
+  const abaDaUrl = searchParams.get("aba");
+  const activeTab: Aba = ehAba(abaDaUrl) ? abaDaUrl : "sistema";
+  const setActiveTab = (aba: Aba) =>
+    setSearchParams(aba === "sistema" ? {} : { aba }, { replace: true });
+
+  // Eneagrama e Cursos buscam os próprios dados ao montar; "Atualizar"
+  // remonta o painel trocando a key.
+  const [versaoPainel, setVersaoPainel] = useState(0);
 
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -95,14 +115,16 @@ const AdminStatistics: React.FC = () => {
 
   const refreshActive = () => {
     if (activeTab === "sistema") fetchStats();
-    else fetchTicketStats();
+    else if (activeTab === "chamados") fetchTicketStats();
+    else setVersaoPainel((v) => v + 1);
   };
 
   // Busca os dados uma vez ao entrar na aba. A partir daí a atualização é
   // sempre manual, pelo botão "Atualizar".
   useEffect(() => {
     if (!user) return;
-    refreshActive();
+    if (activeTab === "sistema") fetchStats();
+    if (activeTab === "chamados") fetchTicketStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, activeTab]);
 
@@ -120,19 +142,18 @@ const AdminStatistics: React.FC = () => {
           </button>
         </div>
 
-        <div className="tabs">
-          <button
-            className={`tab-item ${activeTab === "sistema" ? "active" : ""}`}
-            onClick={() => setActiveTab("sistema")}
-          >
-            Sistema
-          </button>
-          <button
-            className={`tab-item ${activeTab === "chamados" ? "active" : ""}`}
-            onClick={() => setActiveTab("chamados")}
-          >
-            Central de Chamados
-          </button>
+        <div className="tabs" role="tablist">
+          {ABAS.map((aba) => (
+            <button
+              key={aba.key}
+              role="tab"
+              aria-selected={activeTab === aba.key}
+              className={`tab-item ${activeTab === aba.key ? "active" : ""}`}
+              onClick={() => setActiveTab(aba.key)}
+            >
+              {aba.label}
+            </button>
+          ))}
         </div>
 
         {/* ───────────────────────── ABA: SISTEMA ───────────────────────── */}
@@ -289,6 +310,19 @@ const AdminStatistics: React.FC = () => {
             <p>Não foi possível carregar os dados.</p>
           ))}
 
+        {/* ──────────────────────── ABA: ENEAGRAMA ──────────────────────── */}
+        {activeTab === "eneagrama" && (
+          <div className="stats-dashboard">
+            <EnneagramStats key={`eneagrama-${versaoPainel}`} />
+          </div>
+        )}
+
+        {/* ────────────────────────── ABA: CURSOS ────────────────────────── */}
+        {activeTab === "cursos" && (
+          <div className="stats-dashboard">
+            <CourseEngagementDash key={`cursos-${versaoPainel}`} />
+          </div>
+        )}
       </div>
       <Footer />
     </div>

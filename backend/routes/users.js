@@ -540,6 +540,28 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           return res.status(404).json({ error: "Usuário não encontrado." });
         }
         const userEmail = userResult.rows[0].email;
+
+        // Equipamentos do Inventário de TI com o colaborador: a exclusão é
+        // bloqueada até que sejam devolvidos ou transferidos, para nenhum
+        // ativo ficar "com ninguém".
+        const ativos = await client.query(
+          `SELECT COALESCE(a.patrimonio, 'sem patrimônio') AS patrimonio,
+                  CONCAT_WS(' ', a.marca, a.modelo) AS modelo
+             FROM it_assets a
+            WHERE a.user_id = $1
+            ORDER BY a.patrimonio NULLS LAST`,
+          [id],
+        );
+        if (ativos.rowCount > 0) {
+          await client.query("ROLLBACK");
+          const lista = ativos.rows
+            .map((a) => `${a.patrimonio} ${a.modelo}`.trim())
+            .join(", ");
+          return res.status(409).json({
+            error: `Este colaborador ainda tem equipamentos do Inventário de TI. Devolva ou transfira antes de excluir: ${lista}.`,
+          });
+        }
+
         await client.query(
           "UPDATE activity_logs SET user_id = NULL WHERE user_id = $1",
           [id],

@@ -11,9 +11,9 @@ import {
   FaHeadset,
   FaUsers,
   FaGraduationCap,
-  FaChartLine,
   FaCalendarDay,
   FaHandHoldingHeart,
+  FaLaptop,
 } from "react-icons/fa";
 import { FaMagnifyingGlassChart } from "react-icons/fa6";
 import { MdFeedback } from "react-icons/md";
@@ -74,16 +74,10 @@ const AdminGestao: React.FC = () => {
     // },
     {
       title: "Estatísticas Ao Vivo",
-      description: "Visualize as métricas de uso do Painel em tempo real",
+      description:
+        "Uso do Painel, Central de Chamados, Eneagrama e Cursos em um só lugar",
       icon: <FaMagnifyingGlassChart />,
       path: "/admin/statistics",
-      permission: "analytics.view",
-    },
-    {
-      title: "Dashboards",
-      description: "Visualize gráficos sobre o uso dos usuários no Painel",
-      icon: <FaChartLine />,
-      path: "/admin/dashboards",
       permission: "analytics.view",
     },
     {
@@ -99,6 +93,13 @@ const AdminGestao: React.FC = () => {
       icon: <FaHandHoldingHeart />,
       path: "/admin/elogios",
       permission: "praises.view",
+    },
+    {
+      title: "Inventário de TI",
+      description: "Controle notebooks, celulares e com quem cada um está",
+      icon: <FaLaptop />,
+      path: "/admin/inventario-ti",
+      permission: "it_assets.view",
     },
   ]
     .filter((m) => hasPermission(m.permission))

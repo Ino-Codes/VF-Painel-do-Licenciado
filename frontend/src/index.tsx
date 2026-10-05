@@ -12,7 +12,6 @@ import { ThemeProvider } from "./context/ThemeContext.tsx";
 import { safeStorage } from "./utils/safeStorage.ts";
 import App from "./pages/public/App.tsx";
 import Home from "./pages/home/Home.tsx";
-import Dashboards from "./pages/admin/Dashboards.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import Perfil from "./pages/profile/Perfil.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
@@ -39,6 +38,7 @@ import InternalGestao from "./pages/internal/InternalGestao.tsx";
 import ContentGestao from "./pages/content/ContentGestao.tsx";
 import MuralDeAvisos from "./pages/notices/MuralDeAvisos.tsx";
 import HelpDeskKanban from "./pages/itsm/HelpDeskKanban.tsx";
+import ITInventory from "./pages/admin/ITInventory.tsx";
 import WidgetTenants from "./pages/itsm/WidgetTenants.tsx";
 import MeetingRecords from "./pages/meetings/MeetingRecords.tsx";
 import Arquivos from "./pages/archives/Arquivos.tsx";
@@ -71,6 +71,7 @@ import "./styles/18-MeetingRecords.css";
 import "./styles/19-Tracking.css";
 import "./styles/20-Brand.css";
 import "./styles/21-Praises.css";
+import "./styles/22-Inventario.css";
 
 const AppRouter: React.FC = () => {
   return (
@@ -308,13 +309,11 @@ const AppRouter: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          {/* Dashboards foram centralizados nas Estatísticas — mantém links
+              antigos válidos. */}
           <Route
             path="/admin/dashboards"
-            element={
-              <ProtectedRoute permission="analytics.view">
-                <Dashboards />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/admin/statistics?aba=eneagrama" replace />}
           />
           {/* RH consolidado no Admin — mantém links/bookmarks antigos válidos. */}
           <Route
@@ -346,6 +345,8 @@ const AppRouter: React.FC = () => {
                   "widget_tenants.view",
                   "projects.view",
                   "units.view",
+                  "praises.view",
+                  "it_assets.view",
                 ]}
               >
                 <AdminGestao />
@@ -357,6 +358,14 @@ const AppRouter: React.FC = () => {
             element={
               <ProtectedRoute permission="analytics.view">
                 <AdminStatistics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/inventario-ti"
+            element={
+              <ProtectedRoute permission="it_assets.view">
+                <ITInventory />
               </ProtectedRoute>
             }
           />

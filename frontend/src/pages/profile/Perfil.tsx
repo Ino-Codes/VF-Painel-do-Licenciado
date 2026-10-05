@@ -15,11 +15,29 @@ import {
   mesCurto,
   mesTitulo,
 } from "../../components/praises/praiseMonths.ts";
+import {
+  dataBR,
+  iconeDoTipo,
+  nomeDoAtivo,
+  rotuloNumeroSerie,
+  AssetCategoria,
+} from "../../components/itAssets/assetConfig.ts";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { FiEdit, FiEye, FiCamera, FiLogOut } from "react-icons/fi";
 import { PiPencilSimpleLineBold } from "react-icons/pi";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
+
+interface MyAsset {
+  id: number;
+  tipo_nome: string;
+  categoria: AssetCategoria;
+  patrimonio: string | null;
+  marca: string | null;
+  modelo: string | null;
+  numero_serie: string | null;
+  responsavel_desde: string | null;
+}
 
 interface CertificateData {
   certificate_id: number;
@@ -87,6 +105,7 @@ const Perfil: React.FC = () => {
   const [certificates, setCertificates] = useState<CertificateData[]>([]);
   const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
   const [myPraises, setMyPraises] = useState<Praise[]>([]);
+  const [myAssets, setMyAssets] = useState<MyAsset[]>([]);
   // Mês em foco nos elogios (null = o mais recente) e se a lista do mês está
   // aberta além dos primeiros.
   const [praiseMonth, setPraiseMonth] = useState<string | null>(null);
@@ -127,6 +146,15 @@ const Perfil: React.FC = () => {
       .get("/api/praises/mine")
       .then((res) => setMyPraises(res.data as Praise[]))
       .catch(() => setMyPraises([]));
+  }, [user, hasPermission]);
+
+  // Equipamentos do Inventário de TI sob a responsabilidade do colaborador.
+  useEffect(() => {
+    if (!user || !hasPermission("internal_access")) return;
+    api
+      .get("/api/it-assets/mine")
+      .then((res) => setMyAssets(res.data as MyAsset[]))
+      .catch(() => setMyAssets([]));
   }, [user, hasPermission]);
 
   const fetchCertificates = useCallback(async () => {
@@ -523,6 +551,41 @@ const Perfil: React.FC = () => {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* ── Meus equipamentos ── */}
+            {myAssets.length > 0 && (
+              <div className="profile-section">
+                <h3>Meus Equipamentos</h3>
+                <p>
+                  Equipamentos de TI sob a sua responsabilidade. Se algo estiver
+                  diferente, fale com o time de TI.
+                </p>
+                <ul className="inv-mine">
+                  {myAssets.map((a) => {
+                    const Icone = iconeDoTipo(a.categoria);
+                    return (
+                      <li key={a.id} className="inv-mine-item">
+                        <span className="inv-detail-icon" aria-hidden="true">
+                          <Icone />
+                        </span>
+                        <div>
+                          <p className="inv-mine-name">{nomeDoAtivo(a)}</p>
+                          <p className="inv-mine-meta">
+                            {a.patrimonio
+                              ? `Patrimônio ${a.patrimonio}`
+                              : a.numero_serie
+                                ? `${rotuloNumeroSerie(a.categoria)} ${a.numero_serie}`
+                                : a.tipo_nome}
+                            {a.responsavel_desde &&
+                              ` · desde ${dataBR(a.responsavel_desde)}`}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             )}
 

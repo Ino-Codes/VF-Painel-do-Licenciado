@@ -20,6 +20,7 @@ const SCREENS = [
   { key: "projects", label: "Projetos", manage: true, category: "Gestão" },
   { key: "widget_tenants", label: "Sistemas do Helpdesk", manage: true, category: "Gestão" },
   { key: "feedbacks", label: "Feedbacks", manage: true, category: "Gestão" },
+  { key: "it_assets", label: "Inventário de TI", manage: true, category: "Gestão" },
 
   // RH / Operacional
   { key: "meeting_records", label: "Atas de Reunião", manage: true, category: "RH & Operacional" },
