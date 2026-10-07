@@ -4,6 +4,9 @@ const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 const { resolveVpartnerId, isLicenciado } = require("../companyAccess.js");
 
 module.exports = function (pool, cloudinary, upload, logActivity) {
+  // Onde cada arquivo fica (imagem → Cloudinary, documento → Azure Blob).
+  const documentos = require("../storage/documentos.js")(cloudinary);
+
   const getCompanyId = async (slug) => {
     if (slug === "all") return null; // "all" → sem filtro por empresa
     if (!slug || slug === "undefined" || slug === "null") return 1;
@@ -109,41 +112,31 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       try {
         const companyId = await getCompanyId(company);
 
-        const isImage = req.file.mimetype.startsWith("image/");
-        const resourceType = isImage ? "image" : "raw";
-
-        const uploadResult = await new Promise((resolve, reject) => {
-          const originalExt = req.file.originalname.includes(".")
-            ? "." + req.file.originalname.split(".").pop()
-            : "";
-
-          const cleanName = originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const uniquePublicId = `${cleanName}_${Date.now()}${originalExt}`;
-
-          cloudinary.uploader
-            .upload_stream(
-              {
-                resource_type: resourceType,
-                folder: category,
-                tags: [category, folder],
-                ...(resourceType === "raw" && { public_id: uniquePublicId }),
-              },
-              (error, result) => {
-                if (error) reject(error);
-                resolve(result);
-              },
-            )
-            .end(req.file.buffer);
+        // Imagem → Cloudinary; documento → Azure Blob (storage/documentos.js).
+        const salvo = await documentos.salvar({
+          file: req.file,
+          nomeExibicao: originalname,
+          pasta: "arquivos",
+          category,
+          folder,
         });
-
-        const { secure_url: fileUrl, public_id: publicId } = uploadResult;
 
         const result = await pool.query(
           `INSERT INTO archives
-           (filename, originalname, category, folder, public_id, company_id)
-           VALUES ($1, $2, $3, $4, $5, $6)
+           (filename, originalname, category, folder, public_id, company_id,
+            storage, blob_name)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            RETURNING *`,
-          [fileUrl, originalname, category, folder, publicId, companyId],
+          [
+            salvo.url,
+            originalname,
+            category,
+            folder,
+            salvo.publicId,
+            companyId,
+            salvo.storage,
+            salvo.blobName,
+          ],
         );
 
         try {
@@ -160,6 +153,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
         res.status(201).json(result.rows[0]);
       } catch (err) {
+        // Erros esperados (ex.: arquivo acima do limite) têm mensagem própria.
+        if (err.httpStatus) {
+          return res.status(err.httpStatus).json({ error: err.message });
+        }
         console.error("Erro no upload de arquivo:", err);
         res.status(500).json({ error: "Erro no servidor durante o upload." });
       }
@@ -212,24 +209,16 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const { id } = req.params;
       try {
         const fileResult = await pool.query(
-          "SELECT public_id, filename, originalname FROM archives WHERE id = $1",
+          "SELECT public_id, filename, originalname, storage, blob_name FROM archives WHERE id = $1",
           [id],
         );
         if (fileResult.rowCount === 0)
           return res.status(404).json({ error: "Arquivo não encontrado." });
 
-        const {
-          public_id: publicId,
-          filename: fileUrl,
-          originalname,
-        } = fileResult.rows[0];
+        const linha = fileResult.rows[0];
+        const { originalname } = linha;
 
-        if (publicId) {
-          const resourceType = fileUrl.includes("/image/") ? "image" : "raw";
-          await cloudinary.uploader.destroy(publicId, {
-            resource_type: resourceType,
-          });
-        }
+        await documentos.excluir(linha);
 
         await pool.query("DELETE FROM archives WHERE id = $1", [id]);
 
@@ -257,7 +246,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
   router.get("/download/:id", isLoggedIn, checkPermission("archives.view"), async (req, res) => {
     try {
       const fileResult = await pool.query(
-        "SELECT public_id, originalname, filename, company_id FROM archives WHERE id = $1",
+        "SELECT public_id, originalname, filename, company_id, storage, blob_name FROM archives WHERE id = $1",
         [req.params.id],
       );
 
@@ -274,44 +263,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         return res.status(403).send("Você não tem permissão para baixar este arquivo.");
       }
 
-      if (!file.filename) {
-        return res.status(500).send("URL do arquivo não encontrada no banco de dados.");
-      }
-
-      const isRaw = file.filename.includes("/raw/upload/");
-      const resourceType = isRaw ? "raw" : "image";
-
-      const urlExtMatch = file.filename.match(/\.([a-zA-Z0-9]+)(?:[\?#]|$)/);
-      const extNoDot = urlExtMatch ? urlExtMatch[1] : "";
-      const urlExt = extNoDot ? "." + extNoDot : "";
-
-      let cleanName = file.originalname;
-      const dotIndex = cleanName.lastIndexOf(".");
-      if (dotIndex > -1) cleanName = cleanName.substring(0, dotIndex);
-      cleanName = cleanName.replace(/[^a-zA-Z0-9_-]/g, "_");
-
-      const options = {
-        resource_type: resourceType,
-        secure: true,
-        sign_url: true,
-        expires_at: Math.floor(Date.now() / 1000) + 300,
-      };
-
-      let publicIdToUse = file.public_id;
-
-      if (!isRaw) {
-        options.flags = `attachment:${cleanName}`;
-        if (extNoDot) options.format = extNoDot;
-        if (publicIdToUse.endsWith(urlExt)) {
-          publicIdToUse = publicIdToUse.substring(0, publicIdToUse.length - urlExt.length);
-        }
-      } else {
-        if (urlExt && !publicIdToUse.endsWith(urlExt)) {
-          publicIdToUse += urlExt;
-        }
-      }
-
-      const signedUrl = cloudinary.url(publicIdToUse, options);
+      // Link temporário (5 min) no provedor onde o arquivo está.
+      const signedUrl = await documentos.linkDeDownload(file);
 
       try {
         await logActivity(

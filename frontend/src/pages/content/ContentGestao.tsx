@@ -19,12 +19,12 @@ const ContentGestao: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   const modules = [
-    {
-      title: "Arquivos",
-      description: "Documentos arquivados e históricos de conteúdo",
-      icon: <FaArchive />,
-      path: "/content/arquivos",
-    },
+    // {
+    //   title: "Arquivos",
+    //   description: "Documentos arquivados e históricos de conteúdo",
+    //   icon: <FaArchive />,
+    //   path: "/content/arquivos",
+    // },
     {
       title: "Avisos",
       description: "Comunicados e anúncios oficiais",

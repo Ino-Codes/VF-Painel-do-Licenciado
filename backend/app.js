@@ -2,6 +2,7 @@
 
 const migrationRunner = require("./migrationRunner.js");
 const { seedGroups } = require("./seedGroups.js");
+const blobStorage = require("./storage/blobStorage.js");
 const { initAuth } = require("./middleware/auth.js");
 const express = require("express");
 const cors = require("cors");
@@ -245,4 +246,7 @@ app.listen(port, async () => {
   } catch (err) {
     console.error("[migrations] Falha crítica:", err.message);
   }
+  // Loga se o Azure Blob Storage (documentos) está acessível. Nunca derruba
+  // o servidor: sem ele, documentos seguem para o Cloudinary.
+  await blobStorage.verificarConexao();
 });

@@ -32,7 +32,10 @@ const COMPANIES_OPTIONS = [
   { slug: "v-partner", name: "V-PARTNER" },
 ];
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+// Documentos vão para o Azure Blob (até 100 MB); imagens seguem no
+// Cloudinary, cujo plano gratuito aceita até 10 MB. O backend confere de novo.
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 // Modal unificado de arquivo/documento (antes FileModal + ArchiveModal, ~95%
 // idênticos). Só o `resource` muda os endpoints.
@@ -71,8 +74,13 @@ const ContentFileModal: React.FC<ContentFileModalProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      if (selectedFile.size > MAX_FILE_SIZE) {
-        toast.error("O arquivo é muito grande. O limite máximo é de 20 MB.");
+      const ehImagem = selectedFile.type.startsWith("image/");
+      const limite = ehImagem ? MAX_IMAGE_SIZE : MAX_FILE_SIZE;
+      if (selectedFile.size > limite) {
+        const mb = (selectedFile.size / 1024 / 1024).toFixed(1).replace(".", ",");
+        toast.error(
+          `O arquivo tem ${mb} MB e o limite ${ehImagem ? "para imagens " : ""}é de ${limite / 1024 / 1024} MB.`,
+        );
         e.target.value = "";
         setFile(null);
       } else {
@@ -118,8 +126,9 @@ const ContentFileModal: React.FC<ContentFileModalProps> = ({
         );
       }
       onSuccess();
-    } catch (err) {
-      toast.error("Ocorreu um erro ao salvar o arquivo.");
+    } catch (err: any) {
+      // O backend explica o motivo quando sabe (ex.: arquivo acima do limite).
+      toast.error(err?.response?.data?.error || "Ocorreu um erro ao salvar o arquivo.");
       console.error(err);
     }
   };
