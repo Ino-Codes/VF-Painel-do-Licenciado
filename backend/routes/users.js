@@ -562,6 +562,17 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           });
         }
 
+        // Arquivos dos certificados externos: as linhas saem em cascata com o
+        // usuário, mas os arquivos no Cloudinary/Azure são apagados à parte,
+        // depois do COMMIT.
+        const arquivosCertificados = await client.query(
+          `SELECT f.storage, f.url, f.public_id, f.blob_name
+             FROM user_certificate_files f
+             JOIN user_certificates c ON c.id = f.certificate_id
+            WHERE c.user_id = $1`,
+          [id],
+        );
+
         await client.query(
           "UPDATE activity_logs SET user_id = NULL WHERE user_id = $1",
           [id],
@@ -575,6 +586,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           req.ipAddress,
         );
         await client.query("COMMIT");
+        const documentos = require("../storage/documentos.js")(cloudinary);
+        await Promise.allSettled(
+          arquivosCertificados.rows.map((a) =>
+            documentos.excluir({ ...a, filename: a.url }),
+          ),
+        );
         res.json({ success: true, message: "Usuário excluído com sucesso." });
       } catch (err) {
         await client.query("ROLLBACK");

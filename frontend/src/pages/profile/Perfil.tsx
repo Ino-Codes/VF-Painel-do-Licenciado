@@ -8,7 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
-import EmptyState from "../../components/ui/EmptyState.tsx";
+import CertificadosExternos from "../../components/profile/CertificadosExternos.tsx";
 import AvatarModal from "../../components/forms/AvatarModal.tsx";
 import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
 import {
@@ -665,12 +665,17 @@ const Perfil: React.FC = () => {
         {/* ─────────────────────────────────────────────────────────────────── */}
         {activeTab === "certificates" && (
           <div className="profile-tab-content">
-            {isLoadingCertificates ? (
-              <LoadingSpinner variant="inline" label="Carregando certificados" />
-            ) : (
-              <div className="certificates-grid">
-                {certificates.length > 0 ? (
-                  certificates.map((cert) => {
+            {/* Certificados de outras organizações, cadastrados pelo usuário */}
+            <CertificadosExternos />
+
+            {/* Certificados emitidos pelos cursos do próprio Painel */}
+            <div className="profile-section">
+              <h3>Cursos do Painel</h3>
+              {isLoadingCertificates ? (
+                <LoadingSpinner variant="inline" label="Carregando certificados" />
+              ) : certificates.length > 0 ? (
+                <div className="certificates-grid">
+                  {certificates.map((cert) => {
                     // Slug da empresa — fallback para v-corp
                     const slug = cert.company_slug || "v-corp";
 
@@ -709,16 +714,15 @@ const Perfil: React.FC = () => {
                         </button>
                       </div>
                     );
-                  })
-                ) : (
-                  <EmptyState
-                    imageKey="certificado"
-                    title="Nenhum Certificado Encontrado"
-                    message="Você ainda não concluiu nenhum curso para obter um certificado. Complete um curso e ele aparecerá aqui!"
-                  />
-                )}
-              </div>
-            )}
+                  })}
+                </div>
+              ) : (
+                <p className="ext-cert-vazio-texto">
+                  Você ainda não concluiu nenhum curso do Painel. Os certificados
+                  aparecem aqui quando você terminar um.
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>

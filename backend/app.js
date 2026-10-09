@@ -182,6 +182,12 @@ const archivesRoutes = require("./routes/archives.js")(
 );
 const praisesRoutes = require("./routes/praises.js")(pool, logActivity);
 const setoresRoutes = require("./routes/setores.js")(pool);
+const userCertificatesRoutes = require("./routes/userCertificates.js")(
+  pool,
+  cloudinary,
+  upload,
+  logActivity,
+);
 const itAssetsRoutes = require("./routes/itAssets.js")(
   pool,
   logActivity,
@@ -226,6 +232,7 @@ app.use("/api/meeting-records", corsRestrito, meetingRecordsRoutes);
 app.use("/api/archives", corsRestrito, archivesRoutes);
 app.use("/api/praises", corsRestrito, praisesRoutes);
 app.use("/api/setores", corsRestrito, setoresRoutes);
+app.use("/api/user-certificates", corsRestrito, userCertificatesRoutes);
 app.use("/api/it-assets", corsRestrito, itAssetsRoutes);
 
 // Webhook do bot de WhatsApp (via Zenvia). Chamada servidor-a-servidor, sem
