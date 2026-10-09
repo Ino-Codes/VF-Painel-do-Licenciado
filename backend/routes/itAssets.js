@@ -261,7 +261,8 @@ module.exports = function (pool, logActivity, createNotification) {
 
     const dados = {
       type_id: typeId,
-      patrimonio: lerTexto(body.patrimonio, 40),
+      // Maiúsculas: "pat22" e "PAT22" são o mesmo patrimônio.
+      patrimonio: lerTexto(body.patrimonio, 40)?.toUpperCase() ?? null,
       marca: lerTexto(body.marca, 80),
       modelo: lerTexto(body.modelo, 120),
       numero_serie: lerTexto(body.numero_serie, 80),
@@ -285,6 +286,24 @@ module.exports = function (pool, logActivity, createNotification) {
 
   const log = (req, detalhes) =>
     logActivity(req.user.id, req.user.email, "Inventário de TI", detalhes, req.ipAddress);
+
+  // ── Próximo nº de patrimônio (sugestão no cadastro) ──────────────────────
+  // Sequência única "PAT" + número, para todos os tipos: maior existente + 1
+  // (buracos não são reaproveitados, para um número nunca voltar a ser
+  // usado). Mínimo de 2 dígitos: PAT01 … PAT99, PAT100. Os patrimônios no
+  // formato antigo (000078) não entram na conta.
+  router.get("/proximo-patrimonio", ...podeGerir, async (req, res) => {
+    try {
+      const r = await pool.query(
+        `SELECT COALESCE(MAX(substring(patrimonio FROM '^PAT([0-9]+)$')::int), 0) + 1 AS n
+           FROM it_assets
+          WHERE patrimonio ~ '^PAT[0-9]+$'`,
+      );
+      res.json({ sugestao: `PAT${String(r.rows[0].n).padStart(2, "0")}` });
+    } catch (err) {
+      responderErro(res, err, "próximo patrimônio");
+    }
+  });
 
   // ── Tipos ────────────────────────────────────────────────────────────────
   router.get("/types", ...podeVer, async (req, res) => {

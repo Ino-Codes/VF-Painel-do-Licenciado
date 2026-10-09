@@ -240,6 +240,23 @@
   resize: vertical;
 }
 
+/* Dica abaixo do campo (ex.: próximo nº de patrimônio). */
+.inv-field-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.inv-hint-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-color);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .inv-form-section {
   margin: 18px 0 12px;
   padding-top: 14px;

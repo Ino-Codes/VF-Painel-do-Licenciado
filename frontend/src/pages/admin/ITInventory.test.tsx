@@ -125,6 +125,7 @@ beforeEach(() => {
           kpis: { total: 3, em_uso: 2, disponiveis: 1, manutencao: 0 },
         },
       });
+    if (url === "/api/it-assets/proximo-patrimonio") return Promise.resolve({ data: { sugestao: "PAT22" } });
     if (url === "/api/it-assets/types")
       return Promise.resolve({
         data: [
@@ -244,6 +245,39 @@ describe("Inventário de TI", () => {
     const modal = document.querySelector(".modal-content") as HTMLElement;
     fireEvent.click(within(modal).getByRole("button", { name: "Entregar" }));
     expect(api.post).not.toHaveBeenCalled();
+  });
+
+  describe("sugestão de patrimônio no cadastro", () => {
+    const abrirNovo = async () => {
+      render(<ITInventory />);
+      await waitFor(() => expect(linhas().length).toBe(3));
+      fireEvent.click(screen.getByText("Novo ativo"));
+      return (await screen.findByLabelText("Nº de patrimônio")) as HTMLInputElement;
+    };
+
+    it("já vem preenchido com o próximo da sequência", async () => {
+      const campo = await abrirNovo();
+      await waitFor(() => expect(campo.value).toBe("PAT22"));
+      expect(screen.getByText("Próximo número da sequência.")).toBeTruthy();
+    });
+
+    it("se o usuário trocar, oferece voltar para a sugestão", async () => {
+      const campo = await abrirNovo();
+      await waitFor(() => expect(campo.value).toBe("PAT22"));
+      fireEvent.change(campo, { target: { value: "000200" } });
+      fireEvent.click(screen.getByText("usar PAT22"));
+      expect(campo.value).toBe("PAT22");
+    });
+
+    it("na edição não sugere nem troca o patrimônio", async () => {
+      render(<ITInventory />);
+      await waitFor(() => expect(linhas().length).toBe(3));
+      fireEvent.click(screen.getAllByLabelText(/^Editar /)[0]);
+      const campo = (await screen.findByLabelText("Nº de patrimônio")) as HTMLInputElement;
+      expect(campo.value).toBe("000010");
+      expect(mockGet).not.toHaveBeenCalledWith("/api/it-assets/proximo-patrimonio");
+      expect(screen.queryByText(/sequência/)).toBeNull();
+    });
   });
 
   describe("paginação", () => {

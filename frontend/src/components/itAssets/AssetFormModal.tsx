@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../../api.ts";
 import Modal from "../ui/Modal.tsx";
@@ -47,6 +47,28 @@ const AssetFormModal: React.FC<AssetFormModalProps> = ({
     observacao: asset?.observacao ?? "",
   });
   const [salvando, setSalvando] = useState(false);
+  // Próximo nº da sequência PAT, sugerido no cadastro de um ativo novo.
+  const [sugestao, setSugestao] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editando) return;
+    let ativo = true;
+    api
+      .get("/api/it-assets/proximo-patrimonio")
+      .then((res) => {
+        if (!ativo) return;
+        const s = res.data.sugestao as string;
+        setSugestao(s);
+        // Preenche só se o usuário ainda não digitou nada.
+        setForm((f) => (f.patrimonio ? f : { ...f, patrimonio: s }));
+      })
+      .catch(() => {
+        /* sem sugestão: o campo continua livre */
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [editando]);
 
   const tipo = useMemo(
     () => tipos.find((t) => String(t.id) === form.type_id),
@@ -120,9 +142,28 @@ const AssetFormModal: React.FC<AssetFormModalProps> = ({
               className="form-input"
               value={form.patrimonio}
               onChange={set("patrimonio")}
-              placeholder="Ex.: 000078 — vazio se ainda não tem"
+              placeholder="Ex.: PAT22 — vazio se ainda não tem"
               maxLength={40}
+              aria-describedby={sugestao ? "inv-patrimonio-dica" : undefined}
             />
+            {sugestao && (
+              <span id="inv-patrimonio-dica" className="inv-field-hint">
+                {form.patrimonio.trim().toUpperCase() === sugestao ? (
+                  "Próximo número da sequência."
+                ) : (
+                  <>
+                    Próximo da sequência:{" "}
+                    <button
+                      type="button"
+                      className="inv-hint-link"
+                      onClick={() => setForm((f) => ({ ...f, patrimonio: sugestao }))}
+                    >
+                      usar {sugestao}
+                    </button>
+                  </>
+                )}
+              </span>
+            )}
           </div>
 
           <div className="inv-field">
