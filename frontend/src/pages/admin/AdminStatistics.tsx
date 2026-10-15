@@ -14,10 +14,11 @@ import {
   HiOutlineClock,
   HiOutlineCheckCircle,
   HiOutlinePause,
+  HiOutlineStar,
 } from "react-icons/hi";
 import { FaHeadset } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
-import HelpdeskCharts from "./HelpdeskCharts.tsx";
+import HelpdeskCharts, { HelpdeskSeries, formatNota } from "./HelpdeskCharts.tsx";
 import EnneagramStats from "./EnneagramStats.tsx";
 import CourseEngagementDash from "./CourseEngagementDash.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
@@ -51,6 +52,8 @@ interface TicketStats {
   /** Mediana, em horas úteis, da abertura ao início do atendimento. */
   medianWaitHours: number | null;
   startedCount: number;
+  rating?: HelpdeskSeries["rating"];
+  ratingByAttendant?: HelpdeskSeries["ratingByAttendant"];
 }
 
 
@@ -301,7 +304,37 @@ const AdminStatistics: React.FC = () => {
                     <p>Pausados</p>
                   </div>
                 </div>
-                
+
+                {/* Média das avaliações dos solicitantes; a dica mostra a
+                    taxa de resposta (concluídos que foram avaliados). */}
+                <div
+                  className="stat-card"
+                  title={
+                    ticketStats.rating && ticketStats.rating.concluidos
+                      ? `${ticketStats.rating.total} de ${ticketStats.rating.concluidos} chamados concluídos foram avaliados (${Math.round(
+                          (ticketStats.rating.total / ticketStats.rating.concluidos) * 100,
+                        )}%).`
+                      : undefined
+                  }
+                >
+                  <div className="stat-icon">
+                    <HiOutlineStar />
+                  </div>
+                  <div className="stat-info">
+                    <h3>
+                      {ticketStats.rating?.total
+                        ? `${formatNota(ticketStats.rating.media)} / 5`
+                        : "—"}
+                    </h3>
+                    <p>
+                      Avaliação média
+                      {ticketStats.rating?.total
+                        ? ` (${ticketStats.rating.total})`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+
               </div>
 
               <HelpdeskCharts stats={ticketStats} />

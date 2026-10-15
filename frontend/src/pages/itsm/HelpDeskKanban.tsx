@@ -21,8 +21,10 @@ import {
   FaBug,
   FaLifeRing,
   FaRegLightbulb,
+  FaStar,
 } from "react-icons/fa";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { Estrelas, ROTULOS_NOTA } from "../../components/tickets/TicketRating.tsx";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -55,6 +57,10 @@ interface Ticket {
   requester_email: string | null;
   observation: string | null;
   attachments?: TicketAttachment[];
+  /** Avaliação do solicitante (1–5), depois de concluído. */
+  rating?: number | null;
+  rating_comment?: string | null;
+  rated_at?: string | null;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -125,6 +131,16 @@ const TicketCard: React.FC<{
 
       <div className="ticket-card-footer">
         <span className="ticket-card-requester">{ticket.name}</span>
+        {ticket.rating ? (
+          <span
+            className="ticket-card-rating"
+            title={`Avaliado com ${ticket.rating} de 5`}
+            aria-label={`Avaliado com ${ticket.rating} de 5`}
+          >
+            <FaStar aria-hidden="true" />
+            {ticket.rating}
+          </span>
+        ) : null}
         <span className="ticket-card-date">
           <FiClock size={11} />
           {formattedDate}
@@ -631,6 +647,35 @@ const TicketKanbanPage: React.FC = () => {
                     <div className="kanban-modal-concluded">
                       <FaCheckCircle />
                       Chamado concluído
+                    </div>
+                  )}
+
+                  {detailTicket.status === "concluido" && (
+                    <div className="kanban-modal-rating">
+                      <span className="kanban-modal-rating-title">
+                        Avaliação do solicitante
+                      </span>
+                      {detailTicket.rating ? (
+                        <>
+                          <div className="kanban-modal-rating-row">
+                            <Estrelas nota={detailTicket.rating} />
+                            <span>{ROTULOS_NOTA[detailTicket.rating]}</span>
+                          </div>
+                          {detailTicket.rating_comment && (
+                            <p className="kanban-modal-rating-comment">
+                              “{detailTicket.rating_comment}”
+                            </p>
+                          )}
+                          {detailTicket.rated_at && (
+                            <span className="kanban-modal-rating-date">
+                              em{" "}
+                              {new Date(detailTicket.rated_at).toLocaleDateString("pt-BR")}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <p className="kanban-modal-rating-empty">Ainda não avaliado.</p>
+                      )}
                     </div>
                   )}
 

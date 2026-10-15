@@ -200,7 +200,44 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     tenant_name: t.tenant_name || null,
     attendant_name: t.attendant_name || null,
     resolution_notes: t.status === "concluido" ? t.resolution_notes : null,
+    // Avaliação do atendimento (só existe em chamado concluído).
+    avaliacao:
+      t.status === "concluido" && t.rating
+        ? {
+            nota: t.rating,
+            comentario: t.rating_comment || null,
+            data: t.rated_at,
+          }
+        : null,
   });
+
+  // ── Link de avaliação (página pública, já posicionada no formulário) ─────
+  // `nota` pré-seleciona as estrelas quando o solicitante clica numa delas
+  // no e-mail. Abrir o link nunca grava nada: a nota só é registrada quando
+  // ele confirma na página.
+  const ratingUrl = (trackingToken, nota) =>
+    `${FRONTEND_URL}/acompanhar?t=${trackingToken}${nota ? `&nota=${nota}` : ""}#avaliar`;
+
+  // ── Bloco "Como foi o atendimento?" do e-mail de conclusão ───────────────
+  // Cinco estrelas clicáveis; cada uma abre a página com a nota escolhida.
+  const ratingBlockHtml = (trackingToken) => {
+    if (!trackingToken) return "";
+    const estrelas = [1, 2, 3, 4, 5]
+      .map(
+        (n) => `
+          <td align="center" style="padding:0 4px;">
+            <a href="${ratingUrl(trackingToken, n)}" target="_blank" title="${n} de 5" style="font-size:30px;line-height:1;color:#daa520;text-decoration:none;">&#9733;</a>
+            <div style="font-size:11px;color:#6c757d;">${n}</div>
+          </td>`,
+      )
+      .join("");
+    return `
+        <div style="margin:28px 0 8px;padding:20px;border:1px solid #eee;border-radius:8px;text-align:center;">
+          <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#0D0D0D;">Como foi o atendimento?</p>
+          <table border="0" cellspacing="0" cellpadding="0" align="center"><tr>${estrelas}</tr></table>
+          <p style="margin:12px 0 0;font-size:13px;color:#6c757d;">Clique numa estrela para avaliar. Leva menos de um minuto.</p>
+        </div>`;
+  };
 
   // ── Notificação de conclusão no WhatsApp ──────────────────────────────────
   // Vale para solicitantes que são colaboradores internos com telefone
@@ -270,7 +307,12 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     if (ticket.resolution_notes) {
       linhas.push("", "*Instruções de resolução:*", ticket.resolution_notes);
     }
-    linhas.push("", `Detalhes: ${trackUrl}`);
+    linhas.push(
+      "",
+      `Detalhes: ${trackUrl}`,
+      "",
+      `⭐ Como foi o atendimento? Avalie de 1 a 5 estrelas: ${ratingUrl(ticket.tracking_token)}`,
+    );
 
     await whatsapp.sendText(to, linhas.join("\n"));
   };
@@ -745,6 +787,110 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     }
   });
 
+  // ── Avaliação do atendimento ─────────────────────────────────────────────
+  // Uma por chamado, só depois de concluído, sem edição. O UPDATE condicional
+  // (rating IS NULL) garante isso mesmo com dois envios simultâneos.
+  const registrarAvaliacao = async (req, res, { where, params, via }) => {
+    const nota = Number(req.body?.nota);
+    if (!Number.isInteger(nota) || nota < 1 || nota > 5) {
+      return res.status(400).json({ error: "Escolha de 1 a 5 estrelas." });
+    }
+    const comentario = String(req.body?.comentario ?? "").trim();
+    if (comentario.length > 1000) {
+      return res
+        .status(400)
+        .json({ error: "O comentário deve ter até 1000 caracteres." });
+    }
+
+    try {
+      const n = params.length;
+      const result = await pool.query(
+        `UPDATE tickets t
+            SET rating = $${n + 1}, rating_comment = $${n + 2},
+                rated_at = NOW(), rating_via = $${n + 3}
+          WHERE ${where} AND t.status = 'concluido' AND t.rating IS NULL
+          RETURNING t.*`,
+        [...params, nota, comentario || null, via],
+      );
+
+      if (result.rowCount === 0) {
+        // Descobre o motivo para responder com a mensagem certa.
+        const atual = await pool.query(
+          `SELECT t.status, t.rating FROM tickets t WHERE ${where}`,
+          params,
+        );
+        if (atual.rowCount === 0) {
+          return res.status(404).json({ error: "Chamado não encontrado." });
+        }
+        if (atual.rows[0].rating) {
+          return res
+            .status(409)
+            .json({ error: "Este chamado já foi avaliado. Obrigado!" });
+        }
+        return res.status(409).json({
+          error: "Só é possível avaliar o atendimento de um chamado concluído.",
+        });
+      }
+
+      const t = result.rows[0];
+
+      // Avisa o atendente no sino do Painel. Falha aqui não desfaz a nota.
+      if (t.attendant_id) {
+        pool
+          .query(
+            `INSERT INTO notifications (user_id, message, link_to)
+             VALUES ($1, $2, $3)`,
+            [
+              t.attendant_id,
+              `${"⭐".repeat(nota)} O chamado #${t.id} foi avaliado com ${nota} de 5.`,
+              "/admin/helpdesk",
+            ],
+          )
+          .catch((e) => console.warn("Falha ao notificar avaliação:", e));
+      }
+
+      const tenant = await pool.query(
+        "SELECT name FROM widget_tenants WHERE id = $1",
+        [t.tenant_id],
+      );
+      res.json({
+        ...publicTicketView({ ...t, tenant_name: tenant.rows[0]?.name }),
+        attachments: await getAttachments(t.id),
+      });
+    } catch (err) {
+      console.error("Erro ao registrar avaliação:", err);
+      res.status(500).json({ error: "Erro ao registrar a avaliação." });
+    }
+  };
+
+  // ── POST /api/ticket/track/:token/rating (público — pelo link) ───────────
+  // Só pelo token do link (e-mail/WhatsApp): protocolo + e-mail são fáceis
+  // de descobrir e permitiriam avaliar o chamado de outra pessoa.
+  router.post("/track/:token/rating", (req, res) => {
+    const token = String(req.params.token || "");
+    if (!/^[a-f0-9]{32,64}$/i.test(token)) {
+      return res.status(404).json({ error: "Chamado não encontrado." });
+    }
+    return registrarAvaliacao(req, res, {
+      where: "t.tracking_token = $1",
+      params: [token],
+      via: "link",
+    });
+  });
+
+  // ── POST /api/tickets/:id/rating (logado — Meus Chamados) ────────────────
+  router.post("/:id/rating", isLoggedIn, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0 || !req.user?.email) {
+      return res.status(404).json({ error: "Chamado não encontrado." });
+    }
+    return registrarAvaliacao(req, res, {
+      where: "t.id = $1 AND LOWER(t.requester_email) = LOWER($2)",
+      params: [id, String(req.user.email).trim()],
+      via: "painel",
+    });
+  });
+
   // ── GET /api/tickets/mine (protegido — chamados do usuário logado) ───────
   // Lista os chamados abertos com o e-mail do usuário logado, na mesma forma
   // pública da consulta por protocolo (sem campos internos de atendimento).
@@ -1140,6 +1286,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
                   <p style="font-size:14px;color:#6c757d;">Atendido por: ${escapeHtml(
                     ticket.attendant_name || "Equipe V-CORP",
                   )}</p>
+                  ${ticket.rating ? "" : ratingBlockHtml(ticket.tracking_token)}
                   ${trackButtonHtml(ticket.tracking_token)}
                 `,
               }),

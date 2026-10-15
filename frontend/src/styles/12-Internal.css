@@ -408,6 +408,140 @@
   color: var(--status-success);
 }
 
+/* ── Avaliação do atendimento (chamado concluído) ── */
+.rating-block {
+  margin: 0 24px 24px;
+  padding: 16px 18px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--glass-surface-flat);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rating-block--form {
+  border-color: color-mix(in srgb, var(--accent-color) 40%, transparent);
+}
+
+.rating-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.rating-star {
+  color: var(--text-secondary);
+  opacity: 0.45;
+}
+
+.rating-star--on {
+  color: var(--accent-color);
+  opacity: 1;
+}
+
+.rating-done-row,
+.rating-pick-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.rating-done-row .rating-stars {
+  font-size: 1.25rem;
+}
+
+.rating-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rating-comment {
+  margin: 0;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rating-thanks,
+.rating-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Estrelas clicáveis: alvo de toque generoso, sem moldura de botão. */
+.rating-pick {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.rating-pick-star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.12s ease,
+    transform 0.12s ease;
+}
+
+.rating-pick-star.is-on {
+  color: var(--accent-color);
+}
+
+.rating-pick-star:hover {
+  transform: scale(1.12);
+}
+
+.rating-pick-star:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+
+.rating-comment-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rating-comment-label span {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.rating-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.rating-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+  .rating-block {
+    margin: 0 16px 20px;
+  }
+
+  .rating-actions .form-button {
+    width: 100%;
+  }
+}
+
 /* ── Anexos ── */
 .chamado-attach-block {
   grid-column: 1 / -1;

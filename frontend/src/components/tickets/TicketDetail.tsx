@@ -8,6 +8,7 @@ import {
   FiPauseCircle,
 } from "react-icons/fi";
 import { IconType } from "react-icons";
+import TicketRating, { AvaliacaoChamado } from "./TicketRating.tsx";
 
 // Visão do chamado para quem o abriu — a mesma na tela interna (Meus Chamados)
 // e na página pública de acompanhamento. Mora aqui para as duas não saírem do
@@ -30,6 +31,8 @@ export interface PublicTicket {
   attendant_name: string | null;
   resolution_notes: string | null;
   attachments?: TicketAttachment[];
+  /** Avaliação do atendimento (só em chamado concluído). */
+  avaliacao?: AvaliacaoChamado | null;
 }
 
 export const TYPE_CONFIG: Record<
@@ -96,7 +99,22 @@ export const TicketHead: React.FC<{ ticket: PublicTicket }> = ({ ticket }) => {
 };
 
 // ── Corpo do chamado (timeline + campos + anexos) ──────────────────────────
-export const TicketBody: React.FC<{ ticket: PublicTicket }> = ({ ticket }) => {
+interface TicketBodyProps {
+  ticket: PublicTicket;
+  /** Envia a avaliação. Ausente = quem vê não pode avaliar aqui. */
+  onAvaliar?: (nota: number, comentario: string) => Promise<void>;
+  /** Nota pré-selecionada (estrela clicada no e-mail). */
+  notaInicial?: number;
+  /** Rola até a avaliação ao abrir (link "#avaliar"). */
+  focarAvaliacao?: boolean;
+}
+
+export const TicketBody: React.FC<TicketBodyProps> = ({
+  ticket,
+  onAvaliar,
+  notaInicial,
+  focarAvaliacao,
+}) => {
   const isPaused = ticket.status === "pausado";
   // Pausado fica na etapa de atendimento; status desconhecido volta ao início.
   const activeStep = isPaused
@@ -193,6 +211,15 @@ export const TicketBody: React.FC<{ ticket: PublicTicket }> = ({ ticket }) => {
             </div>
           )}
         </div>
+      )}
+
+      {ticket.status === "concluido" && (
+        <TicketRating
+          avaliacao={ticket.avaliacao}
+          onAvaliar={onAvaliar}
+          notaInicial={notaInicial}
+          focar={focarAvaliacao}
+        />
       )}
     </>
   );

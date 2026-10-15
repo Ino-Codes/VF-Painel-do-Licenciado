@@ -65,6 +65,18 @@ const MENU_OPTIONS = [
   { key: "list", title: "Meus chamados", aliases: ["consultar", "meus"] },
 ];
 
+// Conversa parada no meio da abertura de um chamado: depois deste tempo, a
+// próxima mensagem não é tratada como continuação (um "Bom dia" no dia
+// seguinte viraria descrição ou assunto); o bot pergunta se é para retomar.
+const RETOMAR_APOS_MIN = 30;
+const ETAPAS_DO_CHAMADO = ["type", "title", "description", "confirm"];
+
+const RESUME_OPTIONS = [
+  { key: "continue", title: "Continuar", aliases: ["continuar", "retomar", "sim"] },
+  { key: "restart", title: "Recomeçar", aliases: ["recomecar", "novo", "de novo"] },
+  { key: "cancel", title: "Cancelar", aliases: ["nao", "n"] },
+];
+
 const CONFIRM_OPTIONS = [
   { key: "yes", title: "Confirmar", aliases: ["sim", "s", "ok", "confirmo"] },
   { key: "no", title: "Cancelar", aliases: ["nao", "n"] },
@@ -121,6 +133,23 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
 
   const askDescriptionDone = (to, body) =>
     sendButtons(to, body, [{ id: "desc:done", title: "Pronto, pode abrir" }]);
+
+  const askResume = (to, body) =>
+    sendButtons(
+      to,
+      body,
+      RESUME_OPTIONS.map((o) => ({ id: `resume:${o.key}`, title: o.title })),
+    );
+
+  // Resumo mostrado antes de abrir o chamado (etapa de confirmação).
+  const textoConferencia = (session) => {
+    const anexos = Array.isArray(session.attachments) ? session.attachments.length : 0;
+    return `👀 Confira antes de eu abrir:\n\n*Tipo:* ${
+      TYPE_LABELS[session.ticket_type] || session.ticket_type
+    }\n*Assunto:* ${session.title}\n*Descrição:* ${
+      session.description || "(sem texto)"
+    }${anexos ? `\n*Anexos:* ${anexos}` : ""}`;
+  };
 
   // ─── Identificação do colaborador ─────────────────────────────────────────
 
@@ -521,6 +550,63 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
 
     const base = { ...session, last_message_id: messageId };
 
+    // ── Retomada: conversa parada no meio da abertura de um chamado ──
+    const minutosParado = (Date.now() - new Date(session.updated_at).getTime()) / 60000;
+    if (ETAPAS_DO_CHAMADO.includes(session.step) && minutosParado >= RETOMAR_APOS_MIN) {
+      await saveSession(waId, user.id, { ...base, step: `retomar:${session.step}` });
+      await askResume(
+        waId,
+        `👋 Olá, ${firstName(user.nome)}! Você tinha começado a abrir um chamado${
+          session.title ? `: *${session.title}*` : ""
+        }. Quer continuar de onde parou?`,
+      );
+      return;
+    }
+
+    if (String(session.step).startsWith("retomar:")) {
+      const etapa = session.step.slice("retomar:".length);
+      const escolha = resolveChoice(payload, text, "resume", RESUME_OPTIONS);
+
+      if (escolha === "restart") {
+        await startFlow();
+        return;
+      }
+      if (escolha === "cancel") {
+        await finishSession();
+        await sendText(
+          waId,
+          "👍 Tudo bem, descartei o chamado que estava pela metade. Quando quiser, é só mandar uma mensagem.",
+        );
+        return;
+      }
+      if (escolha !== "continue" || !ETAPAS_DO_CHAMADO.includes(etapa)) {
+        await saveSession(waId, user.id, base);
+        await askResume(waId, "Não entendi. Quer continuar o chamado que estava abrindo?");
+        return;
+      }
+
+      // Continua: volta à etapa e repete a pergunta dela.
+      const retomada = { ...base, step: etapa };
+      await saveSession(waId, user.id, retomada);
+      if (etapa === "type") {
+        await askType(waId, "Qual é o tipo do chamado?");
+      } else if (etapa === "title") {
+        await sendText(waId, "✏️ Me diga o *assunto* do chamado, em uma frase curta.");
+      } else if (etapa === "description") {
+        await askDescriptionDone(
+          waId,
+          `${
+            session.description
+              ? `📝 Até agora a descrição está assim:\n\n${session.description}\n\nPode completar`
+              : "📝 Descreva o que está acontecendo. Pode mandar em várias mensagens e anexar arquivos"
+          } — quando terminar, toque em *Pronto, pode abrir*.`,
+        );
+      } else {
+        await askConfirm(waId, textoConferencia(retomada));
+      }
+      return;
+    }
+
     switch (session.step) {
       case "menu": {
         const choice = resolveChoice(payload, text, "menu", MENU_OPTIONS);
@@ -614,14 +700,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
             return;
           }
           await saveSession(waId, user.id, { ...base, step: "confirm" });
-          await askConfirm(
-            waId,
-            `👀 Confira antes de eu abrir:\n\n*Tipo:* ${
-              TYPE_LABELS[session.ticket_type] || session.ticket_type
-            }\n*Assunto:* ${session.title}\n*Descrição:* ${
-              session.description || "(sem texto)"
-            }${atuais.length ? `\n*Anexos:* ${atuais.length}` : ""}`,
-          );
+          await askConfirm(waId, textoConferencia(session));
           return;
         }
 
@@ -669,12 +748,18 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
 
         await saveSession(waId, user.id, { ...base, description, attachments });
 
-        // Silêncio a cada frase seria ruim; repetir a instrução inteira toda
-        // vez também. Só falamos quando há um aviso relevante.
+        // Repetir a instrução a cada frase seria ruim. Fala-se quando há um
+        // aviso relevante, e uma vez no primeiro texto da descrição — para a
+        // pessoa saber que o bot está ouvindo (silêncio total parece travado).
         if (avisos.length) {
           await askDescriptionDone(
             waId,
             `${avisos.join(" ")}\n\nPode continuar ou tocar em *Pronto, pode abrir*.`,
+          );
+        } else if (trecho && !session.description) {
+          await askDescriptionDone(
+            waId,
+            "✍️ Anotado! Pode mandar mais detalhes ou anexos. Quando terminar, toque em *Pronto, pode abrir*.",
           );
         }
         return;

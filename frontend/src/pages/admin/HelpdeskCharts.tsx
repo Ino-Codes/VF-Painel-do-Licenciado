@@ -52,7 +52,20 @@ export interface HelpdeskSeries {
     iniciados: number;
   }[];
   byAttendant: { name: string; count: number }[];
+  /** Avaliação do atendimento (opcional: backend antigo não manda). */
+  rating?: {
+    total: number;
+    media: number | null;
+    concluidos: number;
+    /** Quantidade de notas 1, 2, 3, 4 e 5. */
+    distribuicao: number[];
+  };
+  ratingByAttendant?: { name: string; media: number; count: number }[];
 }
+
+/** 4.6 → "4,6" */
+export const formatNota = (n: number | null | undefined) =>
+  n == null ? "—" : n.toFixed(1).replace(".", ",");
 
 const TYPE_LABELS: Record<string, string> = {
   help: "Ajuda",
@@ -342,6 +355,96 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       ],
     };
   }, [stats.byAttendant, palette]);
+
+  // ── Avaliações: distribuição das notas (1 a 5) ──
+  // Rampa sequencial da marca: nota maior, tom mais forte.
+  const ratingDist = stats.rating?.distribuicao ?? [0, 0, 0, 0, 0];
+  const ratingTotal = stats.rating?.total ?? 0;
+  const ratingDistData = useMemo(
+    () => ({
+      labels: ["1 ★", "2 ★", "3 ★", "4 ★", "5 ★"],
+      datasets: [
+        {
+          data: ratingDist,
+          backgroundColor: palette.seq,
+          borderRadius: 4,
+          borderSkipped: false,
+          maxBarThickness: 44,
+        },
+      ],
+    }),
+    [ratingDist, palette],
+  );
+
+  const ratingDistOptions = useMemo<ChartOptions<any>>(
+    () => ({
+      ...baseOptions,
+      interaction: { mode: "nearest" as const, intersect: true },
+      plugins: {
+        ...baseOptions.plugins,
+        tooltip: {
+          ...(baseOptions.plugins as any).tooltip,
+          displayColors: false,
+          callbacks: {
+            title: (items: any[]) => `${items[0].dataIndex + 1} de 5 estrelas`,
+            label: (ctx: any) => {
+              const pct = ratingTotal ? Math.round((ctx.raw / ratingTotal) * 100) : 0;
+              return ` ${ctx.raw} avaliação(ões) · ${pct}%`;
+            },
+          },
+        },
+      },
+    }),
+    [baseOptions, ratingTotal],
+  );
+
+  // ── Avaliações: média por atendente (escala fixa de 0 a 5) ──
+  const ratingAtt = stats.ratingByAttendant ?? [];
+  const ratingAttData = useMemo(
+    () => ({
+      labels: ratingAtt.map((r) => r.name),
+      datasets: [
+        {
+          data: ratingAtt.map((r) => Number(r.media.toFixed(2))),
+          backgroundColor: palette.seq[2],
+          hoverBackgroundColor: palette.seq[3],
+          borderRadius: 4,
+          borderSkipped: false,
+          barThickness: 18,
+        },
+      ],
+    }),
+    [ratingAtt, palette],
+  );
+
+  const ratingAttOptions = useMemo<ChartOptions<any>>(
+    () => ({
+      ...horizontalOptions,
+      scales: {
+        ...(horizontalOptions as any).scales,
+        x: {
+          ...(horizontalOptions as any).scales.x,
+          min: 0,
+          max: 5,
+          ticks: { ...(horizontalOptions as any).scales.x.ticks, stepSize: 1 },
+        },
+      },
+      plugins: {
+        ...horizontalOptions.plugins,
+        tooltip: {
+          ...(horizontalOptions.plugins as any).tooltip,
+          displayColors: false,
+          callbacks: {
+            label: (ctx: any) => {
+              const r = ratingAtt[ctx.dataIndex];
+              return ` ${formatNota(r?.media)} de 5 · ${r?.count ?? 0} avaliação(ões)`;
+            },
+          },
+        },
+      },
+    }),
+    [horizontalOptions, ratingAtt],
+  );
 
   // ── 3. Tempo médio de resolução por mês ──
   const monthlyData = useMemo(
@@ -644,6 +747,39 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
             <Bar data={attendantData} options={horizontalOptions} />
           ) : (
             <p className="viz-empty">Sem chamados concluídos ainda.</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Avaliações do atendimento ── */}
+      <div className="viz-card">
+        <div className="viz-card-head">
+          <h3>Avaliações do atendimento</h3>
+          <span className="viz-card-sub">
+            {ratingTotal
+              ? `${ratingTotal} avaliação(ões) · média ${formatNota(stats.rating?.media)}`
+              : "notas de 1 a 5 estrelas"}
+          </span>
+        </div>
+        <div className="viz-canvas">
+          {ratingTotal ? (
+            <Bar data={ratingDistData} options={ratingDistOptions} />
+          ) : (
+            <p className="viz-empty">Nenhum chamado avaliado ainda.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="viz-card">
+        <div className="viz-card-head">
+          <h3>Avaliação por atendente</h3>
+          <span className="viz-card-sub">média de 0 a 5</span>
+        </div>
+        <div className="viz-canvas">
+          {ratingAtt.length ? (
+            <Bar data={ratingAttData} options={ratingAttOptions} />
+          ) : (
+            <p className="viz-empty">Nenhum chamado avaliado ainda.</p>
           )}
         </div>
       </div>

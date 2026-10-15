@@ -29,6 +29,16 @@ const MeusChamados: React.FC = () => {
   const [formId, setFormId] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [searchResult, setSearchResult] = useState<PublicTicket | null>(null);
+
+  // Avaliação do atendimento (chamado concluído). O backend confere que o
+  // chamado é do usuário logado; a resposta já vem com a avaliação, e o
+  // chamado é trocado na lista e na consulta por protocolo.
+  const avaliar = (id: number) => async (nota: number, comentario: string) => {
+    const res = await api.post(`/api/tickets/${id}/rating`, { nota, comentario });
+    const atualizado = res.data as PublicTicket;
+    setTickets((lista) => lista.map((t) => (t.id === id ? atualizado : t)));
+    setSearchResult((r) => (r && r.id === id ? atualizado : r));
+  };
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
 
@@ -158,7 +168,7 @@ const MeusChamados: React.FC = () => {
 
                   {isOpen && (
                     <div id={`chamado-body-${ticket.id}`}>
-                      <TicketBody ticket={ticket} />
+                      <TicketBody ticket={ticket} onAvaliar={avaliar(ticket.id)} />
                     </div>
                   )}
                 </article>
@@ -221,7 +231,16 @@ const MeusChamados: React.FC = () => {
                 <div className="chamado-detail-head chamado-detail-head--static">
                   <TicketHead ticket={searchResult} />
                 </div>
-                <TicketBody ticket={searchResult} />
+                <TicketBody
+                  ticket={searchResult}
+                  // Só avalia chamado próprio (a consulta acha qualquer um
+                  // por protocolo + e-mail).
+                  onAvaliar={
+                    tickets.some((t) => t.id === searchResult.id)
+                      ? avaliar(searchResult.id)
+                      : undefined
+                  }
+                />
                 <div className="chamado-detail-foot">
                   <button
                     className="form-button-cancel"

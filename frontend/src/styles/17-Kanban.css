@@ -492,6 +492,65 @@
   padding: 8px 0;
 }
 
+/* ── Avaliação do solicitante ── */
+.ticket-card-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-color);
+  white-space: nowrap;
+}
+
+.kanban-modal-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--glass-surface-flat);
+}
+
+.kanban-modal-rating-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.kanban-modal-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.kanban-modal-rating-row .rating-stars {
+  font-size: 1.1rem;
+}
+
+.kanban-modal-rating-comment {
+  margin: 0;
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.kanban-modal-rating-date,
+.kanban-modal-rating-empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
 /* ── Widget Tenants (Sistemas Integrados) ─────────────────────── */
 .widget-tenants-back {
   text-decoration: none;

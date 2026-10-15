@@ -13,6 +13,11 @@ import {
 const Acompanhar: React.FC = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("t");
+  // Estrela clicada no e-mail de conclusão (só pré-seleciona; nada é
+  // gravado sem a confirmação na página).
+  const notaInicial = Number(searchParams.get("nota")) || undefined;
+  const focarAvaliacao =
+    typeof window !== "undefined" && window.location.hash === "#avaliar";
 
   const [ticket, setTicket] = useState<PublicTicket | null>(null);
   const [loading, setLoading] = useState(false);
@@ -122,7 +127,24 @@ const Acompanhar: React.FC = () => {
               <div className="chamado-detail-head chamado-detail-head--static">
                 <TicketHead ticket={ticket} />
               </div>
-              <TicketBody ticket={ticket} />
+              <TicketBody
+                ticket={ticket}
+                // Avaliar só pelo link (token): protocolo + e-mail são fáceis
+                // de descobrir e permitiriam avaliar o chamado de outra pessoa.
+                onAvaliar={
+                  token
+                    ? async (nota, comentario) => {
+                        const res = await api.post(
+                          `/api/ticket/track/${token}/rating`,
+                          { nota, comentario },
+                        );
+                        setTicket(res.data);
+                      }
+                    : undefined
+                }
+                notaInicial={notaInicial}
+                focarAvaliacao={focarAvaliacao}
+              />
               <div className="chamado-detail-foot">
                 <button className="form-button-cancel" onClick={resetSearch}>
                   Consultar outro chamado

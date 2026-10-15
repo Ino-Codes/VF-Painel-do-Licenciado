@@ -458,6 +458,33 @@ module.exports = function (pool, resend) {
           [TZ],
         );
 
+        // Avaliações do atendimento (1–5 estrelas, dadas pelo solicitante).
+        // `concluidos` permite mostrar a taxa de resposta: quantos dos
+        // chamados concluídos foram avaliados.
+        const ratingQuery = pool.query(
+          `SELECT COUNT(*) FILTER (WHERE rating IS NOT NULL)::int AS total,
+                  AVG(rating)::float AS media,
+                  COUNT(*) FILTER (WHERE status = 'concluido')::int AS concluidos,
+                  COUNT(*) FILTER (WHERE rating = 1)::int AS n1,
+                  COUNT(*) FILTER (WHERE rating = 2)::int AS n2,
+                  COUNT(*) FILTER (WHERE rating = 3)::int AS n3,
+                  COUNT(*) FILTER (WHERE rating = 4)::int AS n4,
+                  COUNT(*) FILTER (WHERE rating = 5)::int AS n5
+             FROM tickets`,
+        );
+
+        // Média por atendente (quem atendeu o chamado avaliado).
+        const ratingByAttendantQuery = pool.query(
+          `SELECT COALESCE(NULLIF(TRIM(attendant_name), ''), 'Sem atendente') AS name,
+                  AVG(rating)::float AS media,
+                  COUNT(*)::int AS c
+             FROM tickets
+            WHERE rating IS NOT NULL
+            GROUP BY 1
+            ORDER BY media DESC, c DESC
+            LIMIT 8`,
+        );
+
         const [
           totalRes,
           byStatusRes,
@@ -471,6 +498,8 @@ module.exports = function (pool, resend) {
           byAttendantRes,
           waitMedianRes,
           waitMonthlyRes,
+          ratingRes,
+          ratingByAttendantRes,
         ] = await Promise.all([
           totalQuery,
           byStatusQuery,
@@ -484,6 +513,8 @@ module.exports = function (pool, resend) {
           byAttendantQuery,
           waitMedianQuery,
           waitMonthlyQuery,
+          ratingQuery,
+          ratingByAttendantQuery,
         ]);
 
         // A série mensal junta as duas métricas pelo mês. Um mês pode ter
@@ -554,6 +585,19 @@ module.exports = function (pool, resend) {
           startedCount: waitMedianRes.rows[0].n,
           byAttendant: byAttendantRes.rows.map((r) => ({
             name: r.name,
+            count: r.c,
+          })),
+          // Avaliação do atendimento.
+          rating: {
+            total: ratingRes.rows[0].total,
+            media: ratingRes.rows[0].media,
+            concluidos: ratingRes.rows[0].concluidos,
+            // Quantidade de avaliações com 1, 2, 3, 4 e 5 estrelas.
+            distribuicao: [1, 2, 3, 4, 5].map((n) => ratingRes.rows[0][`n${n}`]),
+          },
+          ratingByAttendant: ratingByAttendantRes.rows.map((r) => ({
+            name: r.name,
+            media: r.media,
             count: r.c,
           })),
         });
