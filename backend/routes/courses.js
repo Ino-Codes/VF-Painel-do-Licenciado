@@ -2,8 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 const { resolveVpartnerId, isLicenciado } = require("../companyAccess.js");
-const puppeteer = require("puppeteer-core");
-const chromium = require("@sparticuz/chromium");
+const { gerarCertificadoCurso } = require("../certificados/certificadoCurso.js");
 const { JSDOM } = require("jsdom");
 const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
@@ -404,8 +403,6 @@ module.exports = function (pool, cloudinary, upload) {
     const { courseId } = req.params;
     const { id: userId } = req.user;
 
-    let browser = null;
-
     try {
       const userResult = await pool.query(
         "SELECT nome FROM users WHERE id = $1",
@@ -431,7 +428,7 @@ module.exports = function (pool, cloudinary, upload) {
       }
 
       const courseResult = await pool.query(
-        "SELECT title, certificate_template_url FROM courses WHERE id = $1",
+        "SELECT title FROM courses WHERE id = $1",
         [courseId],
       );
       const course = courseResult.rows[0];
@@ -440,224 +437,61 @@ module.exports = function (pool, cloudinary, upload) {
         return res.status(404).send("Curso não encontrado.");
       }
 
-      let backgroundImageUrl = course.certificate_template_url
-        ? course.certificate_template_url
-        : "https://res.cloudinary.com/dsgbgrll5/image/upload/v1761934436/background_yltyhg.png";
+      // Data de emissão = quando o aluno concluiu o curso (a última aula
+      // concluída), não o dia do download. Assim o certificado baixado hoje
+      // ou daqui a um ano mostra a mesma data.
+      const conclusaoResult = await pool.query(
+        `SELECT MAX(p.completed_at) AS concluido_em
+           FROM progress p
+           JOIN lessons l ON l.id = p.lesson_id
+           JOIN modules m ON m.id = l.module_id
+          WHERE m.course_id = $1 AND p.user_id = $2`,
+        [courseId, userId],
+      );
+      const dataConclusao = conclusaoResult.rows[0].concluido_em || new Date();
 
-      if (backgroundImageUrl.toLowerCase().endsWith(".pdf")) {
-        backgroundImageUrl = backgroundImageUrl
-          .replace("/upload/", "/upload/pg_1/")
-          .replace(".pdf", ".png");
-      }
-
-      const completionDate = new Date().toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
-
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-
-          <style>
-            @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
-            @import url('https://fonts.googleapis.com/css2?family=Edu+NSW+ACT+Cursive:wght@400..700&display=swap');
-            
-            body {
-                font-family: 'Montserrat', sans-serif;
-                margin: 0;
-                padding: 0;
-                background-image: url("${backgroundImageUrl}");
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-            }
-
-            .certificate-container {
-                background: none;
-
-                max-width: 1124px;
-                min-width: 1124px;
-                width: 1124px;;
-                
-                height: 788px;
-                max-height: 788px;
-                min-height: 788px;
-                
-                position: relative;
-            }
-
-            .title {
-                font-family: 'Playfair Display', serif;
-                font-size: 4em;
-                color: #cda93f;
-                margin-bottom: 0;
-                line-height: 1;
-            }
-
-            .subtitle {
-                font-family: 'Montserrat', sans-serif;
-                font-size: 1.5em;
-                font-style: semibold;
-                color: #252525;
-                margin-top: 5px;
-                margin-bottom: 80px;
-            }
-
-            .body-text {
-                font-family: 'Montserrat', sans-serif;
-                font-size: 1.2em;
-                color: #252525;
-                margin-bottom: 10px;
-            }
-
-            .student-name {
-                font-family: 'Snell Roundhand', 'Edu NSW ACT Cursive', serif;
-                font-style: italic;
-                font-size: 4em;
-                color: #252525;
-                margin: 20px 0;
-                line-height: 1.2;
-            }
-
-            .course-name {
-                font-family: 'Montserrat', sans-serif;
-                font-size: 1.5em;
-                color: #252525;
-                font-weight: bold;
-                margin-top: 15px;
-                margin-bottom: 15px;
-                text-transform: uppercase;
-            }
-
-            .signature-line {
-                width: 250px;
-                border-bottom: 1px solid #252525;
-                margin: 91px auto 10px auto;
-            }
-
-            .signature-text {
-                font-size: 1.1em;
-                color: #252525;
-                margin-bottom: 70px;
-            }
-
-            .date {
-                font-size: 1.1em;
-                color: #252525;
-                margin-bottom: 10px;
-            }
-
-            .logo-container {
-                margin-top: 10px;
-            }
-          </style>
-        </head>
-          <body>
-            <div class="certificate-container">
-              <h1 class="title">CERTIFICADO</h1>
-              <p class="subtitle">de conclusão</p>
-
-              <p class="body-text">A V-CORP certifica que</p>
-              <p class="student-name">${userName}</p>
-              <p class="body-text">concluiu com êxito o treinamento</p>
-              <p class="course-name">${course.title}</p>
-              <p class="body-text">realizado pela empresa.</p>
-
-              <div class="signature-line"></div>
-              <p class="signature-text">Assinatura</p>
-
-              <p class="date">${completionDate}</p>
-
-              <div class="logo-container">
-                <img src="https://res.cloudinary.com/dsgbgrll5/image/upload/v1782936521/textopreto_svfbdt.png" alt="Logo V-CORP" width="180" />
-              </div>
-            </div>
-          </body>
-        </html>
-      `;
-
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
-      });
-
-      const page = await browser.newPage();
-      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
-      const pdfBytes = await page.pdf({
-        format: "A4",
-        landscape: true,
-        printBackground: true,
+      // Modelo único para todos os cursos (certificados/certificadoCurso.js).
+      const { pdf } = await gerarCertificadoCurso({
+        aluno: userName,
+        curso: course.title,
+        dataConclusao,
       });
 
       const uniqueCode = crypto.randomBytes(16).toString("hex");
 
+      // A emissão registrada acompanha a data de conclusão (é ela que aparece
+      // em "Meus Certificados" no Perfil).
       const insertCertificateQuery = `
         INSERT INTO certificates (user_id, course_id, unique_code, issue_date)
-        VALUES ($1, $2, $3, NOW())
-        ON CONFLICT (user_id, course_id) 
-        DO UPDATE SET issue_date = NOW();
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (user_id, course_id)
+        DO UPDATE SET issue_date = EXCLUDED.issue_date;
       `;
-      await pool.query(insertCertificateQuery, [userId, courseId, uniqueCode]);
+      await pool.query(insertCertificateQuery, [
+        userId,
+        courseId,
+        uniqueCode,
+        dataConclusao,
+      ]);
 
+      // Nome do arquivo: versão ASCII + versão UTF-8 (acentos do título).
+      const nomeArquivo = `Certificado - ${course.title}.pdf`;
+      const nomeAscii = nomeArquivo
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\x20-\x7e]/g, "_")
+        .replace(/["\\]/g, "_");
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="certificado-${course.title}.pdf"`,
+        `attachment; filename="${nomeAscii}"; filename*=UTF-8''${encodeURIComponent(nomeArquivo)}`,
       );
-      res.send(Buffer.from(pdfBytes));
+      res.send(pdf);
     } catch (err) {
       console.error("Erro ao gerar certificado:", err);
       res.status(500).send("Erro ao gerar certificado.");
-    } finally {
-      if (browser !== null) {
-        await browser.close();
-      }
     }
   });
-
-  router.post(
-    "/:courseId/certificate-template",
-    isLoggedIn,
-    checkPermission("courses.manage"),
-    upload.single("template"),
-    async (req, res) => {
-      const { courseId } = req.params;
-      if (!req.file) {
-        return res.status(400).json({ error: "Nenhum arquivo PDF enviado." });
-      }
-
-      try {
-        const uploadResult = await new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ resource_type: "image" }, (error, result) => {
-              if (error) reject(error);
-              resolve(result);
-            })
-            .end(req.file.buffer);
-        });
-
-        const newTemplateUrl = uploadResult.secure_url;
-        await pool.query(
-          "UPDATE courses SET certificate_template_url = $1 WHERE id = $2",
-          [newTemplateUrl, courseId],
-        );
-
-        res.json({ success: true, templateUrl: newTemplateUrl });
-      } catch (err) {
-        console.error("Erro no upload do modelo de certificado:", err);
-        res.status(500).json({ error: "Erro no servidor durante o upload." });
-      }
-    },
-  );
 
   // --- Módulos ---
   router.post(
