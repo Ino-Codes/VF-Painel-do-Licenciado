@@ -13,6 +13,7 @@ import {
   ChartOptions,
 } from "chart.js";
 import { useTheme } from "../../context/ThemeContext.tsx";
+import { VIZ_PALETTE } from "./vizTheme.ts";
 
 ChartJS.register(
   CategoryScale,
@@ -117,40 +118,6 @@ export const formatHoursShort = (h: number | null): string => {
   if (h < 1) return `${Math.round(h * 60)}min`;
   if (h < 24) return `${h.toFixed(1).replace(".", ",")}h`;
   return `${Math.round(h / 24)}d`;
-};
-
-// A paleta fica aqui, em JS, e NÃO é lida do CSS com getComputedStyle.
-// Motivo: o ThemeProvider aplica a classe `dark-theme` ao body dentro de um
-// useEffect, que roda DEPOIS do render deste componente. Uma leitura do DOM
-// durante o render devolveria as cores do tema anterior, e a legenda do
-// gráfico aparecia em quase-preto sobre o fundo escuro (sumia). Como estas
-// cores são desenhadas em canvas e em style inline, ter os valores em JS é
-// determinístico e não depende da ordem dos efeitos.
-//
-// Rampa sequencial dourada + dupla categórica, ambas validadas para
-// contraste e daltonismo. O modo escuro tem degraus próprios, não um
-// espelho automático do claro.
-const VIZ_PALETTE = {
-  light: {
-    seq: ["#cdae6b", "#b8944e", "#9e7c3c", "#836731", "#6a5327"],
-    cat1: "#2a78d6",
-    cat2: "#1baf3b",
-    neutral: "#9aa1ab",
-    grid: "rgba(0, 0, 0, 0.08)",
-    text: "#0a0a0a",
-    textMuted: "#6c757d",
-    surface: "#ffffff",
-  },
-  dark: {
-    seq: ["#6b5226", "#8a6c35", "#a8843f", "#c9a55c", "#e6c98a"],
-    cat1: "#3987e5",
-    cat2: "#199e48",
-    neutral: "#767d88",
-    grid: "rgba(255, 255, 255, 0.10)",
-    text: "#f5f5f5",
-    textMuted: "#9aa0a6",
-    surface: "#0d0d0d",
-  },
 };
 
 interface Props {

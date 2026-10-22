@@ -104,6 +104,69 @@ const CTE_ESPERA = `
       JOIN tickets t ON t.id = i.ticket_id
      WHERE i.t_inicio >= (t.created_at AT TIME ZONE 'UTC')
   )`;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Estatísticas dos cursos
+// ═══════════════════════════════════════════════════════════════════════════
+// Não há matrícula explícita (user_courses nunca é preenchida): um aluno
+// INICIOU um curso quando concluiu ao menos uma aula dele, e CONCLUIU quando
+// concluiu todas — a mesma regra que libera o certificado (routes/courses.js).
+// O quiz não entra na conclusão; é medido à parte, pela melhor nota de cada
+// aluno.
+//
+// Parâmetros: $1 = company_id (null = todas as empresas), $2 = público.
+// Cursos sem nenhuma aula ficam de fora (não há o que concluir).
+const PUBLICOS = ["todos", "internos", "vpartners"];
+
+const ESCOPO_CURSOS = `
+  WITH alunos AS (
+    SELECT u.id, u.nome, u.avatar_url, s.nome AS setor
+      FROM users u
+      LEFT JOIN setores s ON s.id = u.setor_id
+     WHERE $2::text = 'todos'
+        OR ($2::text = 'internos') = EXISTS (
+             SELECT 1 FROM group_permissions gp
+              WHERE gp.group_id = u.group_id
+                AND gp.permission_key = 'internal_access')
+  ),
+  cursos AS (
+    SELECT c.id, c.title, c.is_active, co.name AS empresa,
+           COUNT(l.id)::int AS total_aulas
+      FROM courses c
+      JOIN modules m ON m.course_id = c.id
+      JOIN lessons l ON l.module_id = m.id
+      LEFT JOIN companies co ON co.id = c.company_id
+     WHERE $1::int IS NULL OR c.company_id = $1::int
+     GROUP BY c.id, c.title, c.is_active, co.name
+  ),
+  feitas AS (
+    SELECT p.user_id, m.course_id, p.completed_at
+      FROM progress p
+      JOIN lessons l ON l.id = p.lesson_id
+      JOIN modules m ON m.id = l.module_id
+      JOIN cursos c ON c.id = m.course_id
+      JOIN alunos a ON a.id = p.user_id
+  ),
+  matriculas AS (
+    SELECT f.user_id, f.course_id,
+           COUNT(*)::int AS aulas,
+           COUNT(*) >= MAX(c.total_aulas) AS concluido
+      FROM feitas f
+      JOIN cursos c ON c.id = f.course_id
+     GROUP BY f.user_id, f.course_id
+  ),
+  quiz_melhor AS (
+    SELECT q.course_id, qa.user_id, q.passing_score,
+           MAX(qa.score) AS nota,
+           BOOL_OR(qa.passed) AS aprovado,
+           COUNT(*)::int AS tentativas
+      FROM quiz_attempts qa
+      JOIN quizzes q ON q.id = qa.quiz_id
+      JOIN cursos c ON c.id = q.course_id
+      JOIN alunos a ON a.id = qa.user_id
+     GROUP BY q.course_id, qa.user_id, q.passing_score
+  )`;
+
 const router = express.Router();
 
 const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
@@ -245,35 +308,175 @@ module.exports = function (pool) {
     },
   );
 
+  // --- ESTATÍSTICAS DOS CURSOS ---
+  // ?empresa=<slug>|all filtra os cursos pela empresa; ?publico=todos|internos|vpartners
+  // filtra os alunos (interno = grupo com internal_access).
   router.get(
-    "/course-engagement",
+    "/courses",
     isLoggedIn,
     checkPermission("analytics.view"),
     async (req, res) => {
-      try {
-        const query = `
-      SELECT
-        u.nome,
-        u.avatar_url,
-        COUNT(p.id)::int AS completed_lessons_count
-      FROM
-        progress p
-      JOIN
-        users u ON p.user_id = u.id
-      WHERE
-        u.role != 'licenciado' 
-      GROUP BY
-        u.id, u.nome, u.avatar_url
-      ORDER BY
-        completed_lessons_count DESC
-      LIMIT 3;
-    `;
+      const publico = PUBLICOS.includes(req.query.publico)
+        ? req.query.publico
+        : "todos";
 
-        const result = await pool.query(query);
-        res.json(result.rows);
+      try {
+        // Sem empresa (ou "all") = todas. Slug desconhecido não casa com
+        // nenhum curso, em vez de cair silenciosamente em "todas".
+        let companyId = null;
+        const empresa = req.query.empresa;
+        if (empresa && empresa !== "all") {
+          const r = await pool.query("SELECT id FROM companies WHERE slug = $1", [
+            empresa,
+          ]);
+          companyId = r.rows.length ? r.rows[0].id : -1;
+        }
+        const params = [companyId, publico];
+        const q = (sql) => pool.query(`${ESCOPO_CURSOS} ${sql}`, params);
+
+        const [resumo, quiz, semanal, porCurso, notas, porSetor, ranking] =
+          await Promise.all([
+            q(`
+              SELECT
+                (SELECT COUNT(*) FROM cursos WHERE is_active)::int AS cursos_ativos,
+                (SELECT COUNT(DISTINCT user_id) FROM feitas)::int AS alunos,
+                (SELECT COUNT(*) FROM feitas)::int AS aulas,
+                (SELECT COUNT(*) FROM feitas
+                  WHERE completed_at >= NOW() - INTERVAL '30 days')::int AS aulas_30d,
+                (SELECT COUNT(*) FROM feitas
+                  WHERE completed_at >= NOW() - INTERVAL '60 days'
+                    AND completed_at < NOW() - INTERVAL '30 days')::int AS aulas_30d_anterior,
+                (SELECT COUNT(*) FROM matriculas)::int AS iniciados,
+                (SELECT COUNT(*) FROM matriculas WHERE concluido)::int AS concluidos,
+                (SELECT COUNT(*)
+                   FROM certificates ce
+                   JOIN cursos c ON c.id = ce.course_id
+                   JOIN alunos a ON a.id = ce.user_id)::int AS certificados`),
+            q(`
+              SELECT COUNT(*)::int AS alunos,
+                     COUNT(*) FILTER (WHERE aprovado)::int AS aprovados,
+                     ROUND(AVG(nota), 1)::float AS nota_media,
+                     ROUND(AVG(tentativas), 1)::float AS tentativas_media
+                FROM quiz_melhor`),
+            // Últimas 12 semanas (segunda a domingo, horário de São Paulo),
+            // incluindo as semanas sem atividade.
+            q(`
+              SELECT to_char(s.semana, 'YYYY-MM-DD') AS semana,
+                     COUNT(f.user_id)::int AS aulas,
+                     COUNT(DISTINCT f.user_id)::int AS alunos
+                FROM generate_series(
+                       date_trunc('week', ${paraLocal("NOW()")}) - INTERVAL '11 weeks',
+                       date_trunc('week', ${paraLocal("NOW()")}),
+                       INTERVAL '1 week'
+                     ) AS s(semana)
+                LEFT JOIN feitas f
+                  ON date_trunc('week', ${paraLocal("f.completed_at")}) = s.semana
+               GROUP BY s.semana
+               ORDER BY s.semana`),
+            q(`
+              SELECT c.id, c.title AS titulo, c.empresa, c.is_active AS ativo,
+                     c.total_aulas,
+                     COUNT(mt.user_id)::int AS iniciados,
+                     COUNT(mt.user_id) FILTER (WHERE mt.concluido)::int AS concluidos,
+                     ROUND(AVG(mt.aulas::numeric / c.total_aulas) * 100)::int AS progresso_medio,
+                     qz.alunos AS quiz_alunos,
+                     qz.aprovados AS quiz_aprovados,
+                     qz.nota_media AS quiz_nota_media,
+                     qz.nota_corte
+                FROM cursos c
+                LEFT JOIN matriculas mt ON mt.course_id = c.id
+                LEFT JOIN (
+                  SELECT course_id,
+                         COUNT(*)::int AS alunos,
+                         COUNT(*) FILTER (WHERE aprovado)::int AS aprovados,
+                         ROUND(AVG(nota), 1)::float AS nota_media,
+                         MAX(passing_score)::int AS nota_corte
+                    FROM quiz_melhor
+                   GROUP BY course_id
+                ) qz ON qz.course_id = c.id
+               GROUP BY c.id, c.title, c.empresa, c.is_active, c.total_aulas,
+                        qz.alunos, qz.aprovados, qz.nota_media, qz.nota_corte
+               ORDER BY iniciados DESC, c.title`),
+            // Melhor nota de cada aluno em cada quiz, em faixas fixas.
+            q(`
+              SELECT COUNT(*) FILTER (WHERE nota < 50)::int AS f0,
+                     COUNT(*) FILTER (WHERE nota >= 50 AND nota < 70)::int AS f1,
+                     COUNT(*) FILTER (WHERE nota >= 70 AND nota < 90)::int AS f2,
+                     COUNT(*) FILTER (WHERE nota >= 90)::int AS f3
+                FROM quiz_melhor`),
+            q(`
+              SELECT COALESCE(a.setor, 'Sem setor') AS setor,
+                     COUNT(*)::int AS aulas,
+                     COUNT(DISTINCT f.user_id)::int AS alunos
+                FROM feitas f
+                JOIN alunos a ON a.id = f.user_id
+               GROUP BY 1
+               ORDER BY aulas DESC
+               LIMIT 8`),
+            q(`
+              SELECT a.id, a.nome, a.avatar_url, a.setor,
+                     COUNT(*)::int AS aulas,
+                     (SELECT COUNT(*) FROM matriculas mt
+                       WHERE mt.user_id = a.id AND mt.concluido)::int AS cursos_concluidos,
+                     to_char(MAX(${paraLocal("f.completed_at")}), 'YYYY-MM-DD') AS ultima_atividade
+                FROM feitas f
+                JOIN alunos a ON a.id = f.user_id
+               GROUP BY a.id, a.nome, a.avatar_url, a.setor
+               ORDER BY aulas DESC, MAX(f.completed_at) DESC
+               LIMIT 10`),
+          ]);
+
+        const r = resumo.rows[0];
+        const qz = quiz.rows[0];
+        const n = notas.rows[0];
+
+        res.json({
+          resumo: {
+            cursosAtivos: r.cursos_ativos,
+            alunos: r.alunos,
+            aulas: r.aulas,
+            aulas30d: r.aulas_30d,
+            aulas30dAnterior: r.aulas_30d_anterior,
+            iniciados: r.iniciados,
+            concluidos: r.concluidos,
+            certificados: r.certificados,
+            quiz: {
+              alunos: qz.alunos,
+              aprovados: qz.aprovados,
+              notaMedia: qz.nota_media,
+              tentativasMedia: qz.tentativas_media,
+            },
+          },
+          semanal: semanal.rows,
+          porCurso: porCurso.rows.map((c) => ({
+            id: c.id,
+            titulo: c.titulo,
+            empresa: c.empresa,
+            ativo: c.ativo,
+            totalAulas: c.total_aulas,
+            iniciados: c.iniciados,
+            concluidos: c.concluidos,
+            progressoMedio: c.progresso_medio,
+            quizAlunos: c.quiz_alunos || 0,
+            quizAprovados: c.quiz_aprovados || 0,
+            quizNotaMedia: c.quiz_nota_media,
+            notaCorte: c.nota_corte,
+          })),
+          notas: [n.f0, n.f1, n.f2, n.f3],
+          porSetor: porSetor.rows,
+          ranking: ranking.rows.map((u) => ({
+            id: u.id,
+            nome: u.nome,
+            avatarUrl: u.avatar_url,
+            setor: u.setor,
+            aulas: u.aulas,
+            cursosConcluidos: u.cursos_concluidos,
+            ultimaAtividade: u.ultima_atividade,
+          })),
+        });
       } catch (err) {
-        console.error("Erro ao buscar engajamento de cursos:", err);
-        res.status(500).json({ error: "Erro ao buscar dados de engajamento." });
+        console.error("Erro ao buscar estatísticas de cursos:", err);
+        res.status(500).json({ error: "Erro ao buscar estatísticas de cursos." });
       }
     },
   );

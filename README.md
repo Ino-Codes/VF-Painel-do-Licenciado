@@ -169,44 +169,10 @@ cd backend
 npm install
 ```
 
-Crie um arquivo `.env` na pasta `backend/`:
+Copie o modelo [`backend/.env.example`](backend/.env.example) para `backend/.env` e preencha com os valores reais. O modelo lista todas as variáveis que o backend lê, separando as obrigatórias das opcionais.
 
-```env
-PORT=3001
-DATABASE_URL=postgres://usuario:senha@host:5432/nome_do_banco
-JWT_SECRET=sua_chave_secreta_jwt
-FRONTEND_URL=http://localhost:3000
-
-# Cloudinary (imagens)
-CLOUDINARY_CLOUD_NAME=seu_cloud_name
-CLOUDINARY_API_KEY=sua_api_key
-CLOUDINARY_API_SECRET=sua_api_secret
-
-# Azure Blob Storage (documentos) — opcional; sem ele, documentos vão para o Cloudinary (limite de 10 MB)
-AZURE_STORAGE_CONNECTION_STRING=sua_connection_string
-AZURE_STORAGE_CONTAINER=documentos
-
-# E-mail (Resend)
-RESEND_API_KEY=sua_resend_api_key
-EMAIL_FROM=nao-responda@seu-dominio.com
-RESEND_WEBHOOK_SECRET=segredo_do_webhook_de_entrada   # chamados por e-mail
-
-# WhatsApp (Zenvia) — opcional
-ZENVIA_API_TOKEN=seu_token
-ZENVIA_FROM=5511999999999
-ZENVIA_TEMPLATE_TICKET_DONE=id_do_template_de_conclusao
-WHATSAPP_WEBHOOK_SECRET=segredo_exigido_na_url_do_webhook
-WHATSAPP_DEBUG=false
-
-# Certificados (PDF) — opcional em ambiente local: caminho de um Chrome/Chromium instalado
-CHROME_EXECUTABLE_PATH=
-
-# Logos das empresas usadas nos e-mails (URLs)
-LOGO_V_CORP=...
-LOGO_V_TAX=...
-LOGO_V_BANKING=...
-LOGO_V_BUSINESS=...
-LOGO_V_TECH=...
+```bash
+cp .env.example .env
 ```
 
 Inicie o servidor (as migrations e o seed dos grupos rodam automaticamente no boot):

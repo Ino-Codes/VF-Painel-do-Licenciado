@@ -1,78 +1,3 @@
-.engagement-dash-container {
-  width: 100%;
-}
-
-.engagement-dash-container h4 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: var(--text-primary);
-}
-
-.engagement-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.engagement-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background-color: var(--bg-primary);
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
-}
-
-.engagement-item:hover {
-  box-shadow: var(--box-shadow);
-  transform: translateY(-2px);
-}
-
-.engagement-rank {
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--text-secondary);
-  width: 30px;
-}
-
-.engagement-user-avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.profile-avatar-img-small {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-avatar-icon-small {
-  width: 100%;
-  height: 100%;
-  font-size: 35px;
-  color: var(--text-primary);
-}
-
-.engagement-user-name {
-  flex-grow: 1;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.engagement-score {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--accent-color);
-}
-
 .stats-container {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -483,4 +408,225 @@ body.dark-theme {
     height: 28px;
     font-size: 0.68rem;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Estatísticas dos Cursos (CourseEngagementDash)
+   --------------------------------------------------------------------------- */
+
+/* Ao trocar um filtro, o painel anterior fica esmaecido até os dados novos
+   chegarem — sem piscar um carregamento no lugar dos gráficos. */
+.course-stats {
+  transition: opacity 0.2s ease;
+}
+
+.course-stats--refreshing .stats-grid,
+.course-stats--refreshing .viz-section {
+  opacity: 0.55;
+}
+
+.course-stats-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 32px;
+  margin-bottom: 22px;
+}
+
+.course-stats-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.course-stats-filter-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.course-stats-filter .company-filter {
+  margin-bottom: 0;
+}
+
+/* Seis indicadores: 3 × 2 em vez do auto-fit, que deixava 4 + 2. */
+.course-stats .stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .course-stats .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .course-stats .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* O subtítulo desce para baixo do título em vez de vazar do card. */
+  .course-stats .viz-card-head {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .course-stats .viz-card-sub {
+    white-space: normal;
+  }
+}
+
+/* Linha de apoio dos cards de indicador (contexto do número). */
+.stat-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.stat-delta {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Altura definida pelo componente, proporcional ao número de barras. */
+.viz-canvas--auto {
+  height: var(--viz-h, 240px);
+}
+
+/* ── Ranking de alunos ── */
+.course-ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.course-ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.course-ranking-pos {
+  width: 18px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.course-ranking-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.course-ranking-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.course-ranking-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.course-ranking-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.course-ranking-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-ranking-value {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Medidor na mesma trilha para todos: o comprimento é relativo ao 1º. */
+.course-ranking-meter {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--viz-empty);
+  position: relative;
+  overflow: hidden;
+}
+
+.course-ranking-meter::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--seg-w);
+  background: var(--seg-c);
+  border-radius: 999px;
+}
+
+.course-ranking-meta {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Tabela de detalhe por curso ── */
+.course-stats-table td {
+  white-space: nowrap;
+}
+
+.course-stats-table th {
+  vertical-align: bottom;
+}
+
+.course-stats-table td:first-child {
+  white-space: normal;
+  min-width: 200px;
+  font-weight: 500;
+}
+
+.course-stats-table td.stats-count-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.course-stats-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  vertical-align: middle;
 }
