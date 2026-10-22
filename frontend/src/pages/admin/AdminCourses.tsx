@@ -11,6 +11,7 @@ import CourseModal from "../../components/forms/CourseModal.tsx";
 import EmptyState from "../../components/ui/EmptyState.tsx";
 import { FiTrash2, FiEdit } from "react-icons/fi";
 import { FaChalkboardTeacher } from "react-icons/fa";
+import CapaPadraoCurso from "../../img/curso-padrao.webp";
 // Removemos import de CompanySlug pois não filtraremos mais aqui
 
 interface Course {
@@ -152,10 +153,7 @@ const AdminCourses: React.FC = () => {
               <li key={course.id} className="user-list-item">
                 <div className="user-info admin-courses-user-info">
                   <img
-                    src={
-                      course.thumbnail_url ||
-                      "https://res.cloudinary.com/dsgbgrll5/image/upload/v1756927817/ev4gvx4bqvz5x34ngrc8_x6fzrp.jpg"
-                    }
+                    src={course.thumbnail_url || CapaPadraoCurso}
                     alt="Thumbnail"
                     className="course-thumbnail"
                   />

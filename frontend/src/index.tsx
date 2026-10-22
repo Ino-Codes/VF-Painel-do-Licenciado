@@ -49,7 +49,6 @@ import PraiseWall from "./pages/internal/PraiseWall.tsx";
 import GroupsManagement from "./pages/admin/GroupsManagement.tsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 
-import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/1-global.css";
 import "./styles/2-components.css";
 import "./styles/3-Login.css";
