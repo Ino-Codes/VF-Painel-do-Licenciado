@@ -107,10 +107,8 @@ const CTE_ESPERA = `
 const router = express.Router();
 
 const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
-const { sendEventNotifications } = require("../cron.js");
 
-// Unificamos as funções aqui recebendo pool e resend
-module.exports = function (pool, resend) {
+module.exports = function (pool) {
   // --- ESTATÍSTICAS AO VIVO ---
   router.get(
     "/system-usage",
@@ -243,31 +241,6 @@ module.exports = function (pool, resend) {
       } catch (err) {
         console.error("Erro ao buscar estatísticas do Eneagrama:", err);
         res.status(500).json({ error: "Erro ao buscar estatísticas." });
-      }
-    },
-  );
-
-  router.get(
-    "/trigger-email-test",
-    isLoggedIn,
-    checkPermission("analytics.view"),
-    async (req, res) => {
-      console.log(
-        "ROTA DE TESTE: Disparando manualmente o envio de emails de eventos...",
-      );
-      try {
-        await sendEventNotifications(resend);
-        res
-          .status(200)
-          .send(
-            "Tarefa de notificação de eventos executada manualmente com sucesso. Verifique os logs e a sua caixa de entrada.",
-          );
-      } catch (error) {
-        console.error(
-          "ROTA DE TESTE: Erro ao executar a tarefa manualmente.",
-          error,
-        );
-        res.status(500).send("Ocorreu um erro ao executar a tarefa.");
       }
     },
   );

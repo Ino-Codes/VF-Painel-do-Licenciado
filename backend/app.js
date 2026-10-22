@@ -1,4 +1,4 @@
-//require("dotenv").config();
+require("dotenv").config();
 
 const migrationRunner = require("./migrationRunner.js");
 const { seedGroups } = require("./seedGroups.js");
@@ -10,7 +10,6 @@ const multer = require("multer");
 const path = require("path");
 const { Pool } = require("pg");
 const cloudinary = require("cloudinary").v2;
-const cron = require("node-cron");
 const { Resend } = require("resend");
 
 const app = express();
@@ -119,7 +118,6 @@ const createNotification = async (userId, message, linkTo) => {
 
 // ─── IMPORTAÇÃO DAS ROTAS ─────────────────────────────────────────────────────
 
-const cronFunctions = require("./cron.js");
 const authRoutes = require("./routes/auth.js")(pool, resend, logActivity);
 const groupRoutes = require("./routes/groups.js")(pool, logActivity);
 const userRoutes = require("./routes/users.js")(
@@ -148,11 +146,7 @@ const certificatesRoutes = require("./routes/certificates.js")(pool);
 const quizzesRoutes = require("./routes/quizzes.js")(pool);
 const eventRoutes = require("./routes/events.js")(pool);
 const enneagramRoutes = require("./routes/enneagram.js")(pool);
-const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(
-  pool,
-  resend,
-);
-const cronTriggerRoutes = require("./routes/cronTrigger.js")(pool);
+const adminAnalyticsRoutes = require("./routes/adminAnalytics.js")(pool);
 const notificationRoutes = require("./routes/notifications.js")(pool);
 const unitsRoutes = require("./routes/units.js")(pool);
 const socialRoutes = require("./routes/social.js")(pool, cloudinary, upload);
@@ -200,8 +194,6 @@ const whatsappRoutes = require("./routes/whatsapp.js")(
   cloudinary,
 );
 
-cronFunctions.initializeCron(pool, resend);
-
 // ─── REGISTRO DAS ROTAS ───────────────────────────────────────────────────────
 // Cada rota recebe corsRestrito como middleware explícito.
 // A rota pública do widget recebe corsAberto.
@@ -222,7 +214,6 @@ app.use("/api/admin/events", corsRestrito, eventRoutes);
 app.use("/api/events", corsRestrito, eventRoutes);
 app.use("/api/enneagram", corsRestrito, enneagramRoutes);
 app.use("/api/admin/analytics", corsRestrito, adminAnalyticsRoutes);
-app.use("/api/cron", corsRestrito, cronTriggerRoutes);
 app.use("/api/notifications", corsRestrito, notificationRoutes);
 app.use("/api/units", corsRestrito, unitsRoutes);
 app.use("/api/projects", corsRestrito, projectRoutes);
