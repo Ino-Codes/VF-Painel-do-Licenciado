@@ -227,12 +227,6 @@
   border: 2px solid white;
 }
 
-.certificates-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 2fr));
-  gap: 25px;
-}
-
 .lesson-player-layout {
   display: grid;
   grid-template-columns: 1fr 350px;

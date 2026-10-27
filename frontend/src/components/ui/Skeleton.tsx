@@ -74,21 +74,4 @@ export const ChartSkeleton: React.FC = () => (
   </div>
 );
 
-// Lista/ranking em carregamento (ex.: Top de engajamento em cursos).
-export const RankingSkeleton: React.FC<{ rows?: number }> = ({ rows = 3 }) => (
-  <div className="engagement-dash-container" aria-busy="true">
-    <Skeleton width="40%" height="1.1rem" />
-    <div className="skeleton-ranking-list">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="skeleton-ranking-row">
-          <Skeleton width="1.5rem" height="1.5rem" />
-          <Skeleton width="2.5rem" height="2.5rem" circle />
-          <Skeleton width="45%" height="1rem" />
-          <Skeleton width="4rem" height="1rem" className="skeleton-ranking-score" />
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
 export default Skeleton;

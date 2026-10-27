@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { onKeyActivate } from "../../utils/a11y.ts";
+import CapaPadraoCurso from "../../img/curso-padrao.webp";
 
 interface CourseData {
   id: number;
@@ -41,10 +42,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, companySlug }) => {
       <div className="course-card">
         <div className="course-card-thumbnail">
           <img
-            src={
-              course.thumbnail_url ||
-              "https://res.cloudinary.com/dsgbgrll5/image/upload/v1756927817/ev4gvx4bqvz5x34ngrc8_x6fzrp.jpg"
-            }
+            src={course.thumbnail_url || CapaPadraoCurso}
             alt={course.title}
           />
           {isCompleted && <div className="completion-badge">✓</div>}

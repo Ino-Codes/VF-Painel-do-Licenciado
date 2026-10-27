@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { IMaskInput } from "react-imask";
 import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import CertificadosExternos from "../../components/profile/CertificadosExternos.tsx";
+import CertificadosCursos from "../../components/profile/CertificadosCursos.tsx";
 import AvatarModal from "../../components/forms/AvatarModal.tsx";
 import PraiseCard, { Praise } from "../../components/praises/PraiseCard.tsx";
 import {
@@ -39,15 +40,6 @@ interface MyAsset {
   responsavel_desde: string | null;
 }
 
-interface CertificateData {
-  certificate_id: number;
-  course_id: number;
-  issue_date: string;
-  course_title: string;
-  company_slug?: string;
-  company_name?: string;
-}
-
 interface User {
   id: number;
   email: string;
@@ -63,17 +55,6 @@ interface User {
   data_admissao?: string;
   nickname?: string;
 }
-
-// ─── Mapa de nomes de empresa por slug (fallback caso o backend não retorne) ──
-
-const COMPANY_NAMES: Record<string, string> = {
-  "v-tax": "V-TAX",
-  "v-banking": "V-BANKING",
-  "v-business": "V-BUSINESS",
-  "v-corp": "V-CORP",
-  "v-tech": "V-TECH",
-  "v-partner": "V-PARTNER",
-};
 
 // ─── Helper de formatação de telefone ────────────────────────────────────────
 
@@ -102,8 +83,6 @@ const Perfil: React.FC = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [certificates, setCertificates] = useState<CertificateData[]>([]);
-  const [isLoadingCertificates, setIsLoadingCertificates] = useState(false);
   const [myPraises, setMyPraises] = useState<Praise[]>([]);
   const [myAssets, setMyAssets] = useState<MyAsset[]>([]);
   // Mês em foco nos elogios (null = o mais recente) e se a lista do mês está
@@ -156,25 +135,6 @@ const Perfil: React.FC = () => {
       .then((res) => setMyAssets(res.data as MyAsset[]))
       .catch(() => setMyAssets([]));
   }, [user, hasPermission]);
-
-  const fetchCertificates = useCallback(async () => {
-    if (!user) return;
-    setIsLoadingCertificates(true);
-    try {
-      const res = await api.get(`/api/certificates/user/${user.id}`);
-      setCertificates(res.data);
-    } catch (err) {
-      toast.error("Não foi possível carregar os seus certificados.");
-    } finally {
-      setIsLoadingCertificates(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (activeTab === "certificates") {
-      fetchCertificates();
-    }
-  }, [activeTab, fetchCertificates]);
 
   // ─── Handlers ────────────────────────────────────────────────────────────────
 
@@ -256,32 +216,6 @@ const Perfil: React.FC = () => {
       console.error(err);
     } finally {
       setIsConfirmModalOpen(false);
-    }
-  };
-
-  const handleViewCertificate = async (
-    courseId: number,
-    courseTitle: string,
-  ) => {
-    toast.loading("Preparando o seu certificado...");
-    try {
-      const response = await api.get(
-        `/api/admin/courses/${courseId}/certificate`,
-        { responseType: "blob" },
-      );
-      toast.dismiss();
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `certificado-${courseTitle}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      toast.dismiss();
-      toast.error("Não foi possível gerar o certificado. Tente novamente.");
-      console.error("Erro ao gerar certificado:", err);
     }
   };
 
@@ -669,60 +603,7 @@ const Perfil: React.FC = () => {
             <CertificadosExternos />
 
             {/* Certificados emitidos pelos cursos do próprio Painel */}
-            <div className="profile-section">
-              <h3>Cursos do Painel</h3>
-              {isLoadingCertificates ? (
-                <LoadingSpinner variant="inline" label="Carregando certificados" />
-              ) : certificates.length > 0 ? (
-                <div className="certificates-grid">
-                  {certificates.map((cert) => {
-                    // Slug da empresa — fallback para v-corp
-                    const slug = cert.company_slug || "v-corp";
-
-                    // Nome da empresa — vindo do backend ou fallback do mapa local
-                    const companyName =
-                      cert.company_name || COMPANY_NAMES[slug] || "V-CORP";
-
-                    return (
-                      <div
-                        key={cert.certificate_id}
-                        className={`certificate-card company-${slug}`}
-                      >
-                        <h4 className="certificate-title">
-                          {cert.course_title}
-                        </h4>
-
-                        <p>{companyName}</p>
-
-                        <p>
-                          Emitido em:{" "}
-                          {new Date(cert.issue_date).toLocaleDateString(
-                            "pt-BR",
-                          )}
-                        </p>
-
-                        <button
-                          className="form-button"
-                          onClick={() =>
-                            handleViewCertificate(
-                              cert.course_id,
-                              cert.course_title,
-                            )
-                          }
-                        >
-                          Baixar Certificado
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="ext-cert-vazio-texto">
-                  Você ainda não concluiu nenhum curso do Painel. Os certificados
-                  aparecem aqui quando você terminar um.
-                </p>
-              )}
-            </div>
+            <CertificadosCursos />
           </div>
         )}
       </div>

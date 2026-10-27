@@ -235,56 +235,6 @@
   margin-top: 20px;
 }
 
-/* ── Certificados ─────────────────────────────────────────── */
-
-.certificates-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
-}
-
-.certificate-card {
-  background: var(--glass-surface-flat);
-  border-radius: 10px;
-  padding: 25px;
-  box-shadow: var(--box-shadow);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  text-align: center;
-  gap: 10px;
-  border-top: 4px solid var(--border-color); /* substituído por company-color via classe */
-  transition: box-shadow 0.2s ease;
-  max-width: 32rem;
-}
-.certificate-card:hover {
-  box-shadow: var(--box-shadow);
-}
-.certificate-card h4 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.certificate-card p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.certificate-card button {
-  margin: 0 auto;
-}
-
-/* ── Cores de borda e badge por empresa ──────────────────── */
-
-.certificate-card.company-v-tax,
-.certificate-card.company-v-banking,
-.certificate-card.company-v-business,
-.certificate-card.company-v-corp,
-.certificate-card.company-v-tech {
-  border-top-color: var(--accent-color);
-}
-
 /* ── Modal de Avatar ──────────────────────────────────────── */
 
 .avatar-modal-upload-row {
@@ -460,6 +410,102 @@
   justify-content: flex-end;
   gap: 6px;
   padding: 6px 10px 10px;
+}
+
+/* ── Certificados dos cursos do Painel (mesmos cards dos externos) ── */
+
+/* A capa abre o PDF, não uma imagem ampliada. */
+.course-cert-thumb {
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.course-cert-thumb:disabled {
+  cursor: progress;
+}
+
+.course-cert-thumb img {
+  transition: transform 0.3s ease;
+}
+
+.ext-cert-card:hover .course-cert-thumb img {
+  transform: scale(1.03);
+}
+
+.course-cert-selo {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-white);
+  background: var(--brand-gold);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.course-cert-gerando {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-white);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Em andamento: capa um pouco apagada — o certificado ainda não existe. */
+.course-cert-thumb--andamento img {
+  filter: saturate(0.6);
+  opacity: 0.8;
+}
+
+.course-cert-subtitulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 26px 0 12px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.course-cert-subtitulo span {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.course-cert-progresso {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  overflow: hidden;
+  position: relative;
+}
+
+.course-cert-progresso::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--pct);
+  background: var(--brand-gold);
+  border-radius: 999px;
+}
+
+.ext-cert-actions a.form-icon-edit {
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 /* ── Formulário ── */

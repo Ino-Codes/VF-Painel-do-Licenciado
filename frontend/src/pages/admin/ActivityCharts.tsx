@@ -5,7 +5,7 @@ import { ChartOptions } from "chart.js";
 import {
   useVizPalette,
   opcoesBase,
-  legendaTopo,
+  legendStyle,
   WEEKDAYS,
   shortDay,
 } from "./vizShared.ts";
@@ -122,7 +122,7 @@ const ActivityCharts: React.FC<Props> = ({ stats }) => {
       ...baseOptions,
       plugins: {
         ...baseOptions.plugins,
-        legend: legendaTopo(palette),
+        legend: legendStyle(palette),
       },
       scales: {
         ...baseOptions.scales,

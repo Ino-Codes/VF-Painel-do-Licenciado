@@ -305,22 +305,6 @@ input[type="checkbox"]:checked {
   height: 90px;
 }
 
-/* Ranking (Top de engajamento em cursos) */
-.skeleton-ranking-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
-}
-.skeleton-ranking-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.skeleton-ranking-score {
-  margin-left: auto;
-}
-
 .btn-back-subtle {
   display: inline-flex;
   align-items: center;

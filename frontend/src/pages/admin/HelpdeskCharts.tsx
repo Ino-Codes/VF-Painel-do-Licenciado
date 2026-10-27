@@ -4,7 +4,7 @@ import { ChartOptions } from "chart.js";
 import {
   useVizPalette,
   opcoesBase,
-  legendaTopo,
+  legendStyle,
   WEEKDAYS,
   shortDay,
 } from "./vizShared.ts";
@@ -135,7 +135,7 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       ...baseOptions,
       plugins: {
         ...baseOptions.plugins,
-        legend: legendaTopo(palette),
+        legend: legendStyle(palette),
       },
       scales: {
         ...baseOptions.scales,
@@ -372,7 +372,7 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       ...baseOptions,
       plugins: {
         ...baseOptions.plugins,
-        legend: legendaTopo(palette),
+        legend: legendStyle(palette),
         tooltip: {
           ...(baseOptions.plugins as any).tooltip,
           callbacks: {
