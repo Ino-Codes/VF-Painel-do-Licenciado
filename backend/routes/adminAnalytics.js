@@ -106,79 +106,213 @@ const CTE_ESPERA = `
   )`;
 const router = express.Router();
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Atividade no Painel
+// ═══════════════════════════════════════════════════════════════════════════
+const PERIODOS_ATIVIDADE = [30, 90, 180];
+
+// 'interno' (colaborador) ou 'vpartner', pela mesma regra de companyAccess.js.
+const publicoSql = (u) => `CASE WHEN EXISTS (
+    SELECT 1 FROM group_permissions gp
+     WHERE gp.group_id = ${u}.group_id AND gp.permission_key = 'internal_access'
+  ) THEN 'interno' ELSE 'vpartner' END`;
+
 const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
 const { sendEventNotifications } = require("../cron.js");
 
 // Unificamos as funções aqui recebendo pool e resend
 module.exports = function (pool, resend) {
-  // --- ESTATÍSTICAS AO VIVO ---
+  // --- ESTATÍSTICAS DO PAINEL: aba Atividade ---
+  // Uso do Painel medido pelos logins. A sessão dura 12h, então quem usa o
+  // Painel faz login no dia: "ativo" = fez login no intervalo.
+  //
+  // Público pela regra atual de acesso (companyAccess.js): colaborador é quem
+  // tem a permissão internal_access no grupo; quem não tem é V-Partner.
+  // Logins de usuários já excluídos ficam fora das séries por público.
   router.get(
     "/system-usage",
     isLoggedIn,
     checkPermission("analytics.view"),
     async (req, res) => {
+      const dias = PERIODOS_ATIVIDADE.includes(Number(req.query.dias))
+        ? Number(req.query.dias)
+        : 90;
+      // 30 dias por semana dariam só 5 pontos: nesse período a série é diária.
+      const unidade = dias <= 30 ? "day" : "week";
+
       try {
-        // 1. Logins hoje
-        const todayLoginsQuery = pool.query(`
-        SELECT COUNT(DISTINCT user_id) as count 
-        FROM activity_logs
-        WHERE action = 'Login Bem-Sucedido'
-          AND created_at::date = CURRENT_DATE
-      `);
+        const usuariosQuery = pool.query(
+          `SELECT u.id, u.nome, u.email,
+                  ${publicoSql("u")} AS publico,
+                  l.ultimo AS ultimo_login,
+                  CASE WHEN l.ultimo IS NULL THEN 'nunca'
+                       WHEN l.ultimo > now() - interval '30 days' THEN 'ativo30'
+                       WHEN l.ultimo > now() - interval '90 days' THEN 'ativo90'
+                       ELSE 'inativo' END AS faixa,
+                  COALESCE(l.ultimo > now() - interval '7 days', false) AS ativo7,
+                  COALESCE(l.ultimo > now() - make_interval(days => $1), false) AS ativo_periodo
+             FROM users u
+             LEFT JOIN (
+               SELECT user_id, MAX(created_at) AS ultimo
+                 FROM activity_logs
+                WHERE action = 'Login Bem-Sucedido'
+                GROUP BY user_id
+             ) l ON l.user_id = u.id
+            ORDER BY u.nome`,
+          [dias],
+        );
 
-        // 2. Total de colaboradores cadastrados
-        const totalUsersQuery = pool.query(`
-        SELECT COUNT(*) as count FROM users WHERE role != 'licenciado'
-      `);
+        // Eixo completo (períodos sem nenhum evento aparecem com zero), em
+        // dias ou semanas no horário de São Paulo.
+        const serieQuery = pool.query(
+          `WITH eixo AS (
+             SELECT generate_series(
+                      date_trunc($2, (now() AT TIME ZONE 'America/Sao_Paulo') - make_interval(days => $1 - 1)),
+                      date_trunc($2, now() AT TIME ZONE 'America/Sao_Paulo'),
+                      ('1 ' || $2)::interval
+                    ) AS inicio
+           ),
+           eventos AS (
+             SELECT date_trunc($2, a.created_at AT TIME ZONE 'America/Sao_Paulo') AS inicio,
+                    a.action, a.user_id,
+                    ${publicoSql("u")} AS publico
+               FROM activity_logs a
+               LEFT JOIN users u ON u.id = a.user_id
+              WHERE a.created_at >= (SELECT MIN(inicio) FROM eixo) AT TIME ZONE 'America/Sao_Paulo'
+                AND a.action IN ('Login Bem-Sucedido', 'Falha no Login', '2FA Falhou', 'Senha Redefinida')
+           )
+           SELECT to_char(e.inicio, 'YYYY-MM-DD') AS inicio,
+                  COUNT(DISTINCT ev.user_id) FILTER (WHERE ev.action = 'Login Bem-Sucedido' AND ev.user_id IS NOT NULL AND ev.publico = 'interno')::int AS internos,
+                  COUNT(DISTINCT ev.user_id) FILTER (WHERE ev.action = 'Login Bem-Sucedido' AND ev.user_id IS NOT NULL AND ev.publico = 'vpartner')::int AS vpartners,
+                  COUNT(ev.action) FILTER (WHERE ev.action = 'Login Bem-Sucedido')::int AS sucesso,
+                  COUNT(ev.action) FILTER (WHERE ev.action = 'Falha no Login')::int AS falhas,
+                  COUNT(ev.action) FILTER (WHERE ev.action = '2FA Falhou')::int AS falhas_2fa,
+                  COUNT(ev.action) FILTER (WHERE ev.action = 'Senha Redefinida')::int AS senhas_redefinidas
+             FROM eixo e
+             LEFT JOIN eventos ev ON ev.inicio = e.inicio
+            GROUP BY e.inicio
+            ORDER BY e.inicio`,
+          [dias, unidade],
+        );
 
-        // 3. Total de licenciados cadastrados
-        const totalLicenciadosQuery = pool.query(`
-        SELECT COUNT(*) as count FROM users WHERE role = 'licenciado'
-      `);
+        const diaHoraQuery = pool.query(
+          `SELECT EXTRACT(DOW FROM created_at AT TIME ZONE 'America/Sao_Paulo')::int AS dow,
+                  EXTRACT(HOUR FROM created_at AT TIME ZONE 'America/Sao_Paulo')::int AS hora,
+                  COUNT(*)::int AS count
+             FROM activity_logs
+            WHERE action = 'Login Bem-Sucedido'
+              AND created_at > now() - make_interval(days => $1)
+            GROUP BY 1, 2`,
+          [dias],
+        );
 
-        // 4. Total de downloads de arquivos
-        const totalDownloadsQuery = pool.query(`
-        SELECT COUNT(*) as count FROM activity_logs WHERE action = 'DOWNLOAD_FILE'
-      `);
+        // A falha de senha não tem user_id (o login não passou): o e-mail
+        // digitado diz se era de alguém cadastrado ou um e-mail qualquer.
+        const acessoQuery = pool.query(
+          `SELECT COUNT(*) FILTER (WHERE a.action = 'Login Bem-Sucedido')::int AS sucesso,
+                  COUNT(*) FILTER (WHERE a.action = 'Falha no Login')::int AS falhas,
+                  COUNT(*) FILTER (WHERE a.action = 'Falha no Login' AND u.id IS NOT NULL)::int AS falhas_cadastrados,
+                  COUNT(DISTINCT u.id) FILTER (WHERE a.action = 'Falha no Login')::int AS contas_com_falha,
+                  COUNT(*) FILTER (WHERE a.action = '2FA Falhou')::int AS falhas_2fa,
+                  COUNT(*) FILTER (WHERE a.action = 'Senha Redefinida')::int AS senhas_redefinidas
+             FROM activity_logs a
+             LEFT JOIN users u ON a.action = 'Falha no Login' AND lower(u.email) = lower(a.user_email)
+            WHERE a.created_at > now() - make_interval(days => $1)
+              AND a.action IN ('Login Bem-Sucedido', 'Falha no Login', '2FA Falhou', 'Senha Redefinida')`,
+          [dias],
+        );
 
-        // 5. Top 5 arquivos mais baixados
-        const topDownloadsQuery = pool.query(`
-        SELECT 
-          SUBSTRING(details FROM 'baixou o arquivo (.*)') as filename, 
-          COUNT(*) as count 
-        FROM activity_logs 
-        WHERE action = 'DOWNLOAD_FILE' 
-        GROUP BY filename
-        ORDER BY count DESC 
-        LIMIT 5
-      `);
+        const downloadsQuery = pool.query(
+          `SELECT COUNT(*)::int AS count
+             FROM activity_logs
+            WHERE action = 'DOWNLOAD_FILE'
+              AND created_at > now() - make_interval(days => $1)`,
+          [dias],
+        );
 
-        const [
-          todayLoginsRes,
-          totalUsersRes,
-          totalLicenciadosRes,
-          totalDownloadsRes,
-          topDownloadsRes,
-        ] = await Promise.all([
-          todayLoginsQuery,
-          totalUsersQuery,
-          totalLicenciadosQuery,
-          totalDownloadsQuery,
-          topDownloadsQuery,
-        ]);
+        // O log grava 'baixou o arquivo "Nome".': tira as aspas e o ponto
+        // final para o nome aparecer limpo (e variações caírem juntas).
+        const topDownloadsQuery = pool.query(
+          `SELECT btrim(regexp_replace(
+                    SUBSTRING(details FROM 'baixou o arquivo (.*)'),
+                    '^"|"[.]?$', '', 'g'
+                  )) AS filename,
+                  COUNT(*)::int AS count
+             FROM activity_logs
+            WHERE action = 'DOWNLOAD_FILE'
+              AND created_at > now() - make_interval(days => $1)
+            GROUP BY filename
+            ORDER BY count DESC
+            LIMIT 5`,
+          [dias],
+        );
 
-        const stats = {
-          todayLogins: parseInt(todayLoginsRes.rows[0].count, 10),
-          totalInternalUsers: parseInt(totalUsersRes.rows[0].count, 10),
-          totalLicenciados: parseInt(totalLicenciadosRes.rows[0].count, 10),
-          totalDownloads: parseInt(totalDownloadsRes.rows[0].count, 10),
+        const [usuariosRes, serieRes, diaHoraRes, acessoRes, downloadsRes, topDownloadsRes] =
+          await Promise.all([
+            usuariosQuery,
+            serieQuery,
+            diaHoraQuery,
+            acessoQuery,
+            downloadsQuery,
+            topDownloadsQuery,
+          ]);
+
+        const publicos = {};
+        for (const chave of ["interno", "vpartner"]) {
+          publicos[chave] = {
+            cadastrados: 0,
+            ativos7: 0,
+            ativosPeriodo: 0,
+            faixas: { ativo30: 0, ativo90: 0, inativo: 0, nunca: 0 },
+          };
+        }
+        for (const u of usuariosRes.rows) {
+          const p = publicos[u.publico];
+          p.cadastrados++;
+          if (u.ativo7) p.ativos7++;
+          if (u.ativo_periodo) p.ativosPeriodo++;
+          p.faixas[u.faixa]++;
+        }
+
+        const acesso = acessoRes.rows[0];
+        res.json({
+          dias,
+          granularidade: unidade === "day" ? "dia" : "semana",
+          publicos,
+          // Cada usuário com a sua faixa: o gráfico de adoção lista quem está
+          // numa faixa ao clicar nela.
+          usuarios: usuariosRes.rows.map((u) => ({
+            id: u.id,
+            nome: u.nome,
+            email: u.email,
+            publico: u.publico,
+            faixa: u.faixa,
+            ultimoLogin: u.ultimo_login,
+          })),
+          serie: serieRes.rows.map((r) => ({
+            inicio: r.inicio,
+            internos: r.internos,
+            vpartners: r.vpartners,
+            sucesso: r.sucesso,
+            falhas: r.falhas,
+            falhas2fa: r.falhas_2fa,
+            senhasRedefinidas: r.senhas_redefinidas,
+          })),
+          porDiaHora: diaHoraRes.rows,
+          acesso: {
+            sucesso: acesso.sucesso,
+            falhas: acesso.falhas,
+            falhasCadastrados: acesso.falhas_cadastrados,
+            contasComFalha: acesso.contas_com_falha,
+            falhas2fa: acesso.falhas_2fa,
+            senhasRedefinidas: acesso.senhas_redefinidas,
+          },
+          totalDownloads: downloadsRes.rows[0].count,
           topDownloads: topDownloadsRes.rows.map((row) => ({
             name: row.filename || "Arquivo Desconhecido",
-            count: parseInt(row.count, 10),
+            count: row.count,
           })),
-        };
-
-        res.json(stats);
+        });
       } catch (err) {
         console.error("Erro ao buscar estatísticas de uso:", err);
         res.status(500).json({ error: "Erro ao buscar estatísticas." });
@@ -186,60 +320,105 @@ module.exports = function (pool, resend) {
     },
   );
 
+  // --- ESTATÍSTICAS DO PAINEL: aba Eneagrama ---
+  // Público = quem tem acesso ao teste (permissão enneagram.view no grupo),
+  // mais quem já fez o teste e depois perdeu o acesso — o resultado continua
+  // valendo. Pendente = tem acesso e ainda não fez.
+  //
+  // O teste tem 20 pares de afirmações e cada escolha soma 1 ponto ao tipo
+  // escolhido. Como os tipos aparecem 4 ou 5 vezes, a pontuação bruta não é
+  // comparável entre tipos: vai junto quantas vezes cada tipo é oferecido
+  // (`aparicoes`) para a tela mostrar a % de escolha.
   router.get(
     "/enneagram-stats",
     isLoggedIn,
     checkPermission("analytics.view"),
     async (req, res) => {
       try {
-        const typeCountsQuery = pool.query(
-          `SELECT dominant_type, COUNT(*) as count 
-         FROM user_enneagram_results 
-         GROUP BY dominant_type`,
+        const tiposQuery = pool.query(
+          "SELECT id, name FROM enneagram_types ORDER BY id",
         );
 
-        const completedUsersQuery = pool.query(
-          `SELECT u.nome, u.setor, r.dominant_type 
-         FROM user_enneagram_results r 
-         JOIN users u ON r.user_id = u.id 
-         ORDER BY u.nome ASC`,
+        const aparicoesQuery = pool.query(
+          `SELECT tipo, COUNT(*)::int AS vezes
+             FROM (SELECT type_a AS tipo FROM enneagram_questions
+                   UNION ALL
+                   SELECT type_b FROM enneagram_questions) x
+            GROUP BY tipo`,
         );
 
-        const totalCollaboratorsQuery = pool.query(
-          "SELECT COUNT(*) as total FROM users WHERE role != 'licenciado'",
+        const pessoasQuery = pool.query(
+          `SELECT u.id, u.nome,
+                  COALESCE(s.nome, u.setor) AS setor,
+                  r.dominant_type,
+                  ARRAY[r.score_1, r.score_2, r.score_3, r.score_4, r.score_5,
+                        r.score_6, r.score_7, r.score_8, r.score_9] AS scores,
+                  r.completed_at
+             FROM users u
+             LEFT JOIN setores s ON s.id = u.setor_id
+             LEFT JOIN user_enneagram_results r ON r.user_id = u.id
+            WHERE r.id IS NOT NULL
+               OR EXISTS (
+                    SELECT 1 FROM group_permissions gp
+                     WHERE gp.group_id = u.group_id
+                       AND gp.permission_key = 'enneagram.view'
+                  )
+            ORDER BY u.nome`,
         );
 
-        const completedCollaboratorsQuery = pool.query(
-          `SELECT COUNT(*) as completed FROM user_enneagram_results r
-         JOIN users u ON r.user_id = u.id
-         WHERE u.role != 'licenciado'`,
-        );
-
-        const [
-          typeCountsResult,
-          completedUsersResult,
-          totalCollaboratorsResult,
-          completedCollaboratorsResult,
-        ] = await Promise.all([
-          typeCountsQuery,
-          completedUsersQuery,
-          totalCollaboratorsQuery,
-          completedCollaboratorsQuery,
+        const [tiposRes, aparicoesRes, pessoasRes] = await Promise.all([
+          tiposQuery,
+          aparicoesQuery,
+          pessoasQuery,
         ]);
 
-        const response = {
-          typeCounts: typeCountsResult.rows,
-          completedUsers: completedUsersResult.rows,
-          collaboratorStats: {
-            total: parseInt(totalCollaboratorsResult.rows[0].total, 10),
-            completed: parseInt(
-              completedCollaboratorsResult.rows[0].completed,
-              10,
-            ),
-          },
-        };
+        const aparicoes = Array(9).fill(0);
+        for (const r of aparicoesRes.rows) {
+          if (r.tipo >= 1 && r.tipo <= 9) aparicoes[r.tipo - 1] = r.vezes;
+        }
 
-        res.json(response);
+        const resultados = [];
+        const pendentes = [];
+        const porSetor = new Map();
+        for (const p of pessoasRes.rows) {
+          const setor = p.setor || "Sem setor";
+          const s = porSetor.get(setor) || { setor, total: 0, concluidos: 0 };
+          s.total++;
+          if (p.dominant_type) {
+            s.concluidos++;
+            resultados.push({
+              userId: p.id,
+              nome: p.nome,
+              setor,
+              tipo: p.dominant_type,
+              scores: p.scores.map((n) => n ?? 0),
+              concluidoEm: p.completed_at,
+            });
+          } else {
+            pendentes.push({ userId: p.id, nome: p.nome, setor });
+          }
+          porSetor.set(setor, s);
+        }
+
+        const ultimoTeste = resultados.reduce(
+          (max, r) => (r.concluidoEm && (!max || r.concluidoEm > max) ? r.concluidoEm : max),
+          null,
+        );
+
+        res.json({
+          tipos: tiposRes.rows.map((t) => ({ id: t.id, nome: t.name })),
+          aparicoes,
+          participacao: {
+            total: pessoasRes.rows.length,
+            concluidos: resultados.length,
+          },
+          ultimoTeste,
+          setores: [...porSetor.values()].sort(
+            (a, b) => b.total - a.total || a.setor.localeCompare(b.setor, "pt-BR"),
+          ),
+          resultados,
+          pendentes,
+        });
       } catch (err) {
         console.error("Erro ao buscar estatísticas do Eneagrama:", err);
         res.status(500).json({ error: "Erro ao buscar estatísticas." });

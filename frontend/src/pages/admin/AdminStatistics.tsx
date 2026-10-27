@@ -8,8 +8,8 @@ import toast from "react-hot-toast";
 import {
   HiOutlineUsers,
   HiOutlineDownload,
-  HiOutlineDocumentText,
   HiOutlineStatusOnline,
+  HiOutlineUserGroup,
   HiOutlineInbox,
   HiOutlineClock,
   HiOutlineCheckCircle,
@@ -19,18 +19,10 @@ import {
 import { FaHeadset } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
 import HelpdeskCharts, { HelpdeskSeries, formatNota } from "./HelpdeskCharts.tsx";
+import ActivityCharts, { ActivityStats } from "./ActivityCharts.tsx";
 import EnneagramStats from "./EnneagramStats.tsx";
 import CourseEngagementDash from "./CourseEngagementDash.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
-
-interface SystemStats {
-  todayLogins: number;
-  totalInternalUsers: number;
-  totalLicenciados: number;
-  totalDownloads: number;
-  topDownloads: { name: string; count: number }[];
-}
-
 
 interface TicketStats {
   total: number;
@@ -57,10 +49,17 @@ interface TicketStats {
 }
 
 
+// Período da aba Atividade (o backend aceita os mesmos valores).
+const PERIODOS = [
+  { dias: 30, label: "Últimos 30 dias" },
+  { dias: 90, label: "Últimos 90 dias" },
+  { dias: 180, label: "Últimos 180 dias" },
+];
+
 // Abas da tela. A aba aberta fica na URL (?aba=), para dar para linkar
 // direto — o antigo /admin/dashboards redireciona para cá com ?aba=eneagrama.
 const ABAS = [
-  { key: "sistema", label: "Sistema" },
+  { key: "atividade", label: "Atividade" },
   { key: "chamados", label: "Central de Chamados" },
   { key: "eneagrama", label: "Eneagrama" },
   { key: "cursos", label: "Cursos" },
@@ -73,15 +72,16 @@ const AdminStatistics: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const abaDaUrl = searchParams.get("aba");
-  const activeTab: Aba = ehAba(abaDaUrl) ? abaDaUrl : "sistema";
+  const activeTab: Aba = ehAba(abaDaUrl) ? abaDaUrl : "atividade";
   const setActiveTab = (aba: Aba) =>
-    setSearchParams(aba === "sistema" ? {} : { aba }, { replace: true });
+    setSearchParams(aba === "atividade" ? {} : { aba }, { replace: true });
 
   // Eneagrama e Cursos buscam os próprios dados ao montar; "Atualizar"
   // remonta o painel trocando a key.
   const [versaoPainel, setVersaoPainel] = useState(0);
 
-  const [stats, setStats] = useState<SystemStats | null>(null);
+  const [stats, setStats] = useState<ActivityStats | null>(null);
+  const [dias, setDias] = useState(90);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   const [ticketStats, setTicketStats] = useState<TicketStats | null>(null);
@@ -92,7 +92,9 @@ const AdminStatistics: React.FC = () => {
   const fetchStats = async () => {
     setIsLoadingData(true);
     try {
-      const res = await api.get("/api/admin/analytics/system-usage");
+      const res = await api.get("/api/admin/analytics/system-usage", {
+        params: { dias },
+      });
       setStats(res.data);
     } catch (err) {
       console.error(err);
@@ -117,7 +119,7 @@ const AdminStatistics: React.FC = () => {
 
 
   const refreshActive = () => {
-    if (activeTab === "sistema") fetchStats();
+    if (activeTab === "atividade") fetchStats();
     else if (activeTab === "chamados") fetchTicketStats();
     else setVersaoPainel((v) => v + 1);
   };
@@ -126,10 +128,10 @@ const AdminStatistics: React.FC = () => {
   // sempre manual, pelo botão "Atualizar".
   useEffect(() => {
     if (!user) return;
-    if (activeTab === "sistema") fetchStats();
+    if (activeTab === "atividade") fetchStats();
     if (activeTab === "chamados") fetchTicketStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, activeTab]);
+  }, [user, activeTab, dias]);
 
   if (loading || !user)
     return <LoadingSpinner />;
@@ -139,7 +141,7 @@ const AdminStatistics: React.FC = () => {
       <Menu />
       <div className="content-area">
         <div className="page-header">
-          <h2>Estatísticas do Sistema</h2>
+          <h2>Estatísticas do Painel</h2>
           <button className="form-icon-edit" onClick={refreshActive}>
             <MdRefresh /> Atualizar
           </button>
@@ -159,94 +161,100 @@ const AdminStatistics: React.FC = () => {
           ))}
         </div>
 
-        {/* ───────────────────────── ABA: SISTEMA ───────────────────────── */}
-        {activeTab === "sistema" &&
-          (isLoadingData ? (
-            <LoadingSpinner variant="inline" label="Carregando dados" />
-          ) : stats ? (
-            <div className="stats-dashboard">
-              <div className="stats-grid">
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineStatusOnline />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{stats.todayLogins}</h3>
-                    <p>Logins Hoje</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineDownload />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{stats.totalDownloads}</h3>
-                    <p>Downloads Realizados</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineUsers />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{stats.totalLicenciados}</h3>
-                    <p>V-Partners Cadastrados</p>
-                  </div>
-                </div>
-
-                <div className="stat-card">
-                  <div className="stat-icon">
-                    <HiOutlineUsers />
-                  </div>
-                  <div className="stat-info">
-                    <h3>{stats.totalInternalUsers}</h3>
-                    <p>Colaboradores Cadastrados</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="admin-section">
-                <h3>Arquivos Mais Baixados</h3>
-                <div className="table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Nome do Arquivo</th>
-                        <th className="stats-th-center">Qtd. Downloads</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stats.topDownloads.map((file, index) => (
-                        <tr key={index}>
-                          <td className="file-cell">
-                            <HiOutlineDocumentText
-                              size={20}
-                              color="var(--text-secondary)"
-                            />
-                            {file.name}
-                          </td>
-                          <td className="stats-count-cell">
-                            <span className="count-badge">{file.count}</span>
-                          </td>
-                        </tr>
-                      ))}
-                      {stats.topDownloads.length === 0 && (
-                        <tr>
-                          <td colSpan={2} className="stats-empty-cell">
-                            Nenhum download registrado ainda.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+        {/* ───────────────────────── ABA: ATIVIDADE ────────────────────── */}
+        {activeTab === "atividade" && (
+          <>
+            <div className="page-filters stats-filtros">
+              <div className="filter-group">
+                <label className="filter-label" htmlFor="atividade-periodo">
+                  Período
+                </label>
+                <select
+                  id="atividade-periodo"
+                  className="form-select"
+                  value={dias}
+                  onChange={(e) => setDias(Number(e.target.value))}
+                >
+                  {PERIODOS.map((p) => (
+                    <option key={p.dias} value={p.dias}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-          ) : (
-            <p>Não foi possível carregar os dados.</p>
-          ))}
+
+            {isLoadingData ? (
+              <LoadingSpinner variant="inline" label="Carregando dados" />
+            ) : stats?.publicos ? (
+              <div className="stats-dashboard">
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <div className="stat-icon">
+                      <HiOutlineStatusOnline />
+                    </div>
+                    <div className="stat-info">
+                      <h3>
+                        {stats.publicos.interno.ativos7 +
+                          stats.publicos.vpartner.ativos7}
+                      </h3>
+                      <p>Ativos nos últimos 7 dias</p>
+                      <span className="stat-sub">
+                        de{" "}
+                        {stats.publicos.interno.cadastrados +
+                          stats.publicos.vpartner.cadastrados}{" "}
+                        usuários cadastrados
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="stat-card">
+                    <div className="stat-icon">
+                      <HiOutlineUsers />
+                    </div>
+                    <div className="stat-info">
+                      <h3>{stats.publicos.interno.cadastrados}</h3>
+                      <p>Colaboradores cadastrados</p>
+                      <span className="stat-sub">
+                        {stats.publicos.interno.ativosPeriodo} ativos nos últimos{" "}
+                        {stats.dias} dias
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="stat-card">
+                    <div className="stat-icon">
+                      <HiOutlineUserGroup />
+                    </div>
+                    <div className="stat-info">
+                      <h3>{stats.publicos.vpartner.cadastrados}</h3>
+                      <p>V-Partners cadastrados</p>
+                      <span className="stat-sub">
+                        {stats.publicos.vpartner.ativosPeriodo} ativos nos últimos{" "}
+                        {stats.dias} dias
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="stat-card">
+                    <div className="stat-icon">
+                      <HiOutlineDownload />
+                    </div>
+                    <div className="stat-info">
+                      <h3>{stats.totalDownloads}</h3>
+                      <p>Downloads realizados</p>
+                      <span className="stat-sub">nos últimos {stats.dias} dias</span>
+                    </div>
+                  </div>
+                </div>
+
+                <ActivityCharts stats={stats} />
+              </div>
+            ) : (
+              <p>Não foi possível carregar os dados.</p>
+            )}
+          </>
+        )}
 
         {/* ──────────────────── ABA: CENTRAL DE CHAMADOS ──────────────────── */}
         {activeTab === "chamados" &&
@@ -328,9 +336,6 @@ const AdminStatistics: React.FC = () => {
                     </h3>
                     <p>
                       Avaliação média
-                      {ticketStats.rating?.total
-                        ? ` (${ticketStats.rating.total})`
-                        : ""}
                     </p>
                   </div>
                 </div>

@@ -43,6 +43,7 @@ jest.mock("../../context/AuthContext.tsx", () => ({
   useAuth: () => ({ user: mockUser, loading: false }),
 }));
 jest.mock("./HelpdeskCharts.tsx", () => () => <div>graficos-chamados</div>);
+jest.mock("./ActivityCharts.tsx", () => () => <div>graficos-atividade</div>);
 
 // Os painéis de Eneagrama e Cursos contam quantas vezes montaram, para
 // provar que "Atualizar" os recarrega.
@@ -81,7 +82,20 @@ beforeEach(() => {
   (api.get as jest.Mock).mockImplementation((url: string) =>
     url.endsWith("system-usage")
       ? Promise.resolve({
-          data: { todayLogins: 3, totalInternalUsers: 10, totalLicenciados: 5, totalDownloads: 7, topDownloads: [] },
+          data: {
+            dias: 90,
+            granularidade: "semana",
+            publicos: {
+              interno: { cadastrados: 10, ativos7: 3, ativosPeriodo: 8, faixas: { ativo30: 6, ativo90: 2, inativo: 1, nunca: 1 } },
+              vpartner: { cadastrados: 5, ativos7: 1, ativosPeriodo: 2, faixas: { ativo30: 1, ativo90: 1, inativo: 0, nunca: 3 } },
+            },
+            usuarios: [],
+            serie: [],
+            porDiaHora: [],
+            acesso: { sucesso: 0, falhas: 0, falhasCadastrados: 0, contasComFalha: 0, falhas2fa: 0, senhasRedefinidas: 0 },
+            totalDownloads: 7,
+            topDownloads: [],
+          },
         })
       : Promise.resolve({
           data: { total: 0, byStatus: {}, byType: [], bySystem: [], daily: [], byWeekdayPeriod: [], monthly: [], byAttendant: [], medianWaitHours: null, startedCount: 0 },
@@ -89,36 +103,36 @@ beforeEach(() => {
   );
 });
 
-describe("Estatísticas do Sistema", () => {
-  it("tem as quatro abas, com Sistema por padrão", async () => {
+describe("Estatísticas do Painel", () => {
+  it("tem as quatro abas, com Atividade por padrão", async () => {
     abrir("/admin/statistics");
     const abas = Array.from(document.querySelectorAll(".tab-item")).map((b) => b.textContent);
-    expect(abas).toEqual(["Sistema", "Central de Chamados", "Eneagrama", "Cursos"]);
-    expect(abaAtiva()).toBe("Sistema");
-    await screen.findByText("Logins Hoje");
+    expect(abas).toEqual(["Atividade", "Central de Chamados", "Eneagrama", "Cursos"]);
+    expect(abaAtiva()).toBe("Atividade");
+    await screen.findByText("Ativos nos últimos 7 dias");
   });
 
   it("abre na aba indicada na URL (link antigo de Dashboards)", () => {
     abrir("/admin/statistics?aba=eneagrama");
     expect(abaAtiva()).toBe("Eneagrama");
     expect(screen.getByText("painel-eneagrama")).toBeTruthy();
-    // Eneagrama não usa os dados da aba Sistema nem dos chamados.
+    // Eneagrama não usa os dados da aba Atividade nem dos chamados.
     expect(api.get).not.toHaveBeenCalled();
   });
 
-  it("aba inválida na URL cai em Sistema", async () => {
+  it("aba inválida na URL cai em Atividade", async () => {
     abrir("/admin/statistics?aba=xyz");
-    expect(abaAtiva()).toBe("Sistema");
-    await screen.findByText("Logins Hoje");
+    expect(abaAtiva()).toBe("Atividade");
+    await screen.findByText("Ativos nos últimos 7 dias");
   });
 
   it("trocar de aba atualiza a URL", async () => {
     abrir("/admin/statistics");
-    await screen.findByText("Logins Hoje");
+    await screen.findByText("Ativos nos últimos 7 dias");
     fireEvent.click(screen.getByRole("tab", { name: "Cursos" }));
     expect(urlAtual()).toBe("/admin/statistics?aba=cursos");
     expect(screen.getByText("painel-cursos")).toBeTruthy();
-    fireEvent.click(screen.getByRole("tab", { name: "Sistema" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Atividade" }));
     expect(urlAtual()).toBe("/admin/statistics");
     await waitFor(() =>
       expect((api.get as jest.Mock).mock.calls.filter(([u]) => u.endsWith("system-usage")).length).toBe(2),
@@ -132,9 +146,29 @@ describe("Estatísticas do Sistema", () => {
     expect(mockMontagens.eneagrama).toBe(2);
   });
 
-  it("Atualizar na aba Sistema busca os dados de novo", async () => {
+  it("cards da Atividade: ativos em 7 dias e ativos no período por público", async () => {
     abrir("/admin/statistics");
-    await screen.findByText("Logins Hoje");
+    await screen.findByText("Ativos nos últimos 7 dias");
+    expect(screen.getByText("de 15 usuários cadastrados")).toBeTruthy();
+    expect(screen.getByText("8 ativos nos últimos 90 dias")).toBeTruthy();
+    expect(screen.getByText("2 ativos nos últimos 90 dias")).toBeTruthy();
+    expect(screen.getByText("graficos-atividade")).toBeTruthy();
+  });
+
+  it("trocar o período busca de novo com os dias escolhidos (padrão 90)", async () => {
+    abrir("/admin/statistics");
+    await screen.findByText("Ativos nos últimos 7 dias");
+    expect((api.get as jest.Mock).mock.calls[0][1]).toEqual({ params: { dias: 90 } });
+    fireEvent.change(screen.getByLabelText("Período"), { target: { value: "30" } });
+    await waitFor(() =>
+      expect((api.get as jest.Mock).mock.calls.at(-1)[1]).toEqual({ params: { dias: 30 } }),
+    );
+    await screen.findByText("Ativos nos últimos 7 dias");
+  });
+
+  it("Atualizar na aba Atividade busca os dados de novo", async () => {
+    abrir("/admin/statistics");
+    await screen.findByText("Ativos nos últimos 7 dias");
     fireEvent.click(screen.getByText("Atualizar"));
     await waitFor(() =>
       expect((api.get as jest.Mock).mock.calls.filter(([u]) => u.endsWith("system-usage")).length).toBe(2),

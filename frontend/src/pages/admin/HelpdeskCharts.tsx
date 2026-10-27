@@ -1,38 +1,13 @@
 import React, { useMemo } from "react";
 import { Line, Bar } from "react-chartjs-2";
+import { ChartOptions } from "chart.js";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Filler,
-  Tooltip,
-  Legend,
-  ChartOptions,
-} from "chart.js";
-import { useTheme } from "../../context/ThemeContext.tsx";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Filler,
-  Tooltip,
-  Legend,
-);
-
-// O Chart.js desenha em canvas, que não herda font-family do CSS: a família e
-// os pesos precisam ser declarados aqui para os gráficos usarem a mesma
-// tipografia do resto do painel.
-const FONT_FAMILY = '"Montserrat", sans-serif';
-
-ChartJS.defaults.font.family = FONT_FAMILY;
-ChartJS.defaults.font.size = 11;
-ChartJS.defaults.font.weight = 500;
+  useVizPalette,
+  opcoesBase,
+  legendaTopo,
+  WEEKDAYS,
+  shortDay,
+} from "./vizShared.ts";
 
 // ─── Formato dos dados (espelha o /api/admin/analytics/helpdesk) ────────────
 
@@ -82,7 +57,6 @@ const STATUS_FUNNEL = [
   { key: "concluido", label: "Concluído" },
 ];
 
-const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 // Períodos do dia, na ordem de um dia que começa às 8h. Os índices são os
 // mesmos que o backend devolve em `periodo`.
 const PERIODOS = ["08–10", "10–13", "13–15", "15–18", "18–00", "00–08"];
@@ -96,13 +70,6 @@ const MONTHS = [
   "jan", "fev", "mar", "abr", "mai", "jun",
   "jul", "ago", "set", "out", "nov", "dez",
 ];
-
-// Datas chegam como texto puro (YYYY-MM-DD / YYYY-MM) justamente para não
-// passarem por conversão de fuso no navegador.
-const shortDay = (iso: string) => {
-  const [, m, d] = iso.split("-");
-  return `${d}/${m}`;
-};
 
 const shortMonth = (iso: string) => {
   const [y, m] = iso.split("-");
@@ -119,95 +86,15 @@ export const formatHoursShort = (h: number | null): string => {
   return `${Math.round(h / 24)}d`;
 };
 
-// A paleta fica aqui, em JS, e NÃO é lida do CSS com getComputedStyle.
-// Motivo: o ThemeProvider aplica a classe `dark-theme` ao body dentro de um
-// useEffect, que roda DEPOIS do render deste componente. Uma leitura do DOM
-// durante o render devolveria as cores do tema anterior, e a legenda do
-// gráfico aparecia em quase-preto sobre o fundo escuro (sumia). Como estas
-// cores são desenhadas em canvas e em style inline, ter os valores em JS é
-// determinístico e não depende da ordem dos efeitos.
-//
-// Rampa sequencial dourada + dupla categórica, ambas validadas para
-// contraste e daltonismo. O modo escuro tem degraus próprios, não um
-// espelho automático do claro.
-const VIZ_PALETTE = {
-  light: {
-    seq: ["#cdae6b", "#b8944e", "#9e7c3c", "#836731", "#6a5327"],
-    cat1: "#2a78d6",
-    cat2: "#1baf3b",
-    neutral: "#9aa1ab",
-    grid: "rgba(0, 0, 0, 0.08)",
-    text: "#0a0a0a",
-    textMuted: "#6c757d",
-    surface: "#ffffff",
-  },
-  dark: {
-    seq: ["#6b5226", "#8a6c35", "#a8843f", "#c9a55c", "#e6c98a"],
-    cat1: "#3987e5",
-    cat2: "#199e48",
-    neutral: "#767d88",
-    grid: "rgba(255, 255, 255, 0.10)",
-    text: "#f5f5f5",
-    textMuted: "#9aa0a6",
-    surface: "#0d0d0d",
-  },
-};
-
 interface Props {
   stats: HelpdeskSeries;
 }
 
 const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
-  const { theme } = useTheme();
+  const palette = useVizPalette();
 
-  const palette = useMemo(
-    () => VIZ_PALETTE[theme === "dark" ? "dark" : "light"],
-    [theme],
-  );
-
-  // Eixos e tooltip compartilhados: grade recuada, texto em tom de texto.
   const baseOptions = useMemo<ChartOptions<any>>(
-    () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: "index", intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: palette.surface,
-          titleColor: palette.text,
-          bodyColor: palette.text,
-          borderColor: palette.grid,
-          borderWidth: 1,
-          padding: 12,
-          cornerRadius: 8,
-          displayColors: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          boxPadding: 6,
-          usePointStyle: true,
-          titleFont: { size: 12, weight: 600 },
-          bodyFont: { size: 12, weight: 500 },
-        },
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          border: { color: palette.grid },
-          ticks: { color: palette.textMuted, font: { size: 11 } },
-        },
-        y: {
-          beginAtZero: true,
-          grid: { color: palette.grid },
-          border: { display: false },
-          ticks: {
-            color: palette.textMuted,
-            font: { size: 11 },
-            precision: 0,
-          },
-        },
-      },
-    }),
+    () => opcoesBase(palette),
     [palette],
   );
 
@@ -248,20 +135,7 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       ...baseOptions,
       plugins: {
         ...baseOptions.plugins,
-        legend: {
-          display: true,
-          position: "top" as const,
-          align: "end" as const,
-          labels: {
-            color: palette.text,
-            usePointStyle: true,
-            pointStyle: "circle",
-            boxWidth: 8,
-            boxHeight: 8,
-            padding: 20,
-            font: { size: 12, weight: 600 },
-          },
-        },
+        legend: legendaTopo(palette),
       },
       scales: {
         ...baseOptions.scales,
@@ -358,7 +232,10 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
 
   // ── Avaliações: distribuição das notas (1 a 5) ──
   // Rampa sequencial da marca: nota maior, tom mais forte.
-  const ratingDist = stats.rating?.distribuicao ?? [0, 0, 0, 0, 0];
+  const ratingDist = useMemo(
+    () => stats.rating?.distribuicao ?? [0, 0, 0, 0, 0],
+    [stats.rating],
+  );
   const ratingTotal = stats.rating?.total ?? 0;
   const ratingDistData = useMemo(
     () => ({
@@ -399,7 +276,10 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
   );
 
   // ── Avaliações: média por atendente (escala fixa de 0 a 5) ──
-  const ratingAtt = stats.ratingByAttendant ?? [];
+  const ratingAtt = useMemo(
+    () => stats.ratingByAttendant ?? [],
+    [stats.ratingByAttendant],
+  );
   const ratingAttData = useMemo(
     () => ({
       labels: ratingAtt.map((r) => r.name),
@@ -492,20 +372,7 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       ...baseOptions,
       plugins: {
         ...baseOptions.plugins,
-        legend: {
-          display: true,
-          position: "top" as const,
-          align: "end" as const,
-          labels: {
-            color: palette.text,
-            usePointStyle: true,
-            pointStyle: "circle",
-            boxWidth: 8,
-            boxHeight: 8,
-            padding: 20,
-            font: { size: 12, weight: 600 },
-          },
-        },
+        legend: legendaTopo(palette),
         tooltip: {
           ...(baseOptions.plugins as any).tooltip,
           callbacks: {

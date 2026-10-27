@@ -88,95 +88,6 @@
   color: var(--text-primary);
 }
 
-.chart-container-stats {
-  background: var(--glass-surface-flat);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 25px;
-}
-
-.stat-value {
-  width: 25%;
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--border-graph);
-}
-
-.stat-label {
-  width: 20%;
-  font-size: 1rem;
-  color: var(--text-secondary);
-  margin-top: 5px;
-  margin-bottom: 15px;
-}
-
-.progress-bar-background {
-  width: 45%;
-  background-color: var(--border-color);
-  border-radius: 100px;
-  height: 24px;
-  overflow: hidden;
-}
-
-.progress-bar-foreground {
-  width: var(--progress-width);
-  height: 100%;
-  background-color: var(--action-primary);
-  color: var(--text-white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
-  transition: width 0.5s ease;
-}
-
-.user-results-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: 400px;
-  overflow-y: auto;
-  border-radius: 8px;
-}
-
-.user-results-list li {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-primary);
-}
-
-.user-results-list li:last-child {
-  border-bottom: none;
-}
-
-.user-results-list li:nth-child(odd) {
-  background-color: var(--bg-primary);
-}
-
-.user-results-list .user-setor {
-  font-weight: 400;
-  color: var(--text-secondary);
-  margin-right: 8px;
-  font-size: 0.9em;
-}
-
-.user-name {
-  font-weight: 500;
-}
-
-.user-type {
-  font-weight: 600;
-  color: var(--border-graph);
-  background-color: var(--bg-secondary);
-  padding: 3px 8px;
-  border-radius: 5px;
-}
-
 /* --- Dashboards de Estatísticas --- */
 .stats-grid {
   display: grid;
@@ -228,6 +139,27 @@
   color: var(--text-secondary);
 }
 
+/* Card cujo valor é um nome, não um número (ex.: perfil mais comum). */
+.stat-info h3.stat-text {
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+/* Contexto do número (ex.: "25 ativos nos últimos 90 dias"). */
+.stat-info .stat-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
+/* Filtro de período da aba Atividade: alinhado à borda do conteúdo. */
+.page-filters.stats-filtros {
+  padding: 0;
+  flex-wrap: wrap;
+}
+
 /* Célula com ícone + texto. Mantida como table-cell (sem flex) para que a
    borda inferior alinhe com as demais colunas da linha; o ícone é centralizado
    verticalmente via vertical-align em vez de um contêiner flex. */
@@ -267,10 +199,10 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Gráficos da Central de Chamados
+   Gráficos das Estatísticas do Painel (Atividade, Central de Chamados e Eneagrama)
    ---------------------------------------------------------------------------
    As cores das séries NÃO ficam aqui: vivem em VIZ_PALETTE, dentro de
-   HelpdeskCharts.tsx. Elas são pintadas em canvas e em style inline, e ler
+   pages/admin/vizShared.ts. Elas são pintadas em canvas e em style inline, e ler
    variáveis CSS durante o render devolvia as cores do tema anterior (a classe
    de tema é aplicada num useEffect, depois do render) — o que fazia a legenda
    sumir ao alternar para o escuro. Só sobra aqui o tom da célula vazia do mapa
@@ -469,7 +401,426 @@ body.dark-theme {
   background: var(--cell-c);
 }
 
+/* Mapa de calor por hora (Atividade): 13 colunas, sem cabeçalho de grupo. */
+.viz-heat.viz-heat--horas {
+  grid-template-columns: 42px repeat(13, minmax(0, 1fr));
+}
+
+/* ── Adoção do Painel: uma barra por público ── */
+.viz-adocao + .viz-adocao {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.viz-adocao-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.viz-adocao-head span {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Itens da legenda clicáveis: abrem a lista de quem está na faixa. */
+.viz-legend-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.viz-legend-btn:hover:not(:disabled),
+.viz-legend-btn.active {
+  border-color: var(--glass-border);
+  background: var(--viz-empty);
+}
+
+.viz-legend-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.viz-legend-pct {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.viz-adocao-lista {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.viz-adocao-lista-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+/* Lista longa ("nunca acessou" pode ter dezenas): rola dentro do card. */
+.viz-adocao-tabela {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ── Saúde do acesso: números do período acima do gráfico ── */
+.viz-resumo {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.viz-resumo li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+}
+
+.viz-resumo strong {
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.viz-resumo span {
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+/* ── Arquivos mais baixados: ranking com barra proporcional ── */
+.viz-ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.viz-ranking-item {
+  display: grid;
+  grid-template-columns: 22px 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.viz-ranking-item + .viz-ranking-item {
+  border-top: 1px solid var(--glass-border);
+}
+
+.viz-ranking-pos {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.viz-ranking-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--brand-gold);
+  background: var(--viz-empty);
+  border: 1px solid var(--glass-border);
+}
+
+.viz-ranking-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.viz-ranking-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Nome longo: uma linha com reticências; o nome inteiro fica no title. */
+.viz-ranking-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.viz-ranking-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.viz-ranking-value strong {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.viz-ranking-value span {
+  min-width: 34px;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.viz-ranking-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--viz-empty);
+  overflow: hidden;
+}
+
+.viz-ranking-bar {
+  display: block;
+  width: var(--bar-w);
+  height: 100%;
+  border-radius: 4px;
+  background: var(--bar-c);
+  transition: width 0.4s ease;
+}
+
+/* ── Barras em lista: rótulo | trilha | valor (Eneagrama) ── */
+.viz-barras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* A linha pode ser um botão (filtra a lista de pessoas) ou um div. */
+.viz-barras-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 170px) minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+button.viz-barras-row {
+  cursor: pointer;
+}
+
+button.viz-barras-row:hover:not(:disabled) {
+  border-color: var(--glass-border);
+  background: var(--viz-empty);
+}
+
+button.viz-barras-row:disabled {
+  cursor: default;
+}
+
+.viz-barras-row.vazio .viz-barras-label,
+.viz-barras-row.vazio .viz-barras-value {
+  opacity: 0.55;
+}
+
+.viz-barras-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.viz-barras-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+}
+
+.viz-barras-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.viz-barras-value strong {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.viz-barras-value span {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.viz-barras--compacto .viz-barras-row {
+  padding: 3px 0;
+}
+
+.viz-nota {
+  margin: 14px 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ── Centros de inteligência: legenda detalhada sob a barra ── */
+.viz-centros {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.viz-centros li {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.viz-centros .viz-legend-dot {
+  margin-top: 5px;
+}
+
+.viz-centros-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.viz-centros-valor {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.viz-centros-desc {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+/* ── Lista de pessoas do Eneagrama ── */
+.enea-nome-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.enea-nome-btn:hover {
+  color: var(--brand-gold);
+}
+
+.enea-chevron {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform 0.15s;
+}
+
+.enea-chevron.aberto {
+  transform: rotate(180deg);
+}
+
+.enea-pendente {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.enea-tabela tr.enea-detalhe td {
+  padding-top: 4px;
+  padding-bottom: 16px;
+}
+
+.enea-tabela tr.enea-linha-aberta td {
+  border-bottom-color: transparent;
+}
+
 @media (max-width: 900px) {
+  .viz-resumo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .viz-barras-row {
+    grid-template-columns: minmax(0, 120px) minmax(0, 1fr) 72px;
+    gap: 8px;
+  }
+
+  .viz-heat.viz-heat--horas {
+    grid-template-columns: 30px repeat(13, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .viz-heat--horas .viz-heat-cell {
+    font-size: 0.6rem;
+  }
+
   .viz-section {
     grid-template-columns: minmax(0, 1fr);
   }
