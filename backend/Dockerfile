@@ -1,5 +1,9 @@
 # Passo 1: Use uma imagem base do Node.js baseada em Debian (como a 'slim')
-FROM node:18-slim
+# Node 22: o SDK do Azure Blob Storage (@azure/storage-blob) exige Node 22+
+# — no 18 não existe o `crypto` global e todo upload para a Azure falha.
+# A variante bookworm fixa o Debian em que os pacotes do Chromium abaixo
+# existem (as tags sem variante passam para versões novas do Debian).
+FROM node:22-bookworm-slim
 
 # Passo 2: Crie e defina o diretório de trabalho dentro do container
 WORKDIR /usr/src/app
