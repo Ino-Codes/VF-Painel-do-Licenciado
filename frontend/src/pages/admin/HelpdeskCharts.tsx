@@ -8,12 +8,16 @@ import {
   WEEKDAYS,
   shortDay,
 } from "./vizShared.ts";
+import { tipoInfo } from "../../components/tickets/ticketTypes.ts";
 
 // ─── Formato dos dados (espelha o /api/admin/analytics/helpdesk) ────────────
 
 export interface HelpdeskSeries {
   byStatus: Record<string, number>;
+  /** Por tipo, só o que o atendente classificou. */
   byType: { type: string; count: number }[];
+  /** Tipos escolhidos pelo solicitante, antes da mudança (histórico). */
+  byTypeSolicitante?: { type: string; count: number }[];
   bySystem: { name: string; count: number }[];
   daily: { dia: string; abertos: number; concluidos: number }[];
   byWeekdayPeriod: { dow: number; periodo: number; count: number }[];
@@ -41,12 +45,6 @@ export interface HelpdeskSeries {
 /** 4.6 → "4,6" */
 export const formatNota = (n: number | null | undefined) =>
   n == null ? "—" : n.toFixed(1).replace(".", ",");
-
-const TYPE_LABELS: Record<string, string> = {
-  help: "Ajuda",
-  bug: "Bug",
-  suggestion: "Sugestão",
-};
 
 // Ordem do funil de atendimento. "pausado" fica fora da escala (é um estado,
 // não uma etapa), por isso recebe o cinza neutro.
@@ -182,7 +180,7 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
   const typeData = useMemo(() => {
     const rows = [...stats.byType].sort((a, b) => b.count - a.count);
     return {
-      labels: rows.map((r) => TYPE_LABELS[r.type] || r.type),
+      labels: rows.map((r) => tipoInfo(r.type).label),
       datasets: [
         {
           data: rows.map((r) => r.count),
@@ -433,6 +431,10 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
   };
 
   const semDados = funnel.total === 0;
+  const tiposDoSolicitante = (stats.byTypeSolicitante ?? []).reduce(
+    (acc, r) => acc + r.count,
+    0,
+  );
 
   return (
     <div className="viz-section">
@@ -503,14 +505,25 @@ const HelpdeskCharts: React.FC<Props> = ({ stats }) => {
       <div className="viz-card">
         <div className="viz-card-head">
           <h3>Por tipo</h3>
+          <span className="viz-card-sub">classificados pelo atendente</span>
         </div>
         <div className="viz-canvas">
           {stats.byType.length ? (
             <Bar data={typeData} options={horizontalOptions} />
           ) : (
-            <p className="viz-empty">Sem dados.</p>
+            <p className="viz-empty">
+              Nenhum chamado classificado pelo atendente ainda.
+            </p>
           )}
         </div>
+        {tiposDoSolicitante > 0 && (
+          <p className="viz-nota">
+            {tiposDoSolicitante} chamado{tiposDoSolicitante === 1 ? "" : "s"}{" "}
+            de antes da mudança, com o tipo escolhido pelo próprio
+            solicitante, fica{tiposDoSolicitante === 1 ? "" : "m"} fora deste
+            gráfico.
+          </p>
+        )}
       </div>
 
       <div className="viz-card">

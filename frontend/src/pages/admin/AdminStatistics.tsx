@@ -28,6 +28,7 @@ interface TicketStats {
   total: number;
   byStatus: Record<string, number>;
   byType: { type: string; count: number }[];
+  byTypeSolicitante?: { type: string; count: number }[];
   bySystem: { name: string; count: number }[];
   daily: { dia: string; abertos: number; concluidos: number }[];
   byWeekdayPeriod: { dow: number; periodo: number; count: number }[];

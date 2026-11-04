@@ -1,5 +1,4 @@
 import React from "react";
-import { FaBug, FaLifeRing, FaRegLightbulb } from "react-icons/fa";
 import {
   FiPaperclip,
   FiInbox,
@@ -9,6 +8,7 @@ import {
 } from "react-icons/fi";
 import { IconType } from "react-icons";
 import TicketRating, { AvaliacaoChamado } from "./TicketRating.tsx";
+import { TicketType, tipoInfo } from "./ticketTypes.ts";
 
 // Visão do chamado para quem o abriu — a mesma na tela interna (Meus Chamados)
 // e na página pública de acompanhamento. Mora aqui para as duas não saírem do
@@ -23,7 +23,8 @@ export interface TicketAttachment {
 
 export interface PublicTicket {
   id: number;
-  type: "help" | "suggestion" | "bug";
+  /** Classificação feita pelo atendente; null até o atendimento começar. */
+  type: TicketType | null;
   title: string;
   status: string;
   created_at: string;
@@ -34,15 +35,6 @@ export interface PublicTicket {
   /** Avaliação do atendimento (só em chamado concluído). */
   avaliacao?: AvaliacaoChamado | null;
 }
-
-export const TYPE_CONFIG: Record<
-  string,
-  { label: string; color: string; Icon: IconType }
-> = {
-  help: { label: "Ajuda", color: "#f59e0b", Icon: FaLifeRing },
-  bug: { label: "Bug", color: "#ef4444", Icon: FaBug },
-  suggestion: { label: "Sugestão", color: "#6366f1", Icon: FaRegLightbulb },
-};
 
 export const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   novo: { label: "Recebido", color: "#6366f1" },
@@ -62,13 +54,12 @@ const STATUS_FLOW: { key: string; label: string; Icon: IconType }[] = [
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("pt-BR");
 
-const getTypeInfo = (type: string) => TYPE_CONFIG[type] || TYPE_CONFIG.help;
 const getStatusInfo = (status: string) =>
   STATUS_CONFIG[status] || STATUS_CONFIG.novo;
 
 // ── Cabeçalho do chamado (identificação + status) ──────────────────────────
 export const TicketHead: React.FC<{ ticket: PublicTicket }> = ({ ticket }) => {
-  const typeInfo = getTypeInfo(ticket.type);
+  const typeInfo = tipoInfo(ticket.type);
   const statusInfo = getStatusInfo(ticket.status);
   const TypeIcon = typeInfo.Icon;
 
@@ -84,7 +75,8 @@ export const TicketHead: React.FC<{ ticket: PublicTicket }> = ({ ticket }) => {
         <span className="chamado-detail-title">{ticket.title}</span>
         <span className="chamado-detail-meta">
           <span className="chamado-protocol">#{ticket.id}</span>
-          <span>{typeInfo.label}</span>
+          {/* Sem tipo = ainda não passou pela triagem do atendente. */}
+          {ticket.type && <span>{typeInfo.label}</span>}
           <span>Aberto em {formatDate(ticket.created_at)}</span>
         </span>
       </span>

@@ -46,11 +46,19 @@ const VALID_STATUSES = [
   "concluido",
   "pausado",
 ];
-const VALID_TYPES = ["help", "suggestion", "bug"];
+// Classificação do chamado: quem escolhe é o ATENDENTE, ao iniciar o
+// atendimento (o solicitante só descreve). O chamado nasce sem tipo e pode
+// ser reclassificado até ser concluído. Ver migration 0050.
+const TICKET_TYPES = ["bug", "duvida", "solicitacao", "melhoria", "acesso"];
 
 const TYPE_LABELS = {
-  help: "Ajuda",
   bug: "Bug",
+  duvida: "Dúvida",
+  solicitacao: "Solicitação",
+  melhoria: "Melhoria",
+  acesso: "Acesso",
+  // Tipos antigos, escolhidos pelo solicitante — só no histórico.
+  help: "Ajuda",
   suggestion: "Sugestão",
 };
 
@@ -335,9 +343,10 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       return res.status(400).json({ error: message });
     }
 
+    // Widgets antigos ainda mandam `type`: é ignorado — quem classifica é o
+    // atendente.
     const {
       token,
-      type,
       name,
       title,
       description,
@@ -355,10 +364,6 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       return res
         .status(400)
         .json({ error: "E-mail do solicitante é obrigatório." });
-    }
-
-    if (type && !VALID_TYPES.includes(type)) {
-      return res.status(400).json({ error: "Tipo inválido." });
     }
 
     try {
@@ -380,12 +385,11 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       // Cria o ticket e registra o marco de abertura no histórico (atômico).
       const ticket = await withTransaction(async (client) => {
         const result = await client.query(
-          `INSERT INTO tickets (tenant_id, type, title, description, origin_url, name, requester_email, tracking_token)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `INSERT INTO tickets (tenant_id, title, description, origin_url, name, requester_email, tracking_token)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING *`,
           [
             tenantId,
-            type,
             title,
             description,
             origin_url,
@@ -424,7 +428,6 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
 
       // ── E-mail de confirmação de abertura (não bloqueante) ──
       try {
-        const typeLabel = TYPE_LABELS[ticket.type] || "Chamado";
         await resend.emails.send({
           from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
           to: requester_email,
@@ -436,7 +439,6 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
               <p>Recebemos o seu chamado e ele já está registrado no nosso sistema.</p>
               <p style="background:#f8f9fa;border-left:4px solid #daa520;padding:12px 16px;border-radius:4px;">
                 <strong>Protocolo:</strong> #${ticket.id}<br/>
-                <strong>Tipo:</strong> ${typeLabel}<br/>
                 <strong>Título:</strong> ${escapeHtml(ticket.title)}${
                   savedCount > 0
                     ? `<br/><strong>Anexos:</strong> ${savedCount} arquivo(s)`
@@ -650,8 +652,8 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       const ticket = await withTransaction(async (client) => {
         const result = await client.query(
           `INSERT INTO tickets
-             (tenant_id, type, title, description, origin_url, name, requester_email, tracking_token, source_message_id)
-           VALUES ($1, 'help', $2, $3, $4, $5, $6, $7, $8)
+             (tenant_id, title, description, origin_url, name, requester_email, tracking_token, source_message_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            RETURNING *`,
           [
             tenantId,
@@ -956,7 +958,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
         whereClauses.push(`f.status = $${params.length}`);
       }
 
-      if (type) {
+      if (type === "sem_tipo") {
+        whereClauses.push("f.type IS NULL");
+      } else if (type) {
         params.push(type);
         whereClauses.push(`f.type = $${params.length}`);
       }
@@ -1093,7 +1097,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           // Trava a linha e lê o status atual — para validar a transição e
           // registrar o "from" no histórico.
           const cur = await client.query(
-            "SELECT status FROM tickets WHERE id = $1 FOR UPDATE",
+            "SELECT status, type FROM tickets WHERE id = $1 FOR UPDATE",
             [id],
           );
           if (cur.rowCount === 0) {
@@ -1105,6 +1109,15 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
             throw new HttpError(
               409,
               `Transição de status não permitida: ${from} → ${status}.`,
+            );
+          }
+
+          // Sair de "novo" é iniciar o atendimento, que exige classificar:
+          // o caminho é o /attend.
+          if (status !== undefined && status !== from && !cur.rows[0].type) {
+            throw new HttpError(
+              409,
+              "Classifique o chamado ao iniciar o atendimento.",
             );
           }
 
@@ -1147,11 +1160,16 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     checkPermission("tickets.manage"),
     async (req, res) => {
       const { id } = req.params;
+      const { type } = req.body || {};
+
+      if (type !== undefined && !TICKET_TYPES.includes(type)) {
+        return res.status(400).json({ error: "Classificação inválida." });
+      }
 
       try {
         const ticket = await withTransaction(async (client) => {
           const cur = await client.query(
-            "SELECT status FROM tickets WHERE id = $1 FOR UPDATE",
+            "SELECT status, type FROM tickets WHERE id = $1 FOR UPDATE",
             [id],
           );
           if (cur.rowCount === 0) {
@@ -1159,14 +1177,26 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           }
           const from = cur.rows[0].status;
 
+          // Quem classifica é o atendente, ao iniciar: sem tipo, não inicia.
+          if (!type && !cur.rows[0].type) {
+            throw new HttpError(
+              400,
+              "Classifique o chamado para iniciar o atendimento.",
+            );
+          }
+
           const result = await client.query(
             `UPDATE tickets
              SET status = 'andamento',
                  attendant_id = $1,
-                 attendant_name = $2
+                 attendant_name = $2,
+                 type = COALESCE($4::text, type),
+                 classified_at = CASE WHEN $4::text IS NULL THEN classified_at ELSE now() END,
+                 classified_by = CASE WHEN $4::text IS NULL THEN classified_by ELSE $1 END,
+                 classified_by_name = CASE WHEN $4::text IS NULL THEN classified_by_name ELSE $2 END
              WHERE id = $3
              RETURNING *`,
-            [req.user.id, req.user.nome || req.user.email, id],
+            [req.user.id, req.user.nome || req.user.email, id, type ?? null],
           );
 
           if (from !== "andamento") {
@@ -1187,7 +1217,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
             req.user.id,
             req.user.email,
             "Atendimento Iniciado",
-            `Ticket ID ${id} assumido por ${req.user.nome || req.user.email}.`,
+            `Ticket ID ${id} assumido por ${req.user.nome || req.user.email}${
+              type ? ` e classificado como ${TYPE_LABELS[type]}` : ""
+            }.`,
             req.ipAddress,
           );
         } catch (e) {
@@ -1203,6 +1235,82 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
         }
         console.error("Erro ao iniciar atendimento:", err);
         res.status(500).json({ error: "Erro ao iniciar atendimento." });
+      }
+    },
+  );
+
+  // ── PATCH /api/tickets/:id/classificacao (reclassifica) ─────────────────
+  // Só durante o atendimento (andamento ou pausado): em "novo" a classificação
+  // é feita ao iniciar; depois de concluído, fica fixa.
+  router.patch(
+    "/:id/classificacao",
+    isLoggedIn,
+    checkPermission("tickets.manage"),
+    async (req, res) => {
+      const { id } = req.params;
+      const { type } = req.body || {};
+
+      if (!TICKET_TYPES.includes(type)) {
+        return res.status(400).json({ error: "Classificação inválida." });
+      }
+
+      try {
+        const { anterior, ticket } = await withTransaction(async (client) => {
+          const cur = await client.query(
+            "SELECT status, type FROM tickets WHERE id = $1 FOR UPDATE",
+            [id],
+          );
+          if (cur.rowCount === 0) {
+            throw new HttpError(404, "Ticket não encontrado.");
+          }
+          const { status, type: tipoAtual } = cur.rows[0];
+          if (status === "novo") {
+            throw new HttpError(
+              409,
+              "Classifique o chamado ao iniciar o atendimento.",
+            );
+          }
+          if (status === "concluido") {
+            throw new HttpError(
+              409,
+              "Chamado concluído: a classificação não pode mais ser alterada.",
+            );
+          }
+
+          const result = await client.query(
+            `UPDATE tickets
+                SET type = $1,
+                    classified_at = now(),
+                    classified_by = $2,
+                    classified_by_name = $3
+              WHERE id = $4
+              RETURNING *`,
+            [type, req.user.id, req.user.nome || req.user.email, id],
+          );
+          return { anterior: tipoAtual, ticket: result.rows[0] };
+        });
+
+        if (anterior !== type) {
+          try {
+            logActivity(
+              req.user.id,
+              req.user.email,
+              "Chamado Reclassificado",
+              `Ticket ID ${id}: ${TYPE_LABELS[anterior] || "sem tipo"} → ${TYPE_LABELS[type]}.`,
+              req.ipAddress,
+            );
+          } catch (e) {
+            console.warn("Falha ao registrar log:", e);
+          }
+        }
+
+        res.json({ ...ticket, attachments: await getAttachments(ticket.id) });
+      } catch (err) {
+        if (err.httpStatus) {
+          return res.status(err.httpStatus).json({ error: err.message });
+        }
+        console.error("Erro ao classificar chamado:", err);
+        res.status(500).json({ error: "Erro ao classificar o chamado." });
       }
     },
   );

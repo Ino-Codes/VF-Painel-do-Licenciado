@@ -675,8 +675,17 @@ module.exports = function (pool) {
           "SELECT status, COUNT(*)::int AS c FROM tickets GROUP BY status",
         );
 
+        // Por tipo: só o que o ATENDENTE classificou (classified_at). Os tipos
+        // escolhidos pelo solicitante, antes da mudança, vão à parte — eram
+        // distorcidos (muito "bug" para furar a fila). Ver migration 0050.
         const byTypeQuery = pool.query(
-          "SELECT type, COUNT(*)::int AS c FROM tickets GROUP BY type ORDER BY c DESC",
+          `SELECT type,
+                  (classified_at IS NOT NULL) AS do_atendente,
+                  COUNT(*)::int AS c
+             FROM tickets
+            WHERE type IS NOT NULL
+            GROUP BY 1, 2
+            ORDER BY c DESC`,
         );
 
         const bySystemQuery = pool.query(
@@ -917,7 +926,12 @@ module.exports = function (pool) {
         res.json({
           total: totalRes.rows[0].c,
           byStatus,
-          byType: byTypeRes.rows.map((r) => ({ type: r.type, count: r.c })),
+          byType: byTypeRes.rows
+            .filter((r) => r.do_atendente)
+            .map((r) => ({ type: r.type, count: r.c })),
+          byTypeSolicitante: byTypeRes.rows
+            .filter((r) => !r.do_atendente)
+            .map((r) => ({ type: r.type, count: r.c })),
           bySystem: bySystemRes.rows.map((r) => ({ name: r.name, count: r.c })),
           openedToday: openedRes.rows[0].today,
           opened7d: openedRes.rows[0].d7,

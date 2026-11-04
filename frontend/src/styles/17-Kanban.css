@@ -162,6 +162,14 @@
   flex-shrink: 0;
 }
 
+/* Chamado ainda sem classificação (etapa "Novo"): contorno tracejado deixa
+   claro que falta a triagem do atendente. */
+.ticket-type-badge--pendente {
+  padding: 1px 7px;
+  border: 1px dashed var(--border-color);
+  border-radius: 999px;
+}
+
 /* Variante maior — usada no cabeçalho do modal de detalhes */
 .ticket-type-badge--lg {
   font-size: 13px;
@@ -789,4 +797,72 @@
     min-width: unset;
     max-width: unset;
   }
+}
+
+/* ── Classificação do chamado (feita pelo atendente) ── */
+.kanban-classificacao {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kanban-classificacao-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.kanban-classificacao-opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kanban-classificacao-opcao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.kanban-classificacao-opcao:hover:not(:disabled) {
+  border-color: var(--badge-color);
+}
+
+.kanban-classificacao-opcao.selected {
+  border-color: var(--badge-color);
+  background: color-mix(in srgb, var(--badge-color) 12%, transparent);
+}
+
+.kanban-classificacao-opcao:focus-visible {
+  outline: 2px solid var(--badge-color);
+  outline-offset: 1px;
+}
+
+.kanban-classificacao-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.kanban-classificacao-texto strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.kanban-classificacao-texto small {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-secondary);
 }

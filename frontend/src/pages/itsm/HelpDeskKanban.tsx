@@ -18,13 +18,17 @@ import {
   FaLaptopCode,
   FaCheckCircle,
   FaPlayCircle,
-  FaBug,
-  FaLifeRing,
-  FaRegLightbulb,
   FaStar,
 } from "react-icons/fa";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import { Estrelas, ROTULOS_NOTA } from "../../components/tickets/TicketRating.tsx";
+import {
+  TicketType,
+  TIPOS_CHAMADO,
+  TIPOS_DO_ATENDENTE,
+  TIPOS_LEGADOS,
+  tipoInfo,
+} from "../../components/tickets/ticketTypes.ts";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -45,7 +49,10 @@ interface Ticket {
   tenant_id: number;
   tenant_name: string;
   name: string;
-  type: "help" | "suggestion" | "bug";
+  /** Classificação do atendente; null enquanto está em "Novo". */
+  type: TicketType | null;
+  classified_at?: string | null;
+  classified_by_name?: string | null;
   title: string;
   description: string;
   origin_url: string;
@@ -80,11 +87,10 @@ const getInitials = (name: string): string =>
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
 
-const TYPE_CONFIG = {
-  suggestion: { label: "Sugestão", color: "#6366f1", bg: "#ede9fe", icon: FaRegLightbulb },
-  bug: { label: "Bug", color: "#ef4444", bg: "#fee2e2", icon: FaBug },
-  help: { label: "Ajuda", color: "#f59e0b", bg: "#fef3c7", icon: FaLifeRing },
-};
+// Mensagem de erro que o backend devolve (ex.: 409 de classificação).
+const erroDaApi = (err: unknown, padrao: string) =>
+  (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+  padrao;
 
 // ─── Card ───────────────────────────────────────────────────────────────────
 
@@ -92,8 +98,8 @@ const TicketCard: React.FC<{
   ticket: Ticket;
   onClick: (f: Ticket) => void;
 }> = ({ ticket, onClick }) => {
-  const typeInfo = TYPE_CONFIG[ticket.type] || TYPE_CONFIG.suggestion;
-  const TypeIcon = typeInfo.icon;
+  const typeInfo = tipoInfo(ticket.type);
+  const TypeIcon = typeInfo.Icon;
 
   const formattedDate = new Date(ticket.created_at).toLocaleDateString(
     "pt-BR",
@@ -110,7 +116,7 @@ const TicketCard: React.FC<{
 
       <div className="ticket-card-header">
         <span
-          className="ticket-type-badge"
+          className={`ticket-type-badge ${ticket.type ? "" : "ticket-type-badge--pendente"}`}
           style={{ "--badge-color": typeInfo.color } as React.CSSProperties}
         >
           <TypeIcon className="ticket-type-icon" aria-hidden="true" />
@@ -203,6 +209,9 @@ const TicketKanbanPage: React.FC = () => {
   const [attending, setAttending] = useState(false);
   const [closing, setClosing] = useState(false);
   const [moving, setMoving] = useState(false);
+  // Classificação escolhida no modal para iniciar o atendimento.
+  const [tipoEscolhido, setTipoEscolhido] = useState<TicketType | null>(null);
+  const [classificando, setClassificando] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [observation, setObservation] = useState("");
 
@@ -261,6 +270,7 @@ const TicketKanbanPage: React.FC = () => {
     setDetailTicket(t);
     setResolutionNotes(t.resolution_notes || "");
     setObservation(t.observation || "");
+    setTipoEscolhido(null);
   };
 
   // Aplica o ticket atualizado tanto no board quanto no modal aberto.
@@ -276,17 +286,43 @@ const TicketKanbanPage: React.FC = () => {
   };
 
   // Novo → Em Andamento (registra o atendente)
+  // A classificação é obrigatória: quem classifica é o atendente, não o
+  // solicitante.
   const handleStartAttending = async () => {
     if (!detailTicket) return;
+    if (!tipoEscolhido) {
+      toast.error("Classifique o chamado para iniciar o atendimento.");
+      return;
+    }
     setAttending(true);
     try {
-      const res = await api.patch(`/api/tickets/${detailTicket.id}/attend`);
+      const res = await api.patch(`/api/tickets/${detailTicket.id}/attend`, {
+        type: tipoEscolhido,
+      });
       applyUpdate(res.data);
       toast.success("Atendimento iniciado.");
-    } catch {
-      toast.error("Erro ao iniciar atendimento.");
+    } catch (err) {
+      toast.error(erroDaApi(err, "Erro ao iniciar atendimento."));
     } finally {
       setAttending(false);
+    }
+  };
+
+  // Reclassificar durante o atendimento (andamento ou pausado).
+  const handleReclassificar = async (type: TicketType) => {
+    if (!detailTicket || type === detailTicket.type) return;
+    setClassificando(true);
+    try {
+      const res = await api.patch(
+        `/api/tickets/${detailTicket.id}/classificacao`,
+        { type },
+      );
+      applyUpdate(res.data);
+      toast.success(`Chamado reclassificado como ${TIPOS_CHAMADO[type].label}.`);
+    } catch (err) {
+      toast.error(erroDaApi(err, "Erro ao reclassificar o chamado."));
+    } finally {
+      setClassificando(false);
     }
   };
 
@@ -358,9 +394,8 @@ const TicketKanbanPage: React.FC = () => {
       });
 
   const isBeingAttended = detailTicket?.attendant_id != null;
-  const DetailTypeIcon = detailTicket
-    ? TYPE_CONFIG[detailTicket.type]?.icon
-    : null;
+  const detailType = tipoInfo(detailTicket?.type);
+  const DetailTypeIcon = detailType.Icon;
 
   return (
     <div className="p-2">
@@ -420,9 +455,19 @@ const TicketKanbanPage: React.FC = () => {
                 onChange={(e) => setSelectedType(e.target.value)}
               >
                 <option value="">Todos os tipos</option>
-                <option value="help">Ajuda</option>
-                <option value="bug">Bug</option>
-                <option value="suggestion">Sugestão</option>
+                <option value="sem_tipo">A classificar</option>
+                {TIPOS_DO_ATENDENTE.map((t) => (
+                  <option key={t} value={t}>
+                    {TIPOS_CHAMADO[t].label}
+                  </option>
+                ))}
+                <optgroup label="Antigos (escolhidos pelo solicitante)">
+                  {TIPOS_LEGADOS.map((t) => (
+                    <option key={t} value={t}>
+                      {TIPOS_CHAMADO[t].label}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
             <div className="filter-group">
@@ -490,20 +535,20 @@ const TicketKanbanPage: React.FC = () => {
               <div className="ticket-modal-topbar">
                 <div className="ticket-modal-topbar-left">
                   <span
-                    className="ticket-type-badge ticket-type-badge--lg"
+                    className={`ticket-type-badge ticket-type-badge--lg ${
+                      detailTicket.type ? "" : "ticket-type-badge--pendente"
+                    }`}
                     style={
                       {
-                        "--badge-color": TYPE_CONFIG[detailTicket.type]?.color,
+                        "--badge-color": detailType.color,
                       } as React.CSSProperties
                     }
                   >
-                    {DetailTypeIcon && (
-                      <DetailTypeIcon
-                        className="ticket-type-icon"
-                        aria-hidden="true"
-                      />
-                    )}
-                    {TYPE_CONFIG[detailTicket.type]?.label}
+                    <DetailTypeIcon
+                      className="ticket-type-icon"
+                      aria-hidden="true"
+                    />
+                    {detailType.label}
                   </span>
                   <span className="ticket-modal-id">#{detailTicket.id}</span>
                 </div>
@@ -612,14 +657,96 @@ const TicketKanbanPage: React.FC = () => {
 
                   {/* Ações do fluxo — dependem da etapa atual do card */}
                   {detailTicket.status === "novo" && (
-                    <button
-                      className="ticket-modal-action-btn btn-icon-text"
-                      onClick={handleStartAttending}
-                      disabled={attending}
-                    >
-                      <FaPlayCircle />
-                      {attending ? "Iniciando..." : "Iniciar atendimento"}
-                    </button>
+                    <div className="kanban-classificacao">
+                      <span
+                        className="kanban-modal-resolution-label"
+                        id="classificacao-label"
+                      >
+                        Classificação
+                      </span>
+                      <span className="kanban-classificacao-hint">
+                        Escolha o tipo do chamado para iniciar o atendimento.
+                      </span>
+                      <div
+                        className="kanban-classificacao-opcoes"
+                        role="radiogroup"
+                        aria-labelledby="classificacao-label"
+                      >
+                        {TIPOS_DO_ATENDENTE.map((t) => {
+                          const info = TIPOS_CHAMADO[t];
+                          const Icon = info.Icon;
+                          const marcado = tipoEscolhido === t;
+                          return (
+                            <button
+                              key={t}
+                              type="button"
+                              role="radio"
+                              aria-checked={marcado}
+                              className={`kanban-classificacao-opcao ${marcado ? "selected" : ""}`}
+                              style={
+                                { "--badge-color": info.color } as React.CSSProperties
+                              }
+                              onClick={() => setTipoEscolhido(t)}
+                              disabled={attending}
+                            >
+                              <Icon className="ticket-type-icon" aria-hidden="true" />
+                              <span className="kanban-classificacao-texto">
+                                <strong>{info.label}</strong>
+                                <small>{info.descricao}</small>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <button
+                        className="ticket-modal-action-btn btn-icon-text"
+                        onClick={handleStartAttending}
+                        disabled={attending || !tipoEscolhido}
+                      >
+                        <FaPlayCircle />
+                        {attending ? "Iniciando..." : "Iniciar atendimento"}
+                      </button>
+                    </div>
+                  )}
+
+                  {(detailTicket.status === "andamento" ||
+                    detailTicket.status === "pausado") && (
+                    <div className="kanban-classificacao">
+                      <label
+                        className="kanban-modal-resolution-label"
+                        htmlFor="reclassificar"
+                      >
+                        Classificação
+                      </label>
+                      <select
+                        id="reclassificar"
+                        className="form-select"
+                        value={detailTicket.type ?? ""}
+                        disabled={classificando}
+                        onChange={(e) =>
+                          handleReclassificar(e.target.value as TicketType)
+                        }
+                      >
+                        {/* Tipo antigo (do solicitante) aparece, mas não é
+                            mais oferecido: ao trocar, sai da lista. */}
+                        {detailTicket.type &&
+                          TIPOS_CHAMADO[detailTicket.type]?.legado && (
+                            <option value={detailTicket.type} disabled>
+                              {TIPOS_CHAMADO[detailTicket.type].label} (antigo)
+                            </option>
+                          )}
+                        {TIPOS_DO_ATENDENTE.map((t) => (
+                          <option key={t} value={t}>
+                            {TIPOS_CHAMADO[t].label}
+                          </option>
+                        ))}
+                      </select>
+                      {detailTicket.classified_by_name && (
+                        <span className="kanban-classificacao-hint">
+                          Classificado por {detailTicket.classified_by_name}
+                        </span>
+                      )}
+                    </div>
                   )}
 
                   {detailTicket.status === "andamento" && (
@@ -648,6 +775,14 @@ const TicketKanbanPage: React.FC = () => {
                       <FaCheckCircle />
                       Chamado concluído
                     </div>
+                  )}
+
+                  {detailTicket.status === "concluido" && detailTicket.type && (
+                    <span className="kanban-classificacao-hint">
+                      {detailTicket.classified_by_name
+                        ? `Classificado como ${detailType.label} por ${detailTicket.classified_by_name}`
+                        : `Tipo ${detailType.label}, escolhido pelo solicitante`}
+                    </span>
                   )}
 
                   {detailTicket.status === "concluido" && (

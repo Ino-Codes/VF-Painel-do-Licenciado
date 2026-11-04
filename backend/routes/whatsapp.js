@@ -50,16 +50,6 @@ const ATTACHMENT_ALLOWED_MIMES = new Set([
 const LINK_CODE_TTL_MINUTES = 15;
 const LINK_MAX_ATTEMPTS = 5;
 
-const TYPE_LABELS = { help: "Ajuda", bug: "Bug", suggestion: "Sugestão" };
-
-// Opções do passo "tipo". O índice serve de atalho digitado (1, 2, 3) quando
-// os botões não chegam renderizados.
-const TYPE_OPTIONS = [
-  { key: "help", title: "Ajuda" },
-  { key: "bug", title: "Bug" },
-  { key: "suggestion", title: "Sugestão" },
-];
-
 const MENU_OPTIONS = [
   { key: "new", title: "Abrir chamado", aliases: ["abrir", "novo"] },
   { key: "list", title: "Meus chamados", aliases: ["consultar", "meus"] },
@@ -69,6 +59,9 @@ const MENU_OPTIONS = [
 // próxima mensagem não é tratada como continuação (um "Bom dia" no dia
 // seguinte viraria descrição ou assunto); o bot pergunta se é para retomar.
 const RETOMAR_APOS_MIN = 30;
+// O chamado não tem mais a etapa "tipo" (quem classifica é o atendente, na
+// Central). "type" continua na lista só para conversas que já estavam nessa
+// etapa quando a mudança entrou: elas seguem direto para o assunto.
 const ETAPAS_DO_CHAMADO = ["type", "title", "description", "confirm"];
 
 const RESUME_OPTIONS = [
@@ -118,13 +111,6 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       MENU_OPTIONS.map((o) => ({ id: `menu:${o.key}`, title: o.title })),
     );
 
-  const askType = (to, intro) =>
-    sendButtons(
-      to,
-      intro,
-      TYPE_OPTIONS.map((o) => ({ id: `type:${o.key}`, title: o.title })),
-    );
-
   const askConfirm = (to, body) =>
     sendButtons(to, body, [
       { id: "confirm:yes", title: "Confirmar" },
@@ -144,9 +130,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
   // Resumo mostrado antes de abrir o chamado (etapa de confirmação).
   const textoConferencia = (session) => {
     const anexos = Array.isArray(session.attachments) ? session.attachments.length : 0;
-    return `👀 Confira antes de eu abrir:\n\n*Tipo:* ${
-      TYPE_LABELS[session.ticket_type] || session.ticket_type
-    }\n*Assunto:* ${session.title}\n*Descrição:* ${
+    return `👀 Confira antes de eu abrir:\n\n*Assunto:* ${session.title}\n*Descrição:* ${
       session.description || "(sem texto)"
     }${anexos ? `\n*Anexos:* ${anexos}` : ""}`;
   };
@@ -295,13 +279,12 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       return await withTransaction(async (client) => {
         const inserted = await client.query(
           `INSERT INTO tickets
-             (tenant_id, type, title, description, origin_url, name,
+             (tenant_id, title, description, origin_url, name,
               requester_email, tracking_token, source_message_id)
-           VALUES ($1, $2, $3, $4, 'whatsapp', $5, $6, $7, $8)
+           VALUES ($1, $2, $3, 'whatsapp', $4, $5, $6, $7)
            RETURNING id, tracking_token`,
           [
             tenantId,
-            session.ticket_type,
             session.title,
             session.description,
             user.nome,
@@ -505,11 +488,14 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
 
     const startFlow = async () => {
       await saveSession(waId, user.id, {
-        step: "type",
+        step: "title",
         last_message_id: messageId,
         attachments: [],
       });
-      await askType(waId, "Qual é o tipo do chamado?");
+      await sendText(
+        waId,
+        "✏️ Vamos lá! Me diga o *assunto* do chamado, em uma frase curta.",
+      );
     };
 
     const showMenu = async (intro) => {
@@ -586,11 +572,10 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       }
 
       // Continua: volta à etapa e repete a pergunta dela.
-      const retomada = { ...base, step: etapa };
+      // (A antiga etapa "tipo" retoma já no assunto.)
+      const retomada = { ...base, step: etapa === "type" ? "title" : etapa };
       await saveSession(waId, user.id, retomada);
-      if (etapa === "type") {
-        await askType(waId, "Qual é o tipo do chamado?");
-      } else if (etapa === "title") {
+      if (retomada.step === "title") {
         await sendText(waId, "✏️ Me diga o *assunto* do chamado, em uma frase curta.");
       } else if (etapa === "description") {
         await askDescriptionDone(
@@ -640,21 +625,13 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
         return;
       }
 
+      // Conversa que estava na antiga etapa "tipo": a resposta era um tipo,
+      // não o assunto — segue para o assunto.
       case "type": {
-        const type = resolveChoice(payload, text, "type", TYPE_OPTIONS);
-        if (!type) {
-          await saveSession(waId, user.id, base);
-          await askType(waId, "Não entendi. Escolha o tipo do chamado:");
-          return;
-        }
-        await saveSession(waId, user.id, {
-          ...base,
-          step: "title",
-          ticket_type: type,
-        });
+        await saveSession(waId, user.id, { ...base, step: "title" });
         await sendText(
           waId,
-          "✏️ Perfeito. Agora me diga o *assunto* do chamado, em uma frase curta.",
+          "✏️ Não precisa mais escolher o tipo — nossa equipe classifica o chamado. Me diga o *assunto*, em uma frase curta.",
         );
         return;
       }
