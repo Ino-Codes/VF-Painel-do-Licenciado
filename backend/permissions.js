@@ -52,6 +52,14 @@ const STANDALONE = [
     label: "Acesso à Área Interna",
     category: "Especial",
   },
+  // Central de Chamados: só o responsável mexe num chamado em atendimento.
+  // Esta permissão deixa assumir o atendimento de outra pessoa (férias,
+  // ausência) e excluir chamados.
+  {
+    key: "tickets_reassign",
+    label: "Assumir e excluir chamados de outros atendentes",
+    category: "Especial",
+  },
 ];
 
 // Lista achatada de todas as chaves de permissão válidas.

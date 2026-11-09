@@ -8,7 +8,7 @@ import {
   FiClock,
   FiMonitor,
   FiUser,
-  FiSave,
+  FiLock,
   FiPauseCircle,
   FiRotateCcw,
 } from "react-icons/fi";
@@ -21,6 +21,8 @@ import {
   FaStar,
 } from "react-icons/fa";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import TicketTimeline from "../../components/tickets/TicketTimeline.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 import { Estrelas, ROTULOS_NOTA } from "../../components/tickets/TicketRating.tsx";
 import {
   TicketType,
@@ -62,7 +64,6 @@ interface Ticket {
   attendant_name: string | null;
   resolution_notes: string | null;
   requester_email: string | null;
-  observation: string | null;
   attachments?: TicketAttachment[];
   /** Avaliação do solicitante (1–5), depois de concluído. */
   rating?: number | null;
@@ -137,6 +138,15 @@ const TicketCard: React.FC<{
 
       <div className="ticket-card-footer">
         <span className="ticket-card-requester">{ticket.name}</span>
+        {ticket.attendant_name && ticket.status !== "concluido" && (
+          <span
+            className="ticket-card-attendant"
+            title={`Em atendimento por ${ticket.attendant_name}`}
+            aria-label={`Em atendimento por ${ticket.attendant_name}`}
+          >
+            {getInitials(ticket.attendant_name)}
+          </span>
+        )}
         {ticket.rating ? (
           <span
             className="ticket-card-rating"
@@ -191,6 +201,9 @@ const KanbanColumn: React.FC<{
 
 const TicketKanbanPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, hasPermission } = useAuth();
+  const podeAssumir = hasPermission("tickets_reassign");
+  const podeComentar = hasPermission("tickets.manage");
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -213,7 +226,11 @@ const TicketKanbanPage: React.FC = () => {
   const [tipoEscolhido, setTipoEscolhido] = useState<TicketType | null>(null);
   const [classificando, setClassificando] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState("");
-  const [observation, setObservation] = useState("");
+  // Muda a cada alteração do chamado aberto: a linha do tempo recarrega.
+  const [versaoLinha, setVersaoLinha] = useState(0);
+  const [assumindo, setAssumindo] = useState(false);
+  const [confirmarAssumir, setConfirmarAssumir] = useState(false);
+  const [motivoAssumir, setMotivoAssumir] = useState("");
 
   const fetchTickets = async () => {
     try {
@@ -226,6 +243,7 @@ const TicketKanbanPage: React.FC = () => {
       const res = await api.get("/api/tickets", { params });
       setTickets(res.data);
       setLoadError(false);
+      return res.data as Ticket[];
     } catch {
       setLoadError(true);
       toast.error("Erro ao carregar tickets.");
@@ -269,8 +287,10 @@ const TicketKanbanPage: React.FC = () => {
   const openDetail = (t: Ticket) => {
     setDetailTicket(t);
     setResolutionNotes(t.resolution_notes || "");
-    setObservation(t.observation || "");
     setTipoEscolhido(null);
+    setConfirmarAssumir(false);
+    setMotivoAssumir("");
+    setVersaoLinha(0);
   };
 
   // Aplica o ticket atualizado tanto no board quanto no modal aberto.
@@ -283,6 +303,25 @@ const TicketKanbanPage: React.FC = () => {
     setDetailTicket((atual) =>
       atual && atual.id === updated.id ? { ...atual, ...updated } : updated,
     );
+    setVersaoLinha((v) => v + 1);
+  };
+
+  // O quadro não se atualiza sozinho: quando o servidor recusa uma ação
+  // (409 — outra pessoa já mexeu no chamado), traz o chamado atualizado.
+  const recarregarDetalhe = async (id: number) => {
+    const lista = await fetchTickets();
+    const atual = lista?.find((t) => t.id === id);
+    if (atual) {
+      setDetailTicket((d) => (d && d.id === id ? { ...d, ...atual } : d));
+      setResolutionNotes(atual.resolution_notes || "");
+    }
+    setVersaoLinha((v) => v + 1);
+  };
+
+  const falhou = (err: unknown, padrao: string) => {
+    toast.error(erroDaApi(err, padrao));
+    const status = (err as { response?: { status?: number } })?.response?.status;
+    if (status === 409 && detailTicket) recarregarDetalhe(detailTicket.id);
   };
 
   // Novo → Em Andamento (registra o atendente)
@@ -302,7 +341,7 @@ const TicketKanbanPage: React.FC = () => {
       applyUpdate(res.data);
       toast.success("Atendimento iniciado.");
     } catch (err) {
-      toast.error(erroDaApi(err, "Erro ao iniciar atendimento."));
+      falhou(err, "Erro ao iniciar atendimento.");
     } finally {
       setAttending(false);
     }
@@ -320,7 +359,7 @@ const TicketKanbanPage: React.FC = () => {
       applyUpdate(res.data);
       toast.success(`Chamado reclassificado como ${TIPOS_CHAMADO[type].label}.`);
     } catch (err) {
-      toast.error(erroDaApi(err, "Erro ao reclassificar o chamado."));
+      falhou(err, "Erro ao reclassificar o chamado.");
     } finally {
       setClassificando(false);
     }
@@ -336,8 +375,8 @@ const TicketKanbanPage: React.FC = () => {
       });
       applyUpdate(res.data);
       toast.success("Atendimento concluído. E-mail enviado ao solicitante.");
-    } catch {
-      toast.error("Erro ao concluir atendimento.");
+    } catch (err) {
+      falhou(err, "Erro ao concluir atendimento.");
     } finally {
       setClosing(false);
     }
@@ -353,8 +392,8 @@ const TicketKanbanPage: React.FC = () => {
       });
       applyUpdate(res.data);
       toast.success(successMsg);
-    } catch {
-      toast.error("Erro ao mover o chamado.");
+    } catch (err) {
+      falhou(err, "Erro ao mover o chamado.");
     } finally {
       setMoving(false);
     }
@@ -364,23 +403,26 @@ const TicketKanbanPage: React.FC = () => {
   const handleResume = () =>
     changeStatus("andamento", "Chamado retomado.");
 
-  const closeDetail = () => {
-    const ticket = detailTicket;
-    const obs = observation;
-    setDetailTicket(null);
-    // Salva a observação automaticamente se ela foi alterada
-    if (ticket && obs !== (ticket.observation || "")) {
-      api
-        .patch(`/api/tickets/${ticket.id}`, { observation: obs })
-        .then((res) => {
-          const updated: Ticket = res.data;
-          setTickets((prev) =>
-            prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)),
-          );
-        })
-        .catch(() => toast.error("Erro ao salvar observação."));
+  // Assume o atendimento de outra pessoa (permissão tickets_reassign).
+  const handleAssumir = async () => {
+    if (!detailTicket) return;
+    setAssumindo(true);
+    try {
+      const res = await api.post(`/api/tickets/${detailTicket.id}/assumir`, {
+        motivo: motivoAssumir.trim() || undefined,
+      });
+      applyUpdate(res.data);
+      setConfirmarAssumir(false);
+      setMotivoAssumir("");
+      toast.success("Agora você é o responsável por este chamado.");
+    } catch (err) {
+      falhou(err, "Erro ao assumir o atendimento.");
+    } finally {
+      setAssumindo(false);
     }
   };
+
+  const closeDetail = () => setDetailTicket(null);
 
   // Ordena os cards por data de criação: mais antigos primeiro em todas as
   // etapas, exceto "Concluído", que mostra os mais recentes primeiro.
@@ -394,6 +436,12 @@ const TicketKanbanPage: React.FC = () => {
       });
 
   const isBeingAttended = detailTicket?.attendant_id != null;
+  // Trava: em atendimento (ou pausado), só o responsável mexe no chamado.
+  const travado =
+    !!detailTicket &&
+    ["andamento", "pausado"].includes(detailTicket.status) &&
+    detailTicket.attendant_id != null &&
+    detailTicket.attendant_id !== user?.id;
   const detailType = tipoInfo(detailTicket?.type);
   const DetailTypeIcon = detailType.Icon;
 
@@ -655,6 +703,66 @@ const TicketKanbanPage: React.FC = () => {
                     </div>
                   )}
 
+                  {travado && (
+                    <div className="ticket-modal-lock" role="status">
+                      <div className="ticket-modal-lock-msg">
+                        <FiLock aria-hidden="true" />
+                        <span>
+                          Em atendimento por{" "}
+                          <strong>{detailTicket.attendant_name}</strong>. Só o
+                          responsável pode alterar este chamado — você ainda
+                          pode comentar.
+                        </span>
+                      </div>
+                      {podeAssumir &&
+                        (confirmarAssumir ? (
+                          <div className="ticket-modal-lock-form">
+                            <label
+                              className="kanban-modal-resolution-label"
+                              htmlFor="motivo-assumir"
+                            >
+                              Motivo (opcional)
+                            </label>
+                            <textarea
+                              id="motivo-assumir"
+                              className="kanban-modal-resolution-textarea"
+                              placeholder="Ex.: atendente de férias"
+                              rows={2}
+                              maxLength={1000}
+                              value={motivoAssumir}
+                              onChange={(e) => setMotivoAssumir(e.target.value)}
+                            />
+                            <div className="ticket-modal-lock-acoes">
+                              <button
+                                type="button"
+                                className="form-button-cancel"
+                                onClick={() => setConfirmarAssumir(false)}
+                                disabled={assumindo}
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                className="form-button"
+                                onClick={handleAssumir}
+                                disabled={assumindo}
+                              >
+                                {assumindo ? "Assumindo..." : "Confirmar"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="ticket-modal-action-btn ticket-modal-action-btn--secondary btn-icon-text"
+                            onClick={() => setConfirmarAssumir(true)}
+                          >
+                            Assumir atendimento
+                          </button>
+                        ))}
+                    </div>
+                  )}
+
                   {/* Ações do fluxo — dependem da etapa atual do card */}
                   {detailTicket.status === "novo" && (
                     <div className="kanban-classificacao">
@@ -722,7 +830,7 @@ const TicketKanbanPage: React.FC = () => {
                         id="reclassificar"
                         className="form-select"
                         value={detailTicket.type ?? ""}
-                        disabled={classificando}
+                        disabled={classificando || travado}
                         onChange={(e) =>
                           handleReclassificar(e.target.value as TicketType)
                         }
@@ -749,7 +857,7 @@ const TicketKanbanPage: React.FC = () => {
                     </div>
                   )}
 
-                  {detailTicket.status === "andamento" && (
+                  {detailTicket.status === "andamento" && !travado && (
                     <div className="ticket-modal-actions">
                       <button
                         className="ticket-modal-action-btn btn-icon-text"
@@ -814,7 +922,7 @@ const TicketKanbanPage: React.FC = () => {
                     </div>
                   )}
 
-                  {detailTicket.status === "pausado" && (
+                  {detailTicket.status === "pausado" && !travado && (
                     <button
                       className="ticket-modal-action-btn ticket-modal-action-btn--secondary btn-icon-text"
                       onClick={handleResume}
@@ -836,31 +944,18 @@ const TicketKanbanPage: React.FC = () => {
                         placeholder="Descreva os passos tomados para resolver este chamado."
                         value={resolutionNotes}
                         onChange={(e) => setResolutionNotes(e.target.value)}
-                        disabled={detailTicket.status !== "andamento"}
+                        disabled={detailTicket.status !== "andamento" || travado}
                         rows={4}
                       />
                     </div>
                   )}
 
-                  {/* Observação — salva automaticamente ao fechar */}
-                  <div className="kanban-modal-resolution">
-                    <div className="ticket-modal-obs-head">
-                      <label className="kanban-modal-resolution-label">
-                        Observação
-                      </label>
-                      <span className="ticket-modal-obs-hint">
-                        <FiSave aria-hidden="true" />
-                        salva ao sair
-                      </span>
-                    </div>
-                    <textarea
-                      className="kanban-modal-resolution-textarea"
-                      placeholder="Anotações internas sobre o chamado."
-                      value={observation}
-                      onChange={(e) => setObservation(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
+                  {/* Linha do tempo: eventos + comentários da equipe */}
+                  <TicketTimeline
+                    ticketId={detailTicket.id}
+                    versao={versaoLinha}
+                    podeComentar={podeComentar}
+                  />
                 </div>
               </div>
             </div>

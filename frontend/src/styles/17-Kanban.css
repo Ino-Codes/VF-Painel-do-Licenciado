@@ -364,20 +364,6 @@
   color: var(--text-primary);
 }
 
-.ticket-modal-obs-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.ticket-modal-obs-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
 .kanban-modal-resolution-textarea {
   width: 100%;
   padding: 10px 12px;
@@ -865,4 +851,183 @@
   font-size: 11px;
   line-height: 1.35;
   color: var(--text-secondary);
+}
+
+/* ── Trava: chamado em atendimento por outra pessoa ── */
+/* Iniciais do atendente no card, para ver de longe quem está com o quê. */
+.ticket-card-attendant {
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ticket-modal-lock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--brand-gold);
+  border-radius: 8px;
+  background: var(--bg-primary);
+}
+
+.ticket-modal-lock-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.ticket-modal-lock-msg svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--brand-gold);
+}
+
+.ticket-modal-lock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-modal-lock-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Linha do tempo do chamado ── */
+.ticket-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticket-timeline-vazio {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ticket-timeline-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cada item: ícone na trilha vertical + conteúdo. */
+.ticket-timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+  padding-bottom: 12px;
+}
+
+.ticket-timeline-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 26px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-color);
+}
+
+.ticket-timeline-icone {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.ticket-timeline-item--comentario .ticket-timeline-icone {
+  color: var(--brand-gold);
+}
+
+.ticket-timeline-evento {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  padding-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ticket-timeline-evento strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.ticket-timeline-item time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.ticket-timeline-motivo {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  font-style: italic;
+}
+
+.ticket-timeline-comentario {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+}
+
+.ticket-timeline-autor {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.ticket-timeline-comentario p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ticket-timeline-novo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-timeline-erro {
+  font-size: 12px;
+  color: var(--action-danger);
 }

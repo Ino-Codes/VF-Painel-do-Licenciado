@@ -160,6 +160,7 @@ const ticketsRoutes = require("./routes/tickets.js")(
   logActivity,
   resend,
   cloudinary,
+  createNotification,
 );
 const meetingRecordsRoutes = require("./routes/meetingRecords.js")(
   pool,

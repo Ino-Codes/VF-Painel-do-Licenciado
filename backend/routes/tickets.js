@@ -82,7 +82,13 @@ class HttpError extends Error {
   }
 }
 
-module.exports = function (pool, logActivity, resend, cloudinary) {
+module.exports = function (
+  pool,
+  logActivity,
+  resend,
+  cloudinary,
+  createNotification = async () => {},
+) {
   // ── Helper: roda o middleware do multer e captura erros de upload ─────────
   const runAttachmentUpload = (req, res) =>
     new Promise((resolve, reject) => {
@@ -147,6 +153,38 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
        VALUES ($1, $2, $3, $4, $5)`,
       [ticketId, fromStatus || null, toStatus, userId || null, userName || null],
     );
+  // ── Linha do tempo: comentários e eventos que não são troca de status ────
+  const recordActivity = (
+    db,
+    { ticketId, kind, body = null, meta = {}, userId, userName },
+  ) =>
+    db.query(
+      // clock_timestamp(): na mesma transação do início do atendimento, a
+      // classificação fica logo depois da troca de status (now() empataria).
+      `INSERT INTO ticket_activity (ticket_id, kind, body, meta, user_id, user_name, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp())
+       RETURNING *`,
+      [ticketId, kind, body, JSON.stringify(meta), userId || null, userName || null],
+    );
+
+  const nomeDoUsuario = (req) => req.user.nome || req.user.email;
+
+  // ── Trava: chamado em atendimento só é alterado pelo responsável ─────────
+  // Vale para andamento e pausado. Quem tem `tickets_reassign` precisa
+  // primeiro ASSUMIR o atendimento (POST /:id/assumir) — fica registrado.
+  const garantirResponsavel = (row, req) => {
+    if (
+      ["andamento", "pausado"].includes(row.status) &&
+      row.attendant_id &&
+      row.attendant_id !== req.user.id
+    ) {
+      throw new HttpError(
+        409,
+        `Este chamado está em atendimento por ${row.attendant_name || "outro atendente"}.`,
+      );
+    }
+  };
+
   // ── Helper: escapa valores do usuário antes de injetar no HTML do e-mail ──
   const escapeHtml = (str) =>
     String(str ?? "")
@@ -1056,7 +1094,9 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     }
   });
 
-  // ── PATCH /api/tickets/:id (atualiza status / observação / resolução) ────
+  // ── PATCH /api/tickets/:id (atualiza status / resolução) ─────────────────
+  // A antiga "observação" virou comentário na linha do tempo
+  // (POST /:id/comentarios).
   // Aceita qualquer combinação dos campos; monta o UPDATE dinamicamente.
   router.patch(
     "/:id",
@@ -1064,7 +1104,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     checkPermission("tickets.manage"),
     async (req, res) => {
       const { id } = req.params;
-      const { status, observation, resolution_notes } = req.body;
+      const { status, resolution_notes } = req.body;
 
       if (status !== undefined && !VALID_STATUSES.includes(status)) {
         return res.status(400).json({ error: "Status inválido." });
@@ -1076,10 +1116,6 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       if (status !== undefined) {
         params.push(status);
         fields.push(`status = $${params.length}`);
-      }
-      if (observation !== undefined) {
-        params.push(observation);
-        fields.push(`observation = $${params.length}`);
       }
       if (resolution_notes !== undefined) {
         params.push(resolution_notes);
@@ -1097,13 +1133,14 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           // Trava a linha e lê o status atual — para validar a transição e
           // registrar o "from" no histórico.
           const cur = await client.query(
-            "SELECT status, type FROM tickets WHERE id = $1 FOR UPDATE",
+            "SELECT status, type, attendant_id, attendant_name FROM tickets WHERE id = $1 FOR UPDATE",
             [id],
           );
           if (cur.rowCount === 0) {
             throw new HttpError(404, "Ticket não encontrado.");
           }
           const from = cur.rows[0].status;
+          garantirResponsavel(cur.rows[0], req);
 
           if (status !== undefined && !isAllowedTransition(from, status)) {
             throw new HttpError(
@@ -1169,13 +1206,24 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       try {
         const ticket = await withTransaction(async (client) => {
           const cur = await client.query(
-            "SELECT status, type FROM tickets WHERE id = $1 FOR UPDATE",
+            "SELECT status, type, attendant_name FROM tickets WHERE id = $1 FOR UPDATE",
             [id],
           );
           if (cur.rowCount === 0) {
             throw new HttpError(404, "Ticket não encontrado.");
           }
           const from = cur.rows[0].status;
+
+          // Só se inicia o que ainda está em "novo". Dois atendentes clicando
+          // juntos: a linha travada (FOR UPDATE) faz o segundo cair aqui.
+          if (from !== "novo") {
+            throw new HttpError(
+              409,
+              from === "concluido"
+                ? "Este chamado já foi concluído."
+                : `${cur.rows[0].attendant_name || "Outro atendente"} já iniciou este atendimento.`,
+            );
+          }
 
           // Quem classifica é o atendente, ao iniciar: sem tipo, não inicia.
           if (!type && !cur.rows[0].type) {
@@ -1198,6 +1246,16 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
              RETURNING *`,
             [req.user.id, req.user.nome || req.user.email, id, type ?? null],
           );
+
+          if (type) {
+            await recordActivity(client, {
+              ticketId: Number(id),
+              kind: "classificacao",
+              meta: { type },
+              userId: req.user.id,
+              userName: nomeDoUsuario(req),
+            });
+          }
 
           if (from !== "andamento") {
             await recordStatusChange(client, {
@@ -1257,13 +1315,14 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
       try {
         const { anterior, ticket } = await withTransaction(async (client) => {
           const cur = await client.query(
-            "SELECT status, type FROM tickets WHERE id = $1 FOR UPDATE",
+            "SELECT status, type, attendant_id, attendant_name FROM tickets WHERE id = $1 FOR UPDATE",
             [id],
           );
           if (cur.rowCount === 0) {
             throw new HttpError(404, "Ticket não encontrado.");
           }
           const { status, type: tipoAtual } = cur.rows[0];
+          garantirResponsavel(cur.rows[0], req);
           if (status === "novo") {
             throw new HttpError(
               409,
@@ -1287,6 +1346,15 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
               RETURNING *`,
             [type, req.user.id, req.user.nome || req.user.email, id],
           );
+          if (tipoAtual !== type) {
+            await recordActivity(client, {
+              ticketId: Number(id),
+              kind: "reclassificacao",
+              meta: { de: tipoAtual, para: type },
+              userId: req.user.id,
+              userName: nomeDoUsuario(req),
+            });
+          }
           return { anterior: tipoAtual, ticket: result.rows[0] };
         });
 
@@ -1315,6 +1383,167 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
     },
   );
 
+  // ── POST /api/tickets/:id/assumir (assume o atendimento de outra pessoa) ─
+  router.post(
+    "/:id/assumir",
+    isLoggedIn,
+    checkPermission("tickets_reassign"),
+    async (req, res) => {
+      const { id } = req.params;
+      const motivo = String(req.body?.motivo ?? "").trim().slice(0, 1000) || null;
+
+      try {
+        const { anterior, ticket } = await withTransaction(async (client) => {
+          const cur = await client.query(
+            "SELECT status, attendant_id, attendant_name FROM tickets WHERE id = $1 FOR UPDATE",
+            [id],
+          );
+          if (cur.rowCount === 0) {
+            throw new HttpError(404, "Ticket não encontrado.");
+          }
+          const atual = cur.rows[0];
+          if (!["andamento", "pausado"].includes(atual.status)) {
+            throw new HttpError(
+              409,
+              atual.status === "novo"
+                ? "Este chamado ainda não começou a ser atendido: use Iniciar atendimento."
+                : "Este chamado já foi concluído.",
+            );
+          }
+          if (atual.attendant_id === req.user.id) {
+            throw new HttpError(409, "Você já é o responsável por este chamado.");
+          }
+
+          const result = await client.query(
+            `UPDATE tickets SET attendant_id = $1, attendant_name = $2
+              WHERE id = $3 RETURNING *`,
+            [req.user.id, nomeDoUsuario(req), id],
+          );
+          await recordActivity(client, {
+            ticketId: Number(id),
+            kind: "assumido",
+            body: motivo,
+            meta: { de_id: atual.attendant_id, de_nome: atual.attendant_name },
+            userId: req.user.id,
+            userName: nomeDoUsuario(req),
+          });
+          return { anterior: atual, ticket: result.rows[0] };
+        });
+
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Atendimento Assumido",
+          `Ticket ID ${id}: ${nomeDoUsuario(req)} assumiu o atendimento de ${
+            anterior.attendant_name || "outro atendente"
+          }${motivo ? ` (motivo: ${motivo})` : ""}.`,
+          req.ipAddress,
+        );
+        if (anterior.attendant_id) {
+          await createNotification(
+            anterior.attendant_id,
+            `${nomeDoUsuario(req)} assumiu o atendimento do chamado #${id} — ${ticket.title}.`,
+            "/admin/helpdesk",
+          );
+        }
+
+        res.json({ ...ticket, attachments: await getAttachments(ticket.id) });
+      } catch (err) {
+        if (err.httpStatus) {
+          return res.status(err.httpStatus).json({ error: err.message });
+        }
+        console.error("Erro ao assumir atendimento:", err);
+        res.status(500).json({ error: "Erro ao assumir o atendimento." });
+      }
+    },
+  );
+
+  // ── POST /api/tickets/:id/comentarios ───────────────────────────────────
+  // Qualquer atendente comenta, em qualquer etapa. Comentário não se edita nem
+  // se apaga: a linha do tempo só cresce.
+  const COMENTARIO_MAX = 5000;
+  router.post(
+    "/:id/comentarios",
+    isLoggedIn,
+    checkPermission("tickets.manage"),
+    async (req, res) => {
+      const { id } = req.params;
+      const texto = String(req.body?.texto ?? "").trim();
+      if (!texto) {
+        return res.status(400).json({ error: "Escreva o comentário." });
+      }
+      if (texto.length > COMENTARIO_MAX) {
+        return res.status(400).json({
+          error: `O comentário pode ter até ${COMENTARIO_MAX} caracteres.`,
+        });
+      }
+
+      try {
+        const existe = await pool.query("SELECT 1 FROM tickets WHERE id = $1", [id]);
+        if (!existe.rowCount) {
+          return res.status(404).json({ error: "Ticket não encontrado." });
+        }
+        const result = await recordActivity(pool, {
+          ticketId: Number(id),
+          kind: "comentario",
+          body: texto,
+          userId: req.user.id,
+          userName: nomeDoUsuario(req),
+        });
+        const c = result.rows[0];
+        res.status(201).json({
+          id: `a${c.id}`,
+          kind: c.kind,
+          body: c.body,
+          meta: c.meta,
+          user_id: c.user_id,
+          user_name: c.user_name,
+          created_at: c.created_at,
+        });
+      } catch (err) {
+        console.error("Erro ao comentar chamado:", err);
+        res.status(500).json({ error: "Erro ao registrar o comentário." });
+      }
+    },
+  );
+
+  // ── GET /api/tickets/:id/timeline ───────────────────────────────────────
+  // Trocas de status (ticket_status_history) + comentários e eventos
+  // (ticket_activity), em ordem cronológica.
+  router.get(
+    "/:id/timeline",
+    isLoggedIn,
+    checkPermission("tickets.view"),
+    async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await pool.query(
+          `SELECT * FROM (
+           SELECT 's' || h.id AS id, 'status' AS kind, NULL AS body,
+                  h.id AS seq,
+                  jsonb_build_object('de', h.from_status, 'para', h.to_status) AS meta,
+                  h.changed_by AS user_id, h.changed_by_name AS user_name,
+                  h.changed_at AS created_at
+             FROM ticket_status_history h
+            WHERE h.ticket_id = $1
+           UNION ALL
+           SELECT 'a' || a.id, a.kind, a.body, a.id, a.meta, a.user_id,
+                  a.user_name, a.created_at
+             FROM ticket_activity a
+            WHERE a.ticket_id = $1
+           ) linha
+           ORDER BY created_at, (kind <> 'status'), seq`,
+          [id],
+        );
+        // Empate de horário: troca de status antes do evento.
+        res.json(result.rows.map(({ seq, ...e }) => e));
+      } catch (err) {
+        console.error("Erro ao montar a linha do tempo:", err);
+        res.status(500).json({ error: "Erro ao carregar a linha do tempo." });
+      }
+    },
+  );
+
   // ── PATCH /api/tickets/:id/close (encerra atendimento + e-mail) ─────────
   router.patch(
     "/:id/close",
@@ -1329,13 +1558,20 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
           client,
         ) => {
           const cur = await client.query(
-            "SELECT status FROM tickets WHERE id = $1 FOR UPDATE",
+            "SELECT status, attendant_id, attendant_name FROM tickets WHERE id = $1 FOR UPDATE",
             [id],
           );
           if (cur.rowCount === 0) {
             throw new HttpError(404, "Ticket não encontrado.");
           }
           const from = cur.rows[0].status;
+          garantirResponsavel(cur.rows[0], req);
+          if (from === "novo") {
+            throw new HttpError(409, "Inicie o atendimento antes de concluir.");
+          }
+          if (from === "pausado") {
+            throw new HttpError(409, "Retome o atendimento antes de concluir.");
+          }
 
           const result = await client.query(
             `UPDATE tickets
@@ -1449,7 +1685,7 @@ module.exports = function (pool, logActivity, resend, cloudinary) {
   router.delete(
     "/:id",
     isLoggedIn,
-    checkPermission("tickets.manage"),
+    checkPermission("tickets_reassign"),
     async (req, res) => {
       const { id } = req.params;
 
