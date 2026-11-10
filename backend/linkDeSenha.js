@@ -61,7 +61,7 @@ const TEXTOS = {
       "Este link é válido por 15 minutos. Se você não solicitou esta alteração, por favor, ignore este e-mail. A sua senha atual permanecerá a mesma.",
   },
   convite: {
-    assunto: "Bem-vindo ao Painel V-CORP - crie sua senha",
+    assunto: "Bem-vindo ao Painel V-CORP - Crie sua senha",
     titulo: "Bem-vindo ao Painel V-CORP",
     corpo:
       "Sua conta de acesso ao Painel V-CORP foi criada. Para começar, clique no botão abaixo e crie a sua senha:",
