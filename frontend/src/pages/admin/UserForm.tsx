@@ -16,6 +16,7 @@ interface User {
   setor_id?: number | null;
   corporate_photo_url?: string;
   data_admissao?: string | null;
+  convite_pendente?: boolean;
 }
 
 interface AssignableGroup {
@@ -116,14 +117,58 @@ const UserForm: React.FC<{
         toast.success("Usuário atualizado com sucesso!");
         onSuccess(response.data.user); // Passa o usuário atualizado para o componente pai
       } else {
-        await api.post("/api/users/admin", formData);
-        toast.success("Usuário criado com sucesso!");
+        const res = await api.post("/api/users/admin", formData);
+        if (res.data?.convite_enviado === false) {
+          toast.error(
+            "Usuário criado, mas o e-mail do convite não foi enviado. Use “Reenviar convite” na lista.",
+            { duration: 8000 },
+          );
+        } else {
+          toast.success(`Usuário criado! Convite enviado para ${formData.email}.`);
+        }
         onSuccess(); // Para criação, apenas aciona a atualização da lista
       }
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Ocorreu um erro.");
     }
   };
+
+  const [reenviando, setReenviando] = useState(false);
+  const handleReenviarConvite = async () => {
+    if (!userToEdit) return;
+    setReenviando(true);
+    try {
+      const res = await api.post(`/api/users/admin/${userToEdit.id}/convite`);
+      toast.success(res.data?.message || "Convite reenviado.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Não foi possível reenviar o convite.");
+    } finally {
+      setReenviando(false);
+    }
+  };
+
+  // Criação: avisa que a senha vem pelo convite. Edição de quem ainda não
+  // criou a senha: permite reenviar o convite.
+  const blocoConvite = !userToEdit ? (
+    <p className="userform-convite-aviso">
+      O usuário receberá por e-mail um convite para criar a própria senha
+      (link válido por 72 horas).
+    </p>
+  ) : userToEdit.convite_pendente ? (
+    <div className="userform-convite">
+      <span>
+        <strong>Convite pendente:</strong> este usuário ainda não criou a senha.
+      </span>
+      <button
+        type="button"
+        className="form-button-cancel"
+        onClick={handleReenviarConvite}
+        disabled={reenviando}
+      >
+        {reenviando ? "Enviando..." : "Reenviar convite"}
+      </button>
+    </div>
+  ) : null;
 
   return (
     <form onSubmit={handleSubmit} className="admin-form userform">
@@ -174,21 +219,8 @@ const UserForm: React.FC<{
                   className="form-input"
                 />
               </div>
-              {!userToEdit && (
-                <div className="form-field">
-                  <label htmlFor="uf-senha">Senha inicial</label>
-                  <input
-                    id="uf-senha"
-                    name="password"
-                    onChange={handleChange}
-                    placeholder="Defina uma senha"
-                    type="password"
-                    required
-                    className="form-input"
-                  />
-                </div>
-              )}
             </div>
+            {blocoConvite}
           </div>
 
           {/* Dados profissionais */}
@@ -328,21 +360,8 @@ const UserForm: React.FC<{
                   className="form-input"
                 />
               </div>
-              {!userToEdit && (
-                <div className="form-field">
-                  <label htmlFor="uf-l-senha">Senha inicial</label>
-                  <input
-                    id="uf-l-senha"
-                    name="password"
-                    onChange={handleChange}
-                    placeholder="Defina uma senha"
-                    type="password"
-                    required
-                    className="form-input"
-                  />
-                </div>
-              )}
             </div>
+            {blocoConvite}
           </div>
         </div>
       )}

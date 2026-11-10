@@ -21,6 +21,7 @@ interface User {
   unidade?: string;
   corporate_photo_url?: string;
   data_admissao?: string | null;
+  convite_pendente?: boolean;
 }
 
 type SortConfig = {
@@ -55,6 +56,68 @@ const AdminUsers: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
+
+  // ── Convites de 1º acesso ──────────────────────────────────────────────
+  const podeGerenciar =
+    Array.isArray((user as any)?.permissions) &&
+    (user as any).permissions.includes("users.manage");
+  const [reenviandoId, setReenviandoId] = useState<number | null>(null);
+  // Quantos receberiam o reenvio em massa na aba atual (exclui quem foi
+  // convidado na última hora).
+  const [convitesPendentes, setConvitesPendentes] = useState(0);
+  const [isMassaOpen, setIsMassaOpen] = useState(false);
+  const [enviandoMassa, setEnviandoMassa] = useState(false);
+
+  const carregarPendentes = useCallback(() => {
+    if (!podeGerenciar) return;
+    api
+      .get("/api/users/admin/convites/pendentes", {
+        params: { internal: activeTab === "licenciados" ? "false" : "true" },
+      })
+      .then((res) => setConvitesPendentes(res.data.total || 0))
+      .catch(() => setConvitesPendentes(0));
+  }, [podeGerenciar, activeTab]);
+
+  useEffect(() => {
+    carregarPendentes();
+  }, [carregarPendentes]);
+
+  const handleReenviarConvite = async (alvo: User) => {
+    setReenviandoId(alvo.id);
+    try {
+      const res = await api.post(`/api/users/admin/${alvo.id}/convite`);
+      toast.success(res.data?.message || "Convite reenviado.");
+      carregarPendentes();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Não foi possível reenviar o convite.");
+    } finally {
+      setReenviandoId(null);
+    }
+  };
+
+  const handleReenviarEmMassa = async () => {
+    setEnviandoMassa(true);
+    try {
+      const res = await api.post("/api/users/admin/convites/reenviar-pendentes", {
+        internal: activeTab === "licenciados" ? "false" : "true",
+      });
+      const { enviados = 0, falhas = [] } = res.data || {};
+      if (falhas.length) {
+        toast.error(
+          `${enviados} convite(s) reenviado(s); ${falhas.length} falharam: ${falhas.join(", ")}.`,
+          { duration: 10000 },
+        );
+      } else {
+        toast.success(`${enviados} convite(s) reenviado(s).`);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Não foi possível reenviar os convites.");
+    } finally {
+      setEnviandoMassa(false);
+      setIsMassaOpen(false);
+      carregarPendentes();
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -170,6 +233,7 @@ const AdminUsers: React.FC = () => {
       const setState =
         activeTab === "licenciados" ? setLicenciadoState : setColaboradorState;
       setState((prev) => ({ ...prev, currentPage: 1, searchQuery: "" }));
+      carregarPendentes();
     }
   };
 
@@ -204,14 +268,26 @@ const AdminUsers: React.FC = () => {
           <div>
             <h2 className="content-title">Gestão de Usuários</h2>
           </div>
-          
+          <div className="admin-users-header-actions">
+            {podeGerenciar && convitesPendentes > 0 && (
+              <button
+                type="button"
+                className="form-button-cancel"
+                onClick={() => setIsMassaOpen(true)}
+                disabled={enviandoMassa}
+              >
+                {enviandoMassa
+                  ? "Reenviando convites..."
+                  : `Reenviar convites pendentes (${convitesPendentes})`}
+              </button>
+            )}
             <button
-            className="form-button form-button--add"
-            onClick={handleOpenCreateModal}
-          >
-            + Adicionar Novo
-          </button>
-          
+              className="form-button form-button--add"
+              onClick={handleOpenCreateModal}
+            >
+              + Adicionar Novo
+            </button>
+          </div>
         </div>
 
         
@@ -251,6 +327,8 @@ const AdminUsers: React.FC = () => {
             handlePageChange={handlePageChange}
             handleDeleteClick={handleDeleteClick}
             handleSort={handleSort}
+            handleReenviarConvite={podeGerenciar ? handleReenviarConvite : undefined}
+            reenviandoId={reenviandoId}
           />
         )}
         {activeTab === "interno" && (
@@ -265,6 +343,8 @@ const AdminUsers: React.FC = () => {
             handlePageChange={handlePageChange}
             handleDeleteClick={handleDeleteClick}
             handleSort={handleSort}
+            handleReenviarConvite={podeGerenciar ? handleReenviarConvite : undefined}
+            reenviandoId={reenviandoId}
           />
         )}
           </>
@@ -286,6 +366,17 @@ const AdminUsers: React.FC = () => {
         onConfirm={handleConfirmDelete}
         title="Confirmar Exclusão"
         message="Tem a certeza de que deseja excluir este usuário?"
+      />
+
+      <ConfirmationModal
+        isOpen={isMassaOpen}
+        onClose={() => !enviandoMassa && setIsMassaOpen(false)}
+        onConfirm={handleReenviarEmMassa}
+        title="Reenviar convites pendentes"
+        message={`Será enviado um novo convite por e-mail para ${convitesPendentes} ${activeTab === "licenciados" ? "V-Partner(s)" : "colaborador(es)"} que ainda não criaram a senha. A senha atual dessas contas deixa de valer e só o link novo dá acesso (válido por 72 horas). Quem recebeu convite na última hora fica de fora. O envio pode levar cerca de 1 minuto.`}
+        confirmLabel={enviandoMassa ? "Enviando..." : "Reenviar convites"}
+        confirmClassName="form-button"
+        confirmDisabled={enviandoMassa}
       />
     </div>
   );

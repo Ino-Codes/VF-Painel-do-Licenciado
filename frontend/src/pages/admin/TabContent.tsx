@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiTrash2, FiEdit } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiMail } from "react-icons/fi";
 
 interface User {
   id: number;
@@ -7,6 +7,7 @@ interface User {
   email: string;
   role: string; // legado — mantido no tipo porque outras telas ainda leem
   group_name?: string | null;
+  convite_pendente?: boolean; // ainda não criou a senha (must_change_password)
   unit_id?: number;
   unidade?: string; // legacy support
 }
@@ -30,6 +31,8 @@ interface TabContentProps {
   ) => void;
   fetchUsers: (tab: "licenciados" | "colaboradores") => void;
   handleSort: (tab: "licenciados" | "interno", key: string) => void;
+  handleReenviarConvite?: (user: User) => void;
+  reenviandoId?: number | null;
 }
 
 const TabContent: React.FC<TabContentProps> = ({
@@ -41,6 +44,8 @@ const TabContent: React.FC<TabContentProps> = ({
   handleDeleteClick,
   handlePageChange,
   handleSort,
+  handleReenviarConvite,
+  reenviandoId,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -98,7 +103,17 @@ const TabContent: React.FC<TabContentProps> = ({
           <tbody>
             {state.users.map((u) => (
               <tr key={u.id}>
-                <td data-label="Nome">{u.nome}</td>
+                <td data-label="Nome">
+                  {u.nome}
+                  {u.convite_pendente && (
+                    <span
+                      className="user-convite-badge"
+                      title="Ainda não criou a senha pelo convite"
+                    >
+                      Convite pendente
+                    </span>
+                  )}
+                </td>
                 <td data-label="Email">{u.email}</td>
                 <td data-label="Tipo" className="tab-users-role-cell">
                   {u.group_name || "—"}
@@ -111,6 +126,18 @@ const TabContent: React.FC<TabContentProps> = ({
                     >
                       <FiEdit />
                     </button>
+
+                    {u.convite_pendente && handleReenviarConvite && (
+                      <button
+                        className="form-icon-list"
+                        onClick={() => handleReenviarConvite(u)}
+                        disabled={reenviandoId === u.id}
+                        title="Reenviar convite"
+                        aria-label={`Reenviar convite para ${u.nome}`}
+                      >
+                        <FiMail />
+                      </button>
+                    )}
 
                     <button
                       className="form-icon-delete"

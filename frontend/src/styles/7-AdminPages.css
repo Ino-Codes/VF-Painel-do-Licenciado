@@ -800,7 +800,49 @@
 
 /* TabContent: coluna "Ações" da tabela */
 .tab-users-actions-col {
-  width: 150px;
+  width: 170px; /* editar + reenviar convite + excluir */
+}
+
+/* ── Convite de 1º acesso (lista e formulário de usuários) ─────────────── */
+.admin-users-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-convite-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: var(--brand-gold);
+  background-color: color-mix(in srgb, var(--brand-gold) 14%, transparent);
+}
+
+.userform-convite-aviso {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.userform-convite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
 }
 
 /* TabContent: célula "Tipo" (role) capitalizada */

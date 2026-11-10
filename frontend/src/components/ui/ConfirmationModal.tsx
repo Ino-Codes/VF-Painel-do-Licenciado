@@ -6,6 +6,11 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   title: string;
   message: string;
+  /** Texto do botão de confirmar (padrão "Confirmar"). */
+  confirmLabel?: string;
+  /** Classe do botão de confirmar: padrão vermelho (ação destrutiva). */
+  confirmClassName?: string;
+  confirmDisabled?: boolean;
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -14,6 +19,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   title,
   message,
+  confirmLabel = "Confirmar",
+  confirmClassName = "form-button-delete",
+  confirmDisabled = false,
 }) => {
   if (!isOpen) {
     return null;
@@ -31,8 +39,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <button onClick={onClose} className="form-button-cancel">
             Cancelar
           </button>
-          <button onClick={onConfirm} className="form-button-delete">
-            Confirmar
+          <button
+            onClick={onConfirm}
+            className={confirmClassName}
+            disabled={confirmDisabled}
+          >
+            {confirmLabel}
           </button>
         </div>
       </div>

@@ -10,6 +10,18 @@ const {
   emitirSessao,
   excedeuLimite,
 } = require("../authSession.js");
+const { senhaInutilizavel, enviarConvite } = require("../linkDeSenha.js");
+
+// ── Convite de 1º acesso ─────────────────────────────────────────────────
+// Reenvio individual: até 3 por conta a cada 15 min (evita encher a caixa
+// de alguém por clique repetido). O reenvio em massa pula quem recebeu um
+// convite na última hora. O Resend aceita ~2 envios/s: o envio em lote
+// espera um pouco entre um e-mail e outro.
+const CONVITE_MAX_REENVIOS = 3;
+const CONVITE_JANELA_MIN = 15;
+const CONVITE_MASSA_INTERVALO_MIN = 60;
+const CONVITE_PAUSA_ENTRE_ENVIOS_MS = 600;
+const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Só o próprio usuário mexe na própria foto/senha pelas rotas /:id/...
 // (o admin edita os outros pelas rotas /admin).
@@ -84,8 +96,42 @@ const capitalizeNameWithPrepositions = (name) => {
     .join(" ");
 };
 
-module.exports = function (pool, cloudinary, upload, logActivity) {
+module.exports = function (pool, cloudinary, upload, logActivity, resend) {
   const { isLoggedIn, checkPermission } = require("../middleware/auth.js");
+
+  // Envia o convite e registra. Não lança: devolve true/false para quem
+  // chamou poder avisar o admin (a conta continua criada; dá para reenviar).
+  const convidar = async (user, req, { trocarSenha, detalhe }) => {
+    try {
+      await enviarConvite(pool, resend, user, { trocarSenha });
+      logActivity(
+        user.id,
+        req.user.email,
+        "Convite Enviado",
+        detalhe || `Convite de 1º acesso enviado para ${user.email}.`,
+        req.ipAddress,
+      );
+      return true;
+    } catch (err) {
+      console.error(`Falha ao enviar o convite para ${user.email}:`, err.resend || err);
+      logActivity(
+        user.id,
+        req.user.email,
+        "Falha no Convite",
+        `Não foi possível enviar o convite para ${user.email}.`,
+        req.ipAddress,
+      );
+      return false;
+    }
+  };
+
+  // Filtro interno/V-Partner (mesma regra da listagem).
+  const filtroInterno = (internal) =>
+    internal === "true" || internal === true
+      ? `AND EXISTS (SELECT 1 FROM group_permissions gp WHERE gp.group_id = users.group_id AND gp.permission_key = 'internal_access')`
+      : internal === "false" || internal === false
+        ? `AND NOT EXISTS (SELECT 1 FROM group_permissions gp WHERE gp.group_id = users.group_id AND gp.permission_key = 'internal_access')`
+        : "";
 
   // --- Rotas de Admin (Listar, Criar, Editar, Excluir) ---
 
@@ -160,7 +206,8 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         // `users` sem apelido, e trocar isso mexeria em coisas que funcionam.
         const usersSql = `SELECT id, nome, nickname, email, role, group_id,
           (SELECT g.name FROM user_groups g WHERE g.id = users.group_id) AS group_name,
-          avatar_url, corporate_photo_url, birth_date, cargo, setor, setor_id, unidade, unidade_id, telefone, data_admissao FROM users ${whereString} ${orderByClause} LIMIT $${
+          avatar_url, corporate_photo_url, birth_date, cargo, setor, setor_id, unidade, unidade_id, telefone, data_admissao,
+          must_change_password AS convite_pendente FROM users ${whereString} ${orderByClause} LIMIT $${
           params.length + 1
         } OFFSET $${params.length + 2}`;
 
@@ -191,7 +238,7 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       const {
         nome: nomeOriginal, // CORREÇÃO AQUI
         email: emailOriginal, // CORREÇÃO AQUI
-        password,
+        // `password` não é mais aceito: o usuário cria a senha pelo convite.
         birth_date,
         cargo,
         setor,
@@ -233,9 +280,15 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           });
         }
 
-        await client.query("BEGIN");
+        if (!nome || !email) {
+          return res.status(400).json({ error: "Informe nome e e-mail." });
+        }
 
-        const hash = await bcrypt.hash(password, 10);
+        // Senha aleatória que ninguém conhece: a conta só passa a ter senha
+        // quando o usuário a cria pelo link do convite.
+        const hash = await senhaInutilizavel();
+
+        await client.query("BEGIN");
 
         const userResult = await client.query(
           "INSERT INTO users (nome, email, password, role, group_id, birth_date, cargo, setor, setor_id, telefone, data_admissao, nickname) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
@@ -291,9 +344,26 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           req.ipAddress,
         );
 
-        res.status(201).json({ success: true, id: newUserId });
+        // Depois do COMMIT: se o e-mail falhar, a conta fica criada e o admin
+        // reenvia o convite pela lista.
+        const conviteEnviado = await convidar(
+          { id: newUserId, nome, email },
+          req,
+          { trocarSenha: false },
+        );
+
+        res.status(201).json({
+          success: true,
+          id: newUserId,
+          convite_enviado: conviteEnviado,
+        });
       } catch (err) {
         await client.query("ROLLBACK");
+        if (err.code === "23505") {
+          return res
+            .status(409)
+            .json({ error: "Este e-mail já está em uso por outro usuário." });
+        }
         console.error("Erro ao criar usuário:", err);
         res.status(500).json({ error: "Erro ao criar usuário" });
       } finally {
@@ -431,7 +501,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
       );
 
       const updatedUserResult = await client.query(
-        "SELECT id, nome, nickname, email, role, avatar_url, corporate_photo_url, birth_date, cargo, setor, setor_id, unidade, unidade_id AS unit_id, telefone, data_admissao FROM users WHERE id = $1",
+        `SELECT id, nome, nickname, email, role, group_id,
+           (SELECT g.name FROM user_groups g WHERE g.id = users.group_id) AS group_name,
+           avatar_url, corporate_photo_url, birth_date, cargo, setor, setor_id, unidade, unidade_id AS unit_id, telefone, data_admissao,
+           must_change_password AS convite_pendente
+         FROM users WHERE id = $1`,
         [id],
       );
 
@@ -613,9 +687,12 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         .pipe(csv({ mapHeaders: ({ header }) => header.trim() }))
         .on("data", (data) => results.push(data))
         .on("end", async () => {
+          let convitesFalharam = 0;
           for (const user of results) {
-            const { nome, email, password, role } = user;
-            if (!nome || !email || !password || !role) {
+            // A coluna `password` (formato antigo da planilha) é aceita e
+            // ignorada: a senha é criada pelo usuário no link do convite.
+            const { nome, email, role } = user;
+            if (!nome || !email || !role) {
               errors.push(
                 `Dados incompletos para o e-mail: ${email || "desconhecido"}.`,
               );
@@ -634,19 +711,33 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
                 errors.push(`E-mail já cadastrado: ${email}.`);
                 continue;
               }
-              const hash = await bcrypt.hash(password, 10);
-              await pool.query(
-                "INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4)",
+              const hash = await senhaInutilizavel();
+              const novo = await pool.query(
+                "INSERT INTO users (nome, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id",
                 [nomeCapitalizado, emailNormalizado, hash, role],
               );
+              const novoId = novo.rows[0].id;
               logActivity(
-                null,
+                novoId,
                 req.user.email,
                 "Usuários Criados em Massa",
                 `Usuário ${emailNormalizado} criado via importação em massa.`,
                 req.ipAddress,
               );
               successCount++;
+
+              if (successCount > 1) await pausa(CONVITE_PAUSA_ENTRE_ENVIOS_MS);
+              const ok = await convidar(
+                { id: novoId, nome: nomeCapitalizado, email: emailNormalizado },
+                req,
+                { trocarSenha: false },
+              );
+              if (!ok) {
+                convitesFalharam++;
+                errors.push(
+                  `Usuário ${emailNormalizado} criado, mas o convite não foi enviado. Use "Reenviar convite".`,
+                );
+              }
             } catch (dbError) {
               console.error(`Erro ao inserir usuário ${email}:`, dbError);
               errors.push(`Erro de banco de dados para o e-mail: ${email}.`);
@@ -655,10 +746,140 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
           res.json({
             message: "Processamento do CSV finalizado.",
             successCount,
+            convitesEnviados: successCount - convitesFalharam,
             errorCount: errors.length,
             errors,
           });
         });
+    },
+  );
+
+  // REENVIAR CONVITE (uma conta). Só para quem ainda não criou a senha
+  // (must_change_password). A senha atual vira aleatória e o link anterior
+  // deixa de valer: uma senha inicial antiga, previsível ou compartilhada,
+  // para de funcionar aqui.
+  router.post(
+    "/admin/:id/convite",
+    isLoggedIn,
+    checkPermission("users.manage"),
+    async (req, res) => {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ error: "Usuário inválido." });
+      }
+      try {
+        const r = await pool.query(
+          "SELECT id, nome, email, must_change_password FROM users WHERE id = $1",
+          [id],
+        );
+        const alvo = r.rows[0];
+        if (!alvo) return res.status(404).json({ error: "Usuário não encontrado." });
+        if (!alvo.must_change_password) {
+          return res.status(409).json({
+            error: "Este usuário já criou a senha. Para recuperar o acesso, ele pode usar “Esqueceu a senha?” no login.",
+          });
+        }
+        if (
+          await excedeuLimite(pool, {
+            acao: "Convite Enviado",
+            minutos: CONVITE_JANELA_MIN,
+            maximo: CONVITE_MAX_REENVIOS,
+            userId: id,
+          })
+        ) {
+          return res.status(429).json({
+            error: "Vários convites já foram enviados para este usuário agora há pouco. Aguarde 15 minutos.",
+          });
+        }
+        const ok = await convidar(alvo, req, {
+          trocarSenha: true,
+          detalhe: `Convite de 1º acesso reenviado para ${alvo.email}.`,
+        });
+        if (!ok) {
+          return res.status(502).json({
+            error: "Não foi possível enviar o e-mail do convite. Tente novamente em instantes.",
+          });
+        }
+        res.json({ success: true, message: `Convite reenviado para ${alvo.email}.` });
+      } catch (err) {
+        console.error("Erro ao reenviar convite:", err);
+        res.status(500).json({ error: "Erro no servidor" });
+      }
+    },
+  );
+
+  // Contas com convite pendente (nunca criaram a senha). `internal` segue o
+  // filtro da listagem: "false" = V-Partners, "true" = colaboradores.
+  const sqlPendentes = (internal) => `
+    SELECT id, nome, email FROM users
+     WHERE must_change_password = TRUE ${filtroInterno(internal)}
+       AND NOT EXISTS (
+         SELECT 1 FROM activity_logs a
+          WHERE a.user_id = users.id AND a.action = 'Convite Enviado'
+            AND a.created_at > now() - make_interval(mins => $1))
+     ORDER BY nome`;
+
+  router.get(
+    "/admin/convites/pendentes",
+    isLoggedIn,
+    checkPermission("users.manage"),
+    async (req, res) => {
+      try {
+        const [pendentes, recentes] = await Promise.all([
+          pool.query(sqlPendentes(req.query.internal), [CONVITE_MASSA_INTERVALO_MIN]),
+          pool.query(
+            `SELECT COUNT(*)::int AS n FROM users
+              WHERE must_change_password = TRUE ${filtroInterno(req.query.internal)}`,
+          ),
+        ]);
+        res.json({
+          // Quem vai receber no reenvio em massa (sem convite na última hora).
+          total: pendentes.rowCount,
+          // Todos com convite pendente, inclusive os convidados há pouco.
+          totalPendentes: recentes.rows[0].n,
+        });
+      } catch (err) {
+        console.error("Erro ao contar convites pendentes:", err);
+        res.status(500).json({ error: "Erro no servidor" });
+      }
+    },
+  );
+
+  // REENVIAR CONVITE EM MASSA: todas as contas que ainda não criaram a senha,
+  // exceto as convidadas na última hora (um clique duplo não manda 2 e-mails).
+  router.post(
+    "/admin/convites/reenviar-pendentes",
+    isLoggedIn,
+    checkPermission("users.manage"),
+    async (req, res) => {
+      const internal = req.body?.internal;
+      try {
+        const alvos = (
+          await pool.query(sqlPendentes(internal), [CONVITE_MASSA_INTERVALO_MIN])
+        ).rows;
+        let enviados = 0;
+        const falhas = [];
+        for (const [i, alvo] of alvos.entries()) {
+          if (i > 0) await pausa(CONVITE_PAUSA_ENTRE_ENVIOS_MS);
+          const ok = await convidar(alvo, req, {
+            trocarSenha: true,
+            detalhe: `Convite de 1º acesso reenviado em massa para ${alvo.email}.`,
+          });
+          if (ok) enviados++;
+          else falhas.push(alvo.email);
+        }
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Convites Reenviados em Massa",
+          `${enviados} convite(s) reenviado(s)${falhas.length ? `, ${falhas.length} falha(s)` : ""}.`,
+          req.ipAddress,
+        );
+        res.json({ success: true, total: alvos.length, enviados, falhas });
+      } catch (err) {
+        console.error("Erro ao reenviar convites em massa:", err);
+        res.status(500).json({ error: "Erro no servidor" });
+      }
     },
   );
 

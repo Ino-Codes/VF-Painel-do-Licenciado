@@ -125,6 +125,7 @@ const userRoutes = require("./routes/users.js")(
   cloudinary,
   upload,
   logActivity,
+  resend,
 );
 const noticeRoutes = require("./routes/notices.js")(
   pool,
