@@ -108,6 +108,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(false);
   }, []);
 
+  // Respostas do backend sobre a sessão:
+  // - SESSAO_ENCERRADA: a senha foi trocada/redefinida em outro lugar (ou a
+  //   conta excluída) → sai, em vez de deixar a tela quebrando aos poucos.
+  // - TROCA_DE_SENHA_OBRIGATORIA: recarrega o usuário para o modal aparecer.
+  useEffect(() => {
+    const id = api.interceptors.response.use(
+      (res) => res,
+      (error) => {
+        const code = error?.response?.data?.code;
+        if (code === "SESSAO_ENCERRADA" && safeStorage.get("token")) {
+          safeStorage.remove("token");
+          safeStorage.remove("userData");
+          safeStorage.remove("currentCompany");
+          window.location.href = "/?sessao=encerrada";
+        } else if (code === "TROCA_DE_SENHA_OBRIGATORIA") {
+          setUser((u) => (u && !u.must_change_password ? { ...u, must_change_password: true } : u));
+        }
+        return Promise.reject(error);
+      },
+    );
+    return () => api.interceptors.response.eject(id);
+  }, []);
+
   // Ressincroniza as permissões quando a aba volta ao foco.
   useEffect(() => {
     const onFocus = () => {

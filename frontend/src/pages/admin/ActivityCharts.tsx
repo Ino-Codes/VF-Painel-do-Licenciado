@@ -41,6 +41,10 @@ export interface ActivityStats {
     vpartners: number;
     sucesso: number;
     falhas: number;
+    /** Falhas de e-mail cadastrado (senha errada). Ausente em backend antigo. */
+    falhasSenha?: number;
+    /** Falhas com e-mail que não tem conta. */
+    falhasEmail?: number;
     falhas2fa: number;
     senhasRedefinidas: number;
   }[];
@@ -255,11 +259,25 @@ const ActivityCharts: React.FC<Props> = ({ stats }) => {
         },
         {
           label: "Senha incorreta",
-          data: serie.map((p) => p.falhas),
+          data: serie.map((p) => p.falhasSenha ?? p.falhas),
           borderColor: palette.seq[3],
           backgroundColor: `${palette.seq[3]}22`,
           borderWidth: 2,
           borderDash: [6, 4],
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.35,
+          fill: false,
+        },
+        // Quem digitou um e-mail sem conta não "errou a senha": separado, o
+        // gráfico não exagera o problema de senha.
+        {
+          label: "E-mail não cadastrado",
+          data: serie.map((p) => p.falhasEmail ?? 0),
+          borderColor: palette.seq[1],
+          backgroundColor: `${palette.seq[1]}22`,
+          borderWidth: 2,
+          borderDash: [2, 3],
           pointRadius: 0,
           pointHoverRadius: 5,
           tension: 0.35,
@@ -503,7 +521,7 @@ const ActivityCharts: React.FC<Props> = ({ stats }) => {
         {acesso && (
           <ul className="viz-resumo">
             <li>
-              <strong>{pct(acesso.falhas, tentativas)}%</strong>
+              <strong>{pct(acesso.falhasCadastrados, tentativas)}%</strong>
               <span>das tentativas com senha incorreta</span>
             </li>
             <li>

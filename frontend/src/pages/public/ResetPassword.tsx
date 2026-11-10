@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
+import { REGRA_SENHA, validarSenha } from "../../utils/senha.ts";
 
 const logo =
   "https://res.cloudinary.com/dsgbgrll5/image/upload/v1782936553/textobranco_zxw32o.png";
@@ -26,8 +27,9 @@ const ResetPassword = () => {
       );
       return;
     }
-    if (password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres.");
+    const erroSenha = validarSenha(password);
+    if (erroSenha) {
+      setError(erroSenha);
       return;
     }
     if (password !== confirmPassword) {
@@ -63,9 +65,12 @@ const ResetPassword = () => {
 
         {error && <div className="login-error-message">{error}</div>}
 
+        <p className="login-subtitle">{REGRA_SENHA}</p>
+
         <form onSubmit={handleSubmit}>
           <input
             type="password"
+            autoComplete="new-password"
             placeholder="Nova Senha"
             className="input-login"
             value={password}
@@ -74,6 +79,7 @@ const ResetPassword = () => {
           />
           <input
             type="password"
+            autoComplete="new-password"
             placeholder="Confirmar Nova Senha"
             className="input-login"
             value={confirmPassword}

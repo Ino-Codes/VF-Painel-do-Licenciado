@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
-import ForcePasswordResetModal from "../../components/ui/ForcePasswordResetModal.tsx";
 import Logo from "../../img/textobranco2.png";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
@@ -15,8 +14,7 @@ const App: React.FC = () => {
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, logout, user, loading } = useAuth();
-  const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
+  const { login, user, loading } = useAuth();
 
   // ── Verificação em duas etapas (2FA) ──
   const [step, setStep] = useState<"login" | "2fa">("login");
@@ -33,13 +31,24 @@ const App: React.FC = () => {
   }, [step]);
 
   // Se já existe sessão autenticada (token válido no localStorage), pula a tela
-  // de login e vai direto para a Home — a não ser que o usuário precise trocar
-  // a senha obrigatoriamente.
+  // de login e vai direto para a Home. A troca de senha obrigatória do 1º
+  // acesso é exigida pelo ProtectedRoute, em qualquer tela.
   useEffect(() => {
-    if (!loading && user && !needsPasswordReset) {
+    if (!loading && user) {
       navigate("/home", { replace: true });
     }
-  }, [loading, user, needsPasswordReset, navigate]);
+  }, [loading, user, navigate]);
+
+  // Sessão derrubada pelo backend (senha trocada em outro lugar).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("sessao") === "encerrada") {
+      toast("Sua sessão foi encerrada porque a senha foi alterada. Entre novamente.", {
+        id: "sessao-encerrada",
+      });
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
 
   const formattedTime = `${Math.floor(secondsLeft / 60)}:${String(
     secondsLeft % 60,
@@ -47,18 +56,17 @@ const App: React.FC = () => {
 
   const finishLogin = (user: any, token: string) => {
     login(user, token); // Guarda os dados no localStorage e no contexto
-    if (user.must_change_password) {
-      setNeedsPasswordReset(true); // Se precisar mudar, abre o modal
-    } else {
-      navigate("/home");
-    }
+    navigate("/home");
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true); // Retorno visual durante a validação
     try {
-      const res = await api.post("/api/auth/login", { email, password });
+      const res = await api.post("/api/auth/login", {
+        email: email.trim(),
+        password,
+      });
 
       // 1ª etapa OK → o backend enviou o código por e-mail. Avança para o
       // passo de verificação; o token só vem depois do /verify-2fa.
@@ -69,11 +77,18 @@ const App: React.FC = () => {
         toast.success("Enviamos um código de verificação para o seu e-mail.");
       }
     } catch (err: any) {
-      // 401 = credenciais inválidas; 500 = falha ao enviar o código.
-      if (err?.response?.status === 500) {
+      // 401 = credenciais inválidas; 429 = bloqueio temporário por excesso
+      // de tentativas; 500 = falha ao enviar o código.
+      const status = err?.response?.status;
+      if (status === 500 || status === 429) {
         toast.error(
           err.response.data?.message ||
             "Erro no servidor. Tente novamente em instantes.",
+        );
+      } else if (/@valorfiscal\.com$/i.test(email.trim())) {
+        // Maior causa de falha nos logs desde a mudança de marca.
+        toast.error(
+          "Os e-mails @valorfiscal.com não valem mais. Colaboradores entram com o e-mail @vcorporate.com.br; V-Partners, com o e-mail do cadastro.",
         );
       } else {
         toast.error("Revise os dados de login e tente novamente.");
@@ -89,7 +104,7 @@ const App: React.FC = () => {
     setIsLoading(true);
     try {
       const res = await api.post("/api/auth/verify-2fa", {
-        email,
+        email: email.trim(),
         code: code.trim(),
       });
       const { user, token } = res.data;
@@ -106,7 +121,7 @@ const App: React.FC = () => {
 
   const handleResend = async () => {
     try {
-      await api.post("/api/auth/resend-2fa", { email });
+      await api.post("/api/auth/resend-2fa", { email: email.trim() });
       setCode("");
       setSecondsLeft(120);
       toast.success("Novo código enviado para o seu e-mail.");
@@ -130,7 +145,7 @@ const App: React.FC = () => {
     }
     try {
       const res = await api.post("/api/auth/solicitar-redefinicao", {
-        email: emailRecuperacao,
+        email: emailRecuperacao.trim(),
       });
       setRecoveryMessage(res.data.message);
     } catch (err) {
@@ -148,11 +163,6 @@ const App: React.FC = () => {
     setRecoveryMessage("");
   };
 
-  const onPasswordResetSuccess = () => {
-    setNeedsPasswordReset(false);
-    logout(); // Força o logout para que o usuário entre com a nova senha
-  };
-
   const tituloTela = mostrarRecuperacao
     ? "Recuperar Senha"
     : step === "2fa"
@@ -161,7 +171,7 @@ const App: React.FC = () => {
 
   // Evita exibir a tela de login enquanto a sessão é lida (loading) ou quando
   // já há sessão e o redirecionamento para /home está prestes a acontecer.
-  if (loading || (user && !needsPasswordReset)) {
+  if (loading || user) {
     return <LoadingSpinner />;
   }
 
@@ -321,10 +331,6 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-      {/* O modal de redefinição de senha é renderizado aqui se necessário */}
-      {needsPasswordReset && (
-        <ForcePasswordResetModal onSuccess={onPasswordResetSuccess} />
-      )}
     </>
   );
 };

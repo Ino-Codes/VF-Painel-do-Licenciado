@@ -244,6 +244,15 @@
   flex-shrink: 0;
 }
 
+/* O X do modal é absoluto por padrão (2-components.css); aqui ele entra no
+   fluxo da barra para ficar centralizado com o tipo e o número do chamado.
+   As margens negativas compensam o tamanho do botão (34px), sem aumentar a
+   altura da barra. */
+.ticket-modal-topbar .modal-close-button {
+  position: static;
+  margin: -8px -10px -8px 0;
+}
+
 .ticket-modal-topbar-left {
   display: flex;
   align-items: center;

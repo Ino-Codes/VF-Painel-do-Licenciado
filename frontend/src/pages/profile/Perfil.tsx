@@ -6,6 +6,7 @@ import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { REGRA_SENHA, validarSenha } from "../../utils/senha.ts";
 import ConfirmationModal from "../../components/ui/ConfirmationModal.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import CertificadosExternos from "../../components/profile/CertificadosExternos.tsx";
@@ -183,17 +184,20 @@ const Perfil: React.FC = () => {
       toast.error("A nova senha e a confirmação não correspondem.");
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+    const erroSenha = validarSenha(newPassword, user.email);
+    if (erroSenha) {
+      toast.error(erroSenha);
       return;
     }
 
     try {
-      await api.put(`/api/users/${user.id}/change-password`, {
+      const res = await api.put(`/api/users/${user.id}/change-password`, {
         currentPassword,
         newPassword,
       });
-      toast.success("Senha alterada com sucesso!");
+      // A troca encerra as outras sessões; esta segue com o token novo.
+      if (res.data?.token) login(res.data.user, res.data.token);
+      toast.success("Senha alterada com sucesso! Outras sessões abertas foram encerradas.");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -549,12 +553,14 @@ const Perfil: React.FC = () => {
             {/* ── Alterar Senha ── */}
             <div className="profile-section">
               <h3>Alterar Senha</h3>
+              <p className="senha-regra">{REGRA_SENHA}</p>
 
               <div className="form-row first">
                 <label htmlFor="current-password">Senha Atual:</label>
                 <input
                   id="current-password"
                   type="password"
+                  autoComplete="current-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="form-input"
@@ -567,6 +573,7 @@ const Perfil: React.FC = () => {
                 <input
                   id="new-password"
                   type="password"
+                  autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="form-input"
@@ -582,6 +589,7 @@ const Perfil: React.FC = () => {
                 <input
                   id="confirm-password"
                   type="password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="form-input"

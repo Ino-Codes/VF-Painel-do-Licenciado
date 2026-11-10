@@ -34,8 +34,8 @@ const stats: ActivityStats = {
     { id: 6, nome: "Fábio", email: "fabio@x.com", publico: "vpartner", faixa: "nunca", ultimoLogin: null },
   ],
   serie: [
-    { inicio: "2026-10-12", internos: 3, vpartners: 0, sucesso: 9, falhas: 2, falhas2fa: 0, senhasRedefinidas: 1 },
-    { inicio: "2026-10-19", internos: 2, vpartners: 1, sucesso: 5, falhas: 0, falhas2fa: 0, senhasRedefinidas: 0 },
+    { inicio: "2026-10-12", internos: 3, vpartners: 0, sucesso: 9, falhas: 2, falhasSenha: 1, falhasEmail: 1, falhas2fa: 0, senhasRedefinidas: 1 },
+    { inicio: "2026-10-19", internos: 2, vpartners: 1, sucesso: 5, falhas: 0, falhasSenha: 0, falhasEmail: 0, falhas2fa: 0, senhasRedefinidas: 0 },
   ],
   porDiaHora: [
     { dow: 1, hora: 10, count: 7 },
@@ -56,7 +56,7 @@ describe("Gráficos da aba Atividade", () => {
     render(<ActivityCharts stats={stats} />);
     const [ativos, acesso] = screen.getAllByTestId("linha");
     expect(ativos.textContent).toBe("Colaboradores=3,2 | V-Partners=0,1");
-    expect(acesso.textContent).toBe("Logins concluídos=9,5 | Senha incorreta=2,0");
+    expect(acesso.textContent).toBe("Logins concluídos=9,5 | Senha incorreta=1,0 | E-mail não cadastrado=1,0");
     expect(screen.getAllByText("usuários diferentes que entraram, por semana")).toHaveLength(1);
   });
 
@@ -98,8 +98,8 @@ describe("Gráficos da aba Atividade", () => {
 
   it("resumo da saúde do acesso", () => {
     render(<ActivityCharts stats={stats} />);
-    // 6 falhas em 20 tentativas; 2 delas com e-mail não cadastrado.
-    expect(screen.getByText("30%")).toBeTruthy();
+    // 6 falhas em 20 tentativas: 4 de senha errada (20%) e 2 de e-mail não cadastrado.
+    expect(screen.getByText("20%")).toBeTruthy();
     expect(screen.getByText("das tentativas com senha incorreta")).toBeTruthy();
     expect(screen.getByText("tentativas com e-mail não cadastrado").previousSibling!.textContent).toBe("2");
     expect(screen.getByText("senha redefinida")).toBeTruthy();

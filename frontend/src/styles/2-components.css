@@ -390,6 +390,13 @@ input[type="checkbox"]:checked {
   color: var(--text-primary);
 }
 
+/* Regra de senha exibida junto aos campos de senha nova. */
+.senha-regra {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
 /* Formulários dentro de modais não têm superfície própria — o .modal-content
    já provê o vidro. Evita o efeito de "vidro sobre vidro". */
 .modal-content .admin-form,

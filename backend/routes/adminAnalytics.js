@@ -236,7 +236,11 @@ module.exports = function (pool) {
            eventos AS (
              SELECT date_trunc($2, a.created_at AT TIME ZONE 'America/Sao_Paulo') AS inicio,
                     a.action, a.user_id,
-                    ${publicoSql("u")} AS publico
+                    ${publicoSql("u")} AS publico,
+                    -- Falha de quem tem conta (senha errada) x e-mail que não existe.
+                    (a.action = 'Falha no Login' AND EXISTS (
+                       SELECT 1 FROM users x WHERE x.email = lower(btrim(a.user_email))
+                    )) AS falha_de_cadastrado
                FROM activity_logs a
                LEFT JOIN users u ON u.id = a.user_id
               WHERE a.created_at >= (SELECT MIN(inicio) FROM eixo) AT TIME ZONE 'America/Sao_Paulo'
@@ -247,6 +251,7 @@ module.exports = function (pool) {
                   COUNT(DISTINCT ev.user_id) FILTER (WHERE ev.action = 'Login Bem-Sucedido' AND ev.user_id IS NOT NULL AND ev.publico = 'vpartner')::int AS vpartners,
                   COUNT(ev.action) FILTER (WHERE ev.action = 'Login Bem-Sucedido')::int AS sucesso,
                   COUNT(ev.action) FILTER (WHERE ev.action = 'Falha no Login')::int AS falhas,
+                  COUNT(ev.action) FILTER (WHERE ev.falha_de_cadastrado)::int AS falhas_senha,
                   COUNT(ev.action) FILTER (WHERE ev.action = '2FA Falhou')::int AS falhas_2fa,
                   COUNT(ev.action) FILTER (WHERE ev.action = 'Senha Redefinida')::int AS senhas_redefinidas
              FROM eixo e
@@ -277,7 +282,7 @@ module.exports = function (pool) {
                   COUNT(*) FILTER (WHERE a.action = '2FA Falhou')::int AS falhas_2fa,
                   COUNT(*) FILTER (WHERE a.action = 'Senha Redefinida')::int AS senhas_redefinidas
              FROM activity_logs a
-             LEFT JOIN users u ON a.action = 'Falha no Login' AND lower(u.email) = lower(a.user_email)
+             LEFT JOIN users u ON a.action = 'Falha no Login' AND u.email = lower(btrim(a.user_email))
             WHERE a.created_at > now() - make_interval(days => $1)
               AND a.action IN ('Login Bem-Sucedido', 'Falha no Login', '2FA Falhou', 'Senha Redefinida')`,
           [dias],
@@ -356,6 +361,8 @@ module.exports = function (pool) {
             vpartners: r.vpartners,
             sucesso: r.sucesso,
             falhas: r.falhas,
+            falhasSenha: r.falhas_senha,
+            falhasEmail: r.falhas - r.falhas_senha,
             falhas2fa: r.falhas_2fa,
             senhasRedefinidas: r.senhas_redefinidas,
           })),

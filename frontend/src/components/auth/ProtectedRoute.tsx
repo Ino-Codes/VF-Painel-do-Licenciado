@@ -2,6 +2,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.tsx";
 import LoadingSpinner from "../ui/LoadingSpinner.tsx";
+import ForcePasswordResetModal from "../ui/ForcePasswordResetModal.tsx";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,7 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   permission,
   anyOf,
 }) => {
-  const { user, loading, hasPermission, hasAnyPermission } = useAuth();
+  const { user, loading, login, logout, hasPermission, hasAnyPermission } = useAuth();
 
   if (loading) {
     return <LoadingSpinner />;
@@ -25,6 +26,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (!user) {
     return <Navigate to="/" replace />;
+  }
+
+  // Troca de senha do 1º acesso pendente: nenhuma tela abre antes dela.
+  // (Antes o modal só existia na tela de login — recarregar a página pulava.)
+  if (user.must_change_password) {
+    return (
+      <ForcePasswordResetModal
+        email={user.email}
+        onSuccess={(novoUser, token) => login(novoUser, token)}
+        onCancel={logout}
+      />
+    );
   }
 
   let allowed = true;

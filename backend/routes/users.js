@@ -3,8 +3,17 @@ const bcrypt = require("bcryptjs");
 const csv = require("csv-parser");
 const { Readable } = require("stream");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 const { ROLE_TO_SLUG, SLUG_TO_ROLE } = require("../permissions.js");
+const {
+  validarSenha,
+  gravarSenha,
+  emitirSessao,
+  excedeuLimite,
+} = require("../authSession.js");
+
+// Só o próprio usuário mexe na própria foto/senha pelas rotas /:id/...
+// (o admin edita os outros pelas rotas /admin).
+const ehOProprio = (req) => Number(req.params.id) === Number(req.user.id);
 
 // Resolve group_id/role a partir do corpo da requisição, espelhando um no
 // outro para compatibilidade (role continua preenchido; group_id é a fonte).
@@ -479,31 +488,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
       let responsePayload = { success: true, user: updatedUser };
 
+      // Editou a si mesmo → token novo com os dados atuais. Antes o grupo
+      // não vinha no SELECT e o token novo saía sem group_id.
       if (req.user.id == id) {
-        let groupName = null;
-        if (updatedUser.group_id) {
-          const gRes = await pool.query(
-            "SELECT name FROM user_groups WHERE id = $1",
-            [updatedUser.group_id],
-          );
-          groupName = gRes.rows[0] ? gRes.rows[0].name : null;
-        }
-        const newToken = jwt.sign(
-          {
-            id: updatedUser.id,
-            email: updatedUser.email,
-            role: updatedUser.role,
-            nome: updatedUser.nome,
-            nickname: updatedUser.nickname,
-            avatar_url: updatedUser.avatar_url,
-            data_admissao: updatedUser.data_admissao,
-            group_id: updatedUser.group_id || null,
-            group_name: groupName,
-          },
-          process.env.JWT_SECRET,
-          { expiresIn: "12h" },
-        );
-        responsePayload.token = newToken;
+        const sessao = await emitirSessao(pool, id);
+        if (sessao) responsePayload.token = sessao.token;
       }
 
       res.json(responsePayload);
@@ -804,22 +793,36 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     }
   });
 
+  // Troca obrigatória do 1º acesso. Não pede a senha atual (o usuário acabou
+  // de entrar com ela), por isso só vale enquanto a troca está pendente —
+  // senão qualquer sessão aberta trocaria a senha sem conhecê-la.
   router.put("/force-change-password", isLoggedIn, async (req, res) => {
     const { id: userId } = req.user;
-    const { password } = req.body;
-
-    if (!password || password.length < 6) {
-      return res
-        .status(400)
-        .json({ error: "A senha deve ter pelo menos 6 caracteres." });
-    }
+    const { password } = req.body || {};
 
     try {
-      const newHash = await bcrypt.hash(password, 10);
-      await pool.query(
-        "UPDATE users SET password = $1, must_change_password = FALSE WHERE id = $2",
-        [newHash, userId],
+      const atual = await pool.query(
+        "SELECT email, password, must_change_password FROM users WHERE id = $1",
+        [userId],
       );
+      const conta = atual.rows[0];
+      if (!conta) return res.status(404).json({ error: "Usuário não encontrado." });
+      if (!conta.must_change_password) {
+        return res.status(409).json({
+          error: "Sua senha já foi definida. Para trocá-la, use o seu perfil.",
+        });
+      }
+
+      const erroSenha = validarSenha(password, conta.email);
+      if (erroSenha) return res.status(400).json({ error: erroSenha });
+      if (await bcrypt.compare(password, conta.password)) {
+        return res
+          .status(400)
+          .json({ error: "A nova senha precisa ser diferente da senha inicial." });
+      }
+
+      const newHash = await bcrypt.hash(password, 10);
+      await gravarSenha(pool, userId, newHash);
 
       logActivity(
         userId,
@@ -828,7 +831,14 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         "Senha alterada no primeiro acesso.",
         req.ipAddress,
       );
-      res.json({ success: true, message: "Senha alterada com sucesso!" });
+      // Sessão nova: o usuário segue direto, sem fazer login (e 2FA) de novo.
+      const sessao = await emitirSessao(pool, userId);
+      res.json({
+        success: true,
+        message: "Senha alterada com sucesso!",
+        user: sessao.user,
+        token: sessao.token,
+      });
     } catch (err) {
       console.error("Erro ao forçar mudança de senha:", err);
       res.status(500).json({ error: "Erro no servidor" });
@@ -841,6 +851,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
     upload.single("avatar"),
     async (req, res) => {
       const { id } = req.params;
+      if (!ehOProprio(req)) {
+        return res
+          .status(403)
+          .json({ error: "Você só pode alterar a sua própria foto." });
+      }
       if (!req.file)
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
       try {
@@ -862,29 +877,15 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
             .end(req.file.buffer);
         });
         const newAvatarUrl = uploadResult.secure_url;
-        const updateResult = await pool.query(
-          "UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING id, nome, nickname, email, role, avatar_url, cargo, setor, unidade, unidade_id AS unit_id, telefone",
-          [newAvatarUrl, id],
-        );
+        await pool.query("UPDATE users SET avatar_url = $1 WHERE id = $2", [
+          newAvatarUrl,
+          id,
+        ]);
 
-        const updatedUser = updateResult.rows[0];
-
-        const newToken = jwt.sign(
-          {
-            id: updatedUser.id,
-            email: updatedUser.email,
-            role: updatedUser.role,
-            nome: updatedUser.nome,
-            nickname: updatedUser.nickname,
-            avatar_url: updatedUser.avatar_url,
-            group_id: req.user.group_id || null,
-            group_name: req.user.group_name || null,
-          },
-          process.env.JWT_SECRET,
-          { expiresIn: "12h" },
-        );
-
-        res.json({ success: true, user: updatedUser, token: newToken });
+        // Token sempre do próprio usuário, montado do banco. (Antes era
+        // assinado com o id da URL: qualquer logado obtinha o token de outro.)
+        const sessao = await emitirSessao(pool, req.user.id);
+        res.json({ success: true, user: sessao.user, token: sessao.token });
       } catch (err) {
         console.error("Erro no upload de avatar:", err);
         res.status(500).json({ error: "Erro no servidor durante o upload." });
@@ -894,6 +895,11 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   router.delete("/:id/avatar", isLoggedIn, async (req, res) => {
     const { id } = req.params;
+    if (!ehOProprio(req)) {
+      return res
+        .status(403)
+        .json({ error: "Você só pode alterar a sua própria foto." });
+    }
     try {
       const userResult = await pool.query(
         "SELECT avatar_url FROM users WHERE id = $1",
@@ -904,28 +910,10 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
         const publicId = oldAvatarUrl.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
       }
-      const updateResult = await pool.query(
-        "UPDATE users SET avatar_url = NULL WHERE id = $1 RETURNING id, nome, nickname, email, role, avatar_url, cargo, setor, unidade, telefone",
-        [id],
-      );
-      const updatedUser = updateResult.rows[0];
-      const jwt = require("jsonwebtoken");
-      const newToken = jwt.sign(
-        {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          role: updatedUser.role,
-          nome: updatedUser.nome,
-          nickname: updatedUser.nickname,
-          avatar_url: null,
-          group_id: req.user.group_id || null,
-          group_name: req.user.group_name || null,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: "12h" },
-      );
+      await pool.query("UPDATE users SET avatar_url = NULL WHERE id = $1", [id]);
 
-      res.json({ success: true, user: updatedUser, token: newToken });
+      const sessao = await emitirSessao(pool, req.user.id);
+      res.json({ success: true, user: sessao.user, token: sessao.token });
     } catch (err) {
       console.error("Erro ao remover avatar:", err);
       res.status(500).json({ error: "Erro no servidor" });
@@ -934,31 +922,73 @@ module.exports = function (pool, cloudinary, upload, logActivity) {
 
   router.put("/:id/change-password", isLoggedIn, async (req, res) => {
     const { id } = req.params;
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body || {};
+    // Antes qualquer logado podia chamar com o id de outro: virava um jeito
+    // de testar senhas alheias sem 2FA, sem limite e sem registro de falha.
+    if (!ehOProprio(req)) {
+      return res
+        .status(403)
+        .json({ error: "Você só pode alterar a sua própria senha." });
+    }
     try {
+      if (
+        await excedeuLimite(pool, {
+          acao: "Falha na Troca de Senha",
+          minutos: 15,
+          maximo: 5,
+          userId: req.user.id,
+        })
+      ) {
+        return res.status(429).json({
+          error: "Muitas tentativas com a senha atual errada. Aguarde 15 minutos.",
+        });
+      }
+
       const userResult = await pool.query(
-        "SELECT password FROM users WHERE id = $1",
+        "SELECT email, password FROM users WHERE id = $1",
         [id],
       );
       if (userResult.rowCount === 0)
         return res.status(404).json({ error: "Usuário não encontrado." });
-      const storedHash = userResult.rows[0].password;
-      if (!(await bcrypt.compare(currentPassword, storedHash))) {
-        return res.status(401).json({ error: "A senha atual está incorreta." });
+      const { email, password: storedHash } = userResult.rows[0];
+      if (
+        typeof currentPassword !== "string" ||
+        !(await bcrypt.compare(currentPassword, storedHash))
+      ) {
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Falha na Troca de Senha",
+          "Senha atual incorreta.",
+          req.ipAddress,
+        );
+        return res.status(400).json({ error: "A senha atual está incorreta." });
       }
+      const erroSenha = validarSenha(newPassword, email);
+      if (erroSenha) return res.status(400).json({ error: erroSenha });
+      if (newPassword === currentPassword) {
+        return res
+          .status(400)
+          .json({ error: "A nova senha precisa ser diferente da atual." });
+      }
+
       const newHash = await bcrypt.hash(newPassword, 10);
-      await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
-        newHash,
-        id,
-      ]);
+      await gravarSenha(pool, id, newHash);
       logActivity(
-        id,
-        null,
+        req.user.id,
+        req.user.email,
         "Alteração de Senha",
-        "Senha alterada com sucesso.",
+        "Senha alterada pelo perfil. Outras sessões foram encerradas.",
         req.ipAddress,
       );
-      res.json({ success: true, message: "Senha alterada com sucesso." });
+      // As outras sessões caem; esta continua com um token novo.
+      const sessao = await emitirSessao(pool, req.user.id);
+      res.json({
+        success: true,
+        message: "Senha alterada com sucesso.",
+        user: sessao.user,
+        token: sessao.token,
+      });
     } catch (err) {
       console.error("Erro ao alterar senha:", err);
       res.status(500).json({ error: "Erro no servidor" });

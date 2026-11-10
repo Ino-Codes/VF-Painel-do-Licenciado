@@ -2,13 +2,30 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 const { isLoggedIn } = require("../middleware/auth.js");
-const { getGroupPermissions } = require("../permissionCache.js");
+const {
+  semSegredos,
+  normalizarEmail,
+  validarSenha,
+  gravarSenha,
+  emitirSessao,
+  ipDoCliente,
+  excedeuLimite,
+} = require("../authSession.js");
 
 // ── Configuração da verificação em duas etapas (2FA) ──────────────────────
 const TWO_FACTOR_TTL_MS = 2 * 60 * 1000; // 2 minutos
 const TWO_FACTOR_MAX_ATTEMPTS = 5;
+const TWO_FACTOR_MAX_ENVIOS = 5; // por usuário a cada 15 min (login + reenvios)
+
+// ── Limites de tentativa (janela de 15 minutos) ───────────────────────────
+// Por e-mail: segura a adivinhação de senha de uma conta. Por IP: segura
+// quem testa senhas comuns em muitas contas. A janela é curta para quem
+// errou de verdade não ficar preso — e a redefinição continua disponível.
+const JANELA_MIN = 15;
+const LOGIN_MAX_FALHAS_EMAIL = 10;
+const LOGIN_MAX_FALHAS_IP = 30;
+const REDEFINICAO_MAX_PEDIDOS = 3;
 
 // Código de 6 dígitos, gerado de forma criptograficamente segura.
 const generateTwoFactorCode = () =>
@@ -17,6 +34,23 @@ const generateTwoFactorCode = () =>
 // Guardamos apenas o hash do código (nunca o código em texto puro).
 const hashTwoFactorCode = (code) =>
   crypto.createHash("sha256").update(String(code)).digest("hex");
+
+// Comparação em tempo constante (os dois lados são hashes hex de 64 chars).
+const mesmoHash = (a, b) =>
+  typeof a === "string" &&
+  typeof b === "string" &&
+  a.length === b.length &&
+  crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
+// Hash descartável: o login de um e-mail inexistente também paga o custo do
+// bcrypt, para o tempo de resposta não revelar quem tem conta.
+const HASH_FICTICIO = bcrypt.hashSync(crypto.randomBytes(16).toString("hex"), 10);
+
+const escaparHtml = (s) =>
+  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+const MSG_MUITAS_TENTATIVAS =
+  "Muitas tentativas de login. Aguarde 15 minutos ou use “Esqueceu a senha?”.";
 
 module.exports = function (pool, resend, logActivity) {
   // ── Helper: e-mail estilizado com o código de verificação ───────────────
@@ -33,7 +67,7 @@ module.exports = function (pool, resend, logActivity) {
             </td></tr>
             <tr><td style="padding:30px 40px;color:#2D2C2B;font-size:16px;line-height:1.6;">
               <h2 style="font-size:22px;color:#0D0D0D;margin-top:0;">Seu código de acesso</h2>
-              <p>Olá, ${nome || "usuário"},</p>
+              <p>Olá, ${escaparHtml(nome) || "usuário"},</p>
               <p>Use o código abaixo para concluir o seu login no Painel V-CORP:</p>
               <div style="margin:28px 0;text-align:center;">
                 <span style="display:inline-block;font-size:34px;font-weight:700;letter-spacing:10px;color:#111217;background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 24px;">${code}</span>
@@ -52,14 +86,17 @@ module.exports = function (pool, resend, logActivity) {
   `;
 
   // ── Helper: gera, salva e envia um novo código de verificação ────────────
-  const sendTwoFactorCode = async (user) => {
+  // O reenvio troca o código mas NÃO zera as tentativas: senão cada reenvio
+  // daria mais 5 chutes. Só um login novo (que exige a senha) zera.
+  const sendTwoFactorCode = async (user, { zerarTentativas = true } = {}) => {
     const code = generateTwoFactorCode();
     const expires = new Date(Date.now() + TWO_FACTOR_TTL_MS);
     await pool.query(
       `UPDATE users
-         SET two_factor_code = $1, two_factor_expires = $2, two_factor_attempts = 0
+         SET two_factor_code = $1, two_factor_expires = $2,
+             two_factor_attempts = CASE WHEN $4 THEN 0 ELSE two_factor_attempts END
        WHERE id = $3`,
-      [hashTwoFactorCode(code), expires, user.id],
+      [hashTwoFactorCode(code), expires, user.id, zerarTentativas],
     );
     await resend.emails.send({
       from: `Painel V-CORP <${process.env.EMAIL_FROM}>`,
@@ -80,20 +117,42 @@ module.exports = function (pool, resend, logActivity) {
 
   // ── POST /login — 1ª etapa: valida credenciais e dispara o código ────────
   router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
+    const email = normalizarEmail(req.body?.email);
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+    if (!email || !password) {
+      return res.status(400).json({ message: "Informe e-mail e senha." });
+    }
     try {
-      const result = await pool.query(
-        "SELECT *, must_change_password FROM users WHERE email = $1",
-        [email],
-      );
+      // Bloqueio temporário ANTES de conferir a senha: enquanto durar, nem a
+      // senha certa entra — é o que impede a adivinhação.
+      const ip = ipDoCliente(req);
+      const [porEmail, porIp] = await Promise.all([
+        excedeuLimite(pool, { acao: "Falha no Login", minutos: JANELA_MIN, maximo: LOGIN_MAX_FALHAS_EMAIL, email }),
+        excedeuLimite(pool, { acao: "Falha no Login", minutos: JANELA_MIN, maximo: LOGIN_MAX_FALHAS_IP, ip }),
+      ]);
+      if (porEmail || porIp) {
+        logActivity(
+          null,
+          email,
+          "Login Bloqueado",
+          porEmail
+            ? "Muitas senhas incorretas para este e-mail em 15 minutos."
+            : "Muitas tentativas falhas a partir deste IP em 15 minutos.",
+          req.ipAddress,
+        );
+        return res.status(429).json({ message: MSG_MUITAS_TENTATIVAS });
+      }
+
+      const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
       const user = result.rows[0];
 
-      if (!user || !(await bcrypt.compare(password, user.password))) {
+      const senhaOk = await bcrypt.compare(password, user ? user.password : HASH_FICTICIO);
+      if (!user || !senhaOk) {
         logActivity(
           null,
           email,
           "Falha no Login",
-          "Tentativa de login falhou.",
+          user ? "Senha incorreta." : "E-mail não cadastrado.",
           req.ipAddress,
         );
         return res.status(401).json({ message: "Credenciais inválidas" });
@@ -101,6 +160,19 @@ module.exports = function (pool, resend, logActivity) {
 
       // Credenciais OK → envia o código de verificação por e-mail. O token só
       // é emitido na 2ª etapa (POST /verify-2fa).
+      if (
+        await excedeuLimite(pool, {
+          acao: "2FA Enviado",
+          minutos: JANELA_MIN,
+          maximo: TWO_FACTOR_MAX_ENVIOS,
+          userId: user.id,
+        })
+      ) {
+        return res.status(429).json({
+          message:
+            "Muitos códigos enviados em pouco tempo. Use o último código recebido ou aguarde 15 minutos.",
+        });
+      }
       try {
         await sendTwoFactorCode(user);
       } catch (mailErr) {
@@ -128,17 +200,15 @@ module.exports = function (pool, resend, logActivity) {
 
   // ── POST /verify-2fa — 2ª etapa: valida o código e emite o token ─────────
   router.post("/verify-2fa", async (req, res) => {
-    const { email, code } = req.body;
+    const email = normalizarEmail(req.body?.email);
+    const code = String(req.body?.code ?? "").trim();
     if (!email || !code) {
       return res
         .status(400)
         .json({ message: "E-mail e código são obrigatórios." });
     }
     try {
-      const result = await pool.query(
-        "SELECT *, must_change_password FROM users WHERE email = $1",
-        [email],
-      );
+      const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
       const user = result.rows[0];
 
       if (!user || !user.two_factor_code || !user.two_factor_expires) {
@@ -154,18 +224,23 @@ module.exports = function (pool, resend, logActivity) {
           .json({ message: "Código expirado. Faça o login novamente." });
       }
 
-      if (user.two_factor_attempts >= TWO_FACTOR_MAX_ATTEMPTS) {
+      // Consome a tentativa ANTES de comparar, numa única instrução: várias
+      // requisições em paralelo não conseguem passar das 5 tentativas.
+      const tentativa = await pool.query(
+        `UPDATE users SET two_factor_attempts = two_factor_attempts + 1
+          WHERE id = $1 AND two_factor_code IS NOT NULL AND two_factor_attempts < $2
+          RETURNING two_factor_code`,
+        [user.id, TWO_FACTOR_MAX_ATTEMPTS],
+      );
+      if (!tentativa.rowCount) {
         await clearTwoFactor(user.id);
         return res.status(429).json({
           message: "Muitas tentativas. Faça o login novamente.",
         });
       }
 
-      if (hashTwoFactorCode(code) !== user.two_factor_code) {
-        await pool.query(
-          "UPDATE users SET two_factor_attempts = two_factor_attempts + 1 WHERE id = $1",
-          [user.id],
-        );
+      const hashDigitado = hashTwoFactorCode(code);
+      if (!mesmoHash(hashDigitado, tentativa.rows[0].two_factor_code)) {
         logActivity(
           user.id,
           user.email,
@@ -176,33 +251,19 @@ module.exports = function (pool, resend, logActivity) {
         return res.status(401).json({ message: "Código incorreto." });
       }
 
-      // Sucesso → limpa o 2FA e emite o token.
-      await clearTwoFactor(user.id);
-
-      // Resolve grupo e permissões (RBAC).
-      let groupName = null;
-      let permissions = [];
-      if (user.group_id) {
-        const gRes = await pool.query(
-          "SELECT name FROM user_groups WHERE id = $1",
-          [user.group_id],
-        );
-        groupName = gRes.rows[0] ? gRes.rows[0].name : null;
-        permissions = await getGroupPermissions(pool, user.group_id);
+      // Sucesso → o código vale uma vez só: quem limpar primeiro leva.
+      const consumido = await pool.query(
+        `UPDATE users
+            SET two_factor_code = NULL, two_factor_expires = NULL, two_factor_attempts = 0
+          WHERE id = $1 AND two_factor_code = $2`,
+        [user.id, hashDigitado],
+      );
+      if (!consumido.rowCount) {
+        return res.status(400).json({
+          message: "Nenhum código pendente. Faça o login novamente.",
+        });
       }
-
-      const tokenPayload = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        nome: user.nome,
-        group_id: user.group_id || null,
-        group_name: groupName,
-        must_change_password: user.must_change_password,
-      };
-      const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-        expiresIn: "12h",
-      });
+      const { token, user: dados } = await emitirSessao(pool, user.id);
 
       logActivity(
         user.id,
@@ -212,15 +273,7 @@ module.exports = function (pool, resend, logActivity) {
         req.ipAddress,
       );
 
-      delete user.password;
-      delete user.two_factor_code;
-      delete user.two_factor_expires;
-      delete user.two_factor_attempts;
-
-      user.group_name = groupName;
-      user.permissions = permissions;
-
-      res.json({ user, token });
+      res.json({ user: dados, token });
     } catch (err) {
       console.error("Erro na rota /api/auth/verify-2fa:", err);
       res.status(500).send({ error: "Erro no servidor" });
@@ -229,7 +282,7 @@ module.exports = function (pool, resend, logActivity) {
 
   // ── POST /resend-2fa — reenvia o código (apenas se houver login pendente) ─
   router.post("/resend-2fa", async (req, res) => {
-    const { email } = req.body;
+    const email = normalizarEmail(req.body?.email);
     try {
       const result = await pool.query(
         "SELECT * FROM users WHERE email = $1",
@@ -238,10 +291,27 @@ module.exports = function (pool, resend, logActivity) {
       const user = result.rows[0];
 
       // Só reenvia quando já existe um 2FA pendente — evita usar a rota como
-      // oráculo de existência de e-mail ou como vetor de spam.
-      if (user && user.two_factor_expires) {
+      // oráculo de existência de e-mail ou como vetor de spam — e dentro do
+      // limite de envios.
+      if (
+        user &&
+        user.two_factor_expires &&
+        !(await excedeuLimite(pool, {
+          acao: "2FA Enviado",
+          minutos: JANELA_MIN,
+          maximo: TWO_FACTOR_MAX_ENVIOS,
+          userId: user.id,
+        }))
+      ) {
         try {
-          await sendTwoFactorCode(user);
+          await sendTwoFactorCode(user, { zerarTentativas: false });
+          logActivity(
+            user.id,
+            user.email,
+            "2FA Enviado",
+            "Código de verificação reenviado por e-mail.",
+            req.ipAddress,
+          );
         } catch (mailErr) {
           console.error("Falha ao reenviar código 2FA:", mailErr);
         }
@@ -256,22 +326,54 @@ module.exports = function (pool, resend, logActivity) {
     }
   });
 
+  // A resposta é sempre a mesma e sai antes do envio: nem o texto nem o tempo
+  // de resposta revelam se o e-mail tem conta. Pedidos acima do limite são
+  // ignorados em silêncio (evita encher a caixa de alguém de e-mails).
+  const RESPOSTA_REDEFINICAO = {
+    message:
+      "Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.",
+  };
+
   router.post("/solicitar-redefinicao", async (req, res) => {
-    const { email } = req.body;
+    const email = normalizarEmail(req.body?.email);
+    if (!email) return res.json(RESPOSTA_REDEFINICAO);
     try {
+      const excedeu = await excedeuLimite(pool, {
+        acao: "Redefinição Solicitada",
+        minutos: JANELA_MIN,
+        maximo: REDEFINICAO_MAX_PEDIDOS,
+        email,
+      });
+      res.json(RESPOSTA_REDEFINICAO);
+      if (excedeu) return;
+      enviarLinkDeRedefinicao(email, req.ipAddress).catch((err) =>
+        console.error(
+          "Erro ao enviar o link de redefinição de senha:",
+          err?.response ? err.response.data : err,
+        ),
+      );
+    } catch (err) {
+      console.error("Erro ao solicitar redefinição de senha:", err);
+      res.status(500).send({ error: "Erro no servidor" });
+    }
+  });
+
+  const enviarLinkDeRedefinicao = async (email, ipAddress) => {
       const userResult = await pool.query(
         "SELECT * FROM users WHERE email = $1",
         [email],
       );
       const user = userResult.rows[0];
 
-      if (!user) {
-        // Por segurança, enviamos a mesma mensagem mesmo que o usuário não exista
-        return res.json({
-          message:
-            "Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.",
-        });
-      }
+      // Registra também os pedidos de e-mail sem conta: contam para o limite.
+      await logActivity(
+        user ? user.id : null,
+        email,
+        "Redefinição Solicitada",
+        user ? "Link de redefinição enviado por e-mail." : "E-mail não cadastrado.",
+        ipAddress,
+      );
+      if (!user) return;
 
       const resetToken = crypto.randomBytes(32).toString("hex");
       const hashedToken = crypto
@@ -309,7 +411,7 @@ module.exports = function (pool, resend, logActivity) {
                   <tr>
                     <td style="padding: 30px 40px; color: #2D2C2B; font-size: 16px; line-height: 1.6;">
                       <h2 style="font-size: 22px; color: #0D0D0D; margin-top: 0;">Redefinição de Senha</h2>
-                      <p>Olá, ${user.nome},</p>
+                      <p>Olá, ${escaparHtml(user.nome)},</p>
                       <p>Recebemos uma solicitação para redefinir a sua senha de acesso ao Painel V-CORP. Se foi você, clique no botão abaixo para criar uma nova senha:</p>
                       
                       <table border="0" cellspacing="0" cellpadding="0" style="margin: 30px 0;">
@@ -345,23 +447,11 @@ module.exports = function (pool, resend, logActivity) {
         subject: "Redefinição de Senha - Painel V-CORP",
         html: html,
       });
-
-      res.json({
-        message:
-          "Se um e-mail correspondente for encontrado em nosso sistema, um link para redefinição de senha será enviado.",
-      });
-    } catch (err) {
-      console.error(
-        "Erro ao solicitar redefinição de senha:",
-        err.response ? err.response.data : err,
-      );
-      res.status(500).send({ error: "Erro no servidor" });
-    }
-  });
+  };
 
   router.post("/redefinir-senha", async (req, res) => {
-    const { token, password } = req.body;
-    if (!token || !password) {
+    const { token, password } = req.body || {};
+    if (typeof token !== "string" || !token || !password) {
       return res
         .status(400)
         .json({ error: "Token e nova senha são obrigatórios." });
@@ -384,16 +474,32 @@ module.exports = function (pool, resend, logActivity) {
         });
       }
 
-      const newPasswordHash = await bcrypt.hash(password, 10);
-      await pool.query(
-        "UPDATE users SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2",
-        [newPasswordHash, user.id],
+      const erroSenha = validarSenha(password, user.email);
+      if (erroSenha) return res.status(400).json({ error: erroSenha });
+
+      // O link vale uma vez só: consome o token na mesma instrução que o
+      // confere (dois envios simultâneos não redefinem duas vezes).
+      const consumido = await pool.query(
+        `UPDATE users SET reset_token = NULL, reset_token_expires = NULL
+          WHERE id = $1 AND reset_token = $2 AND reset_token_expires > NOW()`,
+        [user.id, hashedToken],
       );
+      if (!consumido.rowCount) {
+        return res.status(400).json({
+          error:
+            "Token inválido ou expirado. Por favor, solicite a redefinição novamente.",
+        });
+      }
+
+      // Quem redefine pelo link já escolheu a própria senha: não precisa
+      // trocar de novo no 1º acesso. As sessões abertas são encerradas.
+      const newPasswordHash = await bcrypt.hash(password, 10);
+      await gravarSenha(pool, user.id, newPasswordHash);
       logActivity(
         user.id,
         user.email,
         "Senha Redefinida",
-        "Senha redefinida com sucesso através do link.",
+        "Senha redefinida com sucesso através do link. Sessões abertas foram encerradas.",
         req.ipAddress,
       );
       res.json({ message: "Senha redefinida com sucesso!" });
@@ -411,17 +517,10 @@ module.exports = function (pool, resend, logActivity) {
       const result = await pool.query("SELECT * FROM users WHERE id = $1", [
         req.user.id,
       ]);
-      const user = result.rows[0];
-      if (!user) {
+      if (!result.rows[0]) {
         return res.status(404).json({ error: "Usuário não encontrado." });
       }
-      delete user.password;
-      delete user.two_factor_code;
-      delete user.two_factor_expires;
-      delete user.two_factor_attempts;
-      delete user.reset_token;
-      delete user.reset_token_expires;
-
+      const user = semSegredos(result.rows[0]);
       let groupName = null;
       if (user.group_id) {
         const gRes = await pool.query(
