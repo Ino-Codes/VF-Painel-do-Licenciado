@@ -56,81 +56,6 @@
   flex-basis: 120px;
   flex-shrink: 0;
 }
-.profile-button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.profile-avatar-container {
-  position: relative;
-}
-
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 25px;
-  background: var(--glass-surface-flat);
-  box-shadow: var(--glass-shadow);
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 25px;
-}
-
-.profile-header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-grow: 1;
-  width: 100%;
-}
-
-.profile-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* Separa o texto do botão */
-  flex-grow: 1; /* Ocupa todo o espaço restante do header */
-  width: 100%;
-  margin: 0;
-}
-
-.profile-avatar-main {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: center;
-  background-color: var(--bg-primary);
-  box-shadow: var(--box-shadow);
-}
-
-.profile-avatar-icon {
-  width: 100%;
-  height: 100%;
-  color: var(--text-secondary);
-  display: block;
-}
-
-.profile-user-icon {
-  font-size: 54px;
-  vertical-align: text-bottom;
-}
-
-.profile-header-info h2 {
-  margin: 0 0 5px 0;
-  font-size: 24px;
-}
-
-.profile-header-info p {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-.profile-tab-content {
-  margin-top: 25px;
-}
-
 .profile-section {
   background: var(--glass-surface-flat);
   box-shadow: var(--glass-shadow);
@@ -150,89 +75,10 @@
   margin-bottom: 20px;
 }
 
-.profile-avatar-container {
-  position: relative;
-}
-
-.profile-edit-icon {
-  position: absolute;
-  bottom: 5px;
-  right: -5px;
-  width: 32px;
-  height: 32px;
-  background-color: rgba(255, 255, 255, 0.9);
-  color: var(--text-primary);
-  border: 1px solid var(--border-strong);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  cursor: pointer;
-  z-index: 2;
-  transition: all 0.2s ease;
-}
-
-.profile-edit-icon:hover {
-  background-color: var(--bg-primary);
-  transform: scale(1.1);
-  box-shadow: var(--box-shadow);
-}
-
 .profile-section h3 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.edit-profile-button {
-  background: none;
-  border: 1px solid var(--border-strong);
-  border-radius: 5px;
-  padding: 5px 10px;
-  font-size: 14px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-primary);
-}
-
-.edit-profile-button:hover {
-  background-color: var(--bg-primary);
-}
-
-.profile-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-.info-item span {
-  font-weight: 500;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.info-item p {
-  font-size: 16px;
-  margin: 5px 0 0 0;
-  font-weight: 500;
-}
-
-.profile-edit-form .form-row {
-  align-items: center;
-}
-
-.profile-edit-form label {
-  flex-basis: 80px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
 }
 
 /* ── Modal de Avatar ──────────────────────────────────────── */
@@ -751,4 +597,722 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Tela de Perfil — capa da marca + menu lateral de seções
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Capa ── */
+.perfil-capa {
+  background: var(--bg-primary);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+/* A página do perfil tem largura máxima: a capa é 4:1 e, numa tela larga
+   sem limite, ficaria alta demais. */
+.perfil-pagina {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Faixa no padrão do LinkedIn: 1584 × 396 px, proporção 4:1. A imagem já
+   chega recortada nessa proporção, então aparece inteira, sem corte. */
+.perfil-capa-faixa {
+  position: relative;
+  aspect-ratio: 4 / 1;
+  background: var(--brand-black);
+  border-bottom: 3px solid var(--brand-gold);
+  overflow: hidden;
+}
+
+.perfil-capa-imagem {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.perfil-capa-editar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(8, 8, 7, 0.55);
+  color: var(--text-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  padding: 0;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.perfil-capa-editar:hover,
+.perfil-capa-editar:focus-visible {
+  background: var(--brand-gold);
+  border-color: var(--brand-gold);
+}
+
+.perfil-capa-corpo {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 0 32px 26px;
+  flex-wrap: wrap;
+}
+
+.perfil-capa-avatar {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  margin-top: -64px;
+  flex-shrink: 0;
+}
+
+.perfil-capa-foto {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  border: 5px solid var(--bg-primary);
+  box-sizing: border-box;
+  object-fit: cover;
+  object-position: center;
+  background: var(--brand-black);
+}
+
+.perfil-avatar-iniciais {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-black);
+  color: var(--brand-gold-on-dark);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.perfil-capa-foto.perfil-avatar-iniciais {
+  font-size: 40px;
+}
+
+.perfil-capa-camera {
+  position: absolute;
+  right: 2px;
+  bottom: 6px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--bg-primary);
+  background: var(--brand-gold);
+  color: var(--text-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.2s ease;
+}
+
+.perfil-capa-camera:hover {
+  background: color-mix(in srgb, var(--brand-gold) 85%, #000);
+}
+
+.perfil-capa-info {
+  flex: 1 1 280px;
+  min-width: 0;
+  padding-top: 14px;
+}
+
+.perfil-capa-nome {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.perfil-capa-nome h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.perfil-capa-info p {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.perfil-selo {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-gold-text);
+  background: var(--brand-gold-soft);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+/* ── Layout: menu + conteúdo ── */
+.perfil-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.perfil-menu {
+  flex: 1 1 230px;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 90px;
+}
+
+.perfil-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.perfil-menu-item:hover {
+  background: var(--glass-surface-flat);
+  color: var(--text-primary);
+}
+
+.perfil-menu-item--ativo {
+  background: var(--glass-surface);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.perfil-menu-icone {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.perfil-menu-item--ativo .perfil-menu-icone {
+  color: var(--brand-gold);
+}
+
+.perfil-menu-rotulo {
+  flex: 1;
+}
+
+.perfil-menu-contagem {
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--brand-gold-soft);
+  color: var(--brand-gold-text);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.perfil-menu-divisor {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 10px 0 6px;
+  width: 100%;
+}
+
+.perfil-menu-item--sair,
+.perfil-menu-item--sair:hover {
+  color: var(--action-danger);
+}
+
+.perfil-conteudo {
+  flex: 999 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.perfil-secao-topo h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.perfil-secao-topo p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ── Cards (inclui os .profile-section dos componentes de certificados) ── */
+.perfil-card,
+.perfil-conteudo .profile-section {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin: 0;
+}
+
+.perfil-conteudo .profile-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.perfil-card-titulo,
+.perfil-card-titulo h3 {
+  margin: 0 0 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.perfil-card-titulo--com-nota {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.perfil-card-titulo--com-nota h3 {
+  margin: 0;
+}
+
+.perfil-card-titulo--com-nota span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.perfil-vazio {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Foto */
+.perfil-foto {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.perfil-foto-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.perfil-foto-avatar.perfil-avatar-iniciais {
+  font-size: 26px;
+}
+
+.perfil-foto-texto {
+  flex: 1 1 200px;
+}
+
+.perfil-foto-texto h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.perfil-foto-texto p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.perfil-foto-acoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Campos */
+.perfil-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+}
+
+.perfil-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.perfil-campo label,
+.perfil-campo-rotulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.perfil-campo .form-input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.perfil-campo-bloqueado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.perfil-campo-bloqueado-valor {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.perfil-campo-cadeado {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+/* Dados mantidos pelo RH */
+.perfil-dados-rh {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.perfil-dados-rh div {
+  background: var(--glass-surface-flat);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.perfil-dados-rh dt {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.perfil-dados-rh dd {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Barra "alterações não salvas" */
+.perfil-barra-salvar {
+  position: sticky;
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--brand-black);
+  color: var(--text-white);
+  border-radius: 14px;
+  padding: 12px 14px 12px 22px;
+  box-shadow: var(--glass-shadow);
+}
+
+.perfil-barra-salvar span {
+  flex: 1 1 200px;
+  font-size: 14px;
+}
+
+.perfil-barra-salvar button {
+  font-family: inherit;
+  font-size: 14px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.perfil-barra-salvar button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.perfil-barra-salvar-descartar {
+  background: transparent;
+  color: var(--text-white);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.perfil-barra-salvar-salvar {
+  background: var(--brand-gold-on-dark);
+  color: var(--brand-black);
+  border: 0;
+  font-weight: 600;
+}
+
+/* Perfil comportamental (cartão escuro de destaque) */
+.perfil-destaque {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  background: var(--brand-black);
+  border-color: var(--border-color);
+  color: var(--text-white);
+}
+
+.perfil-destaque-icone {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: rgba(217, 191, 138, 0.14);
+  color: var(--brand-gold-on-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.perfil-destaque-texto {
+  flex: 1 1 220px;
+}
+
+.perfil-destaque-texto h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.perfil-destaque-texto p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #c9c5bd;
+}
+
+.perfil-destaque-acoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.perfil-destaque-primario,
+.perfil-destaque-secundario {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.perfil-destaque-primario,
+.perfil-destaque-primario:hover {
+  background: var(--brand-gold-on-dark);
+  color: var(--brand-black);
+  font-weight: 600;
+}
+
+.perfil-destaque-secundario,
+.perfil-destaque-secundario:hover {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--text-white);
+}
+
+/* Segurança */
+.perfil-senha {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 18px;
+}
+
+.perfil-senha-regra {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.perfil-senha-acoes {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Celular / tablet ── */
+@media (max-width: 900px) {
+  .perfil-menu {
+    position: static;
+    max-width: none;
+    flex-basis: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .perfil-menu-item {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .perfil-menu-divisor {
+    display: none;
+  }
+
+  .perfil-senha,
+  .perfil-dados-rh {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .perfil-capa-editar {
+    top: 8px;
+    right: 8px;
+  }
+
+  .perfil-capa-corpo {
+    padding: 0 18px 20px;
+    gap: 12px;
+  }
+
+  .perfil-capa-avatar,
+  .perfil-capa-foto {
+    width: 104px;
+    height: 104px;
+  }
+
+  .perfil-capa-avatar {
+    margin-top: -52px;
+  }
+
+  .perfil-capa-info {
+    padding-top: 0;
+  }
+
+  .perfil-capa-nome h1 {
+    font-size: 21px;
+  }
+
+  .perfil-card,
+  .perfil-conteudo .profile-section {
+    padding: 20px;
+  }
+
+  .perfil-campos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perfil-barra-salvar span {
+    flex-basis: 100%;
+  }
+}
+
+/* ── Modal da capa (reaproveita a base do modal de avatar) ── */
+.capa-modal-card {
+  max-width: 640px;
+}
+
+.capa-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  cursor: pointer;
+}
+
+.capa-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--brand-black);
+  border-bottom: 3px solid var(--brand-gold);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-gold) 22%, transparent);
+  transition: box-shadow 0.2s;
+}
+
+.capa-dropzone:hover .capa-preview {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand-gold) 30%, transparent);
+}
+
+.capa-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.capa-preview-vazia {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--brand-gold-on-dark);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.capa-preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--text-white);
+  background: rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.capa-dropzone:hover .capa-preview-overlay {
+  opacity: 1;
+}
+
+.capa-dropzone-hint {
+  max-width: 100%;
+  white-space: normal;
 }

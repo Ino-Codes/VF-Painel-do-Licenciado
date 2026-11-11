@@ -3,8 +3,16 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import ConfirmationModal from "../ui/ConfirmationModal.tsx";
-import { FiCamera, FiX, FiTrash2 } from "react-icons/fi";
+import { FiCamera, FiImage, FiX, FiTrash2 } from "react-icons/fi";
 import { HiOutlineUserCircle } from "react-icons/hi";
+import EditorDeImagem, { Recorte } from "./EditorDeImagem.tsx";
+import { cortarImagem, TAMANHO_AVATAR } from "./cortarImagem.ts";
+import { lerImagemEscolhida } from "./lerImagemEscolhida.ts";
+
+// Foto de perfil, em duas etapas como a capa:
+//  1. escolher a imagem (ou remover a foto atual);
+//  2. "Editar imagem": moldura redonda, arrastar, zoom e giro.
+// O recorte sai pronto do navegador, quadrado (512 × 512).
 
 interface AvatarModalProps {
   isOpen: boolean;
@@ -13,184 +21,181 @@ interface AvatarModalProps {
 
 const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
   const { user, login } = useAuth();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  // Imagem escolhida (object URL) — presente = etapa de edição.
+  const [origem, setOrigem] = useState<string | null>(null);
+  const [recorte, setRecorte] = useState<Recorte | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [confirmarRemocao, setConfirmarRemocao] = useState(false);
 
   if (!isOpen || !user) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const MAX_SIZE_MB = 2;
-    const MAX_WIDTH = 1500;
-    const MAX_HEIGHT = 1500;
-    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
-
-    if (file.size > MAX_SIZE_BYTES) {
-      toast.error(
-        `O arquivo é muito grande. O tamanho máximo é de ${MAX_SIZE_MB}MB.`,
-      );
-      e.target.value = "";
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
-          toast.error(
-            `A imagem é muito grande em dimensões. O máximo permitido é ${MAX_WIDTH}x${MAX_HEIGHT} pixels.`,
-          );
-          e.target.value = "";
-        } else {
-          setSelectedFile(file);
-          setPreviewUrl((prev) => {
-            if (prev) URL.revokeObjectURL(prev); // libera o preview anterior
-            return URL.createObjectURL(file);
-          });
-          toast.success("Imagem selecionada com sucesso!");
-        }
-      };
-      img.onerror = () => {
-        toast.error("Não foi possível ler o arquivo de imagem.");
-        e.target.value = "";
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const closeAndReset = () => {
-    setSelectedFile(null);
-    setPreviewUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
+  const descartarImagem = () => {
+    setOrigem((o) => {
+      if (o) URL.revokeObjectURL(o);
       return null;
     });
+    setRecorte(null);
+  };
+
+  const fecharELimpar = () => {
+    if (enviando) return;
+    descartarImagem();
     onClose();
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("avatar", selectedFile);
+  const escolher = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = await lerImagemEscolhida(e, {
+      larguraIdeal: TAMANHO_AVATAR.largura,
+      alturaIdeal: TAMANHO_AVATAR.altura,
+    });
+    if (!url) return;
+    descartarImagem();
+    setOrigem(url);
+  };
+
+  const salvar = async () => {
+    if (!origem || !recorte) return;
+    setEnviando(true);
     try {
-      const res = await api.post(`/api/users/${user.id}/avatar`, formData);
+      const arquivo = await cortarImagem(origem, recorte.area, recorte.rotacao, TAMANHO_AVATAR);
+      const form = new FormData();
+      form.append("avatar", arquivo, "avatar.jpg");
+      const res = await api.post(`/api/users/${user.id}/avatar`, form);
       // O backend responde { success, user, token }
       login(res.data.user, res.data.token);
       toast.success("Foto de perfil atualizada!");
-      closeAndReset();
-    } catch (err) {
-      toast.error("Erro ao atualizar a foto.");
-    } finally {
-      setIsUploading(false);
+      setEnviando(false);
+      descartarImagem();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.message || "Erro ao atualizar a foto.");
+      setEnviando(false);
     }
   };
 
-  const handleRemove = async () => {
-    setIsConfirmOpen(false);
-    setIsUploading(true);
+  const remover = async () => {
+    setConfirmarRemocao(false);
+    setEnviando(true);
     try {
       const res = await api.delete(`/api/users/${user.id}/avatar`);
       login(res.data.user, res.data.token);
       toast.success("Foto de perfil removida!");
-      closeAndReset();
-    } catch (err) {
-      toast.error("Erro ao remover a foto.");
-    } finally {
-      setIsUploading(false);
+      setEnviando(false);
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Erro ao remover a foto.");
+      setEnviando(false);
     }
   };
 
-  const currentImage = previewUrl || user.avatar_url;
+  const seletorDeArquivo = (
+    <input
+      id="avatar-file-input"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      className="file-upload-input"
+      onChange={escolher}
+    />
+  );
 
   return (
     <>
-      <div className="modal-overlay modal-overlay--blur" onClick={closeAndReset}>
+      <div className="modal-overlay modal-overlay--blur" onClick={fecharELimpar}>
         <div
-          className="avatar-modal-card"
+          className={`avatar-modal-card${origem ? " avatar-modal-card--editor avatar-modal-card--editor-foto" : ""}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="avatar-modal-titulo"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            className="avatar-modal-close"
-            onClick={closeAndReset}
-            aria-label="Fechar"
-          >
+          <button className="avatar-modal-close" onClick={fecharELimpar} aria-label="Fechar">
             <FiX />
           </button>
 
-          <div className="avatar-modal-head">
-            <h2>Foto de perfil</h2>
-            <p>Envie uma imagem quadrada de até 2&nbsp;MB (JPG, PNG ou WEBP).</p>
-          </div>
+          {!origem ? (
+            /* ── Etapa 1: escolher ── */
+            <>
+              <div className="avatar-modal-head">
+                <h2 id="avatar-modal-titulo">Foto de perfil</h2>
+                <p>JPG, PNG ou WEBP. Depois de escolher, você ajusta o enquadramento.</p>
+              </div>
 
-          <label htmlFor="avatar-file-input" className="avatar-dropzone">
-            <span className="avatar-dropzone-ring">
-              {currentImage ? (
-                <img src={currentImage} alt="Pré-visualização do avatar" />
-              ) : (
-                <HiOutlineUserCircle className="avatar-dropzone-placeholder" />
-              )}
-              <span className="avatar-dropzone-overlay">
-                <FiCamera />
-              </span>
-            </span>
-            <span className="avatar-dropzone-hint">
-              {selectedFile
-                ? selectedFile.name
-                : "Clique para escolher uma imagem"}
-            </span>
-            <input
-              id="avatar-file-input"
-              type="file"
-              accept="image/*"
-              className="file-upload-input"
-              onChange={handleFileChange}
-            />
-          </label>
+              <label htmlFor="avatar-file-input" className="avatar-dropzone">
+                <span className="avatar-dropzone-ring">
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt="Foto atual" />
+                  ) : (
+                    <HiOutlineUserCircle className="avatar-dropzone-placeholder" />
+                  )}
+                  <span className="avatar-dropzone-overlay">
+                    <FiCamera />
+                  </span>
+                </span>
+                <span className="avatar-dropzone-hint">Clique para escolher uma imagem</span>
+                {seletorDeArquivo}
+              </label>
 
-          <div className="avatar-modal-actions">
-            {user.avatar_url && (
-              <button
-                type="button"
-                className="avatar-btn avatar-btn--danger"
-                onClick={() => setIsConfirmOpen(true)}
-                disabled={isUploading}
-              >
-                <FiTrash2 /> Remover foto
-              </button>
-            )}
-
-            <div className="avatar-modal-actions-right">
-              <button
-                type="button"
-                className="avatar-btn avatar-btn--ghost"
-                onClick={closeAndReset}
-                disabled={isUploading}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="avatar-btn avatar-btn--primary"
-                onClick={handleUpload}
-                disabled={!selectedFile || isUploading}
-              >
-                {isUploading ? "Salvando..." : "Salvar"}
-              </button>
-            </div>
-          </div>
+              <div className="avatar-modal-actions">
+                {user.avatar_url && (
+                  <button
+                    type="button"
+                    className="avatar-btn avatar-btn--danger"
+                    onClick={() => setConfirmarRemocao(true)}
+                    disabled={enviando}
+                  >
+                    <FiTrash2 /> Remover foto
+                  </button>
+                )}
+                <div className="avatar-modal-actions-right">
+                  <button type="button" className="avatar-btn avatar-btn--ghost" onClick={fecharELimpar} disabled={enviando}>
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            /* ── Etapa 2: editar imagem ── */
+            <>
+              <h2 id="avatar-modal-titulo" className="img-editor-titulo">
+                Editar imagem
+              </h2>
+              <EditorDeImagem
+                key={origem}
+                imagem={origem}
+                proporcao={1}
+                formato="round"
+                onChange={setRecorte}
+                extras={
+                  <label htmlFor="avatar-file-input" className="img-editor-trocar">
+                    <FiImage aria-hidden="true" /> Trocar imagem
+                    {seletorDeArquivo}
+                  </label>
+                }
+              />
+              <div className="avatar-modal-actions">
+                <div className="avatar-modal-actions-right">
+                  <button type="button" className="avatar-btn avatar-btn--ghost" onClick={descartarImagem} disabled={enviando}>
+                    Voltar
+                  </button>
+                  <button
+                    type="button"
+                    className="avatar-btn avatar-btn--primary"
+                    onClick={salvar}
+                    disabled={!recorte || enviando}
+                  >
+                    {enviando ? "Salvando..." : "Salvar alterações"}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       <ConfirmationModal
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={handleRemove}
+        isOpen={confirmarRemocao}
+        onClose={() => setConfirmarRemocao(false)}
+        onConfirm={remover}
         title="Remover Foto"
         message="Tem a certeza de que deseja remover a sua foto de perfil atual?"
       />

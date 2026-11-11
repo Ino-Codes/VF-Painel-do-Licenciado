@@ -1141,6 +1141,118 @@ module.exports = function (pool, cloudinary, upload, logActivity, resend) {
     }
   });
 
+  // ── Capa do perfil ─────────────────────────────────────────────────────────
+  // Faixa do topo da tela de Perfil. A imagem é recortada no Cloudinary para
+  // 1584 × 396 px (4:1, o padrão do LinkedIn), pelo centro — o mesmo recorte
+  // que a pré-visualização do modal mostra.
+  const CAPA_MAX_BYTES = 8 * 1024 * 1024;
+  const CAPA_TIPOS = ["image/jpeg", "image/png", "image/webp"];
+
+  // "…/upload/v123/capas-perfil/abc.jpg" → "capas-perfil/abc"
+  const publicIdDaUrl = (url) => {
+    const m = /\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i.exec(url || "");
+    return m ? m[1] : null;
+  };
+
+  // Apagar a imagem antiga é faxina: se falhar, a troca já valeu.
+  const apagarCapaAntiga = async (url) => {
+    const publicId = publicIdDaUrl(url);
+    if (!publicId) return;
+    try {
+      await cloudinary.uploader.destroy(publicId);
+    } catch (err) {
+      console.error("Não foi possível apagar a capa antiga:", err.message);
+    }
+  };
+
+  router.post(
+    "/:id/cover",
+    isLoggedIn,
+    upload.single("cover"),
+    async (req, res) => {
+      const { id } = req.params;
+      if (!ehOProprio(req)) {
+        return res
+          .status(403)
+          .json({ error: "Você só pode alterar a sua própria capa." });
+      }
+      if (!req.file)
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      if (!CAPA_TIPOS.includes(req.file.mimetype)) {
+        return res
+          .status(400)
+          .json({ error: "Envie uma imagem JPG, PNG ou WEBP." });
+      }
+      if (req.file.size > CAPA_MAX_BYTES) {
+        return res
+          .status(400)
+          .json({ error: "A imagem deve ter no máximo 8 MB." });
+      }
+      try {
+        const atual = await pool.query(
+          "SELECT cover_url FROM users WHERE id = $1",
+          [id],
+        );
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              {
+                resource_type: "image",
+                folder: "capas-perfil",
+                transformation: [
+                  { width: 1584, height: 396, crop: "fill", gravity: "center" },
+                  { quality: "auto", fetch_format: "auto" },
+                ],
+              },
+              (error, result) => (error ? reject(error) : resolve(result)),
+            )
+            .end(req.file.buffer);
+        });
+        await pool.query("UPDATE users SET cover_url = $1 WHERE id = $2", [
+          uploadResult.secure_url,
+          id,
+        ]);
+        await apagarCapaAntiga(atual.rows[0]?.cover_url);
+
+        logActivity(
+          req.user.id,
+          req.user.email,
+          "Capa do Perfil Alterada",
+          "Nova imagem de capa enviada.",
+          req.ipAddress,
+        );
+        const sessao = await emitirSessao(pool, req.user.id);
+        res.json({ success: true, user: sessao.user, token: sessao.token });
+      } catch (err) {
+        console.error("Erro no upload da capa:", err);
+        res.status(500).json({ error: "Erro no servidor durante o upload." });
+      }
+    },
+  );
+
+  router.delete("/:id/cover", isLoggedIn, async (req, res) => {
+    const { id } = req.params;
+    if (!ehOProprio(req)) {
+      return res
+        .status(403)
+        .json({ error: "Você só pode alterar a sua própria capa." });
+    }
+    try {
+      const atual = await pool.query(
+        "SELECT cover_url FROM users WHERE id = $1",
+        [id],
+      );
+      await pool.query("UPDATE users SET cover_url = NULL WHERE id = $1", [id]);
+      await apagarCapaAntiga(atual.rows[0]?.cover_url);
+
+      const sessao = await emitirSessao(pool, req.user.id);
+      res.json({ success: true, user: sessao.user, token: sessao.token });
+    } catch (err) {
+      console.error("Erro ao remover a capa:", err);
+      res.status(500).json({ error: "Erro no servidor" });
+    }
+  });
+
   router.put("/:id/change-password", isLoggedIn, async (req, res) => {
     const { id } = req.params;
     const { currentPassword, newPassword } = req.body || {};

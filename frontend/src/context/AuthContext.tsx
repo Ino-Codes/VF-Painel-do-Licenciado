@@ -21,6 +21,7 @@ export interface User {
   group_name?: string | null;
   permissions?: string[];
   avatar_url?: string;
+  cover_url?: string | null;
   must_change_password?: boolean;
   company_slug: CompanySlug;
   allowed_companies?: CompanySlug[];

@@ -47,6 +47,10 @@
   /* No tema claro a superfície precisa ser opaca (branco levemente
      gradiente), senão os cards somem sobre o fundo claro. */
   --brand-gold: #8a6c35;
+  --brand-black: #080807; /* capa do perfil: preto da marca nos dois temas */
+  --brand-gold-on-dark: #d9bf8a; /* dourado legível sobre o preto da marca */
+  --brand-gold-soft: #f3ede2; /* fundo tonal dourado (selos, ícones, item ativo) */
+  --brand-gold-text: #6e5527; /* texto dourado sobre --brand-gold-soft */
   --glass-surface: linear-gradient(127deg, #ffffff, #f6f6f8);
   /* Versão chapada da superfície (o meio do gradiente acima). Um gradiente é
      pintado no box de cada elemento, então cards de larguras diferentes lado a
@@ -137,6 +141,10 @@ body.dark-theme {
 
   /* ── Novo padrão visual da marca (MIV): dourado + superfície de vidro ── */
   --brand-gold: #8a6c35;
+  --brand-black: #080807;
+  --brand-gold-on-dark: #d9bf8a;
+  --brand-gold-soft: rgba(138, 108, 53, 0.22);
+  --brand-gold-text: #d9bf8a;
   --glass-surface: linear-gradient(
     127deg,
     rgba(255, 255, 255, 0.055),
