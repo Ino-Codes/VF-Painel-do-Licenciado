@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { HiOutlineUserGroup } from "react-icons/hi";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 interface Group {
   id: number;
@@ -251,7 +252,7 @@ const GroupsManagement: React.FC = () => {
       </div>
 
       {modalOpen && catalog && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
+        <div ref={saidaAnimada} className="modal-overlay" onClick={() => setModalOpen(false)}>
           <div
             className="modal-content modal-wide groups-perm-modal"
             onClick={(e) => e.stopPropagation()}

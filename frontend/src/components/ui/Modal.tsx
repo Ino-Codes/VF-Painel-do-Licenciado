@@ -1,4 +1,5 @@
 import React from "react";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 interface ModalProps {
   onClose: () => void;
@@ -26,7 +27,7 @@ const Modal: React.FC<ModalProps> = ({
   closeOnOverlayClick,
 }) => {
   return (
-    <div
+    <div ref={saidaAnimada}
       className={`modal-overlay${overlayClassName ? ` ${overlayClassName}` : ""}`}
       onClick={closeOnOverlayClick ? onClose : undefined}
     >

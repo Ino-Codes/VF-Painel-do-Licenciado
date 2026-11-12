@@ -26,6 +26,9 @@ import {
   AssetCategoria,
 } from "../../components/itAssets/assetConfig.ts";
 import { IconType } from "react-icons";
+import { AnimatePresence, motion } from "motion/react";
+import NumeroAnimado from "../../components/ui/NumeroAnimado.tsx";
+import { ENTRADA, MOLA } from "../../utils/animacao.ts";
 import {
   FiUser,
   FiHeart,
@@ -86,6 +89,13 @@ interface ItemMenu {
   contagem?: number;
   soInterno?: boolean;
 }
+
+// Elogios: a grade escalona a entrada dos cartões.
+const GRADE_ELOGIOS = { oculto: {}, visivel: { transition: { staggerChildren: 0.06 } } };
+const CARTAO_ELOGIO = {
+  oculto: { opacity: 0, y: 14, scale: 0.98 },
+  visivel: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35, ease: ENTRADA } },
+};
 
 const soDigitos = (v?: string | null) => (v || "").replace(/\D/g, "");
 
@@ -365,17 +375,28 @@ const Perfil: React.FC = () => {
         </article>
       )}
 
-      {alterado && (
-        <div className="perfil-barra-salvar" role="status">
-          <span>Você tem alterações não salvas.</span>
-          <button type="button" className="perfil-barra-salvar-descartar" onClick={descartarAlteracoes} disabled={salvando}>
-            Descartar
-          </button>
-          <button type="button" className="perfil-barra-salvar-salvar" onClick={handleSaveChanges} disabled={salvando}>
-            {salvando ? "Salvando..." : "Salvar alterações"}
-          </button>
-        </div>
-      )}
+      {/* Sobe com uma mola curta ao editar; desce ao salvar ou descartar. */}
+      <AnimatePresence>
+        {alterado && (
+          <motion.div
+            key="barra-salvar"
+            className="perfil-barra-salvar"
+            role="status"
+            initial={{ opacity: 0, y: 48 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 32, transition: { duration: 0.18 } }}
+            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+          >
+            <span>Você tem alterações não salvas.</span>
+            <button type="button" className="perfil-barra-salvar-descartar" onClick={descartarAlteracoes} disabled={salvando}>
+              Descartar
+            </button>
+            <button type="button" className="perfil-barra-salvar-salvar" onClick={handleSaveChanges} disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 
@@ -413,15 +434,25 @@ const Perfil: React.FC = () => {
             <div className="praise-month-summary">
               <h4 className="praise-month-title">{mesTitulo(praiseMonthAtivo)}</h4>
               <span className="praise-month-meta">
-                {praisesDoMes.length} elogio{praisesDoMes.length === 1 ? "" : "s"}
+                <NumeroAnimado valor={praisesDoMes.length} duracao={0.5} /> elogio
+                {praisesDoMes.length === 1 ? "" : "s"}
               </span>
             </div>
 
-            <div className="praise-grid praise-grid--testimonial">
+            {/* Trocar de mês recria a grade: os cartões entram um a um. */}
+            <motion.div
+              key={praiseMonthAtivo || "todos"}
+              className="praise-grid praise-grid--testimonial"
+              initial="oculto"
+              animate="visivel"
+              variants={GRADE_ELOGIOS}
+            >
               {praisesVisiveis.map((p) => (
-                <PraiseCard key={p.id} praise={p} showRecipient={false} variant="testimonial" />
+                <motion.div key={p.id} className="praise-grid-item" variants={CARTAO_ELOGIO}>
+                  <PraiseCard praise={p} showRecipient={false} variant="testimonial" />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {(praisesRestantes > 0 || showAllPraises) && (
               <div className="praise-more-row">
@@ -587,47 +618,51 @@ const Perfil: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area perfil-pagina">
-        {/* ── Capa ── */}
-        <section className="perfil-capa">
-          {/* Faixa 4:1 (1584 × 396, padrão do LinkedIn). Sem imagem própria,
-              fica a faixa preta da marca com o filete dourado. */}
-          <div className="perfil-capa-faixa">
-            {user.cover_url && <img src={user.cover_url} alt="" className="perfil-capa-imagem" />}
-            <button
-              type="button"
-              className="perfil-capa-editar"
-              aria-label="Editar capa do perfil"
-              title="Editar capa"
-              onClick={() => setIsCapaModalOpen(true)}
-            >
-              <FiEdit2 aria-hidden="true" />
-            </button>
-          </div>
-          <div className="perfil-capa-corpo">
-            <div className="perfil-capa-avatar">
-              <PerfilAvatar user={user} className="perfil-capa-foto" />
+        {/* Menu à esquerda, ocupando a altura toda; à direita a capa e,
+            abaixo dela, a seção aberta. No celular a capa vem primeiro. */}
+        <div className="perfil-layout">
+          {/* ── Capa ── */}
+          <section className="perfil-capa">
+            {/* Faixa 4:1 (1584 × 396, padrão do LinkedIn). Sem imagem própria,
+                fica a faixa preta da marca com o filete dourado. */}
+            <div className="perfil-capa-faixa">
+              {user.cover_url && <img src={user.cover_url} alt="" className="perfil-capa-imagem" />}
               <button
                 type="button"
-                className="perfil-capa-camera"
-                aria-label="Trocar foto de perfil"
-                onClick={() => setIsAvatarModalOpen(true)}
+                className="perfil-capa-editar"
+                aria-label="Editar capa do perfil"
+                title="Editar capa"
+                onClick={() => setIsCapaModalOpen(true)}
               >
-                <FiCamera aria-hidden="true" />
+                <FiEdit2 aria-hidden="true" />
               </button>
             </div>
-            <div className="perfil-capa-info">
-              <div className="perfil-capa-nome">
-                <h1>{user.nome}</h1>
-                {user.group_name && <span className="perfil-selo">{user.group_name}</span>}
+            <div className="perfil-capa-corpo">
+              <div className="perfil-capa-avatar">
+                <PerfilAvatar user={user} className="perfil-capa-foto" />
+                <button
+                  type="button"
+                  className="perfil-capa-camera"
+                  aria-label="Trocar foto de perfil"
+                  onClick={() => setIsAvatarModalOpen(true)}
+                >
+                  <FiCamera aria-hidden="true" />
+                </button>
               </div>
-              <p>{subtitulo}</p>
+              <div className="perfil-capa-info">
+                <div className="perfil-capa-nome">
+                  <h1>{user.nome}</h1>
+                  {user.group_name && <span className="perfil-selo">{user.group_name}</span>}
+                </div>
+                <p>{subtitulo}</p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <div className="perfil-layout">
           {/* ── Menu lateral ── */}
-          <nav className="perfil-menu" aria-label="Seções do perfil">
+          {/* layoutScroll: no celular o menu rola de lado, e o indicador
+              precisa descontar essa rolagem para deslizar no lugar certo. */}
+          <motion.nav className="perfil-menu" aria-label="Seções do perfil" layoutScroll>
             {itensMenu.map(({ id, rotulo, Icone, contagem }) => (
               <button
                 key={id}
@@ -636,6 +671,15 @@ const Perfil: React.FC = () => {
                 aria-current={secao === id ? "page" : undefined}
                 onClick={() => abrirSecao(id)}
               >
+                {/* Um só indicador, que desliza até o item ativo. */}
+                {secao === id && (
+                  <motion.span
+                    layoutId="perfil-menu-indicador"
+                    className="perfil-menu-indicador"
+                    transition={MOLA}
+                    aria-hidden="true"
+                  />
+                )}
                 <Icone aria-hidden="true" className="perfil-menu-icone" />
                 <span className="perfil-menu-rotulo">{rotulo}</span>
                 {!!contagem && <span className="perfil-menu-contagem">{contagem}</span>}
@@ -646,10 +690,18 @@ const Perfil: React.FC = () => {
               <FiLogOut aria-hidden="true" className="perfil-menu-icone" />
               <span className="perfil-menu-rotulo">Sair da conta</span>
             </button>
-          </nav>
+          </motion.nav>
 
-          {/* ── Conteúdo da seção ── */}
-          <section className="perfil-conteudo">{conteudo[secao]}</section>
+          {/* ── Conteúdo da seção: entra suave a cada troca ── */}
+          <motion.section
+            key={secao}
+            className="perfil-conteudo"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: ENTRADA }}
+          >
+            {conteudo[secao]}
+          </motion.section>
         </div>
       </div>
 

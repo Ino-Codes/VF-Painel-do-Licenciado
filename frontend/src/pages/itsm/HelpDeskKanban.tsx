@@ -31,6 +31,7 @@ import {
   TIPOS_LEGADOS,
   tipoInfo,
 } from "../../components/tickets/ticketTypes.ts";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -574,7 +575,7 @@ const TicketKanbanPage: React.FC = () => {
 
         {/* Modal de detalhes */}
         {detailTicket && (
-          <div className="modal-overlay" onClick={closeDetail}>
+          <div ref={saidaAnimada} className="modal-overlay" onClick={closeDetail}>
             <div
               className="detail-ticket-modal"
               onClick={(e) => e.stopPropagation()}

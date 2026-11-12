@@ -7,6 +7,7 @@ import { FiImage, FiX, FiTrash2 } from "react-icons/fi";
 import EditorDeImagem, { Recorte } from "./EditorDeImagem.tsx";
 import { cortarImagem, TAMANHO_CAPA } from "./cortarImagem.ts";
 import { lerImagemEscolhida } from "./lerImagemEscolhida.ts";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 // Capa do perfil: a faixa do topo da tela de Perfil, no padrão do LinkedIn
 // (1584 × 396 px, proporção 4:1). Duas etapas, como no LinkedIn:
@@ -96,7 +97,7 @@ const CapaModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <div className="modal-overlay modal-overlay--blur" onClick={fecharELimpar}>
+      <div ref={saidaAnimada} className="modal-overlay modal-overlay--blur" onClick={fecharELimpar}>
         <div
           className={`avatar-modal-card capa-modal-card${origem ? " avatar-modal-card--editor" : ""}`}
           role="dialog"

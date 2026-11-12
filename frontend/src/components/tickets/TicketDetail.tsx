@@ -9,6 +9,8 @@ import {
 import { IconType } from "react-icons";
 import TicketRating, { AvaliacaoChamado } from "./TicketRating.tsx";
 import { TicketType, tipoInfo } from "./ticketTypes.ts";
+import { motion } from "motion/react";
+import { ENTRADA } from "../../utils/animacao.ts";
 
 // Visão do chamado para quem o abriu — a mesma na tela interna (Meus Chamados)
 // e na página pública de acompanhamento. Mora aqui para as duas não saírem do
@@ -142,9 +144,25 @@ export const TicketBody: React.FC<TicketBodyProps> = ({
               className={`chamado-step ${state}${paused}`}
               aria-current={index === activeStep ? "step" : undefined}
             >
-              <span className="chamado-step-dot">
+              {/* O filete dourado corre de etapa em etapa até a atual. */}
+              {index < STATUS_FLOW.length - 1 && (
+                <span className="chamado-step-trilho" aria-hidden="true">
+                  <motion.span
+                    className="chamado-step-trilho-cheio"
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: index < activeStep ? 1 : 0 }}
+                    transition={{ duration: 0.35, delay: 0.15 + index * 0.3, ease: ENTRADA }}
+                  />
+                </span>
+              )}
+              <motion.span
+                className="chamado-step-dot"
+                initial={index <= activeStep ? { scale: 0.6, opacity: 0.4 } : false}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: index * 0.3, type: "spring", stiffness: 500, damping: 20 }}
+              >
                 <StepIcon aria-hidden="true" />
-              </span>
+              </motion.span>
               <span className="chamado-step-label">{step.label}</span>
             </li>
           );

@@ -15,6 +15,7 @@ import {
 import { MdToggleOn, MdToggleOff } from "react-icons/md";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 interface Tenant {
   id: number;
@@ -423,7 +424,7 @@ const WidgetTenantsPage: React.FC = () => {
 
       {/* Modal de criação/edição */}
       {showModal && (
-        <div className="modal-overlay">
+        <div ref={saidaAnimada} className="modal-overlay">
           <div className="modal-content widget-tenant-modal">
             <button type="button" className="modal-close-button" aria-label="Fechar" onClick={closeModal}>
               &times;

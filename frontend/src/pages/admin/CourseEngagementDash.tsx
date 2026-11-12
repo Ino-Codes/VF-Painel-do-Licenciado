@@ -27,6 +27,7 @@ import { useTheme } from "../../context/ThemeContext.tsx";
 import CompanyFilter from "../../components/ui/CompanyFilter.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import { VIZ_PALETTE, legendStyle, tooltipStyle } from "./vizTheme.ts";
+import NumeroAnimado from "../../components/ui/NumeroAnimado.tsx";
 
 ChartJS.register(
   CategoryScale,
@@ -115,6 +116,10 @@ const pct = (parte: number, total: number): number | null =>
   total > 0 ? Math.round((parte / total) * 100) : null;
 
 const formatPct = (v: number | null) => (v == null ? "—" : `${v}%`);
+
+/** Percentual de indicador, contando até o valor ("—" sem base). */
+const PctAnimado: React.FC<{ valor: number | null }> = ({ valor }) =>
+  valor == null ? <>—</> : <NumeroAnimado valor={valor} sufixo="%" />;
 
 /** 8.5 → "8,5" */
 const formatNum = (n: number | null | undefined) =>
@@ -547,7 +552,7 @@ const CourseEngagementDash: React.FC = () => {
             <HiOutlineUserGroup />
           </div>
           <div className="stat-info">
-            <h3>{resumo.alunos}</h3>
+            <h3><NumeroAnimado valor={resumo.alunos} /></h3>
             <p>Alunos engajados</p>
             <span className="stat-sub">com ao menos uma aula concluída</span>
           </div>
@@ -558,7 +563,7 @@ const CourseEngagementDash: React.FC = () => {
             <HiOutlineBookOpen />
           </div>
           <div className="stat-info">
-            <h3>{resumo.aulas}</h3>
+            <h3><NumeroAnimado valor={resumo.aulas} /></h3>
             <p>Aulas concluídas</p>
             <span className="stat-sub">
               {resumo.aulas30d} nos últimos 30 dias
@@ -577,7 +582,7 @@ const CourseEngagementDash: React.FC = () => {
             <HiOutlineAcademicCap />
           </div>
           <div className="stat-info">
-            <h3>{formatPct(pct(resumo.concluidos, resumo.iniciados))}</h3>
+            <h3><PctAnimado valor={pct(resumo.concluidos, resumo.iniciados)} /></h3>
             <p>Taxa de conclusão</p>
             <span className="stat-sub">
               {resumo.concluidos} de {plural(resumo.iniciados, "curso iniciado", "cursos iniciados")}
@@ -590,7 +595,7 @@ const CourseEngagementDash: React.FC = () => {
             <HiOutlineClipboardCheck />
           </div>
           <div className="stat-info">
-            <h3>{formatPct(pct(resumo.quiz.aprovados, resumo.quiz.alunos))}</h3>
+            <h3><PctAnimado valor={pct(resumo.quiz.aprovados, resumo.quiz.alunos)} /></h3>
             <p>Aprovação nos quizzes</p>
             <span className="stat-sub">
               {resumo.quiz.alunos > 0
@@ -607,7 +612,7 @@ const CourseEngagementDash: React.FC = () => {
             <HiOutlineBadgeCheck />
           </div>
           <div className="stat-info">
-            <h3>{resumo.certificados}</h3>
+            <h3><NumeroAnimado valor={resumo.certificados} /></h3>
             <p>Certificados emitidos</p>
             <span className="stat-sub">gerados pelos alunos que concluíram</span>
           </div>
@@ -618,7 +623,7 @@ const CourseEngagementDash: React.FC = () => {
             <HiOutlineDocumentText />
           </div>
           <div className="stat-info">
-            <h3>{resumo.cursosAtivos}</h3>
+            <h3><NumeroAnimado valor={resumo.cursosAtivos} /></h3>
             <p>Cursos ativos</p>
             <span className="stat-sub">com aulas cadastradas</span>
           </div>

@@ -18,11 +18,12 @@ import {
 } from "react-icons/hi";
 import { FaHeadset } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
-import HelpdeskCharts, { HelpdeskSeries, formatNota } from "./HelpdeskCharts.tsx";
+import HelpdeskCharts, { HelpdeskSeries } from "./HelpdeskCharts.tsx";
 import ActivityCharts, { ActivityStats } from "./ActivityCharts.tsx";
 import EnneagramStats from "./EnneagramStats.tsx";
 import CourseEngagementDash from "./CourseEngagementDash.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import NumeroAnimado from "../../components/ui/NumeroAnimado.tsx";
 
 interface TicketStats {
   total: number;
@@ -196,8 +197,9 @@ const AdminStatistics: React.FC = () => {
                     </div>
                     <div className="stat-info">
                       <h3>
-                        {stats.publicos.interno.ativos7 +
-                          stats.publicos.vpartner.ativos7}
+                        <NumeroAnimado
+                          valor={stats.publicos.interno.ativos7 + stats.publicos.vpartner.ativos7}
+                        />
                       </h3>
                       <p>Ativos nos últimos 7 dias</p>
                       <span className="stat-sub">
@@ -214,7 +216,7 @@ const AdminStatistics: React.FC = () => {
                       <HiOutlineUsers />
                     </div>
                     <div className="stat-info">
-                      <h3>{stats.publicos.interno.cadastrados}</h3>
+                      <h3><NumeroAnimado valor={stats.publicos.interno.cadastrados} /></h3>
                       <p>Colaboradores cadastrados</p>
                       <span className="stat-sub">
                         {stats.publicos.interno.ativosPeriodo} ativos nos últimos{" "}
@@ -228,7 +230,7 @@ const AdminStatistics: React.FC = () => {
                       <HiOutlineUserGroup />
                     </div>
                     <div className="stat-info">
-                      <h3>{stats.publicos.vpartner.cadastrados}</h3>
+                      <h3><NumeroAnimado valor={stats.publicos.vpartner.cadastrados} /></h3>
                       <p>V-Partners cadastrados</p>
                       <span className="stat-sub">
                         {stats.publicos.vpartner.ativosPeriodo} ativos nos últimos{" "}
@@ -242,7 +244,7 @@ const AdminStatistics: React.FC = () => {
                       <HiOutlineDownload />
                     </div>
                     <div className="stat-info">
-                      <h3>{stats.totalDownloads}</h3>
+                      <h3><NumeroAnimado valor={stats.totalDownloads} /></h3>
                       <p>Downloads realizados</p>
                       <span className="stat-sub">nos últimos {stats.dias} dias</span>
                     </div>
@@ -269,7 +271,7 @@ const AdminStatistics: React.FC = () => {
                     <FaHeadset />
                   </div>
                   <div className="stat-info">
-                    <h3>{ticketStats.total}</h3>
+                    <h3><NumeroAnimado valor={ticketStats.total} /></h3>
                     <p>Total de Chamados</p>
                   </div>
                 </div>
@@ -279,7 +281,7 @@ const AdminStatistics: React.FC = () => {
                     <HiOutlineInbox />
                   </div>
                   <div className="stat-info">
-                    <h3>{ticketStats.byStatus.novo || 0}</h3>
+                    <h3><NumeroAnimado valor={ticketStats.byStatus.novo || 0} /></h3>
                     <p>Novos (na fila)</p>
                   </div>
                 </div>
@@ -289,7 +291,7 @@ const AdminStatistics: React.FC = () => {
                     <HiOutlineClock />
                   </div>
                   <div className="stat-info">
-                    <h3>{ticketStats.byStatus.andamento || 0}</h3>
+                    <h3><NumeroAnimado valor={ticketStats.byStatus.andamento || 0} /></h3>
                     <p>Em Atendimento</p>
                   </div>
                 </div>
@@ -299,7 +301,7 @@ const AdminStatistics: React.FC = () => {
                     <HiOutlineCheckCircle />
                   </div>
                   <div className="stat-info">
-                    <h3>{ticketStats.byStatus.concluido || 0}</h3>
+                    <h3><NumeroAnimado valor={ticketStats.byStatus.concluido || 0} /></h3>
                     <p>Concluídos</p>
                   </div>
                 </div>
@@ -309,7 +311,7 @@ const AdminStatistics: React.FC = () => {
                     <HiOutlinePause />
                   </div>
                   <div className="stat-info">
-                    <h3>{ticketStats.byStatus.pausado || 0}</h3>
+                    <h3><NumeroAnimado valor={ticketStats.byStatus.pausado || 0} /></h3>
                     <p>Pausados</p>
                   </div>
                 </div>
@@ -331,9 +333,11 @@ const AdminStatistics: React.FC = () => {
                   </div>
                   <div className="stat-info">
                     <h3>
-                      {ticketStats.rating?.total
-                        ? `${formatNota(ticketStats.rating.media)} / 5`
-                        : "—"}
+                      {ticketStats.rating?.total ? (
+                        <NumeroAnimado valor={ticketStats.rating.media} casas={1} sufixo=" / 5" />
+                      ) : (
+                        "—"
+                      )}
                     </h3>
                     <p>
                       Avaliação média

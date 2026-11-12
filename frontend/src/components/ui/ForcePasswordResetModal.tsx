@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import api from "../../api.ts";
 import toast from "react-hot-toast";
 import { REGRA_SENHA, validarSenha } from "../../utils/senha.ts";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 interface Props {
   email?: string;
@@ -47,7 +48,7 @@ const ForcePasswordResetModal: React.FC<Props> = ({ email, onSuccess, onCancel }
   };
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="troca-senha-titulo">
+    <div ref={saidaAnimada} className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="troca-senha-titulo">
       <div className="modal-content">
         <h2 id="troca-senha-titulo">Definir Nova Senha</h2>
         <p>

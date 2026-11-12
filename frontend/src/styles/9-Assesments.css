@@ -102,6 +102,35 @@
   color: var(--text-primary);
 }
 
+/* Aprovação: a nota conta até o valor e o selo do certificado surge depois. */
+.quiz-nota {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.quiz-certificado {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--brand-black);
+  color: var(--brand-gold-on-dark);
+  font-size: 14px;
+  text-align: left;
+}
+
+.quiz-certificado svg {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.quiz-certificado a {
+  color: var(--text-white);
+  font-weight: 600;
+}
+
 .detailed-texts {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -139,6 +168,43 @@
 .enneagram-page-indicator {
   font-weight: 500;
   color: #6c757d;
+}
+
+/* Barra de progresso do teste (perguntas respondidas). */
+.enneagram-progresso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 20px;
+}
+
+.enneagram-progresso-trilho {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-color);
+  overflow: hidden;
+}
+
+.enneagram-progresso-barra {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--brand-gold);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+.enneagram-progresso-texto {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* As perguntas deslizam de lado ao trocar de página: sem rolagem lateral. */
+.enneagram-form {
+  overflow-x: clip;
 }
 
 .enneagram-pagination {

@@ -1,4 +1,5 @@
 import React from "react";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   }
 
   return (
-    <div className="modal-overlay">
+    <div ref={saidaAnimada} className="modal-overlay">
       <div className="modal-content confirmation-modal">
         <button type="button" className="modal-close-button" aria-label="Fechar" onClick={onClose}>
           &times;

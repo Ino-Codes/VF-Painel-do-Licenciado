@@ -6,6 +6,7 @@ import {
   agruparPorMes,
   mesTitulo,
 } from "../../components/praises/praiseMonths.ts";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 interface User {
   id: number;
@@ -77,7 +78,7 @@ const UserDetailModal: React.FC<ModalProps> = ({ isOpen, onClose, user }) => {
     "https://res.cloudinary.com/dsgbgrll5/image/upload/v1759255539/default-corporate-user_eyle7x.png";
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div ref={saidaAnimada} className="modal-overlay" onClick={onClose}>
       <div
         className="modal-content user-detail-modal-content"
         onClick={(e) => e.stopPropagation()}

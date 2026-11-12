@@ -22,6 +22,9 @@ import {
   iniciais,
   nomeDoAtivo,
 } from "../../components/itAssets/assetConfig.ts";
+import NumeroAnimado from "../../components/ui/NumeroAnimado.tsx";
+import { AnimatePresence, motion } from "motion/react";
+import { LINHA_TABELA, useIdsNovos, useRemocaoPontual } from "../../utils/animacao.ts";
 
 interface Kpis {
   total: number;
@@ -173,6 +176,11 @@ const ITInventory: React.FC = () => {
   const inicio = (paginaAtual - 1) * porPagina;
   const visiveis = ordenados.slice(inicio, inicio + porPagina);
 
+  // Ativo baixado ou fora do filtro sai de lado; ativo cadastrado brilha.
+  const idsVisiveis = visiveis.map((a) => a.id);
+  const animarSaida = useRemocaoPontual(idsVisiveis);
+  const novos = useIdsNovos(idsVisiveis);
+
   // Filtro, aba, ordenação ou limite novos: volta para a primeira página.
   useEffect(() => {
     setPagina(1);
@@ -256,7 +264,7 @@ const ITInventory: React.FC = () => {
                   <c.Icon />
                 </div>
                 <div className="stat-info">
-                  <h3>{c.valor}</h3>
+                  <h3><NumeroAnimado valor={c.valor} /></h3>
                   <p>{c.rotulo}</p>
                 </div>
               </div>
@@ -365,14 +373,19 @@ const ITInventory: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    visiveis.map((a) => {
+                    <AnimatePresence initial={false} custom={animarSaida}>
+                    {visiveis.map((a) => {
                       const TipoIcon = iconeDoTipo(a.categoria);
                       const st = STATUS_CONFIG[a.status];
                       const rapida = ACAO_RAPIDA[a.status];
                       return (
-                        <tr
+                        <motion.tr
                           key={a.id}
-                          className="inv-row"
+                          layout="position"
+                          custom={animarSaida}
+                          variants={LINHA_TABELA}
+                          exit="saida"
+                          className={`inv-row${novos.has(a.id) ? " linha-nova" : ""}`}
                           onClick={() => setDetalheId(a.id)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") setDetalheId(a.id);
@@ -451,9 +464,10 @@ const ITInventory: React.FC = () => {
                               </div>
                             </td>
                           )}
-                        </tr>
+                        </motion.tr>
                       );
-                    })
+                    })}
+                    </AnimatePresence>
                   )}
                 </tbody>
               </table>

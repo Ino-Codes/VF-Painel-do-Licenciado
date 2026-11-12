@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../api.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import toast from "react-hot-toast";
+import { motion } from "motion/react";
+import { FiAward } from "react-icons/fi";
+import Confete from "../../components/ui/Confete.tsx";
+import NumeroAnimado from "../../components/ui/NumeroAnimado.tsx";
+import { ENTRADA } from "../../utils/animacao.ts";
 
 interface QuizOption {
   id: number;
@@ -97,16 +102,45 @@ const QuizPlayer: React.FC = () => {
         <div className="content-area quiz-results">
           <h2>Resultado do Teste</h2>
           {quizResult.passed ? (
-            <div className="result-pass">
-              <h3>Parabéns, você foi aprovado! 🎉</h3>
-              <p>Sua nota: {quizResult.score}%</p>
-              <p>
-                Você acertou {quizResult.correctAnswers} de{" "}
-                {quizResult.totalQuestions} perguntas.
-              </p>
-            </div>
+            <>
+              {/* Aprovação: confete nas cores da marca e o certificado
+                  aparecendo como conquista. */}
+              <Confete />
+              <motion.div
+                className="result-pass"
+                initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              >
+                <h3>Parabéns, você foi aprovado! 🎉</h3>
+                <p className="quiz-nota">
+                  Sua nota: <NumeroAnimado valor={quizResult.score} sufixo="%" duracao={1.1} />
+                </p>
+                <p>
+                  Você acertou {quizResult.correctAnswers} de{" "}
+                  {quizResult.totalQuestions} perguntas.
+                </p>
+                <motion.div
+                  className="quiz-certificado"
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.1, type: "spring", stiffness: 420, damping: 16 }}
+                >
+                  <FiAward aria-hidden="true" />
+                  <span>
+                    Com todas as aulas concluídas, o certificado fica em{" "}
+                    <Link to="/perfil?secao=certificados">Meu perfil › Certificados</Link>
+                  </span>
+                </motion.div>
+              </motion.div>
+            </>
           ) : (
-            <div className="result-fail">
+            <motion.div
+              className="result-fail"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: ENTRADA }}
+            >
               <h3>Não foi desta vez...</h3>
               <p>Sua nota: {quizResult.score}%</p>
               <p>
@@ -114,7 +148,7 @@ const QuizPlayer: React.FC = () => {
                 {quizResult.totalQuestions} perguntas. Estude mais um pouco e
                 tente novamente!
               </p>
-            </div>
+            </motion.div>
           )}
           <button
             className="form-button"

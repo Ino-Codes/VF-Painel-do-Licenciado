@@ -203,6 +203,18 @@
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
+/* Casca animada de cada cartão na grade do Perfil (entrada escalonada):
+   o cartão ocupa a célula inteira, como quando era filho direto da grade. */
+.praise-grid-item {
+  display: flex;
+  min-width: 0;
+}
+
+.praise-grid-item > .praise-card {
+  flex: 1;
+  min-width: 0;
+}
+
 .praise-card--testimonial {
   position: relative;
   border-left: none;

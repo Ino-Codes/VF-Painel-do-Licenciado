@@ -8,6 +8,7 @@ import { HiOutlineUserCircle } from "react-icons/hi";
 import EditorDeImagem, { Recorte } from "./EditorDeImagem.tsx";
 import { cortarImagem, TAMANHO_AVATAR } from "./cortarImagem.ts";
 import { lerImagemEscolhida } from "./lerImagemEscolhida.ts";
+import { saidaAnimada } from "../../utils/animacao.ts";
 
 // Foto de perfil, em duas etapas como a capa:
 //  1. escolher a imagem (ou remover a foto atual);
@@ -100,7 +101,7 @@ const AvatarModal: React.FC<AvatarModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <div className="modal-overlay modal-overlay--blur" onClick={fecharELimpar}>
+      <div ref={saidaAnimada} className="modal-overlay modal-overlay--blur" onClick={fecharELimpar}>
         <div
           className={`avatar-modal-card${origem ? " avatar-modal-card--editor avatar-modal-card--editor-foto" : ""}`}
           role="dialog"

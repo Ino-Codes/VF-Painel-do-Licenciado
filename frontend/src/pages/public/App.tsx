@@ -5,6 +5,8 @@ import { useAuth } from "../../context/AuthContext.tsx";
 import Logo from "../../img/textobranco2.png";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { AnimatePresence, motion } from "motion/react";
+import { ENTRADA } from "../../utils/animacao.ts";
 
 const App: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -178,14 +180,40 @@ const App: React.FC = () => {
   return (
     <>
       <div className="login-page">
+        {/* Abertura da marca: o logo sobe, o filete dourado corre e o
+            slogan assenta. Toca uma vez e não atrasa quem quer só entrar. */}
         <aside className="login-hero">
-          <img className="login-hero-logo" alt="V-CORP" src={Logo} />
-          <span className="login-hero-divider" />
-          <p className="login-hero-tagline">Soluções Corporativas</p>
+          <motion.img
+            className="login-hero-logo"
+            alt="V-CORP"
+            src={Logo}
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, ease: ENTRADA }}
+          />
+          <motion.span
+            className="login-hero-divider"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.55, delay: 0.35, ease: [0.65, 0, 0.35, 1] }}
+          />
+          <motion.p
+            className="login-hero-tagline"
+            initial={{ opacity: 0, letterSpacing: "10px" }}
+            animate={{ opacity: 1, letterSpacing: "4px" }}
+            transition={{ duration: 0.7, delay: 0.55, ease: ENTRADA }}
+          >
+            Soluções Corporativas
+          </motion.p>
         </aside>
 
         <div className="login-panel">
-          <div className="login-panel-inner">
+          <motion.div
+            className="login-panel-inner"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.25, ease: ENTRADA }}
+          >
             <img className="login-panel-logo" alt="V-CORP" src={Logo} />
             <h2 className="titulo-login">{tituloTela}</h2>
             {!mostrarRecuperacao && step === "login" && (
@@ -194,6 +222,16 @@ const App: React.FC = () => {
               </p>
             )}
 
+          {/* Login, código de verificação e recuperação trocam com um
+              esmaecer curto, sem pular de uma vez. */}
+          <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={mostrarRecuperacao ? "recuperacao" : step}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: ENTRADA }}
+          >
           {mostrarRecuperacao ? (
             <>
               {!recoveryMessage ? (
@@ -323,12 +361,14 @@ const App: React.FC = () => {
               </p>
             </form>
           )}
+          </motion.div>
+          </AnimatePresence>
 
             <p className="login-footer">
               V-CORP © {new Date().getFullYear()}. Todos os direitos
               reservados.
             </p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </>

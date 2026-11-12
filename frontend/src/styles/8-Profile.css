@@ -610,7 +610,7 @@
   box-shadow: var(--glass-shadow);
   border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 24px;
+  grid-area: capa;
 }
 
 /* A página do perfil tem largura máxima: a capa é 4:1 e, numa tela larga
@@ -648,8 +648,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(8, 8, 7, 0.55);
+  border: none;
+  background: rgba(0, 0, 0, 0.50);
   color: var(--text-white);
   display: flex;
   align-items: center;
@@ -657,8 +657,6 @@
   font-size: 18px;
   padding: 0;
   cursor: pointer;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
@@ -678,15 +676,15 @@
 
 .perfil-capa-avatar {
   position: relative;
-  width: 128px;
-  height: 128px;
-  margin-top: -64px;
+  width: 160px;
+  height: 160px;
+  margin-top: -80px;
   flex-shrink: 0;
 }
 
 .perfil-capa-foto {
-  width: 128px;
-  height: 128px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
   border: 5px solid var(--bg-primary);
   box-sizing: border-box;
@@ -768,17 +766,20 @@
   padding: 4px 12px;
 }
 
-/* ── Layout: menu + conteúdo ── */
+/* ── Layout: menu à esquerda na altura toda; capa e seção à direita ── */
 .perfil-layout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 28px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-areas:
+    "menu capa"
+    "menu conteudo";
+  column-gap: 28px;
+  row-gap: 24px;
+  align-items: start;
 }
 
 .perfil-menu {
-  flex: 1 1 230px;
-  max-width: 260px;
+  grid-area: menu;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -787,6 +788,7 @@
 }
 
 .perfil-menu-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -809,12 +811,28 @@
   color: var(--text-primary);
 }
 
-.perfil-menu-item--ativo {
-  background: var(--glass-surface);
-  border-color: var(--glass-border);
-  box-shadow: var(--glass-shadow);
+/* O fundo do item ativo é o .perfil-menu-indicador, que desliza de um item
+   para o outro (Perfil.tsx, layoutId do Motion). */
+.perfil-menu-item--ativo,
+.perfil-menu-item--ativo:hover {
+  background: transparent;
   color: var(--text-primary);
   font-weight: 600;
+}
+
+.perfil-menu-indicador {
+  position: absolute;
+  inset: -1px;
+  border-radius: 10px;
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  z-index: 0;
+}
+
+.perfil-menu-item > :not(.perfil-menu-indicador) {
+  position: relative;
+  z-index: 1;
 }
 
 .perfil-menu-icone {
@@ -852,7 +870,7 @@
 }
 
 .perfil-conteudo {
-  flex: 999 1 560px;
+  grid-area: conteudo;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -1179,10 +1197,18 @@
 
 /* ── Celular / tablet ── */
 @media (max-width: 900px) {
+  /* Capa no topo, menu vira uma faixa rolável logo abaixo. */
+  .perfil-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "capa"
+      "menu"
+      "conteudo";
+    row-gap: 20px;
+  }
+
   .perfil-menu {
     position: static;
-    max-width: none;
-    flex-basis: 100%;
     flex-direction: row;
     overflow-x: auto;
     padding-bottom: 4px;

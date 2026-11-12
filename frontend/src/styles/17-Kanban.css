@@ -977,6 +977,33 @@
   color: var(--brand-gold);
 }
 
+/* Evento que acabou de chegar (comentário, troca de status): o ícone
+   acende em dourado e solta um anel. */
+.ticket-timeline-item--novo .ticket-timeline-icone {
+  animation: eventoNovo 1.4s ease-out;
+}
+
+@keyframes eventoNovo {
+  0% {
+    border-color: var(--brand-gold);
+    color: var(--brand-gold);
+    box-shadow: 0 0 0 0 var(--brand-gold-soft);
+  }
+  60% {
+    border-color: var(--brand-gold);
+    box-shadow: 0 0 0 8px var(--brand-gold-soft);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-timeline-item--novo .ticket-timeline-icone {
+    animation: none;
+  }
+}
+
 .ticket-timeline-evento {
   display: flex;
   flex-wrap: wrap;

@@ -7,6 +7,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { MotionConfig } from "motion/react";
 
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import { safeStorage } from "./utils/safeStorage.ts";
@@ -408,7 +409,10 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.Fragment>
     <ThemeProvider>
-      <AppRouter />
+      {/* Quem pede "reduzir movimento" no sistema não vê as animações. */}
+      <MotionConfig reducedMotion="user">
+        <AppRouter />
+      </MotionConfig>
     </ThemeProvider>
   </React.Fragment>,
 );

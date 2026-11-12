@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { FiTrash2, FiEdit, FiMail } from "react-icons/fi";
+import { AnimatePresence, motion } from "motion/react";
+import { LINHA_TABELA, useIdsNovos, useRemocaoPontual } from "../../utils/animacao.ts";
 
 interface User {
   id: number;
@@ -48,6 +50,10 @@ const TabContent: React.FC<TabContentProps> = ({
   reenviandoId,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  // Usuário excluído sai de lado; usuário recém-cadastrado brilha em dourado.
+  const ids = state.users.map((u) => u.id);
+  const animarSaida = useRemocaoPontual(ids);
+  const novos = useIdsNovos(ids);
 
   const getSortIcon = (key: string) => {
     if (state.sortConfig.key !== key) return null;
@@ -101,8 +107,16 @@ const TabContent: React.FC<TabContentProps> = ({
             </tr>
           </thead>
           <tbody>
+            <AnimatePresence initial={false} custom={animarSaida}>
             {state.users.map((u) => (
-              <tr key={u.id}>
+              <motion.tr
+                key={u.id}
+                layout="position"
+                custom={animarSaida}
+                variants={LINHA_TABELA}
+                exit="saida"
+                className={novos.has(u.id) ? "linha-nova" : undefined}
+              >
                 <td data-label="Nome">
                   {u.nome}
                   {u.convite_pendente && (
@@ -148,8 +162,9 @@ const TabContent: React.FC<TabContentProps> = ({
                     </button>
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
             ))}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>

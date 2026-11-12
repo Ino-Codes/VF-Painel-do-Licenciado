@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "../../api.ts";
 import { useNavigate } from "react-router-dom";
 import Menu from "../../components/layout/Menu.tsx";
 import Footer from "../../components/layout/Footer.tsx";
 import toast from "react-hot-toast";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
+import { AnimatePresence, motion } from "motion/react";
+import { ENTRADA, reduzMovimento } from "../../utils/animacao.ts";
 
 const QUESTIONS_PER_PAGE = 10;
+
+// Troca de página: as perguntas saem para um lado e as novas entram pelo
+// outro, no sentido em que a pessoa andou (próxima ou anterior).
+const PAGINA = {
+  entra: (sentido: number) => ({ opacity: 0, x: sentido * 48 }),
+  centro: { opacity: 1, x: 0, transition: { duration: 0.28, ease: ENTRADA } },
+  sai: (sentido: number) => ({ opacity: 0, x: sentido * -48, transition: { duration: 0.16 } }),
+};
 
 const EnneagramPage: React.FC = () => {
   const [questions, setQuestions] = useState([]);
@@ -15,6 +25,16 @@ const EnneagramPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [currentPage, setCurrentPage] = useState(1);
+  // 1 = avançou, -1 = voltou: define o lado da animação.
+  const [sentido, setSentido] = useState(1);
+  const topoRef = useRef<HTMLDivElement>(null);
+
+  // A página nova começa do topo: quem clicou em "Próximo" estava no fim.
+  useEffect(() => {
+    const topo = topoRef.current;
+    if (!topo || topo.getBoundingClientRect().top >= 0) return;
+    topo.scrollIntoView({ behavior: reduzMovimento() ? "auto" : "smooth", block: "start" });
+  }, [currentPage]);
 
   useEffect(() => {
     api
@@ -62,12 +82,16 @@ const EnneagramPage: React.FC = () => {
       );
       return;
     }
+    setSentido(1);
     setCurrentPage((prev) => prev + 1);
   };
 
   const handlePrevPage = () => {
+    setSentido(-1);
     setCurrentPage((prev) => prev - 1);
   };
+
+  const respondidas = Object.keys(answers).length;
 
   if (loading) {
     return <LoadingSpinner />;
@@ -77,7 +101,7 @@ const EnneagramPage: React.FC = () => {
     <div className="p-2">
       <Menu />
       <div className="content-area">
-        <div className="enneagram-page-header">
+        <div className="enneagram-page-header" ref={topoRef}>
           <h2>Teste de Perfil Eneagrama</h2>
           {totalPages > 0 && (
             <span className="enneagram-page-indicator">
@@ -89,29 +113,62 @@ const EnneagramPage: React.FC = () => {
           Para cada par abaixo, selecione a frase que melhor o descreve na maior
           parte do tempo.
         </p>
-        <div className="enneagram-form">
-          {currentQuestions.map((q, index) => (
-            <div key={q.id} className="enneagram-question-pair">
-              <h4>Questão {startIndex + index + 1}</h4>
-              <div
-                className={`statement-option ${
-                  answers[q.id] === q.type_a ? "selected" : ""
-                }`}
-                onClick={() => handleSelect(q.id, q.type_a)}
-              >
-                {q.statement_a}
-              </div>
-              <div className="separator-or">ou</div>
-              <div
-                className={`statement-option ${
-                  answers[q.id] === q.type_b ? "selected" : ""
-                }`}
-                onClick={() => handleSelect(q.id, q.type_b)}
-              >
-                {q.statement_b}
-              </div>
+        {questions.length > 0 && (
+          <div className="enneagram-progresso">
+            <div
+              className="enneagram-progresso-trilho"
+              role="progressbar"
+              aria-label="Perguntas respondidas"
+              aria-valuemin={0}
+              aria-valuemax={questions.length}
+              aria-valuenow={respondidas}
+            >
+              <motion.span
+                className="enneagram-progresso-barra"
+                initial={false}
+                animate={{ scaleX: respondidas / questions.length }}
+                transition={{ duration: 0.4, ease: ENTRADA }}
+              />
             </div>
-          ))}
+            <span className="enneagram-progresso-texto">
+              {respondidas} de {questions.length} respondidas
+            </span>
+          </div>
+        )}
+        <div className="enneagram-form">
+          <AnimatePresence mode="wait" initial={false} custom={sentido}>
+            <motion.div
+              key={currentPage}
+              custom={sentido}
+              variants={PAGINA}
+              initial="entra"
+              animate="centro"
+              exit="sai"
+            >
+              {currentQuestions.map((q, index) => (
+                <div key={q.id} className="enneagram-question-pair">
+                  <h4>Questão {startIndex + index + 1}</h4>
+                  <div
+                    className={`statement-option ${
+                      answers[q.id] === q.type_a ? "selected" : ""
+                    }`}
+                    onClick={() => handleSelect(q.id, q.type_a)}
+                  >
+                    {q.statement_a}
+                  </div>
+                  <div className="separator-or">ou</div>
+                  <div
+                    className={`statement-option ${
+                      answers[q.id] === q.type_b ? "selected" : ""
+                    }`}
+                    onClick={() => handleSelect(q.id, q.type_b)}
+                  >
+                    {q.statement_b}
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
 
           <div className="pagination-controls enneagram-pagination">
             <button

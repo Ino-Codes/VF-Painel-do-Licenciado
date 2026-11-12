@@ -13,6 +13,8 @@ import {
 import { IconType } from "react-icons";
 import api from "../../api.ts";
 import { tipoInfo } from "./ticketTypes.ts";
+import { motion } from "motion/react";
+import { ENTRADA } from "../../utils/animacao.ts";
 
 // Linha do tempo do chamado na Central: trocas de status, classificação,
 // atendimento assumido e comentários dos atendentes. Comentário só se soma —
@@ -107,6 +109,51 @@ const TicketTimeline: React.FC<Props> = ({ ticketId, versao = 0, podeComentar })
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState("");
   const fimRef = useRef<HTMLLIElement>(null);
+  // Eventos já mostrados. Na primeira carga a linha entra em sequência
+  // rápida; depois, só o que chegou de novo entra (com destaque dourado).
+  const conhecidos = useRef<Set<string> | null>(null);
+
+  useEffect(() => {
+    conhecidos.current = null;
+  }, [ticketId]);
+
+  // Destaque dourado dos que chegaram, pelo tempo da animação.
+  const [novos, setNovos] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    if (!eventos) return;
+    const antes = conhecidos.current;
+    conhecidos.current = new Set(eventos.map((e) => e.id));
+    if (!antes) return;
+    const chegaram = eventos.filter((e) => !antes.has(e.id)).map((e) => e.id);
+    if (chegaram.length) setNovos(new Set(chegaram));
+  }, [eventos]);
+
+  useEffect(() => {
+    if (novos.size === 0) return;
+    const t = setTimeout(() => setNovos(new Set()), 1500);
+    return () => clearTimeout(t);
+  }, [novos]);
+
+  const primeiraCarga = conhecidos.current === null;
+  const entrada = (id: string, i: number) => {
+    if (primeiraCarga) {
+      return {
+        initial: { opacity: 0, y: 6 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.25, delay: Math.min(i * 0.035, 0.4), ease: ENTRADA },
+      };
+    }
+    if (!conhecidos.current?.has(id)) {
+      return {
+        initial: { opacity: 0, y: 10 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.3, ease: ENTRADA },
+      };
+    }
+    return { initial: false as const };
+  };
+  const ehNovo = (id: string) => novos.has(id);
 
   useEffect(() => {
     let ativo = true;
@@ -159,10 +206,11 @@ const TicketTimeline: React.FC<Props> = ({ ticketId, versao = 0, podeComentar })
             if (e.kind === "comentario") {
               const antigo = e.meta?.origem === "observacao";
               return (
-                <li
+                <motion.li
                   key={e.id}
                   ref={ultimo ? fimRef : undefined}
-                  className="ticket-timeline-item ticket-timeline-item--comentario"
+                  className={`ticket-timeline-item ticket-timeline-item--comentario${ehNovo(e.id) ? " ticket-timeline-item--novo" : ""}`}
+                  {...entrada(e.id, i)}
                 >
                   <span className="ticket-timeline-icone" aria-hidden="true">
                     <FiMessageSquare />
@@ -174,12 +222,17 @@ const TicketTimeline: React.FC<Props> = ({ ticketId, versao = 0, podeComentar })
                     </div>
                     <p>{e.body}</p>
                   </div>
-                </li>
+                </motion.li>
               );
             }
             const { Icon, texto: frase } = descrever(e);
             return (
-              <li key={e.id} ref={ultimo ? fimRef : undefined} className="ticket-timeline-item">
+              <motion.li
+                key={e.id}
+                ref={ultimo ? fimRef : undefined}
+                className={`ticket-timeline-item${ehNovo(e.id) ? " ticket-timeline-item--novo" : ""}`}
+                {...entrada(e.id, i)}
+              >
                 <span className="ticket-timeline-icone" aria-hidden="true">
                   <Icon />
                 </span>
@@ -190,7 +243,7 @@ const TicketTimeline: React.FC<Props> = ({ ticketId, versao = 0, podeComentar })
                     <p className="ticket-timeline-motivo">Motivo: {e.body}</p>
                   )}
                 </div>
-              </li>
+              </motion.li>
             );
           })}
         </ol>

@@ -283,9 +283,9 @@
   text-align: center;
 }
 
-/* Linha conectora entre as etapas. */
-.chamado-step:not(:last-child)::after {
-  content: "";
+/* Linha conectora entre as etapas. A parte preenchida cresce até a etapa
+   atual quando o chamado abre (TicketDetail.tsx, Motion). */
+.chamado-step-trilho {
   position: absolute;
   top: 18px;
   left: 50%;
@@ -293,10 +293,14 @@
   height: 2px;
   background: var(--border-color);
   z-index: 0;
+  overflow: hidden;
 }
 
-.chamado-step.is-done::after {
+.chamado-step-trilho-cheio {
+  display: block;
+  height: 100%;
   background: var(--accent-color);
+  transform-origin: left center;
 }
 
 .chamado-step-dot {

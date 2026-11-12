@@ -9,6 +9,7 @@ import {
 import api from "../../api.ts";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.tsx";
 import { useVizPalette } from "./vizShared.ts";
+import NumeroAnimado from "../../components/ui/NumeroAnimado.tsx";
 
 // ─── Formato dos dados (espelha o /api/admin/analytics/enneagram-stats) ─────
 
@@ -184,7 +185,7 @@ const EnneagramStats: React.FC = () => {
           </div>
           <div className="stat-info">
             <h3>
-              {participacao.concluidos} de {participacao.total}
+              <NumeroAnimado valor={participacao.concluidos} /> de {participacao.total}
             </h3>
             <p>Fizeram o teste</p>
             <span className="stat-sub">
@@ -216,7 +217,7 @@ const EnneagramStats: React.FC = () => {
             <HiOutlineViewGrid />
           </div>
           <div className="stat-info">
-            <h3>{presentes} de 9</h3>
+            <h3><NumeroAnimado valor={presentes} /> de 9</h3>
             <p>Tipos presentes na equipe</p>
             {resultados.length > 0 && ausentes.length > 0 && (
               <span className="stat-sub">sem ninguém: tipos {ausentes.join(", ")}</span>
