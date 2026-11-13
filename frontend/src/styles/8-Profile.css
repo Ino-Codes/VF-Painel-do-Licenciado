@@ -782,9 +782,8 @@
   grid-area: menu;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   position: sticky;
-  top: 90px;
 }
 
 .perfil-menu-item {
